@@ -1,0 +1,438 @@
+#! /usr/bin/perl
+
+# --- config
+$logfile = "install.log";
+$makefile = "makefile";
+$use_gui=0;
+$use_grisu=0;
+$wsdl2h = "wsdl2h";
+$soapcpp2 = "soapcpp2";
+# --- CUTTING EDGE
+#$wsdl2h = "/home/sean/apps/bin/wsdl2h";
+#$soapcpp2 = "/home/sean/apps/bin/soapcpp2";
+
+# --- redirect errors
+open(STDERR, ">$logfile");
+
+# --- get compile preferences from user
+&user_prompt();
+
+# pre-checks os / files (eg pkg-config) / libs
+$osmakefile = &check_os();
+
+# TODO - print help on where to get if not installed?
+&check_program("pkg-config") || die;
+
+print ("Checking pre-requisite packages.\n");
+
+# TODO - print help on where to get if not installed?
+&check_library("gtk+-2.0") || die;
+if ($use_gui)
+  {
+  &check_library("gtkglext-1.0") || die;
+  }
+if ($use_grisu)
+  {
+  &check_library("gsoap") || die;
+  &check_library("gsoapssl") || die;
+  &check_library("libssl") || die;
+
+  &setup_soap_stubs() || die;
+  }
+
+# print current options + any warnings etc
+do
+  {
+  print "Enter Install location: ";
+  $_ = <>;
+  chomp;
+# use current directory if enter pressed
+  if ($_ == "\n")
+    {
+    $_ = ".";
+    }
+  }
+while (&check_install($_));
+
+$dest = $_."/";
+
+# allow editing of make/install options
+# TODO - if cant open - attempt to open in current directory
+&build_makefile($osmakefile);
+
+# clean the build area
+unlink <*.o>;
+unlink gdis;
+
+# perform make
+if (system("make -f $makefile") != 0)
+  {
+  print "GDIS compile failed - check $logfile\n";
+  close(STDERR);
+  exit;
+  }
+else
+  {
+  print "GDIS compile successful.\n";
+  }
+
+# perform install / strip 
+# copy gdis exec + manual etc etc to install location
+# dont install if dest is ./
+if (length($dest) > 2)
+  {
+  print "Installing GDIS in: [$dest]\n";
+
+# FIXME - make this more portable
+  system("strip gdis");
+
+  copy("gdis", $dest) || die "Cannot copy gdis.\n";
+  copy("gdis.elements", $dest) || die "Cannot copy gdis.elements.\n";
+  copy("gdis.library", $dest) || die "Cannot copy gdis.library.\n";
+  copy("gdis.manual", $dest) || die "Cannot copy gdis.manual.\n";
+#  system("cp gdis $dest");
+#  system("cp gdis.elements $dest");
+#  system("cp gdis.library $dest");
+#  system("cp gdis.manual $dest");
+  }
+
+print "done.\n";
+
+close(STDERR);
+exit;
+
+# --- subroutines
+
+# --- ask the user what type of package to compile
+
+sub user_prompt
+{
+print "GDIS Install options\n\n";
+print "1. Standard GUI package (default)\n";
+print "2. Command line only\n";
+
+do
+  {
+  $repeat=0;
+  print "Choice: ";
+  $_ = <>;
+
+# if enter pressed - assume option 1
+  if ($_ eq "\n")
+    {
+    $use_gui=1;
+    $use_grisu=0;
+    }
+  elsif ($_ eq "1\n")
+    {
+    $use_gui=1;
+    $use_grisu=0;
+    }
+  elsif ($_ eq "2\n")
+    {
+    $use_gui=0;
+    $use_grisu=0;
+    }
+  else
+    {
+    print "Invalid option.\n";
+    $repeat=1;
+    }
+  }
+while ($repeat);
+}
+
+# --- returns the os specific makefile
+sub check_os
+{
+$os = "makefile.linux";
+
+open(OUT, "uname -a |");
+
+while (<OUT>)
+  {
+  if (/Linux/)
+    {
+    $os = "makefile.linux";
+    }
+  if (/Darwin Kernel/)
+    {
+    $os = "makefile.osx";
+    }
+  }
+
+close(OUT);
+
+return $os;
+}
+
+# -- checks is directory is a valid install location
+sub check_install
+{
+print "$_[0] : ";
+
+stat($_[0]);
+
+if (!-e _)
+  {
+  print "does not exist.\n";
+  return(1);
+  }
+if (!-d _)
+  {
+  print "is not a directory.\n";
+  return(1);
+  }
+if (!-w _)
+  {
+  print "is not writable by you.\n";
+  return(1);
+  }
+
+print " [ok]\n";
+
+return(0);
+}
+
+# -- checks if argument string is a valid executable
+sub check_program
+{
+$ret = system($_[0]);
+
+if ($ret == -1)
+  {
+  print "Missing program: $_[0]\n";
+  return(0);
+  }
+return(1);
+}
+
+# -- primitive for pkg-config checking
+sub check_library
+{
+#print "$_[0] 		";
+
+printf "%-20s  ",$_[0];
+if (system("pkg-config --exists $_[0]"))
+  {
+  print "[not found]\n";
+  return(0);
+  }
+else
+  {
+  print "[ok]\n";
+  }
+return(1);
+}
+
+# NEW - generate C client stubs from grisu wsdl
+sub setup_soap_stubs()
+{
+
+# TODO - get this thing to download the WSDL (SSL issues)
+#system("wsdl2h -c -x -o grisu_ws.h grisu.wsdl") || die "Can't process WSDL.\n";
+#system("soapcpp2 -L -x -C -c grisu_ws.h") || die "Can't generate C client stubs.\n";
+# I think wsdl2h sometimes complains - still works - but we can't use || die
+system("$wsdl2h -c -o grisu_ws.h grisu.wsdl");
+
+# --- CUTTING EDGE
+&hack_header();
+
+# CURRENT - (-2) generate soap 1.2 bindings (needed for MTOM?)
+# CURRENT - (-2) breaks everything (seems to be an xfire issue)
+system("$soapcpp2 -1 -L -x -C -c grisu_ws.h");
+
+# hack the soap header to contain authentication tokens
+open(INP, "soapStub.h") || die "Can't open soapStub.h\n";
+open(OUT, ">new_soapStub.h") || die "Can't open temporary header file\n";
+while(<INP>)
+  {
+# search for soap header struct
+  if (/struct SOAP_ENV__Header/)
+    {
+# search for closing brace
+    do
+      {
+      print OUT;
+      $_ = <INP>;
+      }
+    while (!/};/);
+# insert authentication fields
+    print OUT "/* GDIS insert */\n";
+    print OUT "char *username;\n";
+    print OUT "char *password;\n";
+    print OUT "char *myproxyserver;\n";
+    print OUT "char *myproxyport;\n";
+    }
+  print OUT;
+  }
+close INP;
+close OUT;
+rename("new_soapStub.h", "soapStub.h") || die "Can't rename soapStub.h";
+
+# hack the soap header serializer to pass authentication tokens
+open(INP, "soapC.c") || die "Can't open soapC.c\n";
+open(OUT, ">new_soapC.c") || die "Can't open temporary C file\n";
+
+while(<INP>)
+  {
+  if (/soap_out_SOAP_ENV__Header\(struct/)
+    {
+# search for closing element
+    do
+      {
+      print OUT;
+      $_ = <INP>;
+      }
+    while (!/soap_element_end_out/);
+# insert authentication fields
+    print OUT "\n/* GDIS insert */\n";
+    print OUT "soap_element_begin_out(soap, \"ns1:AuthenticationToken\", 0, NULL);\n";
+    print OUT "soap_out_string(soap, \"ns1:Username\", 1, &(a->username), \"\");\n";
+    print OUT "soap_out_string(soap, \"ns1:Password\", 2, &(a->password), \"\");\n";
+    print OUT "soap_out_string(soap, \"ns1:MyProxyServer\", 3, &(a->myproxyserver), \"\");\n";
+    print OUT "soap_out_string(soap, \"ns1:MyProxyPort\", 4, &(a->myproxyport), \"\");\n";
+    print OUT "soap_element_end_out(soap, \"ns1:AuthenticationToken\");\n\n";
+    }
+  print OUT;
+  }
+
+close INP;
+close OUT;
+rename("new_soapC.c", "soapC.c") || die "Can't rename soapC.c\n";
+
+return(1);
+}
+
+# CURRENT - havk the header to try and cope with MTOM
+sub hack_header
+{
+open(INP, "grisu_ws.h") || die "Can't open grisu_ws.h\n";
+open(OUT, ">new_grisu_ws.h") || die "Can't open temporary header file\n";
+
+# --- this works, but not very portable
+#print OUT "#import \"xop.h\"\n";
+#print OUT "#import \"xmlmime.h\"\n";
+
+# --- experimenting
+print OUT "//gsoap xop schema import: http://www.w3.org/2004/08/xop/include\n";
+print OUT "struct _xop__Include\n{\n";
+print OUT "unsigned char *__ptr;\n";
+print OUT "int __size;\n";
+print OUT "char *id;\n";
+print OUT "char *type;\n";
+print OUT "char *options;\n";
+print OUT "};\n";
+print OUT "typedef struct _xop__Include _xop__Include;\n\n";
+
+print OUT "//gsoap xmlmime schema import: http://www.w3.org/2004/11/xmlmime\n\n";
+
+#print OUT "struct ns1__Data\n{\n_xop__Include xop__Include;\n@char *xmlmime__contentType;\n};\n";
+
+while(<INP>)
+  {
+#  if (/struct _ns1__downloadResponse/)
+#    {
+#    print OUT;
+#    for ($i=0 ; $i<5 ; $i++)
+#      {
+#      $_ = <INP>;
+#      if (/struct xsd__base64Binary/)
+#        {
+#        print OUT "struct ns1__Data*  out  1;  // NEW HACK\n";
+#        }
+#      else
+#        {
+#        print OUT;
+#        }
+#      }
+#    }
+#  else
+#    {
+    print OUT;
+#    }
+  }
+
+close INP;
+close OUT;
+rename("new_grisu_ws.h", "grisu_ws.h") || die "Can't rename grisu_ws.h\n";
+
+return(1);
+}
+
+# CURRENT - create a minimal makefile
+# NB: can effect a make clean etc etc through perl script
+# TODO - GPROF (-pg) -> CFLAGS/LIBS
+sub build_makefile
+{
+open(OUT, ">$makefile") || die;
+
+print OUT "# --- auto generated GDIS makefile\n\n";
+
+# --- variables for determining which source files to include
+if ($use_gui)
+  {
+  print OUT "USE_GUI = YES\n";
+  }
+else
+  {
+  print OUT "USE_GUI = NO\n";
+  }
+if ($use_grisu)
+  {
+  print OUT "USE_GRISU = YES\n";
+  }
+else
+  {
+  print OUT "USE_GRISU = NO\n";
+  }
+
+# TODO - pass OS as argument
+print OUT "include $_[0]\n";
+print OUT "include makefile.src\n\n";
+
+$cflags="";
+$incs="";
+$libs="";
+
+if ($use_gui)
+  {
+  $cflags .= "-DWITH_GUI ";
+  $incs .= "`pkg-config --cflags gtk+-2.0 gthread-2.0 gtkglext-1.0 gmodule-2.0` ";
+  $libs .= "`pkg-config --libs gtk+-2.0 gthread-2.0 gtkglext-1.0 gmodule-2.0` ";
+  }
+else
+  {
+  $incs .= "`pkg-config --cflags gtk+-2.0 gthread-2.0 gmodule-2.0` ";
+  $libs .= "`pkg-config --libs gtk+-2.0 gthread-2.0 gmodule-2.0` ";
+  }
+if ($use_grisu)
+  {
+  $cflags .= "-DWITH_OPENSSL -DWITH_GRISU `pkg-config --cflags gsoapssl libssl` ";
+  $libs .= "`pkg-config --libs gsoapssl libssl` ";
+
+# --- CUTTING EDGE
+#  $cflags .= "-DWITH_OPENSSL -DWITH_GRISU `pkg-config --cflags /home/sean/apps/lib/pkgconfig/gsoapssl.pc libssl` ";
+#  $libs .= "`pkg-config --libs /home/sean/apps/lib/pkgconfig/gsoapssl.pc libssl` ";
+  }
+
+print OUT "CFLAGS := \$(CFLAGS) $cflags\n";
+print OUT "INCS := \$(INCS) $incs\n";
+print OUT "LIBS := \$(LIBS) $libs\n\n";
+
+print OUT "OBJ = \$(SRC:.c=.o)\n";
+print OUT "-include \$(OBJ:.o=.d)\n\n";
+
+print OUT "gdis: \$(OBJ)\n";
+print OUT "\t\$(CC) \$(OBJ) \$(LDFLAGS) -o gdis \$(LIBS)\n";
+
+print OUT "%.o: %.c\n";
+print OUT "\t\$(CC) \$(CFLAGS) -c \$*.c \$(INCS)\n";
+print OUT "\t\$(CC) \$(CFLAGS) -MM \$*.c \$(INCS) > \$*.d\n";
+
+
+print OUT "clean:\n";
+print OUT "\t rm -rf gdis *.o *.d\n";
+
+close(OUT);
+}

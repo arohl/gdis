@@ -1,0 +1,100 @@
+single relax conp comp molmec dist
+
+cutd 10.0
+
+#CaSO4.2H2O 
+
+switch rfo gnorm 0.1
+
+name CaSO4_DH
+cell
+5.670   15.201   6.533   90  118.6  90
+frac 
+Ca     0.50000  0.0796700  0.25000             
+S      0.00000  0.0770500  0.75000             
+O1     0.96320  0.1319000  0.55047            
+O1     0.75822  0.0222600  0.66709         
+H      0.25112  0.1615800  0.50372            
+H      0.40458  0.2427500  0.49217          
+O2     0.37960  0.1821200  0.45881        
+space
+I 1 2/c 1
+observables
+elastic
+1 1 7.86
+elastic
+2 2 6.27
+elastic
+3 3 7.26
+elastic
+4 4 0.91
+elastic
+5 5 2.64
+elastic
+6 6 1.04
+elastic
+1 2 4.10
+elastic 
+1 3 2.68
+elastic 
+1 5 -0.70
+elastic
+2 3 2.42
+elastic
+2 5 0.31
+elastic
+3 5 -1.74
+end
+
+species
+Ca  2.00
+S   1.36
+O1 -0.84
+O2 -0.82
+H   0.41
+end
+
+element
+cova Ca 0.1
+end
+
+# fitting
+
+observables
+weights 27
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 31 32 33
+100 100 100 100 100 100 100 100 100 100
+100 100 100 100 100 100 100 100 100 100 100
+100000 100000 100000 100000 100000 100000
+end
+
+# common
+
+buck inter
+Ca core  O1 core     1651.39    0.2931    0.00   15.0    1 1 0
+buck inter
+O1 core  O1 core   103585.02    0.2000   25.98   15.0    0 0 0
+morse bond
+S core   O1 core        5.00    1.2000    1.505          0 0 0
+three bond
+S core  O1 core  O1 core   15.0    109.47   0 0 
+
+# water
+
+buckingham inter
+O1  O2    64972.27    0.2146   29.76   15.0    1 0 0
+buckingham inter
+O2  O2    58213.81    0.2099   30.42   15.0    1 0 0
+buckingham inter
+Ca  O2     1374.31    0.2997    0.00   15.0    1 1 0
+
+buckingham inter
+H   O1     1009.93    0.1995    4.84   15.0    0 0 0
+
+harmonic bond
+H core   O2 core         62.6567     0.96   0.0   0 0
+three bond
+O2 core  H core  H core   5.0416   104.50         0 0
+
+print 1
+

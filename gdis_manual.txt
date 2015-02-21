@@ -1,0 +1,132 @@
+
+TODO - html & put on sourceforge site
+
+GDIS Manual
+===========
+
+GDIS is a molecular modelling GUI. It was originally intended just
+for loading and rotating simple models and then rendering pretty
+pictures. It has grown to be much more than that.
+
+However, the idea of loading up a model and performing various
+tasks on it remains.
+
+
+Models
+------
+
+The way in which you load and save models is pretty standard and can be
+achieved either through the "File" menu pulldown or by clicking on the
+appropriate toolbar icon.
+
+NB: all filetype recognition is done through the extension.
+
+GDIS can load the following filetypes:
+
+	Biosym (msi/accelrys/whatever) .arc and .car files.
+	cif (.cif)
+        fdf the free data format, suitable for the SIESTA package (.fdf)
+	marvin output (.mvnout, .mvout)
+	gdis morphology file (.gmf)
+	gulp input (.gin), restart (.res), and ouput (.got)
+	xtl (.xtl)
+	xyz (.xyz)
+Plus, If you have babel installed,
+	pdb (.pdb)
+        mopac output (.out)
+
+GDIS can save files as one of the following:
+	Biosym
+        cif
+        fdf (free data format - suitable for the SIESTA package)
+	gulp input
+	gdis morphology
+	xtl
+	xyz
+
+Every model has inherent properties and operations that can be
+performed on it. Sometimes these are not the same for different
+models (eg a surface and an isolated molecule).
+
+The properties and other model specific manipulations you can perform
+on a loaded model are found in the branches of the model subtree (the
+pane to the left of the main drawing area). Other, more general
+operations, such as measuring bond distances, angles, etc. are all
+accessible through the menus and toolbar icons. 
+
+
+Modes
+-----
+
+	All operations generally act on the currently active model.
+The only exception is for certain dialogs that are associated with a
+particular model(s) and no other (eg energetics). Obviously, actions
+performed within these dialogs act only on the associated model, even
+if it is not currently active. In such cases, the model name is usually
+displayed in the dialog somewhere. 
+
+	When a model is first loaded, it is in 'normal' mode. This
+is a rotation/translation and selection mode. A newly loaded/created
+model becomes the currently active model.
+
+The active model is identified by the yellow, instead of white, frame
+colour (GTK drawing mode only), and is highlighted in the model tree.
+
+GDIS was written with a three button mouse in mind.
+
+The left button is used for making selections. Single clicks will give
+atom info as well as selecting an atom. If clicked and dragged, a box
+selection is drawn. Pressing shift while doing the above appends items
+to the current selection.
+
+The middle button allows you to do translation, or zoom if shift is
+clicked. 
+
+The right button will give you rotations around two of the three axes,
+with shift adding rotations around the third. Rotation in discrete
+amounts can also be achieved through the model orientation spinners.
+
+
+3. Selections
+
+There is only one selection allowed per model. The atoms associated
+with the current selection are identified by little yellow squares,
+circles, or halos (user changeable) being drawn around the atoms.
+The usual stuff, such as deleting, hiding, and cutting & pasting
+can be achieved through the "Edit" menu pulldown.
+
+Also, if the control key is held down, all rotational/translational
+operations (ie via the mouse) will act on the current selection only.
+
+
+4. MD initializer (RDF calc)
+
+	This dialogue will generate a cubic lattice, with input models 
+placed randomly at lattice points. It is intended to be a starting
+point for liquid molecular dynamics simulations. In order to get your
+solute molecules properly randomized in solution, you need to load
+your solvent model first, followed by all your solute models. After
+this has been done, you can then run the MD dialog and fill in the
+numbers (eg cube size, number of components of solute to place etc.)
+and generate a box. If you're unhappy with a particular configuration,
+just keep generating random boxes until it you're satisfied.
+
+5. VdW surfaces
+
+6. Surface generation
+
+7. Rendering
+
+	GDIS doesn't actually do any of this itself. It harnesses
+the power of POVRay and OpenGL in order to make pretty pictures.
+Both these options are available through the display properties
+dialog. In general, povray images look better than OpenGL, but
+with the latter you can rotate the model on the fly.
+
+
+Transformations/model editing dialog
+
+BFDH - will get it's own "morphology" dialog
+
+Tasks?
+

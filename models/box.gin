@@ -1,0 +1,15 @@
+fit relax opti conp molmec bond torsion comp fix
+
+cell 
+5.0000    5.0000   5.0000   90.00000   90.00000   90.00000
+frac
+ Na    0.0    0.0    0.0
+ Na    1.0    1.0    0.0
+ Na    1.0    0.0    1.0
+ Na    0.0    1.0    1.0
+ O    1.0    1.0    1.0
+ O    0.0    0.0    1.0
+ O    0.0    1.0    0.0
+ O    1.0    0.0    0.0
+space
+P 1

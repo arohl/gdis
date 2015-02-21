@@ -1,0 +1,48 @@
+CURRENT
+-------
+
+Make ribbon normals consistent eg all outward facing. Will need to
+calc the ribbon centroid for this & flip normals if inward facing.
+
+Instead of doing a costly get_elem_data(), each atom has a pointer to
+the relevant (global/local) static elem_pak to use for this atom.
+
+Long range:
+Group all non atom/bond stuff in generic object listing.
+
+GDIS now automatically distiguishes rhombo & hex type cells, but
+only if spacename is specified (searches for 'R'). Need to be 
+able to do the same for space number (ie find the range)
+
+SOF entry for shells. (what about when one shell is near multiple cores?)
+
+The use of bash (exec -> "sh") is the cause of the pid
+difference when spawning gulp jobs via the old method under linux.
+The mac uses zsh (or something else) which doesn't do this.
+
+POVRay has problems if two like objects are placed at the same position,
+eg partially occ. sites will cause render to fail. Perhaps some sort of
+redundancy checker should be run before the .pov file is generated.
+
+Do nicer looking ellipses instead of circles for angle measurements.
+
+POVray sometimes puts ugly white dots on a rendered sphere. Only
+noticed it happening occasionaly on hydrogen (ie on the grey shaded
+regions of white spheres). OpenGL sometimes does this too - but AFAIK 
+only on the cylinders in B&S or cylinder drawing mode.
+
+Add scrolled win for viewing atoms & coords & status flags of a model.
+Could then undelete/edit atoms directly. This could be a general 'data'
+child of a model that contains periodic or not + sginfo/pbc etc that
+can also be edited & auto updated by gdis.
+
+Make an option to enable the user to either: save transformed model
+(ie with all the centering & rotations done in gdis), or just save
+the original configuration. The difference is mainly between using
+(x,y,z) and (rx,ry,rz) as save coordinates - but also the centroid.
+
+THINK ABOUT - an undo function (store past operations that have inverses,
+              can undo an operation if it has an inverse).
+            - internal scripting (guile?), so that gdis can be run to do
+              operations on files without a GUI coming up.
+

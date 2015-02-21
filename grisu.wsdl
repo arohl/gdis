@@ -1,0 +1,2467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://grisu.vpac.org/grisu-ws" xmlns:tns="http://grisu.vpac.org/grisu-ws" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope" xmlns:ns1="http://exceptions.control.grisu.vpac.org" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:ns3="http://control.grisu.vpac.org" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding" xmlns:ns2="http://model.fs.grisu.vpac.org" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://grisu.vpac.org/grisu-ws">
+<xsd:element name="getChildrenFiles">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:complexType name="ArrayOfString">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" minOccurs="0" name="string" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:element name="getChildrenFilesResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="VomsException" type="ns1:VomsException"/>
+<xsd:element name="RemoteFileSystemException" type="ns1:RemoteFileSystemException"/>
+<xsd:element name="getJobFqan">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobFqanResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="NoSuchJobException" type="ns1:NoSuchJobException"/>
+<xsd:element name="mount">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="mountResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns2:MountPoint"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="login">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="loginResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="NoValidCredentialException" type="ns1:NoValidCredentialException"/>
+<xsd:element name="getTemplate">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getTemplateResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="NoSuchTemplateException" type="ns1:NoSuchTemplateException"/>
+<xsd:element name="getFqans">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getFqansResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="df">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="dfResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns2:ArrayOfMountPoint"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="downloadByteArray">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="downloadByteArrayResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:base64Binary"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsForApplication2">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsForApplication2Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="ps">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="psResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getStagingFileSystemForSubmissionLocation">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getStagingFileSystemForSubmissionLocationResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getUserProperty">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getUserPropertyResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="mkdir">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="mkdirResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getDataLocationsForVO">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:complexType name="anyType2anyTypeMap">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" minOccurs="0" name="entry">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="0" name="key" type="xsd:anyType"/>
+<xsd:element maxOccurs="1" minOccurs="0" name="value" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:element name="getDataLocationsForVOResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsPerVersionOfApplication">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsPerVersionOfApplicationResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getTemplate1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getTemplate1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="downloadByteArray1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:int"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="downloadByteArray1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:base64Binary"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="listHostedApplicationTemplates">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="listHostedApplicationTemplatesResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="deleteFiles">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="deleteFilesResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getMessagesSince">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" type="xsd:dateTime"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getMessagesSinceResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="calculateAbsoluteJobDirectory">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="calculateAbsoluteJobDirectoryResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="ls_string">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:int"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="ls_stringResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsForApplication1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsForApplication1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getApplicationDetails">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getApplicationDetailsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="createJob1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:anyType"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="createJob1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="JobCreationException" type="ns3:JobCreationException"/>
+<xsd:element name="JobDescriptionNotValidException" type="ns1:JobDescriptionNotValidException"/>
+<xsd:element name="getSubmissionLocationsForApplication">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSubmissionLocationsForApplicationResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getDN">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getDNResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllJobnames">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllJobnamesResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllJobProperties">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllJobPropertiesResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="download">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="downloadResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:base64Binary"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="isFolder">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="isFolderResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="kill">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="killResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllAvailableApplications">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllAvailableApplicationsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="addJobProperties">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="addJobPropertiesResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="addJobProperty">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="addJobPropertyResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllSubmissionLocations">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllSubmissionLocationsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getInterfaceVersion">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getInterfaceVersionResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:double"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="createJob">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="createJobResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllSubmissionLocations1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getAllSubmissionLocations1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getVersionsOfApplicationOnSite">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getVersionsOfApplicationOnSiteResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="uploadByteArray1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:base64Binary"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in3" type="xsd:int"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in4" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="uploadByteArray1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="ps_string">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="ps_stringResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSite">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getSiteResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="lastModified">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="lastModifiedResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:long"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="ls">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" type="xsd:int"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="lsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getApplicationDetails1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getApplicationDetails1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="calculateRelativeJobDirectory">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="calculateRelativeJobDirectoryResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="setJobDescription_string">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="setJobDescription_stringResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="logout">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="logoutResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="submitJob">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="submitJobResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="JobSubmissionException" type="ns1:JobSubmissionException"/>
+<xsd:element name="uploadByteArray">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:base64Binary"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="uploadByteArrayResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="cp">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in3" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="cpResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getFileSize">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getFileSizeResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:long"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="deleteFile">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="deleteFileResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="upload">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:base64Binary"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="uploadResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobDirectory">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobDirectoryResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="setJobDescription">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="setJobDescriptionResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllSites">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllSitesResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobDetails_string">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobDetails_stringResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobStatus">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobStatusResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" type="xsd:int"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="umount">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="umountResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getJobDetails">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobDetailsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:anyType"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="mount1">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in2" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in3" type="xsd:boolean"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="mount1Response">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns2:MountPoint"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobProperty">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="getJobPropertyResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="submitSupportRequest">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="in0" nillable="true" type="xsd:string"/>
+<xsd:element maxOccurs="1" minOccurs="1" name="in1" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+<xsd:element name="submitSupportRequestResponse">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllHosts">
+<xsd:complexType/>
+</xsd:element>
+<xsd:element name="getAllHostsResponse">
+<xsd:complexType>
+<xsd:sequence>
+<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:anyType2anyTypeMap"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:element>
+</xsd:schema>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://exceptions.control.grisu.vpac.org">
+<xsd:complexType name="VomsException"/>
+<xsd:complexType name="RemoteFileSystemException"/>
+<xsd:complexType name="NoSuchJobException"/>
+<xsd:complexType name="NoValidCredentialException"/>
+<xsd:complexType name="NoSuchTemplateException"/>
+<xsd:complexType name="JobDescriptionNotValidException"/>
+<xsd:complexType name="JobSubmissionException"/>
+</xsd:schema>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://model.fs.grisu.vpac.org">
+<xsd:complexType name="MountPoint">
+<xsd:sequence>
+<xsd:element minOccurs="0" name="automaticallyMounted" type="xsd:boolean"/>
+<xsd:element minOccurs="0" name="disabled" type="xsd:boolean"/>
+<xsd:element minOccurs="0" name="dn" nillable="true" type="xsd:string"/>
+<xsd:element minOccurs="0" name="fqan" nillable="true" type="xsd:string"/>
+<xsd:element minOccurs="0" name="mountPointId" nillable="true" type="xsd:long"/>
+<xsd:element minOccurs="0" name="mountpoint" nillable="true" type="xsd:string"/>
+<xsd:element minOccurs="0" name="rootUrl" nillable="true" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="ArrayOfMountPoint">
+<xsd:sequence>
+<xsd:element maxOccurs="unbounded" minOccurs="0" name="MountPoint" nillable="true" type="ns2:MountPoint"/>
+</xsd:sequence>
+</xsd:complexType>
+</xsd:schema>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://control.grisu.vpac.org">
+<xsd:complexType name="JobCreationException"/>
+</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="lastModifiedRequest">
+    <wsdl:part name="parameters" element="tns:lastModified"/>
+  </wsdl:message>
+  <wsdl:message name="addJobPropertiesRequest">
+    <wsdl:part name="parameters" element="tns:addJobProperties"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSubmissionLocationsRequest">
+    <wsdl:part name="parameters" element="tns:getAllSubmissionLocations"/>
+  </wsdl:message>
+  <wsdl:message name="deleteFileResponse">
+    <wsdl:part name="parameters" element="tns:deleteFileResponse"/>
+  </wsdl:message>
+  <wsdl:message name="killRequest">
+    <wsdl:part name="parameters" element="tns:kill"/>
+  </wsdl:message>
+  <wsdl:message name="downloadByteArrayRequest">
+    <wsdl:part name="parameters" element="tns:downloadByteArray"/>
+  </wsdl:message>
+  <wsdl:message name="loginResponse">
+    <wsdl:part name="parameters" element="tns:loginResponse"/>
+  </wsdl:message>
+  <wsdl:message name="createJob1Request">
+    <wsdl:part name="parameters" element="tns:createJob1"/>
+  </wsdl:message>
+  <wsdl:message name="getInterfaceVersionRequest">
+    <wsdl:part name="parameters" element="tns:getInterfaceVersion"/>
+  </wsdl:message>
+  <wsdl:message name="getChildrenFilesRequest">
+    <wsdl:part name="parameters" element="tns:getChildrenFiles"/>
+  </wsdl:message>
+  <wsdl:message name="getAllAvailableApplicationsRequest">
+    <wsdl:part name="parameters" element="tns:getAllAvailableApplications"/>
+  </wsdl:message>
+  <wsdl:message name="ps_stringRequest">
+    <wsdl:part name="parameters" element="tns:ps_string"/>
+  </wsdl:message>
+  <wsdl:message name="getApplicationDetails1Request">
+    <wsdl:part name="parameters" element="tns:getApplicationDetails1"/>
+  </wsdl:message>
+  <wsdl:message name="getDNRequest">
+    <wsdl:part name="parameters" element="tns:getDN"/>
+  </wsdl:message>
+  <wsdl:message name="getJobPropertyRequest">
+    <wsdl:part name="parameters" element="tns:getJobProperty"/>
+  </wsdl:message>
+  <wsdl:message name="listHostedApplicationTemplatesResponse">
+    <wsdl:part name="parameters" element="tns:listHostedApplicationTemplatesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="psRequest">
+    <wsdl:part name="parameters" element="tns:ps"/>
+  </wsdl:message>
+  <wsdl:message name="getTemplate1Request">
+    <wsdl:part name="parameters" element="tns:getTemplate1"/>
+  </wsdl:message>
+  <wsdl:message name="getTemplateRequest">
+    <wsdl:part name="parameters" element="tns:getTemplate"/>
+  </wsdl:message>
+  <wsdl:message name="lsRequest">
+    <wsdl:part name="parameters" element="tns:ls"/>
+  </wsdl:message>
+  <wsdl:message name="getAllHostsResponse">
+    <wsdl:part name="parameters" element="tns:getAllHostsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ls_stringResponse">
+    <wsdl:part name="parameters" element="tns:ls_stringResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getFileSizeResponse">
+    <wsdl:part name="parameters" element="tns:getFileSizeResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getTemplate1Response">
+    <wsdl:part name="parameters" element="tns:getTemplate1Response"/>
+  </wsdl:message>
+  <wsdl:message name="logoutResponse">
+    <wsdl:part name="parameters" element="tns:logoutResponse"/>
+  </wsdl:message>
+  <wsdl:message name="VomsException">
+    <wsdl:part name="VomsException" element="tns:VomsException"/>
+  </wsdl:message>
+  <wsdl:message name="getApplicationDetailsRequest">
+    <wsdl:part name="parameters" element="tns:getApplicationDetails"/>
+  </wsdl:message>
+  <wsdl:message name="downloadByteArrayResponse">
+    <wsdl:part name="parameters" element="tns:downloadByteArrayResponse"/>
+  </wsdl:message>
+  <wsdl:message name="isFolderResponse">
+    <wsdl:part name="parameters" element="tns:isFolderResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getTemplateResponse">
+    <wsdl:part name="parameters" element="tns:getTemplateResponse"/>
+  </wsdl:message>
+  <wsdl:message name="downloadRequest">
+    <wsdl:part name="parameters" element="tns:download"/>
+  </wsdl:message>
+  <wsdl:message name="dfRequest">
+    <wsdl:part name="parameters" element="tns:df"/>
+  </wsdl:message>
+  <wsdl:message name="deleteFileRequest">
+    <wsdl:part name="parameters" element="tns:deleteFile"/>
+  </wsdl:message>
+  <wsdl:message name="uploadByteArrayResponse">
+    <wsdl:part name="parameters" element="tns:uploadByteArrayResponse"/>
+  </wsdl:message>
+  <wsdl:message name="mountRequest">
+    <wsdl:part name="parameters" element="tns:mount"/>
+  </wsdl:message>
+  <wsdl:message name="getAllJobnamesResponse">
+    <wsdl:part name="parameters" element="tns:getAllJobnamesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="uploadByteArray1Request">
+    <wsdl:part name="parameters" element="tns:uploadByteArray1"/>
+  </wsdl:message>
+  <wsdl:message name="getInterfaceVersionResponse">
+    <wsdl:part name="parameters" element="tns:getInterfaceVersionResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsPerVersionOfApplicationResponse">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsPerVersionOfApplicationResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSubmissionLocationsResponse">
+    <wsdl:part name="parameters" element="tns:getAllSubmissionLocationsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="createJobRequest">
+    <wsdl:part name="parameters" element="tns:createJob"/>
+  </wsdl:message>
+  <wsdl:message name="getStagingFileSystemForSubmissionLocationResponse">
+    <wsdl:part name="parameters" element="tns:getStagingFileSystemForSubmissionLocationResponse"/>
+  </wsdl:message>
+  <wsdl:message name="setJobDescriptionResponse">
+    <wsdl:part name="parameters" element="tns:setJobDescriptionResponse"/>
+  </wsdl:message>
+  <wsdl:message name="submitJobRequest">
+    <wsdl:part name="parameters" element="tns:submitJob"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDetails_stringResponse">
+    <wsdl:part name="parameters" element="tns:getJobDetails_stringResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getJobFqanRequest">
+    <wsdl:part name="parameters" element="tns:getJobFqan"/>
+  </wsdl:message>
+  <wsdl:message name="mount1Request">
+    <wsdl:part name="parameters" element="tns:mount1"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDetails_stringRequest">
+    <wsdl:part name="parameters" element="tns:getJobDetails_string"/>
+  </wsdl:message>
+  <wsdl:message name="lastModifiedResponse">
+    <wsdl:part name="parameters" element="tns:lastModifiedResponse"/>
+  </wsdl:message>
+  <wsdl:message name="NoValidCredentialException">
+    <wsdl:part name="NoValidCredentialException" element="tns:NoValidCredentialException"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplicationResponse">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplicationResponse"/>
+  </wsdl:message>
+  <wsdl:message name="downloadResponse">
+    <wsdl:part name="parameters" element="tns:downloadResponse"/>
+  </wsdl:message>
+  <wsdl:message name="uploadByteArrayRequest">
+    <wsdl:part name="parameters" element="tns:uploadByteArray"/>
+  </wsdl:message>
+  <wsdl:message name="getChildrenFilesResponse">
+    <wsdl:part name="parameters" element="tns:getChildrenFilesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplication2Response">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplication2Response"/>
+  </wsdl:message>
+  <wsdl:message name="createJob1Response">
+    <wsdl:part name="parameters" element="tns:createJob1Response"/>
+  </wsdl:message>
+  <wsdl:message name="uploadRequest">
+    <wsdl:part name="parameters" element="tns:upload"/>
+  </wsdl:message>
+  <wsdl:message name="setJobDescription_stringRequest">
+    <wsdl:part name="parameters" element="tns:setJobDescription_string"/>
+  </wsdl:message>
+  <wsdl:message name="NoSuchJobException">
+    <wsdl:part name="NoSuchJobException" element="tns:NoSuchJobException"/>
+  </wsdl:message>
+  <wsdl:message name="mkdirResponse">
+    <wsdl:part name="parameters" element="tns:mkdirResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplicationRequest">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplication"/>
+  </wsdl:message>
+  <wsdl:message name="addJobPropertyRequest">
+    <wsdl:part name="parameters" element="tns:addJobProperty"/>
+  </wsdl:message>
+  <wsdl:message name="ps_stringResponse">
+    <wsdl:part name="parameters" element="tns:ps_stringResponse"/>
+  </wsdl:message>
+  <wsdl:message name="JobCreationException">
+    <wsdl:part name="JobCreationException" element="tns:JobCreationException"/>
+  </wsdl:message>
+  <wsdl:message name="getStagingFileSystemForSubmissionLocationRequest">
+    <wsdl:part name="parameters" element="tns:getStagingFileSystemForSubmissionLocation"/>
+  </wsdl:message>
+  <wsdl:message name="submitSupportRequestRequest">
+    <wsdl:part name="parameters" element="tns:submitSupportRequest"/>
+  </wsdl:message>
+  <wsdl:message name="getAllJobnamesRequest">
+    <wsdl:part name="parameters" element="tns:getAllJobnames"/>
+  </wsdl:message>
+  <wsdl:message name="umountRequest">
+    <wsdl:part name="parameters" element="tns:umount"/>
+  </wsdl:message>
+  <wsdl:message name="getDataLocationsForVORequest">
+    <wsdl:part name="parameters" element="tns:getDataLocationsForVO"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDirectoryResponse">
+    <wsdl:part name="parameters" element="tns:getJobDirectoryResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getApplicationDetails1Response">
+    <wsdl:part name="parameters" element="tns:getApplicationDetails1Response"/>
+  </wsdl:message>
+  <wsdl:message name="psResponse">
+    <wsdl:part name="parameters" element="tns:psResponse"/>
+  </wsdl:message>
+  <wsdl:message name="calculateRelativeJobDirectoryResponse">
+    <wsdl:part name="parameters" element="tns:calculateRelativeJobDirectoryResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDetailsResponse">
+    <wsdl:part name="parameters" element="tns:getJobDetailsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="addJobPropertiesResponse">
+    <wsdl:part name="parameters" element="tns:addJobPropertiesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSubmissionLocations1Response">
+    <wsdl:part name="parameters" element="tns:getAllSubmissionLocations1Response"/>
+  </wsdl:message>
+  <wsdl:message name="submitSupportRequestResponse">
+    <wsdl:part name="parameters" element="tns:submitSupportRequestResponse"/>
+  </wsdl:message>
+  <wsdl:message name="ls_stringRequest">
+    <wsdl:part name="parameters" element="tns:ls_string"/>
+  </wsdl:message>
+  <wsdl:message name="downloadByteArray1Response">
+    <wsdl:part name="parameters" element="tns:downloadByteArray1Response"/>
+  </wsdl:message>
+  <wsdl:message name="getFileSizeRequest">
+    <wsdl:part name="parameters" element="tns:getFileSize"/>
+  </wsdl:message>
+  <wsdl:message name="getAllAvailableApplicationsResponse">
+    <wsdl:part name="parameters" element="tns:getAllAvailableApplicationsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="JobDescriptionNotValidException">
+    <wsdl:part name="JobDescriptionNotValidException" element="tns:JobDescriptionNotValidException"/>
+  </wsdl:message>
+  <wsdl:message name="getJobStatusResponse">
+    <wsdl:part name="parameters" element="tns:getJobStatusResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplication1Response">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplication1Response"/>
+  </wsdl:message>
+  <wsdl:message name="JobSubmissionException">
+    <wsdl:part name="JobSubmissionException" element="tns:JobSubmissionException"/>
+  </wsdl:message>
+  <wsdl:message name="calculateAbsoluteJobDirectoryRequest">
+    <wsdl:part name="parameters" element="tns:calculateAbsoluteJobDirectory"/>
+  </wsdl:message>
+  <wsdl:message name="dfResponse">
+    <wsdl:part name="parameters" element="tns:dfResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getMessagesSinceRequest">
+    <wsdl:part name="parameters" element="tns:getMessagesSince"/>
+  </wsdl:message>
+  <wsdl:message name="getVersionsOfApplicationOnSiteRequest">
+    <wsdl:part name="parameters" element="tns:getVersionsOfApplicationOnSite"/>
+  </wsdl:message>
+  <wsdl:message name="isFolderRequest">
+    <wsdl:part name="parameters" element="tns:isFolder"/>
+  </wsdl:message>
+  <wsdl:message name="createJobResponse">
+    <wsdl:part name="parameters" element="tns:createJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getApplicationDetailsResponse">
+    <wsdl:part name="parameters" element="tns:getApplicationDetailsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="mountResponse">
+    <wsdl:part name="parameters" element="tns:mountResponse"/>
+  </wsdl:message>
+  <wsdl:message name="setJobDescription_stringResponse">
+    <wsdl:part name="parameters" element="tns:setJobDescription_stringResponse"/>
+  </wsdl:message>
+  <wsdl:message name="downloadByteArray1Request">
+    <wsdl:part name="parameters" element="tns:downloadByteArray1"/>
+  </wsdl:message>
+  <wsdl:message name="getSiteResponse">
+    <wsdl:part name="parameters" element="tns:getSiteResponse"/>
+  </wsdl:message>
+  <wsdl:message name="NoSuchTemplateException">
+    <wsdl:part name="NoSuchTemplateException" element="tns:NoSuchTemplateException"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSitesResponse">
+    <wsdl:part name="parameters" element="tns:getAllSitesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="deleteFilesRequest">
+    <wsdl:part name="parameters" element="tns:deleteFiles"/>
+  </wsdl:message>
+  <wsdl:message name="killResponse">
+    <wsdl:part name="parameters" element="tns:killResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getDNResponse">
+    <wsdl:part name="parameters" element="tns:getDNResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getUserPropertyRequest">
+    <wsdl:part name="parameters" element="tns:getUserProperty"/>
+  </wsdl:message>
+  <wsdl:message name="uploadResponse">
+    <wsdl:part name="parameters" element="tns:uploadResponse"/>
+  </wsdl:message>
+  <wsdl:message name="cpRequest">
+    <wsdl:part name="parameters" element="tns:cp"/>
+  </wsdl:message>
+  <wsdl:message name="uploadByteArray1Response">
+    <wsdl:part name="parameters" element="tns:uploadByteArray1Response"/>
+  </wsdl:message>
+  <wsdl:message name="getSiteRequest">
+    <wsdl:part name="parameters" element="tns:getSite"/>
+  </wsdl:message>
+  <wsdl:message name="logoutRequest">
+    <wsdl:part name="parameters" element="tns:logout"/>
+  </wsdl:message>
+  <wsdl:message name="listHostedApplicationTemplatesRequest">
+    <wsdl:part name="parameters" element="tns:listHostedApplicationTemplates"/>
+  </wsdl:message>
+  <wsdl:message name="setJobDescriptionRequest">
+    <wsdl:part name="parameters" element="tns:setJobDescription"/>
+  </wsdl:message>
+  <wsdl:message name="calculateAbsoluteJobDirectoryResponse">
+    <wsdl:part name="parameters" element="tns:calculateAbsoluteJobDirectoryResponse"/>
+  </wsdl:message>
+  <wsdl:message name="cpResponse">
+    <wsdl:part name="parameters" element="tns:cpResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getJobFqanResponse">
+    <wsdl:part name="parameters" element="tns:getJobFqanResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getJobStatusRequest">
+    <wsdl:part name="parameters" element="tns:getJobStatus"/>
+  </wsdl:message>
+  <wsdl:message name="submitJobResponse">
+    <wsdl:part name="parameters" element="tns:submitJobResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getMessagesSinceResponse">
+    <wsdl:part name="parameters" element="tns:getMessagesSinceResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDetailsRequest">
+    <wsdl:part name="parameters" element="tns:getJobDetails"/>
+  </wsdl:message>
+  <wsdl:message name="addJobPropertyResponse">
+    <wsdl:part name="parameters" element="tns:addJobPropertyResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getFqansRequest">
+    <wsdl:part name="parameters" element="tns:getFqans"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSubmissionLocations1Request">
+    <wsdl:part name="parameters" element="tns:getAllSubmissionLocations1"/>
+  </wsdl:message>
+  <wsdl:message name="lsResponse">
+    <wsdl:part name="parameters" element="tns:lsResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getVersionsOfApplicationOnSiteResponse">
+    <wsdl:part name="parameters" element="tns:getVersionsOfApplicationOnSiteResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplication2Request">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplication2"/>
+  </wsdl:message>
+  <wsdl:message name="getJobPropertyResponse">
+    <wsdl:part name="parameters" element="tns:getJobPropertyResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getAllJobPropertiesResponse">
+    <wsdl:part name="parameters" element="tns:getAllJobPropertiesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="umountResponse">
+    <wsdl:part name="parameters" element="tns:umountResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsForApplication1Request">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsForApplication1"/>
+  </wsdl:message>
+  <wsdl:message name="loginRequest">
+    <wsdl:part name="parameters" element="tns:login"/>
+  </wsdl:message>
+  <wsdl:message name="calculateRelativeJobDirectoryRequest">
+    <wsdl:part name="parameters" element="tns:calculateRelativeJobDirectory"/>
+  </wsdl:message>
+  <wsdl:message name="getDataLocationsForVOResponse">
+    <wsdl:part name="parameters" element="tns:getDataLocationsForVOResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getAllHostsRequest">
+    <wsdl:part name="parameters" element="tns:getAllHosts"/>
+  </wsdl:message>
+  <wsdl:message name="mount1Response">
+    <wsdl:part name="parameters" element="tns:mount1Response"/>
+  </wsdl:message>
+  <wsdl:message name="RemoteFileSystemException">
+    <wsdl:part name="RemoteFileSystemException" element="tns:RemoteFileSystemException"/>
+  </wsdl:message>
+  <wsdl:message name="getAllJobPropertiesRequest">
+    <wsdl:part name="parameters" element="tns:getAllJobProperties"/>
+  </wsdl:message>
+  <wsdl:message name="getJobDirectoryRequest">
+    <wsdl:part name="parameters" element="tns:getJobDirectory"/>
+  </wsdl:message>
+  <wsdl:message name="getSubmissionLocationsPerVersionOfApplicationRequest">
+    <wsdl:part name="parameters" element="tns:getSubmissionLocationsPerVersionOfApplication"/>
+  </wsdl:message>
+  <wsdl:message name="mkdirRequest">
+    <wsdl:part name="parameters" element="tns:mkdir"/>
+  </wsdl:message>
+  <wsdl:message name="getUserPropertyResponse">
+    <wsdl:part name="parameters" element="tns:getUserPropertyResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getFqansResponse">
+    <wsdl:part name="parameters" element="tns:getFqansResponse"/>
+  </wsdl:message>
+  <wsdl:message name="getAllSitesRequest">
+    <wsdl:part name="parameters" element="tns:getAllSites"/>
+  </wsdl:message>
+  <wsdl:message name="deleteFilesResponse">
+    <wsdl:part name="parameters" element="tns:deleteFilesResponse"/>
+  </wsdl:message>
+  <wsdl:portType name="grisuPortType">
+    <wsdl:operation name="getChildrenFiles">
+      <wsdl:input name="getChildrenFilesRequest" message="tns:getChildrenFilesRequest"/>
+      <wsdl:output name="getChildrenFilesResponse" message="tns:getChildrenFilesResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobFqan">
+      <wsdl:input name="getJobFqanRequest" message="tns:getJobFqanRequest"/>
+      <wsdl:output name="getJobFqanResponse" message="tns:getJobFqanResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="mount">
+      <wsdl:input name="mountRequest" message="tns:mountRequest"/>
+      <wsdl:output name="mountResponse" message="tns:mountResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="login">
+      <wsdl:input name="loginRequest" message="tns:loginRequest"/>
+      <wsdl:output name="loginResponse" message="tns:loginResponse"/>
+      <wsdl:fault name="NoValidCredentialException" message="tns:NoValidCredentialException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getTemplate">
+      <wsdl:input name="getTemplateRequest" message="tns:getTemplateRequest"/>
+      <wsdl:output name="getTemplateResponse" message="tns:getTemplateResponse"/>
+      <wsdl:fault name="NoSuchTemplateException" message="tns:NoSuchTemplateException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getFqans">
+      <wsdl:input name="getFqansRequest" message="tns:getFqansRequest"/>
+      <wsdl:output name="getFqansResponse" message="tns:getFqansResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="df">
+      <wsdl:input name="dfRequest" message="tns:dfRequest"/>
+      <wsdl:output name="dfResponse" message="tns:dfResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="downloadByteArray">
+      <wsdl:input name="downloadByteArrayRequest" message="tns:downloadByteArrayRequest"/>
+      <wsdl:output name="downloadByteArrayResponse" message="tns:downloadByteArrayResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication2">
+      <wsdl:input name="getSubmissionLocationsForApplication2Request" message="tns:getSubmissionLocationsForApplication2Request"/>
+      <wsdl:output name="getSubmissionLocationsForApplication2Response" message="tns:getSubmissionLocationsForApplication2Response"/>
+    </wsdl:operation>
+    <wsdl:operation name="ps">
+      <wsdl:input name="psRequest" message="tns:psRequest"/>
+      <wsdl:output name="psResponse" message="tns:psResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getStagingFileSystemForSubmissionLocation">
+      <wsdl:input name="getStagingFileSystemForSubmissionLocationRequest" message="tns:getStagingFileSystemForSubmissionLocationRequest"/>
+      <wsdl:output name="getStagingFileSystemForSubmissionLocationResponse" message="tns:getStagingFileSystemForSubmissionLocationResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getUserProperty">
+      <wsdl:input name="getUserPropertyRequest" message="tns:getUserPropertyRequest"/>
+      <wsdl:output name="getUserPropertyResponse" message="tns:getUserPropertyResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="mkdir">
+      <wsdl:input name="mkdirRequest" message="tns:mkdirRequest"/>
+      <wsdl:output name="mkdirResponse" message="tns:mkdirResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getDataLocationsForVO">
+      <wsdl:input name="getDataLocationsForVORequest" message="tns:getDataLocationsForVORequest"/>
+      <wsdl:output name="getDataLocationsForVOResponse" message="tns:getDataLocationsForVOResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsPerVersionOfApplication">
+      <wsdl:input name="getSubmissionLocationsPerVersionOfApplicationRequest" message="tns:getSubmissionLocationsPerVersionOfApplicationRequest"/>
+      <wsdl:output name="getSubmissionLocationsPerVersionOfApplicationResponse" message="tns:getSubmissionLocationsPerVersionOfApplicationResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getTemplate1">
+      <wsdl:input name="getTemplate1Request" message="tns:getTemplate1Request"/>
+      <wsdl:output name="getTemplate1Response" message="tns:getTemplate1Response"/>
+      <wsdl:fault name="NoSuchTemplateException" message="tns:NoSuchTemplateException"/>
+    </wsdl:operation>
+    <wsdl:operation name="downloadByteArray1">
+      <wsdl:input name="downloadByteArray1Request" message="tns:downloadByteArray1Request"/>
+      <wsdl:output name="downloadByteArray1Response" message="tns:downloadByteArray1Response"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="listHostedApplicationTemplates">
+      <wsdl:input name="listHostedApplicationTemplatesRequest" message="tns:listHostedApplicationTemplatesRequest"/>
+      <wsdl:output name="listHostedApplicationTemplatesResponse" message="tns:listHostedApplicationTemplatesResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="deleteFiles">
+      <wsdl:input name="deleteFilesRequest" message="tns:deleteFilesRequest"/>
+      <wsdl:output name="deleteFilesResponse" message="tns:deleteFilesResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getMessagesSince">
+      <wsdl:input name="getMessagesSinceRequest" message="tns:getMessagesSinceRequest"/>
+      <wsdl:output name="getMessagesSinceResponse" message="tns:getMessagesSinceResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="calculateAbsoluteJobDirectory">
+      <wsdl:input name="calculateAbsoluteJobDirectoryRequest" message="tns:calculateAbsoluteJobDirectoryRequest"/>
+      <wsdl:output name="calculateAbsoluteJobDirectoryResponse" message="tns:calculateAbsoluteJobDirectoryResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="ls_string">
+      <wsdl:input name="ls_stringRequest" message="tns:ls_stringRequest"/>
+      <wsdl:output name="ls_stringResponse" message="tns:ls_stringResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication1">
+      <wsdl:input name="getSubmissionLocationsForApplication1Request" message="tns:getSubmissionLocationsForApplication1Request"/>
+      <wsdl:output name="getSubmissionLocationsForApplication1Response" message="tns:getSubmissionLocationsForApplication1Response"/>
+    </wsdl:operation>
+    <wsdl:operation name="getApplicationDetails">
+      <wsdl:input name="getApplicationDetailsRequest" message="tns:getApplicationDetailsRequest"/>
+      <wsdl:output name="getApplicationDetailsResponse" message="tns:getApplicationDetailsResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="createJob1">
+      <wsdl:input name="createJob1Request" message="tns:createJob1Request"/>
+      <wsdl:output name="createJob1Response" message="tns:createJob1Response"/>
+      <wsdl:fault name="JobCreationException" message="tns:JobCreationException"/>
+      <wsdl:fault name="JobDescriptionNotValidException" message="tns:JobDescriptionNotValidException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication">
+      <wsdl:input name="getSubmissionLocationsForApplicationRequest" message="tns:getSubmissionLocationsForApplicationRequest"/>
+      <wsdl:output name="getSubmissionLocationsForApplicationResponse" message="tns:getSubmissionLocationsForApplicationResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getDN">
+      <wsdl:input name="getDNRequest" message="tns:getDNRequest"/>
+      <wsdl:output name="getDNResponse" message="tns:getDNResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllJobnames">
+      <wsdl:input name="getAllJobnamesRequest" message="tns:getAllJobnamesRequest"/>
+      <wsdl:output name="getAllJobnamesResponse" message="tns:getAllJobnamesResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllJobProperties">
+      <wsdl:input name="getAllJobPropertiesRequest" message="tns:getAllJobPropertiesRequest"/>
+      <wsdl:output name="getAllJobPropertiesResponse" message="tns:getAllJobPropertiesResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="download">
+      <wsdl:input name="downloadRequest" message="tns:downloadRequest"/>
+      <wsdl:output name="downloadResponse" message="tns:downloadResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="isFolder">
+      <wsdl:input name="isFolderRequest" message="tns:isFolderRequest"/>
+      <wsdl:output name="isFolderResponse" message="tns:isFolderResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="kill">
+      <wsdl:input name="killRequest" message="tns:killRequest"/>
+      <wsdl:output name="killResponse" message="tns:killResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllAvailableApplications">
+      <wsdl:input name="getAllAvailableApplicationsRequest" message="tns:getAllAvailableApplicationsRequest"/>
+      <wsdl:output name="getAllAvailableApplicationsResponse" message="tns:getAllAvailableApplicationsResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="addJobProperties">
+      <wsdl:input name="addJobPropertiesRequest" message="tns:addJobPropertiesRequest"/>
+      <wsdl:output name="addJobPropertiesResponse" message="tns:addJobPropertiesResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="addJobProperty">
+      <wsdl:input name="addJobPropertyRequest" message="tns:addJobPropertyRequest"/>
+      <wsdl:output name="addJobPropertyResponse" message="tns:addJobPropertyResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSubmissionLocations">
+      <wsdl:input name="getAllSubmissionLocationsRequest" message="tns:getAllSubmissionLocationsRequest"/>
+      <wsdl:output name="getAllSubmissionLocationsResponse" message="tns:getAllSubmissionLocationsResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getInterfaceVersion">
+      <wsdl:input name="getInterfaceVersionRequest" message="tns:getInterfaceVersionRequest"/>
+      <wsdl:output name="getInterfaceVersionResponse" message="tns:getInterfaceVersionResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="createJob">
+      <wsdl:input name="createJobRequest" message="tns:createJobRequest"/>
+      <wsdl:output name="createJobResponse" message="tns:createJobResponse"/>
+      <wsdl:fault name="JobCreationException" message="tns:JobCreationException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSubmissionLocations1">
+      <wsdl:input name="getAllSubmissionLocations1Request" message="tns:getAllSubmissionLocations1Request"/>
+      <wsdl:output name="getAllSubmissionLocations1Response" message="tns:getAllSubmissionLocations1Response"/>
+    </wsdl:operation>
+    <wsdl:operation name="getVersionsOfApplicationOnSite">
+      <wsdl:input name="getVersionsOfApplicationOnSiteRequest" message="tns:getVersionsOfApplicationOnSiteRequest"/>
+      <wsdl:output name="getVersionsOfApplicationOnSiteResponse" message="tns:getVersionsOfApplicationOnSiteResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="uploadByteArray1">
+      <wsdl:input name="uploadByteArray1Request" message="tns:uploadByteArray1Request"/>
+      <wsdl:output name="uploadByteArray1Response" message="tns:uploadByteArray1Response"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="ps_string">
+      <wsdl:input name="ps_stringRequest" message="tns:ps_stringRequest"/>
+      <wsdl:output name="ps_stringResponse" message="tns:ps_stringResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getSite">
+      <wsdl:input name="getSiteRequest" message="tns:getSiteRequest"/>
+      <wsdl:output name="getSiteResponse" message="tns:getSiteResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="lastModified">
+      <wsdl:input name="lastModifiedRequest" message="tns:lastModifiedRequest"/>
+      <wsdl:output name="lastModifiedResponse" message="tns:lastModifiedResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="ls">
+      <wsdl:input name="lsRequest" message="tns:lsRequest"/>
+      <wsdl:output name="lsResponse" message="tns:lsResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getApplicationDetails1">
+      <wsdl:input name="getApplicationDetails1Request" message="tns:getApplicationDetails1Request"/>
+      <wsdl:output name="getApplicationDetails1Response" message="tns:getApplicationDetails1Response"/>
+    </wsdl:operation>
+    <wsdl:operation name="calculateRelativeJobDirectory">
+      <wsdl:input name="calculateRelativeJobDirectoryRequest" message="tns:calculateRelativeJobDirectoryRequest"/>
+      <wsdl:output name="calculateRelativeJobDirectoryResponse" message="tns:calculateRelativeJobDirectoryResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="setJobDescription_string">
+      <wsdl:input name="setJobDescription_stringRequest" message="tns:setJobDescription_stringRequest"/>
+      <wsdl:output name="setJobDescription_stringResponse" message="tns:setJobDescription_stringResponse"/>
+      <wsdl:fault name="JobDescriptionNotValidException" message="tns:JobDescriptionNotValidException"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="logout">
+      <wsdl:input name="logoutRequest" message="tns:logoutRequest"/>
+      <wsdl:output name="logoutResponse" message="tns:logoutResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="submitJob">
+      <wsdl:input name="submitJobRequest" message="tns:submitJobRequest"/>
+      <wsdl:output name="submitJobResponse" message="tns:submitJobResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+      <wsdl:fault name="NoValidCredentialException" message="tns:NoValidCredentialException"/>
+      <wsdl:fault name="JobSubmissionException" message="tns:JobSubmissionException"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="uploadByteArray">
+      <wsdl:input name="uploadByteArrayRequest" message="tns:uploadByteArrayRequest"/>
+      <wsdl:output name="uploadByteArrayResponse" message="tns:uploadByteArrayResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="cp">
+      <wsdl:input name="cpRequest" message="tns:cpRequest"/>
+      <wsdl:output name="cpResponse" message="tns:cpResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getFileSize">
+      <wsdl:input name="getFileSizeRequest" message="tns:getFileSizeRequest"/>
+      <wsdl:output name="getFileSizeResponse" message="tns:getFileSizeResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="deleteFile">
+      <wsdl:input name="deleteFileRequest" message="tns:deleteFileRequest"/>
+      <wsdl:output name="deleteFileResponse" message="tns:deleteFileResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="upload">
+      <wsdl:input name="uploadRequest" message="tns:uploadRequest"/>
+      <wsdl:output name="uploadResponse" message="tns:uploadResponse"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDirectory">
+      <wsdl:input name="getJobDirectoryRequest" message="tns:getJobDirectoryRequest"/>
+      <wsdl:output name="getJobDirectoryResponse" message="tns:getJobDirectoryResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="setJobDescription">
+      <wsdl:input name="setJobDescriptionRequest" message="tns:setJobDescriptionRequest"/>
+      <wsdl:output name="setJobDescriptionResponse" message="tns:setJobDescriptionResponse"/>
+      <wsdl:fault name="JobDescriptionNotValidException" message="tns:JobDescriptionNotValidException"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSites">
+      <wsdl:input name="getAllSitesRequest" message="tns:getAllSitesRequest"/>
+      <wsdl:output name="getAllSitesResponse" message="tns:getAllSitesResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDetails_string">
+      <wsdl:input name="getJobDetails_stringRequest" message="tns:getJobDetails_stringRequest"/>
+      <wsdl:output name="getJobDetails_stringResponse" message="tns:getJobDetails_stringResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobStatus">
+      <wsdl:input name="getJobStatusRequest" message="tns:getJobStatusRequest"/>
+      <wsdl:output name="getJobStatusResponse" message="tns:getJobStatusResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="umount">
+      <wsdl:input name="umountRequest" message="tns:umountRequest"/>
+      <wsdl:output name="umountResponse" message="tns:umountResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDetails">
+      <wsdl:input name="getJobDetailsRequest" message="tns:getJobDetailsRequest"/>
+      <wsdl:output name="getJobDetailsResponse" message="tns:getJobDetailsResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="mount1">
+      <wsdl:input name="mount1Request" message="tns:mount1Request"/>
+      <wsdl:output name="mount1Response" message="tns:mount1Response"/>
+      <wsdl:fault name="RemoteFileSystemException" message="tns:RemoteFileSystemException"/>
+      <wsdl:fault name="VomsException" message="tns:VomsException"/>
+    </wsdl:operation>
+    <wsdl:operation name="getJobProperty">
+      <wsdl:input name="getJobPropertyRequest" message="tns:getJobPropertyRequest"/>
+      <wsdl:output name="getJobPropertyResponse" message="tns:getJobPropertyResponse"/>
+      <wsdl:fault name="NoSuchJobException" message="tns:NoSuchJobException"/>
+    </wsdl:operation>
+    <wsdl:operation name="submitSupportRequest">
+      <wsdl:input name="submitSupportRequestRequest" message="tns:submitSupportRequestRequest"/>
+      <wsdl:output name="submitSupportRequestResponse" message="tns:submitSupportRequestResponse"/>
+    </wsdl:operation>
+    <wsdl:operation name="getAllHosts">
+      <wsdl:input name="getAllHostsRequest" message="tns:getAllHostsRequest"/>
+      <wsdl:output name="getAllHostsResponse" message="tns:getAllHostsResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="grisuHttpBinding" type="tns:grisuPortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getChildrenFiles">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getChildrenFilesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getChildrenFilesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getJobFqan">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobFqanRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobFqanResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="mount">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="mountRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="mountResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="login">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="loginRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="loginResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoValidCredentialException">
+        <wsdlsoap:fault name="NoValidCredentialException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getTemplate">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getTemplateRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getTemplateResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchTemplateException">
+        <wsdlsoap:fault name="NoSuchTemplateException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getFqans">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getFqansRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getFqansResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="df">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="dfRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="dfResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="downloadByteArray">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="downloadByteArrayRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="downloadByteArrayResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication2">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubmissionLocationsForApplication2Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubmissionLocationsForApplication2Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ps">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="psRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="psResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getStagingFileSystemForSubmissionLocation">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getStagingFileSystemForSubmissionLocationRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getStagingFileSystemForSubmissionLocationResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getUserProperty">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getUserPropertyRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getUserPropertyResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="mkdir">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="mkdirRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="mkdirResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getDataLocationsForVO">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getDataLocationsForVORequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getDataLocationsForVOResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsPerVersionOfApplication">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubmissionLocationsPerVersionOfApplicationRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubmissionLocationsPerVersionOfApplicationResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getTemplate1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getTemplate1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getTemplate1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchTemplateException">
+        <wsdlsoap:fault name="NoSuchTemplateException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="downloadByteArray1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="downloadByteArray1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="downloadByteArray1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="listHostedApplicationTemplates">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="listHostedApplicationTemplatesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="listHostedApplicationTemplatesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="deleteFiles">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="deleteFilesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="deleteFilesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getMessagesSince">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getMessagesSinceRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getMessagesSinceResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="calculateAbsoluteJobDirectory">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="calculateAbsoluteJobDirectoryRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="calculateAbsoluteJobDirectoryResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ls_string">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ls_stringRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ls_stringResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubmissionLocationsForApplication1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubmissionLocationsForApplication1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getApplicationDetails">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getApplicationDetailsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getApplicationDetailsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="createJob1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="createJob1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="createJob1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="JobCreationException">
+        <wsdlsoap:fault name="JobCreationException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="JobDescriptionNotValidException">
+        <wsdlsoap:fault name="JobDescriptionNotValidException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSubmissionLocationsForApplication">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubmissionLocationsForApplicationRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubmissionLocationsForApplicationResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getDN">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getDNRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getDNResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getAllJobnames">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllJobnamesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllJobnamesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getAllJobProperties">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllJobPropertiesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllJobPropertiesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="download">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="downloadRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="downloadResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="isFolder">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="isFolderRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="isFolderResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="kill">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="killRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="killResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getAllAvailableApplications">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllAvailableApplicationsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllAvailableApplicationsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="addJobProperties">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="addJobPropertiesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="addJobPropertiesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addJobProperty">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="addJobPropertyRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="addJobPropertyResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSubmissionLocations">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllSubmissionLocationsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllSubmissionLocationsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getInterfaceVersion">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getInterfaceVersionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getInterfaceVersionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="createJob">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="createJobRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="createJobResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="JobCreationException">
+        <wsdlsoap:fault name="JobCreationException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSubmissionLocations1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllSubmissionLocations1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllSubmissionLocations1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getVersionsOfApplicationOnSite">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getVersionsOfApplicationOnSiteRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getVersionsOfApplicationOnSiteResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="uploadByteArray1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="uploadByteArray1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="uploadByteArray1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="ps_string">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="ps_stringRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="ps_stringResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getSite">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSiteRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSiteResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="lastModified">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="lastModifiedRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="lastModifiedResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="ls">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="lsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="lsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getApplicationDetails1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getApplicationDetails1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getApplicationDetails1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="calculateRelativeJobDirectory">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="calculateRelativeJobDirectoryRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="calculateRelativeJobDirectoryResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="setJobDescription_string">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="setJobDescription_stringRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="setJobDescription_stringResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="JobDescriptionNotValidException">
+        <wsdlsoap:fault name="JobDescriptionNotValidException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="logout">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="logoutRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="logoutResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="submitJob">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="submitJobRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="submitJobResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="NoValidCredentialException">
+        <wsdlsoap:fault name="NoValidCredentialException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="JobSubmissionException">
+        <wsdlsoap:fault name="JobSubmissionException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="uploadByteArray">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="uploadByteArrayRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="uploadByteArrayResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="cp">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="cpRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="cpResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getFileSize">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getFileSizeRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getFileSizeResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="deleteFile">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="deleteFileRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="deleteFileResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="upload">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="uploadRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="uploadResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDirectory">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobDirectoryRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobDirectoryResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="setJobDescription">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="setJobDescriptionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="setJobDescriptionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="JobDescriptionNotValidException">
+        <wsdlsoap:fault name="JobDescriptionNotValidException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getAllSites">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllSitesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllSitesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDetails_string">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobDetails_stringRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobDetails_stringResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getJobStatus">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobStatusRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobStatusResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="umount">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="umountRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="umountResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getJobDetails">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobDetailsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobDetailsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="mount1">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="mount1Request">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="mount1Response">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="VomsException">
+        <wsdlsoap:fault name="VomsException" use="literal"/>
+      </wsdl:fault>
+      <wsdl:fault name="RemoteFileSystemException">
+        <wsdlsoap:fault name="RemoteFileSystemException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getJobProperty">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getJobPropertyRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getJobPropertyResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="NoSuchJobException">
+        <wsdlsoap:fault name="NoSuchJobException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="submitSupportRequest">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="submitSupportRequestRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="submitSupportRequestResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getAllHosts">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getAllHostsRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getAllHostsResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="grisu">
+    <wsdl:port name="grisuHttpPort" binding="tns:grisuHttpBinding">
+      <wsdlsoap:address location="https://ngportaldev.vpac.org/grisu-ws/services/grisu"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

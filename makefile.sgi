@@ -1,0 +1,7 @@
+# --- gdis Makefile for sgi
+
+CC = gcc
+CFLAGS = -O2
+INCS = `pkg-config --cflags gtk+-2.0 gthread-2.0 gtkglext-1.0 gmodule-2.0`
+LIBS = `pkg-config --libs gtk+-2.0 gthread-2.0 gtkglext-1.0 gmodule-2.0` -lGL -lGLU
+

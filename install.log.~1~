@@ -1,0 +1,81 @@
+Must specify package names on the command line
+task.c: In function 'task_queue_init':
+task.c:94:1: warning: 'g_thread_init' is deprecated (declared at /opt/local/include/glib-2.0/glib/deprecated/gthread.h:265) [-Wdeprecated-declarations]
+ g_thread_init(NULL);
+ ^
+grid.c: In function 'grid_application_remove':
+grid.c:83:1: warning: 'return' with a value, in function returning void [enabled by default]
+ return(NULL);
+ ^
+crystal_graph.c: In function 'free_key':
+crystal_graph.c:98:3: warning: 'g_mem_chunk_free' is deprecated (declared at /opt/local/include/glib-2.0/glib/deprecated/gallocator.h:54) [-Wdeprecated-declarations]
+   g_mem_chunk_free(key_chunk, key);
+   ^
+crystal_graph.c: In function 'calculate_crystal_graph':
+crystal_graph.c:172:3: warning: 'g_mem_chunk_new' is deprecated (declared at /opt/local/include/glib-2.0/glib/deprecated/gallocator.h:43) [-Wdeprecated-declarations]
+   key_chunk = g_mem_chunk_create(gint, 
+   ^
+crystal_graph.c:223:15: warning: 'g_mem_chunk_alloc' is deprecated (declared at /opt/local/include/glib-2.0/glib/deprecated/gallocator.h:50) [-Wdeprecated-declarations]
+               key_ptr = g_chunk_new(gdouble, key_chunk);
+               ^
+file_bgf.c: In function 'read_bgf':
+file_bgf.c:173:5: warning: passing argument 2 of 'fgetline' from incompatible pointer type [enabled by default]
+     if (fgetline(fp, line))
+     ^
+In file included from file_bgf.c:30:0:
+file.h:51:6: note: expected 'gchar *' but argument is of type 'gchar ***'
+ gint fgetline(FILE *, gchar *);
+      ^
+file_bgf.c:179:3: warning: passing argument 1 of 'g_ascii_strncasecmp' from incompatible pointer type [enabled by default]
+   while (g_ascii_strncasecmp(line, "HETATM", 6) != 0);
+   ^
+In file included from /opt/local/include/glib-2.0/glib.h:79:0,
+                 from gdis.h:269,
+                 from file_bgf.c:27:
+/opt/local/include/glib-2.0/glib/gstrfuncs.h:186:23: note: expected 'const gchar *' but argument is of type 'gchar ***'
+ gint                  g_ascii_strncasecmp (const gchar *s1,
+                       ^
+file_bgf.c:183:3: warning: passing argument 1 of 'tokenize' from incompatible pointer type [enabled by default]
+   buff = tokenize(line, &num_tokens);
+   ^
+In file included from file_bgf.c:31:0:
+parse.h:28:9: note: expected 'const gchar *' but argument is of type 'gchar ***'
+ gchar **tokenize(const gchar *, gint *);
+         ^
+gl_main.c: In function 'gl_init_projection':
+gl_main.c:232:1: warning: 'gluLookAt' is deprecated (declared at /System/Library/Frameworks/OpenGL.framework/Headers/glu.h:265): "Use GLKMatrix4MakeLookAt" [-Wdeprecated-declarations]
+ gluLookAt(x[0], x[1], x[2], v[0], v[1], v[2], o[0], o[1], o[2]);
+ ^
+gl_main.c:261:3: warning: 'gluPerspective' is deprecated (declared at /System/Library/Frameworks/OpenGL.framework/Headers/glu.h:278): "Use GLKMatrix4MakePerspective" [-Wdeprecated-declarations]
+   gluPerspective(camera->fov, a, 0.1, 4.0*sysenv.rsize);
+   ^
+gl_main.c: In function 'gl_project':
+gl_main.c:422:1: warning: 'gluUnProject' is deprecated (declared at /System/Library/Frameworks/OpenGL.framework/Headers/glu.h:297): "Use GLKMathUnproject" [-Wdeprecated-declarations]
+ gluUnProject(x, ry, 0.5, canvas->modelview, canvas->projection, canvas->viewport, &r[0], &r[1], &r[2]);
+ ^
+gl_main.c: In function 'gl_unproject':
+gl_main.c:433:1: warning: 'gluProject' is deprecated (declared at /System/Library/Frameworks/OpenGL.framework/Headers/glu.h:280): "Use GLKMathProject" [-Wdeprecated-declarations]
+ gluProject(w[0],w[1],w[2],canvas->modelview,canvas->projection,canvas->viewport,&r[0],&r[1],&r[2]);
+ ^
+In file included from /opt/local/include/glib-2.0/gobject/gobject.h:28:0,
+                 from /opt/local/include/glib-2.0/gobject/gbinding.h:29,
+                 from /opt/local/include/glib-2.0/glib-object.h:23,
+                 from /opt/local/include/glib-2.0/gio/gioenums.h:28,
+                 from /opt/local/include/glib-2.0/gio/giotypes.h:28,
+                 from /opt/local/include/glib-2.0/gio/gio.h:26,
+                 from /opt/local/include/gtk-2.0/gdk/gdkapplaunchcontext.h:30,
+                 from /opt/local/include/gtk-2.0/gdk/gdk.h:32,
+                 from /opt/local/include/gtk-2.0/gtk/gtk.h:32,
+                 from gdis.h:270,
+                 from gui_edit.c:34:
+gui_edit.c: In function 'gui_edit_dialog':
+gui_edit.c:2361:54: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+                    GTK_SIGNAL_FUNC(change_transmat), (gpointer) i);
+                                                      ^
+/opt/local/include/glib-2.0/gobject/gsignal.h:472:73: note: in definition of macro 'g_signal_connect'
+     g_signal_connect_data ((instance), (detailed_signal), (c_handler), (data), NULL, (GConnectFlags) 0)
+                                                                         ^
+gui_grid.c: In function 'gui_grid_dialog':
+gui_grid.c:1094:3: warning: 'g_mutex_new' is deprecated (declared at /opt/local/include/glib-2.0/glib/deprecated/gthread.h:277) [-Wdeprecated-declarations]
+   gui_grid_mutex = g_mutex_new();
+   ^

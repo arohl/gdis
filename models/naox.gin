@@ -1,0 +1,55 @@
+fit relax opti conp molmec bond torsion comp fix
+cell 
+3.44900    5.24300   10.37500   90.00000   92.66000   90.00000
+frac
+ Na1    0.30200    0.05650    0.35520  1.0
+  O1    0.16570   -0.12220    0.15110 -0.81548
+  O2    0.22740    0.27040    0.06910 -0.81548
+  C1    0.11350    0.04350    0.06340  0.63096
+space
+14
+origin
+2
+print 
+1
+element
+cova Na 0.1
+end
+
+#vary
+#charges 2
+#O C
+#end
+
+lennard  
+Na   Na    1881.61    2.90   15 0 0
+lennard 
+C    Na   36440.34   32.62   15 0 0 
+lennard
+O    Na    6351.19   34.28   15 0 0
+lennard x13
+C    C    45267.75  100.0    15 1 1
+lennard x13
+C    O    66649.15   30.78   15 1 1
+lennard x13
+O    O    333648.90   17.65   15 0 0
+
+
+harmonic molmec
+C    O    46.8331 1.26 0 1
+#harmonic molmec kcal
+#C    C   532.8     1.54  0 1
+
+morse molmec
+C    C   8.0  5.0  1.54  1 1 0
+
+three-body molmec
+C    O    O    12.5756 109.37 1 1 
+three-body molmec kcal
+C    O    C   136.0    125.31  1  1 
+torsion molmec kcal
+O    C    C   O    0.45 +2 180 0
+torsion intra kcal
+C    C   O    O    5.0 +2 180 1.8 1.6 2.4 3.0 0
+
+

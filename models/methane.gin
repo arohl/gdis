@@ -1,0 +1,49 @@
+opti conp molmec
+
+maxcyc 50
+
+name methane
+cartesian
+C    core   -1.95042   -0.03671    0.64453 
+H    core   -2.67173   -0.52377   -0.01166 
+H    core   -1.69758   -0.70435    1.46820 
+H    core   -2.38523    0.88039    1.04197 
+H    core   -1.01679    0.25640    0.16440 
+
+
+harm bond kcal
+C    C     310.0    1.526    0 0
+harm bond kcal
+C    H     340.0    1.090    0 0
+harm bond kcal
+C    O     320.0    1.410    0 0
+harm bond kcal
+O    H     553.0    0.960    0 0
+three bond kcal
+C  C  C     40.0      109.50    0 0
+three bond kcal
+C  C  H     50.0      109.50    0 0
+three bond kcal
+H  C  H     35.0      109.50    0 0
+three bond kcal
+C  C  O     50.0      109.50    0 0
+three bond kcal
+C  O  H     55.0      108.50    0 0
+torsion bond kcal
+H  C  C  H        0.15   +3       0.0      0 0
+torsion bond kcal
+H  C  C  C        0.16   +3       0.0      0 0
+torsion bond kcal
+H  O  C  C        0.16   +3       0.0      0 0
+torsion bond kcal
+H  O  C  C        0.25   +1       0.0      0 0
+torsion bond kcal
+C  C  C  C        0.18   +3       0.0      0 0
+torsion bond kcal
+C  C  C  C        0.25   +2     180.0      0 0
+torsion bond kcal
+C  C  C  C        0.20   +1     180.0      0 0
+torsion bond kcal
+H  C  C  O        0.25   +1       0.0      0 0
+
+print 1

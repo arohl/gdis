@@ -1,0 +1,115 @@
+relax opti conp comp mole bond fix 
+switch rfo gnorm 0.5
+title
+CAOH - ICSD collection code 202220
+NaOH - ICSD collection code 61045
+MgOH - ICSD collection code 81139
+KOH - ISCD collection code 65163
+end
+
+name calcium hydroxide
+cell
+    3.592 3.592 4.906 90.0 90.0 120.0
+frac 4
+Ca core    0.000000  0.000000  0.0000
+O  core    0.333333  0.666667  0.2340
+O  shel    0.333333  0.666667  0.2340
+H  core    0.333333  0.666667  0.4256
+space
+164
+
+name sodium hydroxide
+cell
+    3.401 11.378 3.398 90.0 90.0 90.0
+frac 4
+Na  core  0.0  0.3381  0.25
+O   core  0.0  0.1338  0.25
+O   shel  0.0  0.1338  0.25
+H   core  0.0  0.0520  0.25
+space
+63
+
+name magnesium hydroxide
+cell
+    3.130 3.130 4.710 90.0 90.0 120.0
+frac 4
+Mg  core   0.000000  0.000000  0.000000
+O   core   0.333333  0.666667  0.220100
+O   shel   0.333333  0.666667  0.220100
+H   core   0.333333  0.666667  0.420900
+space
+164
+
+name potassium hydroxide
+cell
+    5.892 3.943 7.715 90.0 110.3 90.0
+frac 4
+K  core   0.766  0.255  0.063
+O  core   0.443  0.264  0.210
+O  shel   0.443  0.264  0.210
+H  core   0.303  0.150  0.238
+space
+P 1 21/N 1
+
+cutd 4.0
+
+element
+covalent Ca 0.1
+covalent Na 0.1
+covalent Mg 0.1
+covalent K  0.1
+end
+
+species 7
+Ca core  2.0
+Na core  1.0
+Mg core  2.0
+K  core  1.0
+O shel  -2.366
+O core   0.948
+H core   0.418
+
+# fitted parameters 
+
+buck inter
+Na core  O shel    939.77   0.2978   0.0    0.0  8.0   0 0 0
+buck inter
+Na core  H core    244.06   0.2843   0.0    0.0  8.0   0 0 0
+#buck inter
+#Na core Na core    287.26   0.3066   0.0    0.0  8.0   0 0 0
+
+buck inter
+Mg core  O shel     967.90   0.3017  0.0    0.0  8.0   0 0 0
+buck inter
+Mg core  H core     480.42   0.3048  0.0    0.0  8.0   0 0 0
+#buck inter
+#Mg core Mg core     704.74   0.3000  0.0    0.0  8.0   0 0 0
+
+buck inter
+Ca core  O shel    1356.84   0.3208   0.0    0.0  8.0   0 0 0
+buck inter
+Ca core  H core     323.44   0.3016   0.0    0.0  8.0   0 0 0
+#buck inter
+#Ca core Ca core     600.00   0.3000   0.0    0.0  8.0   0 0 0
+
+buck inter
+K core  O shel   3209.90   0.2810   0.0    0.0  8.0   0 0 0
+buck inter
+K core  H core    404.67   0.2041   0.0    0.0  8.0   0 0 0
+buck inter
+K core  K core    738.33   0.3867   0.0    0.0  8.0   0 0 0
+
+# fixed parameters (from gibbsite,bayerite and diaspore fit)
+
+buck inter
+O shel    O shel       9999.97    0.1490   17.0       0.0 15.0    0 0 0
+buck inter
+O shel    H core        235.00    0.2500    0.0       0.0 15.0    0 0 0
+morse bond
+O core    H core          5.4246  2.2682    0.95                  0 0 0
+
+spring
+O       60.1   0
+
+print 1
+

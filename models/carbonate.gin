@@ -1,0 +1,13 @@
+single conp mole
+
+maxcyc 50
+
+library gdis.lib
+
+cartesian
+C    core 0.476667 -0.513340 0.000000 
+O    core 0.473912 0.761875 0.000000 
+O    core -0.626313 -1.153327 0.000000 
+O    core 1.582400 -1.148554 0.000000 
+
+print 1

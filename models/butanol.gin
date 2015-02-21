@@ -1,0 +1,59 @@
+opti conp molmec
+
+maxcyc 500
+
+name butanol1_min
+cartesian
+C1   core   -1.95042   -0.03671    0.64453 -0.159
+C2   core   -0.80330    0.47940   -0.22734 -0.106
+H1   core   -2.58333   -0.74430    0.08694 0.053
+H2   core   -1.56416   -0.55932    1.53338 0.053
+H3   core   -2.58934    0.79096    0.98966 0.053
+C3   core   -0.06294   -0.67075   -0.90975 -0.106
+H4   core   -1.18919    1.17843   -0.98565 0.053
+H5   core   -0.08657    1.05081    0.38535 0.053
+C4   core    1.44805   -0.45598   -0.84378 0.054
+H6   core   -0.32633   -1.62210   -0.42286 0.053
+H7   core   -0.38464   -0.75184   -1.95926 0.053
+H8   core    1.93844   -1.30973   -0.34821 0.053
+H9   core    1.87099   -0.37105   -1.85812 0.053
+O1   core    1.73614    0.73242   -0.11827 -0.580
+H10  core    2.68235    0.80914   -0.08124 0.420
+
+
+harmonic k3 k4 bond kcal
+C    C       599.3400  -3010.6047  16315.2335  1.5300    0 0 0 0
+harmonic k3 k4 bond kcal
+C    H       690.0000  -4151.3850  20270.2680  1.1010    0 0 0 0
+harmonic k3 k4 bond kcal
+C    O       800.7908  -5011.1086  31512.3992  1.4200    0 0 0 0
+harmonic k3 k4 bond kcal
+O    H      1080.7266  -7871.0399  51178.4566  0.9494    0 0 0 0
+three k3 k4 bond kcal
+C    C    C         79.0320  -44.6689  -229.4141  112.6700    0 0 0 0
+three k3 k4 bond kcal
+C    C    H         82.9060  -63.6221   123.0657  110.7700    0 0 0 0
+three k3 k4 bond kcal
+C    C    O        109.0762  -50.1969  -314.0086  111.2700    0 0 0 0
+three k3 k4 bond kcal
+C    H    H         79.2820  -77.5378   -58.3198  107.6600    0 0 0 0
+three k3 k4 bond kcal
+C    O    H        117.0892  -64.8440  -297.5939  108.7280    0 0 0 0
+three k3 k4 bond kcal
+O    H    C        105.4122  -72.6395  -236.7980  105.8000    0 0 0 0
+torsion bond kcal
+C    C    C    C    0.0514  -2    0
+torsion bond kcal
+H    C    C    C    0.0316  -2    0
+torsion bond kcal
+O    C    C    C    0.7137  -1    0
+torsion bond kcal
+H    C    C    H   -0.1432  -1    0
+torsion bond kcal
+O    C    C    H   -0.1435  -1    0
+torsion bond kcal
+H    O    C    C   -0.6732  -1    0
+torsion bond kcal
+H    O    C    H    0.1863  -1    0
+
+print 1

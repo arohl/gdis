@@ -1,0 +1,59 @@
+opti conp molmec
+
+maxcyc 500
+
+name butane1
+cartesian
+C1   core   -1.95042   -0.03671    0.64453 0.0
+C2   core   -0.73061    0.47565   -0.12518 0.0
+H1   core   -2.40373   -0.90139    0.13556 0.0
+H2   core   -1.66931   -0.35432    1.66065 0.0
+H3   core   -2.71985    0.74570    0.73497 0.0
+C3   core    0.05107   -0.67541   -0.75894 0.0
+H4   core   -1.04687    1.18623   -0.90488 0.0
+H5   core   -0.06173    1.03462    0.54953 0.0
+C4   core    1.52419   -0.30905   -0.93236 0.0
+H6   core   -0.03542   -1.57150   -0.12586 0.0
+H7   core   -0.38906   -0.93393   -1.73403 0.0
+H8   core    2.16682   -1.17855   -0.71846 0.0
+H9   core    1.72338    0.00599   -1.96974 0.0
+H10  core    2.06243    0.42327   -0.38837 0.0
+
+
+
+harmonic k3 k4 bond kcal
+C    C       599.3400  -3010.6047  16315.2335  1.5300    0 0 0 0
+harmonic k3 k4 bond kcal
+C    H       690.0000  -4151.3850  20270.2680  1.1010    0 0 0 0
+harmonic k3 k4 bond kcal
+C    O       800.7908  -5011.1086  31512.3992  1.4200    0 0 0 0
+harmonic k3 k4 bond kcal
+O    H      1080.7266  -7871.0399  51178.4566  0.9494    0 0 0 0
+three k3 k4 bond kcal
+C    C    C         79.0320  -44.6689  -229.4141  112.6700    0 0 0 0
+three k3 k4 bond kcal
+C    C    H         82.9060  -63.6221   123.0657  110.7700    0 0 0 0
+three k3 k4 bond kcal
+C    C    O        109.0762  -50.1969  -314.0086  111.2700    0 0 0 0
+three k3 k4 bond kcal
+C    H    H         79.2820  -77.5378   -58.3198  107.6600    0 0 0 0
+three k3 k4 bond kcal
+C    O    H        117.0892  -64.8440  -297.5939  108.7280    0 0 0 0
+three k3 k4 bond kcal
+O    H    C        105.4122  -72.6395  -236.7980  105.8000    0 0 0 0
+torsion bond kcal
+C    C    C    C    0.0514  -2    0
+torsion bond kcal
+H    C    C    C    0.0316  -2    0
+torsion bond kcal
+O    C    C    C    0.7137  -1    0
+torsion bond kcal
+H    C    C    H   -0.1432  -1    0
+torsion bond kcal
+O    C    C    H   -0.1435  -1    0
+torsion bond kcal
+H    O    C    C   -0.6732  -1    0
+torsion bond kcal
+H    O    C    H    0.1863  -1    0
+
+print 1

@@ -1,0 +1,13 @@
+ $contrl coord=cart scftyp=rhf runtyp=optimize $end
+ $system timlim=600 mwords=1 $end
+ $statpt nstep=100 method=qa $end
+ $basis gbasis=pm3 $end
+ $data
+methane
+c1
+C        6     0.017953444     0.093267404    -0.207635924
+H        1     0.783154038     0.517269451     0.466138821
+H        1    -0.967940233     0.526941695     0.035901837
+H        1    -0.019784993    -1.002639029    -0.077860896
+H        1     0.276601486     0.331332729    -1.254421732
+ $end

@@ -1,0 +1,33 @@
+opti conp molmec
+
+switch_min rfo  gnorm     0.100000
+
+name so4_iso
+cartesian
+S    core    0.00044   -0.00002    0.00000 
+O    core    1.46314   -0.00002    0.00000 
+O    core   -0.48786   -1.37892    0.00000 
+O    core   -0.48786    0.68948    1.19420 
+O    core   -0.48786    0.68948   -1.19420 
+
+species   2
+S      core    1.616000            
+O      core   -0.904000            
+
+element
+cova O  0.60
+end
+
+buck intra     
+O     core O     core  2607.0400     0.254260 0.0000      1.000  2.500
+buck inter     
+O     core O     core  103895.56     0.200000 25.980      1.000 15.000
+
+morse bond
+S     O    5.01    1.03826   1.23661    0 0 0
+
+three bond
+S  O  O   15.0     109.47    0 0 
+
+
+print 1

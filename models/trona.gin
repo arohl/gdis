@@ -1,0 +1,80 @@
+opti conp molmec comp nosym 
+
+title
+ICSD Collection Code 35191 
+end
+
+switch rfo gnorm 0.1
+
+name trona
+cell
+20.36  3.48  10.29  90.0  106.48  90.0 
+frac
+Na   0.0         0.74786    0.25                 
+Na   0.15059     0.16359    0.42612          
+C    0.09303     0.26524    0.10317          
+O1   0.15103     0.39845    0.10200          
+O1   0.05433     0.12980    0.98823          
+O1   0.07258     0.25364    0.20797          
+H1   0.0         0.0        0.0                  
+O2   0.21207     0.66563    0.35376          
+H2   0.19149     0.59393    0.25966          
+H2   0.25913     0.73060    0.36351          
+space
+C 1 2/C 1 
+
+species
+Ca core  2.000
+Na core  1.000
+C  core  0.712
+S  core  1.616
+O1 core -0.904
+H1 core  1.000
+O2 core -0.820
+H2 core  0.410
+end
+
+element
+cova Ca 0.1
+cova Na 0.1
+cova C  1.0
+cova O  0.6
+cova H  0.1
+end
+
+buck inter
+Na    O     1640.25    0.2655    0.0   12.0    0 0 0
+buck inter
+Ca    O     1746.07    0.2968    0.0   12.0    0 0 0
+buck inter
+H     O      847.60    0.09655   0.0   12.0    0 0 0
+
+# minimum cutoffs used to prevent excessive repulsion due
+# to interaction between close partially occupied sites
+
+buck intra
+O     O     2607.04    0.25426   0.00   1.0  2.5    0 0 0
+buck inter
+O     O   103895.56    0.2000   25.98   1.0 15.0    0 0 0
+
+morse bond
+C     O     5.70    2.82726   1.20172    0 0 0
+morse bond
+S     O     5.01    1.03826   1.23661    0 0 0
+
+three bond
+S  O  O    15.0     109.47    0 0 
+
+torsion      
+O  C  O  O     0.1800  -2  0.0     1.50 1.50 2.00 2.00    0
+
+# water
+
+harmonic bond
+H2   O2            62.6567     0.96         0 0
+three bond
+O2   H2   H2 core   5.0416   104.50         0 0
+
+
+print 1
+

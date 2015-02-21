@@ -1,0 +1,26 @@
+<JobDefinition xmlns="http://schemas.ggf.org/jsdl/2005/11/jsdl">
+<JobDescription>
+<JobIdentification>
+<JobName>gdis_test_34</JobName>
+</JobIdentification>
+<Application>
+<ApplicationName>uname</ApplicationName>
+<POSIXApplication xmlns="http://schemas.ggf.org/jsdl/2005/11/jsdl-posix">
+<WorkingDirectory filesystemName="userExecutionHostFs">grisu-jobs-dir/gdis_test_34</WorkingDirectory>
+<Executable>/bin/uname</Executable>
+<Argument>-a</Argument>
+<Output>stdout.txt</Output>
+<Error>stderr.txt</Error>
+</POSIXApplication> 
+<TotalCPUTime>60</TotalCPUTime>
+<TotalCPUCount>1</TotalCPUCount>
+</Application>
+<Resources>
+<CandidateHosts><HostName>normal:ng2.ivec.org</HostName></CandidateHosts>
+<FileSystem name="userExecutionHostFs">
+<MountSource>gsiftp://ngdata.ivec.org/store/ng03/grid-admin/C_AU_O_APACGrid_OU_iVEC_CN_Sean_Fleming/</MountSource>
+<FileSystemType>normal</FileSystemType>
+</FileSystem>
+</Resources>
+</JobDescription>
+</JobDefinition>

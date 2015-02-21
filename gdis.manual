@@ -1,0 +1,271 @@
+
+%topic 1. Overview
+
+\h Introduction
+
+GDIS is a free (GPL) chemical visualization program. It is primarily aimed at displaying molecular and periodic systems - such as surface slabs and crystal unit cells. It also acts as an interface to external computational packages in order to perform energy minimization and other tasks.
+
+Main reference:
+
+S Fleming and A Rohl, "GDIS: a visualization program for molecular and periodic systems" Z Kryst 220 (2005) p580-584
+
+\h Interface Basics
+
+The top of the GDIS interface contains a row of menu options, with a toolbar underneath. Many of the useful menu options have a shortcut toolbar icon that can be clicked on to bring up the dialog. If the mouse cursor is placed over the icon for a short period a text tooltip will show describing its function. On the far right is a pulldown menu (text box with a down facing arrow) that controls the selection mode. By default, a single click will select only one atom. However, selection modes that select whole molecules, all elements in a molecule, or by atomic label are available.
+
+The GDIS interface is divided into several sections. The models currently loaded are listed in the left pane. Next to each model name is a small icon which indicates the type of model - such as surface, crystal, or polymer. Clicking on the name will select this as the currently active model - which will then be rendered in the main OpenGL canvas window to the right. By default, the canvas contains a single displayed molecules. However, canvas splitting functionality is available. These button are located on the toolbar and split the canvas into left and right, and upper and lower panes. At present, the maximum available canvas panes is four.
+
+Below the model list is the Active Model pane which displays some information about the model. By default it displays data such as the number of atoms and molecules in the model. Other filetypes, such as output files from computational packages, will have the energy and other useful summary information. However, additional information and functionality of the Active Model pane can be exposed through the pulldown menu directly underneath the model list pane. Firstly, any symmetry information that is known about the model (eg spacegroup and cell parameters) will be displayed, the properties of selected atoms can also be displayed and edited, the viewing mode may also be set, and, in the case of a crystal unit cell, additional periodic images may be created.
+
+\h Basic Interaction
+
+GDIS was designed with a three button mouse in mind.
+
+Left button
+
+The left button is used to create selections of subsets within the model. This can be achieved by clicking on atoms, in which case some information will appear in the selection properties box in the model content pane. If the left button is held and the mouse is dragged, then a selection box will be drawn. When the mouse button is released, all atoms in the box become part of the selection. Single clicking on an empty part of the graphical display will clear the selection. If the <SHIFT> key is held then atoms may be appended to an existing selection. Selected atoms can be deleted by pressing the <DELETE> key or through the Edit->Delete menu option. Selected atoms can be cut and pasted into other models, hidden, or have their colour modified by employing the appropriate option in the Edit menu.
+
+The default selection mode is single atoms. This can be changed using the pulldown in the top right hand corner of the interface. The pulldown can be used to change to a number of alternate selection modes. The operation of these modes should be self-evident, with the possible exception of the fragment mode. In this selection mode, two atoms that are bonded should be clicked on. When this is done, GDIS will select the molecular fragment that is connected to these atoms. The direction of the fragment is decided by the order in which the first two atoms are selected.
+
+Middle button
+
+The default action when the middle button is held and the mouse is moved is to translate the model as a whole. However, if the <CONTROL> button is pressed, this translation will only occur for the selected atoms.
+
+Right mouse button
+
+Holding down the right mouse button, coupled with mouse motion will rotate the model as a whole. Mouse motion in the x and y direction produces rotation about two of the three spatial axes. If the <SHIFT> key is held, then the right mouse button will only rotate around the third axis. In similar fashion to the middle button, if the <CONTROL> key is held, then only the selected atoms will be rotated.
+
+\h Scaling the model
+
+Zooming in and out on the model can be accomplished through the Camera section of the View->Display properties dialog. Note that the displayed zoom factor is model independent, and may be used to generate images with identical scaling. Alternatively, you may press <SHIFT>, the middle mouse button, and move the mouse to achieve a scaling effect.
+
+\h Operational modes
+
+By default, GDIS operates in normal mode. The behaviour of this mode is described by the previous section on Basic Interaction and mouse button actions. However, other modes exist that modify how GDIS responds to mouse input. The current operational mode is always displayed in the bottom right hand corner of the display canvas. Also, normal mode operation can readily be returned to by clicking on the arrow toolbar icon.
+
+%topic 2. Visualization
+
+\h Display Properties 
+
+\p image_palette
+
+To access the View->Display properties menu you must first load (or create) a model in GDIS. This dialog controls many aspects relating to how the currently active model is drawn. Typical molecular modelling display modes such as CPK, Ball and Stick (the default), and others can be chosen. In addition, the camera and light sources used may also be modified. Also notable, is the POVRay tab. This permits the rendering of a model using the Persistance Of Vision RAYtracing package. This program is independent of GDIS and must be aready installed so that the povray executable is visible in your path. If these conditions are met, GDIS will automatically create, submit, and display the results of a POVRay rendered image when the Render button is clicked. In general, POVRay images look much nicer than OpenGL, since they are rendered using slower, more realistic algorithms.
+
+\h Multiple canvases
+
+\p image_canvas_single \p image_canvas_create \p image_canvas_delete
+
+On the toolbar, there are icons for creating and destroying additional OpenGL viewing canvases. An additionl icon also returns to the default single canvas view. In multi-canvas mode, several models may be viewed concurrently, however, only one can be active (and hence rotated/acted upon) at a time. The active model will have a yellow border and will be highlighted in the model list pane.
+
+\h Animation and recording
+
+\p image_animate
+
+There are two main ways of creating an animation. The camera icon (or View->Recording mode) activates the built-in recording function. In this mode, each time the model is redrawn (eg due to a rotation or translation) a frame is stored. Selecting the arrow icon (or View->Normal mode) will stop the recording. To play an animation, use the Tools->Visualization->Animation menu (or the appropriate icon).
+
+The second method of building an animation sequence is through the use of camera waypoints. This may be accomplished within the Camera tab of the Display properties dialog. Here there is a list of the currently available cameras alongside their attributes (eg perspective). More than one camera can be created by means of the Add button. These additional camera waypoints can be selected and then the mouse used to move around to the desired viewpoint. Note that to effectively "fly" through a model the camera type should be perspective, rather than orthographic, to achieve the best effect. When a number of such viewing waypoints are created, clicking the Create animation from waypoints button will build an animation that traverses each camera location. This can then be viewed in the animation dialog as before. Additional options are available to quickly build rotation animations. Also, sequences of such animations can be built up by unselecting the Overwrite old frames check box.
+
+Finaly, certain filetypes, such as output from molecular dynamics simulations (see the section on supported filetypes), contain an inherrent animation sequence. These can be displayed in the same fashion using the animation dialog.
+
+\h Iso-Surfaces
+
+\p image_isosurface
+
+There are three types of iso-surface constructions that can be constructed in GDIS. All are built using the marching cubes algorithm. The resulting triangulation can be viewed and deleted in the Model editing->spatials dialog.
+
+\i Molecular surfaces
+
+These are obtained using the gaussian description of molecular shape [ref?]. This is similar to the idea of rolling a probe atom over the surface of the system being studied, except the atoms are no longer hard spheres. The exponent of the gaussian may be adjusted using the molecular surface blurring value. The default colour scheme is to give surface points that are uniquely associated with a single atom the colour of that atom. For surface points that are associated with more than one atom, also called re-entrant, the default colour can be editing in the display properties dialog. The AFM colouring method will produce a surface coloured according to the height of the surface ie the z value. This only makes sense in terms of a 2D crystal surface for which a theoretical AFM image is desired. Finally, if the atoms have been assigned meaningfull charges, the electrostatic potential at each point on the surface can be employed in the colouring. The range of the colour scale in this case can be left to the automatic minimum/maximum calculator, or it can be supplied by the user.
+
+\i Hirshfeld surfaces
+
+These surfaces are based on gaussians centered on atomic sites, and revolve around a quantity known as the wieght function. This parameter is defined as the ratio between the electronic density contribution at a point between a given molecule and the rest of the crystal. The Hirshfeld surface is the iso-surface for which this value is exactly a half. Currentlt, the curvedness and shape index can be used to colour the surface. See [ref] for more details.
+
+\i Electron density
+
+Currently, GDIS can only display an electron density iso-surface using the results from a SIESTA calculation. If this data is in the same directory as the source model geometry (and has the same name and the appropriate file extension), then GDIS should automatically employ this file in computing the iso-surface.
+
+To plot SIESTA iso-surfaces, the .RHO and .VH files from a calculation need to be present in the same directory as the input file. 
+
+\h Element Properties
+
+\p image_element
+
+Modifying the default properties for an element, such as the colour, size, and cutoff radius for bonding calculations is all done through Periodic Table dialog. This can be activated by clicking the periodic table icon or by selecting the Tools->Visualization->Periodic Table menu option. Individual elements can then be selected (one at a time) in order to bring up another dialog of modifiable values for that particular species.
+
+%topic 3. Building
+
+\h Model editing 
+
+\p image_tools
+
+\i Builder
+
+When the Tools->Builder->Editing menu option, or the corresponding icon is clicked, then the model editing dialog will be presented. If the Make new model button is pressed, and then the add atoms button, the left mouse button can no longer be used for creating and modifying selections. Instead, single clicking will now add atoms. Note that when adding atoms, the selection properties pane can be used to modify the element, charge, and even position of the new atom. Buttons for switching to other operation modes, such as adding and deleting bonds, are also available. Also, if the [Model Images] pulldown has been employed to generate periodic images, the [Make supercell] button will remove all symmetry and make a new unit cell from the total model.
+
+\i Spatials
+
+Additional geometric objects, such as planes and vectors, can be defined within GDIS. This may be for the purpose of display, or for defining a reference object to build a symmetry operation around.
+
+Adding vector or plane spatials is straight forward, and is done by clicking on 2 or 3 atoms. The new object is then drawn and will appear in the dialog spatial list. Ribbon objects are more complex. Essentially, these provide a means to simplify the drawing of organic materials. Any structure that is composed of a series of linked cyclic carbon groups can be replaces by a ribbon that passes through the plane of the cyclic group. For more details, consult the following reference:
+
+Colours of all, or selected, spatials can also be modifed in this dialog.
+
+[REF: Ribbon paper]
+
+\i Transformations
+
+The transformations tab provides a powerful means for performing symmetry operations on atomic positions and repeat vectors of a structure. Values defining a 3x3 transformation matrix, and 3x1 translational offset, may be hand edited by the user, or, filled out with some pre-defined operations such as rotations and mirror planes. To define such operations, a reference spatial need to be supplied. The reference spatial may be the x, y, or z axis in which the corresponding single characters 'x', 'y', or 'z' can be supplied. In addition, if a spatial object (eg vector or plane) has been defined, this may also be used as a reference object. Once the desired transformation matrix has been constructed, it may be applied to the entire model or to a selected portion of the atoms. 
+
+Operations on the repeat vectors are a little more complicated. A typical use might be to reorient a surface so the repeat vectors lie along a different direction to the default. This may be useful in forming commensurate surfaces, or in building a correct surface step/kink construction. For an example of this useage, see the following paper for more details:
+
+[ref]
+
+Adjustments to the periodicity of a model may also be performed. For example, to convert from a unit cell (3D periodic) to an isolated molecule, set the alter periodicity spinner to 0 and click the button. Note that to go from a lower to higher periodicity, repeat vectors must necessarily be supplied. These should be placed in columns in the transformation matrix.
+
+\i Labelling
+
+TODO
+
+Atoms in a model have a number of associated labels. These may convey information to computational programs, such as ghost or dummy atoms, also atoms that are fixed in position or allowed to move and so on. For the programs GDIS supports, these labels may be modified by using this tab. The labels can be used to colour the atoms, and therebye show the distribution in a model, and the labels can be modified by selecting a group and applied the desired change.
+
+\i Library
+
+A small number of preloaded structures are available as part of the default gdis library. Under the library tab there are two lists. The left list is used to navigate the database. The available models are shown in the right list, and can be loaded by double clicking. The models are stored in the gdis.library file, which is a text file that can be extended by the user if so desired.
+
+\h Crystal Surfaces
+
+\p image_surface
+
+	GDIS can load a selected range of two dimensional, or surface, models (see File Types). In addition, unit cells may also be cleaved on an arbitrary plane to create a new surface model. The surface builder dialog may be invoked if a three dimensionally periodic structure (crystal unit cell) is currently active. This dialog presents the user with numerous options.
+
+\i Defining the surface
+
+	A planar cleaved surface can be defined uniquely by the miller (hkl) indices, and a shift value. The Miller indices are inverse intercepts on the crystallographic axes, whilst the shift value represents a fractional (0.0 - 1.0) offset within the repeat slice of that face, namely the Dhkl thickness. There are two additional values; the region 1 and region 2 depths. These are multiples of Dhkl required when building the new model. The size of region 2 is chosen to be thick enough so that the atoms represent the effect of the bulk upon the atoms in region 1. The size of region 1 is generally chosen so that some property, such as the surface energy, is converged. Clearly, these values are system dependent but are typically chosen so that the thickness would approximately be between 10 and 20 Angstroms.
+
+\i Analysing the surface
+
+Once a surface has been defined, the create button can be clicked - which will result in a new model being created. This new model inherits many of the features of the source unit cell (such as GULP potentials) but is two dimensionaly periodic. This new model can then be edited like any other, or used in energy calculations. Note that shortcut buttons for performing GULP energy calculations are provided underneath the hkl list. These buttons provide a means by which to automatically compute the surface/attachment energy for a face, without having to create the model and submit a GULP job. By selecting multiple entries in the list, multiple calculations can be quickly performed.
+
+\i Morphology prediction
+
+Often morphology prediction involves looking at the relative importance of a number of facets that make up a crystal form. In such a study, it is common to begin with the BFDH morphology prediction - which is a ranking of faces based on Dhkl values. GDIS provides a convenient means to quickly list (in the right hand side of the surface dialog) a desired number of Dhkl ranked faces. By clicking on the Display morphology, a predicted crystal habit based on the Dhkl values will be drawn in the active model. If Create morpgology is clicked, the same habit will be created in a blank new model.
+
+Additional morphology predictions, based on calculated surface energy, can also be constructed. First the appropriate column in the surface list must be filled in eg by performing a calculation energy. This must be done for all faces of interest. The desired morphology can be selected in the Morphology type pulldown, and then the corresponding habit may be built with the Display or Create morphology buttons.
+
+By default, GDIS sorts the new surface atoms by depth. However, an option is supplied that preserves the order the atoms were read in. 
+
+\h Dislocations
+
+TODO - Andrew Walker?
+
+\h Docking
+
+This feature provides a means by which to automatically sample docking locations for a given surface. The dialog can be found in Tools->Computational(building?)->Docking. GDIS requires that a source surface model be already loaded, and contain sufficient information (eg potentials) to execute a GULP job. In addition, the molecule to be docked must also be loaded into the same model space. This molecule must be selected for the setup to proceed. The dialog then requires the size of a sampling grid to be specified as well as the number of rotations to be performed on the docked molecule. When the execute button is clicked, GDIS creates a project directory containing a number of GULP jobs. Each of these jobs is a single surface and selected molecule configuration that samples the defined grid and required number of rotations. These jobs must then be submitted manually to the GULP program. Upon completion, the File->Import->Project option can be used on the project.pcf file in the created project directory. This will generate a coloured surface map of the lowest interaction energy found at each grid point on the surface. This colouring scheme is applied to a molecular surface mapping.
+
+\h MD initializer
+
+The Molecular dynamics initializer is useful for creating a box of molecules that can be employed as a starting point for trajectory type simulations. GDIS requires that all components of the system be loaded as models before you open the dialog. Once the solvent and all solute molecules have been loaded (as separate models) the MD initializer dialog will allow the user to enter the size and how much of each solute to include. After clicking the execute button, the program will create a 3D grid and place solvent molecules at random. The grid spacing is automatically chosed so that no overlap between neighbouring molecules is possible. Any empty grid points left after all solvent molecules have been placed is designated as a solute molecule. The resulting block of material may then be run through an equilibration phase to remove the artificial order imposed by the grid.
+
+Further details on plotting the order parameter to ensure that no structure remains in the simulated liquid can be found in the section on Dynamics Analysis.
+
+%topic 4. Computational
+
+\h Introduction
+
+Many of the computations offered by GDIS are achieved by creating and submitting an input file of appropriate type, and then reading the output back in. As a result, GDIS needs to know the path of the appropriate exectuables on your system. On startup, an attempt is made to locate these files. However, the user may manually enter in locations using the View->Executable paths option. This is often necessary on Windows platforms. In this dialog, if the text entry is blank it means that GDIS was unable to find the corresponding executable and it must be manually entered.
+
+\h Generating Diffraction Patterns
+
+\p image_diffraction
+
+The Tools->Computation->Diffraction menu brings up a dialog for generating theoretical diffraction patterns. Options for radiation type, wavelength as well as some common peak broadening functions are available.  Each time the execute button is pressed a new graph (attached to the currently active model) is generated. This graph is drawn in the main OpenGL window and can be viewed in the usual fashion. Note that the peaks in the graph can be clicked on with the mouse to obtain the corresponding hkl values. Also, there is an output file entry in the dialog which can be used to export the calculated diffraction data.
+
+\h GULP 
+
+GULP is a general forcefield code, aimed at simulating lattice dynamics. For more details on the capabilities of the GULP code, consult its homepage [http://gulp.curtin.edu.au]. GDIS provides a graphical means by which to set up and execute GULP calculations and view the results. Note that the GULP executable is not included with the GDIS package and must installed separately and be in your path (on a UNIX system) for GDIS to make use of.
+
+When a GULP input file is loaded, GDIS processes many of the keywords, option, and potentials in addition to the atom types and coordinates of the structure. These values can be viewed and modified using the Tools->Computational->GULP dialog. In addition, this dialog allows the user to execute GULP jobs in the background and will automatically process the output file to display a summary of the results of the calculation. Whilst GULP output files can be loaded by GDIS, it is important to note that not all information is present in this file. Consequently, if GULP jobs are to be run within GDIS - they should be based on a source GULP input file.
+
+\h GAMESS
+
+GAMESS is a computational code that permits \i ab-initio, semi-empirical, and density functional calculations to be performed. As before, it is often best to work from a GAMESS input file when performing calculations. However, The Tools->Computational->GAMESS dialog provides enough configuration options to permit single point or optimization runs with the desired accuracy level / basis set to be readily performed.
+
+
+%topic 5. Analysis
+
+\h Making Measurements
+
+\p image_measure
+
+The Tools->Analysis->Measurements menu option brings up the measurements dialog. If one of the manual methods are selected, then the operational mode will change accordingly. However, the mode will also indicate that it expects a number of atoms to be specified in order to perform the required task. For example, if measure angles is selected, then the mode will reflect how many atoms have been clicked on already, and how many it requires in total - in this case three. When the latter number is satisfied the measurement is drawn and displayed in the dialog. 
+
+Measurements can also be made using the search panel. Here, the component atoms can be either any atom, part of the selection, or a specific element/atom label type. The Atom 1, Atom 2, etc. pulldown entries can be changed to a preset value, or modified manually to provide a search filtering pattern for the desired measurements. Cutoff limits may also be specified. Once a number of measurements are made, they may also be removed by clicking on their entry in the dialog and then on the Delete button. If the model name in the measurements dialog is selected, then all measurements are removed.
+
+\h Dynamics Analysis
+
+TODO
+
+%topic 6. File Types
+
+\h Recognized File Types 
+
+Each loaded file can contain one or more chemical structures, or models. These can be loaded, saved, and closed through the File menu pulldown or by clicking on the appropriate toolbar icon. Filetype recognition is achieved through the extension. In the case of duplicate file extensions, use the filter menu (bottom right hand side of the file dialog) to force GDIS to use a particular loading routine.
+
+============================================================================
+\f Recognized file type	 Read Extension         Write Extension
+============================================================================
+\f Biosym/MSI/Accelrys     (.arc, .car, .cor)     (.car)
+\f CASTEP output           (.castep)               -
+\f CIF                     (.cif)                 (.cif)
+\f GAMESS input            (.inp)                 (.inp)
+\f GAMESS output           (.gmot, .gmout)         -
+\f GDIS morphology         (.gmf)                 (.gmf)
+\f GDIS structure          (.xml)                 (.xml)
+\f GULP input/restart      (.gin, .res)           (.gin, .res)
+\f GULP output             (.got, .gout)           -
+\f MARVIN input/restart    (.mar, .mvn, .mvn-r)   (.mar, .mvn, .mvn-r)
+\f MARVIN output           (.mot, .mvout .mvnout)  -
+\f MOPAC output            (.out)                  -
+\f Protein DataBase (PDB)  (.pdb)                 (.pdb)
+\f Rietica                 (.inp)                  -
+\f SIESTA input            (.fdf)                 (.fdf)
+\f SIESTA output           (.out)                  -
+\f XTL                     (.xtl)                 (.xtl)
+\f XYZ                     (.xyz)(.ani)           (.xyz)
+
+\h Animation File Types
+
+Some of the above file types can also contain animations. If a GULP input or restart file with an associated ascii trajectory file is loaded the animation sequence will automatically be constructed. Biosym .arc files may also contain multiple frames that will be used to build an animation. Also, output files from GULP and SIESTA minimizations will be converted to an animation sequence with each step corresponding to a single frame. Multi-frame xyz files (.ani extension) are also supported. Finally, it is possible to store recordings that have been created within GDIS by saving as XML. Naturally, multi-frame XML file reading is also supported.
+
+\h Importing/Exporting Data
+
+In addition GDIS can load and display GEOMVIEW graphics files, although not all geometric primitives are supported at this time.
+
+Also, graph data from a diffraction pattern or dynamics analysis can be exported in the form of space separated column data. This is suitable for loading into a spreadsheet or graphing program.
+
+%Topic 7. Acknowledgements
+
+Current development of this project is supported by the Western Australian Premier's Research Fellowship. Also, the following people are recognized for their invaluable contributions to the GDIS package.
+
+General programming:
+
+	Andrew Rohl
+        Craig Fisher
+        Marcin Wojdyr
+
+Hirshfeld surfaces:
+
+        Joshua McKinnon
+
+Periodic table:
+
+	Kyle R. Burton	
+
+Space group lookup:
+
+	Ralf W. Gross-Kunstleve
+
+Symmetry analysis:
+
+	Sergei Pachkovsky

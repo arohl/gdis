@@ -1,0 +1,44 @@
+#
+# Keywords:
+#
+mole opti conp comp prop phon
+#
+# Options:
+#
+name calcite_rhomb_gale
+cell
+    6.375112   6.375112   6.375112  45.995223  45.995223  45.995223
+fractional
+Ca    core 0.0000000 0.0000000 0.0000000 2.00000000 1.00000 0.00000
+C     core 0.2500000 0.2500000 0.2500000 1.34353898 1.00000 0.00000
+O     core 0.5026015 0.9973984 0.2500000 1.01848700 1.00000 0.00000
+O     shel 0.5032031 0.9967968 0.2500000 -2.1330000 1.00000 0.00000
+space
+R -3 C
+totalenergy           -85.2510065520 eV
+species   4
+Ca     core    2.000000
+C      core    1.343539
+O      core    1.018487
+O      shel   -2.133000
+buck intra
+O     core O     core  4030.30000     0.245497 0.0000000      0.00  2.50
+buck
+Ca    core O     shel  2154.06000     0.289118 0.0000000      0.00 10.00
+buck
+C     core Ca    core  120000000.     0.120000 0.0000000      0.00 10.00
+buck inter
+O     shel O     shel  64242.4540     0.198913  21.84357      0.00 15.00
+morse intra bond
+C     core O     core 5.0000000     2.5228      1.19820  0.0000
+spring
+O      52.740087
+three bond intra
+C     core O     core O     core 1.7995     120.00
+outofplane bond intra
+C     cor O     cor O     cor O     cor 8.6892     360.00
+element
+covalent 20  0.0000
+end
+dump calcite_rhomb_gale.res
+

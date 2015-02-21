@@ -1,0 +1,48 @@
+GDIS, Copyright (C) 2000-2003 by Sean Fleming
+
+sean@power.curtin.edu.au
+
+GDIS comes with ABSOLUTELY NO WARRANTY.
+
+This is free software. You are welcome to redistribute copies
+provided the conditions of the GPL (GNU Public License) are met.
+
+Although you are not required to do so, the author would consider
+it a courtesy if you submit to him any changes you consider to be
+worthwhile. The goal would be to keep the development of GDIS more
+or less centralized.
+
+Some cool features of GDIS are entirely due to the hard work that
+has gone into creating the following packages:
+
+1. CDD for the computation of halfspace intersections (morphology display).
+   (c) Komei Fukuda
+
+2. GPeriodic for pretty Periodic Table display and editing.
+   (c) 1999 Kyle R. Burton 
+
+3. SgInfo for Space Group generator lookup.
+   (c) 1994-96 Ralf W. Grosse-Kunstleve
+
+4. Brute force symmetry analyzer.
+   (c) 1996 S. Pachkovsky 
+
+Notes
+-----
+
+There are a few optional packages that enhance the GDIS experience.
+
+1. For rendering (and subsequent image viewing) you will need:
+  - POVRay 
+  - ImageMagick (or an image viewer similar to 'display')
+
+2. For rendered animations, you will need:
+  - ImageMagick
+  - mpeg2encode (if you want to output MPEG's)
+
+3. For molecule minimization, you will need:
+  - GULP
+
+4. To load certain filetypes, such as PDB, you will need:
+  - Babel
+

@@ -1,0 +1,53 @@
+single conp molmec
+
+maxcyc 50
+
+# was an attempt at amber, but RESP charges needed :-(
+
+name ethane
+cartesian
+C    core   -1.95042   -0.03671    0.64453 
+C    core   -0.68840    0.29830   -0.14533 
+H    core   -2.67179   -0.52381   -0.01172 
+H    core   -1.69758   -0.70435    1.46820 
+H    core   -2.38517    0.88026    1.04191 
+H    core   -0.94133    0.96543   -0.96935 
+H    core    0.03104    0.78981    0.50973 
+H    core   -0.25378   -0.61896   -0.54266 
+
+harm bond kcal
+C    C     310.0    1.526    0 0
+harm bond kcal
+C    H     340.0    1.090    0 0
+harm bond kcal
+C    O     320.0    1.410    0 0
+harm bond kcal
+O    H     553.0    0.960    0 0
+three bond kcal
+C  C  C     40.0      109.50    0 0
+three bond kcal
+C  C  H     50.0      109.50    0 0
+three bond kcal
+H  C  H     35.0      109.50    0 0
+three bond kcal
+C  C  O     50.0      109.50    0 0
+three bond kcal
+C  O  H     55.0      108.50    0 0
+torsion bond kcal
+H  C  C  H        0.15   +3       0.0      0 0
+torsion bond kcal
+H  C  C  C        0.16   +3       0.0      0 0
+torsion bond kcal
+H  O  C  C        0.16   +3       0.0      0 0
+torsion bond kcal
+H  O  C  C        0.25   +1       0.0      0 0
+torsion bond kcal
+C  C  C  C        0.18   +3       0.0      0 0
+torsion bond kcal
+C  C  C  C        0.25   +2     180.0      0 0
+torsion bond kcal
+C  C  C  C        0.20   +1     180.0      0 0
+torsion bond kcal
+H  C  C  O        0.25   +1       0.0      0 0
+
+print 1

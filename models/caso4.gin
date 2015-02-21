@@ -1,0 +1,63 @@
+opti conp prop mole comp 
+
+# CaSO4 data
+cell
+6.992 6.240 6.999 90.0 90.0 90.0
+fractional 
+4
+Ca  0.0000  -0.3478    0.2500 
+S   0.0000  -0.1556    0.7500
+O   0.1700  -0.0157    0.7500
+O   0.000   -0.2972    0.5814
+space
+C M C M
+
+observables
+elastic
+ 1 1  11.30
+elastic
+ 2 2  9.38
+elastic
+ 3 3 18.6
+elastic
+ 4 4  0.92
+elastic
+ 5 5  3.28
+elastic
+ 6 6  2.66
+elastic
+ 1 2  1.52
+elastic
+ 1 3  1.64
+elastic
+ 2 3  3.18
+end
+
+species
+Ca 2.00
+S  1.36
+O -0.84
+end
+
+observables
+weight
+12
+1 2 3 4 5 6 7 8 9 10 11 12
+100 100 100 10 10 10 10 10 10 
+100000 100000 100000
+end
+
+buck inter
+Ca core O core 1651.35 0.2931 0.0 10.0 0 0 0
+morse molmec
+S core O core 5.000 1.200 1.505  0 0 0
+buck inter
+O core O core 103585.02 0.2000 25.980 0.0 15.0 0 0 0
+three-body molmec
+S core O core O core 15.0 109.47 0 0
+
+accu 
+7.0
+
+print 1
+

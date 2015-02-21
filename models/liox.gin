@@ -1,0 +1,82 @@
+opti conp molmec bond torsion comp 
+cell 
+3.400    5.156   9.055   90.000   95.600   90.000
+frac 
+ Li   -0.05670   -0.01344    0.29179
+  O    0.13313    0.23698    0.13379
+  O    0.23847    0.22028   -0.10649
+  C    0.10582    0.13418    0.00738
+space
+P 1 21/n 1
+
+species
+Li 1
+O -0.81548
+C 0.63096
+
+#observables
+#weights 2
+#4 20
+#25  25
+#end
+
+#variables
+#charge 2
+#C O
+#end
+
+print 
+1
+element
+cova Li 0.1
+end
+
+
+lennard 9 6 x13 
+C    C    1070.4224   24.8673   15 0 0 
+lennard 9 6 x13 
+C    O     855.6238   22.4938   15 0 0 
+lennard 9 6 x13 
+O    O     702.3115   20.2177   15 0 0 
+
+lennard 9 6 
+C   Li     107.5272    5.6610   15 1 1 
+lennard 9 6 
+O   Li      82.4289    4.4508   15 0 0 
+lennard 9 6 
+Li  Li       4.1141    0.6930   15 0 0
+
+
+morse molmec
+C    O    159.9105   0.2008   1.23  0 0 0
+morse molmec
+C    C    268.8586   0.2384   1.54  0 0 0
+
+three-body molmec
+C     O     O     14.7920   123.000000  0 0
+three-body molmec
+C     C     O      4.9180   120.000000  0 0
+
+torsion molmec
+O     C     C     O     0.05091   +2   180  0
+torsion molmec
+C     C     O     O     0.18864   +2   180  1.80  1.60  2.40  3.00  0
+
+
+
+
+
+ 
+#harmonic molmec
+#C    O    46.8331 1.25 0 0
+#harmonic molmec kcal
+#C    C   532.8     1.50  0 0
+#three-body molmec
+#C    O    O    12.5756 123.0 0 0 
+#three-body molmec kcal
+#C    O    C   136.0    120.0  0  0 
+#torsion molmec kcal
+#O    C    C   O    0.45 +2 180 0
+#torsion intra kcal
+#C    C   O    O    5.0 +2 180 1.8 1.6 2.4 3.0 0
+

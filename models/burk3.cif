@@ -1,0 +1,58 @@
+data_*Burkeite-Na4(SO4)1.39(CO3).61-Giuseppetti
+
+_audit_creation_date                01:06:08
+
+_chemical_name_systematic          'Sodium sulfate carbonate (4/1.39/.61)   '
+_chemical_formula_structural       'Na4(SO4)1.39(CO3).61'
+_chemical_formula_sum              ' C.61 NA4 O7.39 S1.39  '
+
+_publ_section_title
+;
+The crystal structure of synthetic burkeite 
+;
+loop_
+_publ_author_name                  
+  'Giuseppetti G'
+  'Mazzi F'
+  'Tadini C'
+                
+_journal_name_full                  'Neues Jahrb.Min.,Monatsh.'
+_journal_volume                       1988 
+_journal_year                        1988
+_journal_page_first                  203
+_journal_page_last                   221                
+
+_cell_length_a                       5.170
+_cell_length_b                       9.217
+_cell_length_c                       7.058
+_cell_angle_alpha                    90.
+_cell_angle_beta                     90.
+_cell_angle_gamma                    90.
+_symmetry_space_group_name_H-M      'P M N M '
+_symmetry_Int_Tables_number         '0'
+
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_symmetry_multiplicity
+_atom_site_Wyckoff_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_B_iso_or_equiv 
+_atom_site_occupancy
+Na1 Na   4 f   0.25000 0.75090 0.00510 2.24000 1.00000
+Na2 Na   2 a   0.25000 0.42540 0.25000 5.46000 1.00000
+Na3 Na   2 b   0.75000 0.87540 0.25000 2.19000 1.00000
+C1  C    2 b   0.75000 0.55840 0.25000 1.61000 0.61000
+S1  S    2 b   0.75000 0.55840 0.25000 1.61000 0.39000
+S2  S    4 e   0.29510 0.09130 0.25000 1.16000 0.50000
+O1  O    2 b   0.75000 0.42260 0.25000 3.80000 0.85000
+O2  O    4 e   0.53570 0.64030 0.25000 2.90000 0.88000
+O3  O    4 f   0.75000 0.46930 0.08190 5.50000 0.15000
+O4  O    8 g   0.93070 0.58090 0.09510 6.00000 0.12000
+O5  O    8 g   0.19270 0.16450 0.08150 2.50000 0.50000
+O6  O    4 e   0.21640 0.93680 0.25000 1.50000 0.50000
+O7  O    4 e   0.57980 0.10570 0.25000 2.20000 0.50000
+
+_refine_ls_R_factor_all              0.04

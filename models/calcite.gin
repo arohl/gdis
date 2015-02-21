@@ -1,0 +1,83 @@
+single conp mole
+
+title
+CaCO3 modified  fgc pote.                                                       
+end
+
+name calcite
+cell
+4.980182 4.980182 17.071573  89.999999 89.999999 119.999999
+fractional
+Ca   core   0.000000   0.000000   0.000000 2.00000000 1.00000 0.00000
+C    core   0.000000   0.000000   0.250000 1.34353899 1.00000 0.00000
+O    core   0.252654   0.000000   0.250000 1.01848700 1.00000 0.00000
+O    shel   0.253238   0.000000   0.250000 -2.1330000 1.00000 0.00000
+
+space
+R -3 c
+
+elements
+covalent 25  0.0000
+covalent 26  0.0000
+covalent 27  0.0000
+covalent 28  0.0000
+covalent 30  0.0000
+covalent 48  0.0000
+end
+
+species
+Cd     core    2.000000
+Mn     core    2.000000
+Mg     core    2.000000
+Zn     core    2.000000
+Ni     core    2.000000
+Co     core    2.000000
+Fe     core    2.000000
+Ca     core    2.000000
+C      core    1.343539
+O      core    1.018487
+O      shel   -2.133000
+end
+
+buck intra     
+O     core O     core  4030.30000     0.245497 0.0000000      0.00  2.50
+
+buck     
+Ca    core O     shel  2154.06000     0.289118 0.0000000      0.00 10.00
+
+buck inter     
+O     shel O     shel  64727.5050     0.198914  21.84357      0.00 15.00
+
+buck     
+Cd    core O     shel  4329.81000     0.256300 0.0000000      0.00 10.00
+
+buck     
+Mg    core O     shel  1039.58460     0.289329 0.0000000      0.00 10.00
+
+buck     
+Co    core O     shel  1095.59850     0.286300 0.0000000      0.00 10.00
+
+buck     
+Fe    core O     shel  2152.98610     0.265068 0.0000000      0.00 10.00
+
+buck     
+Mn    core O     shel  2000.93570     0.272681 0.0000000      0.00 10.00
+
+buck     
+Ni    core O     shel  1634.46190     0.266612 0.0000000      0.00 10.00
+
+buck     
+Zn    core O     shel  1029.39000     0.289100 0.0000000      0.00 10.00
+
+morse intra bond
+C     core O     core 5.0000000     2.5228      1.19820  0.0000
+
+spring
+O      52.739130     10000.000    
+
+three bond intra
+C     core O     core O     core 1.7765     120.00    
+
+outofplane bond intra
+C     cor O     cor O     cor O     cor 8.8279    
+

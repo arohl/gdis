@@ -1,0 +1,38 @@
+# 
+# Keywords:
+# 
+opti conp comp diff molmec prop phon                                                 
+# 
+# Options:
+# 
+cell
+   6.624118   6.624118   5.969752  90.000000  90.000000  90.000000
+fractional 
+Zr    core 0.0000000 0.7500000 0.1250000 4.00000000 1.00000 0.00000             
+Si    core 0.0000000 0.2500000 0.3750000 1.15731200 1.00000 0.00000             
+O     core 0.0000000 0.0559361 0.2224612 0.84367200 1.00000 0.00000             
+O     shel 0.0000000 0.0492908 0.2113332 -2.1330000 1.00000 0.00000             
+space
+141
+origin 2
+totalenergy          -526.5920213399 eV
+species   4
+Zr     core    4.000000            
+Si     core    1.157312            
+O      core    0.843672            
+O      shel   -2.133000            
+buck inter     
+Zr    core O     shel  1014.70900     0.352800 0.0000000      0.000 10.000
+buck inter     
+O     shel O     shel  110755.522     0.200000  33.09514      0.000 15.000
+spring
+O      50.000000    0.80000000    
+morse bond
+Si    core O     shel 5.0000000     1.3272      1.76733  0.0000
+three bond intra
+Si    core O     shel O     shel 29.021     109.47    
+dump zircon.res                                                  
+
+element
+cova Zr 0.5
+end

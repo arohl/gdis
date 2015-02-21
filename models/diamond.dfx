@@ -1,0 +1,38 @@
+{data file for diamond, with random hexagonal intergrowths}
+{probability of cubic stacking = 70%}
+
+INSTRUMENTAL                       {Header for instrumental section}
+X-RAY                              {Simulate X-ray diffraction}
+1.5418                             {X-ray wavelength}
+{gaussian 0.1 trim}                {Instrumental broadening (much faster)}
+PSEUDO-VOIGT 0.1 -0.036 0.009 0.6 TRIM {Instrumental broadening (much slower)}
+
+STRUCTURAL                         {Header for structural section}
+2.52 2.52 2.06 120.0               {unit cell coordinates, a, b, c, gamma}
+6/MMM                              {hexagonal, c = cubic [111]}
+2                                  {111 sheet, plus its mirror}
+infinite                           {Layers are very wide in the a-b plane}
+
+LAYER 1
+CENTROSYMMETRIC
+ C    1  -.333333  -.166667  -.125  1.0  1.0
+{C    2   .333333   .166667   .125  1.0  1.0, related to 1 by -1}
+
+LAYER 2
+CENTROSYMMETRIC
+ C    1   .333333   .166667  -.125  1.0  1.0
+{C    2  -.333333  -.166667   .125  1.0  1.0, related to 1 by -1}
+
+STACKING                         {Header for stacking description}
+recursive                        {Statistical ensemble}
+infinite                         {Infinite number of layers}
+
+TRANSITIONS                      {Header for stacking transition data}
+
+{Transitions from layer 1}
+0.7   0.666667   0.333333  1.0    {layer 1 to layer 1}
+0.3   0.0        0.0       1.0    {layer 1 to layer 2}
+
+{Transitions from layer 2}
+0.3   0.0        0.0       1.0    {layer 2 to layer 1}
+0.7  -0.666667  -0.333333  1.0    {layer 2 to layer 2}
