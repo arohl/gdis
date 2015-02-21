@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 #define JJM_DEBUG
-#define VERSION 0.90
+#define VERSION 0.91
 #define PATCH 0
-#define YEAR 2008
+#define YEAR 2015
 
 /********************************************/
 /*** Debugging switches					 ****/
