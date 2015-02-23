@@ -15,7 +15,6 @@
 		4927B95F1A0508CA001BF241 /* libgobject-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B95E1A0508CA001BF241 /* libgobject-2.0.0.dylib */; };
 		4927B9611A0509B3001BF241 /* libgthread-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B9601A0509B3001BF241 /* libgthread-2.0.0.dylib */; };
 		493D4F091A749B4F00F8D944 /* file_qe.c in Sources */ = {isa = PBXBuildFile; fileRef = 493D4F081A749B4F00F8D944 /* file_qe.c */; };
-		493D4F0B1A75219300F8D944 /* hippuric.qeout in CopyFiles */ = {isa = PBXBuildFile; fileRef = 493D4F0A1A75212600F8D944 /* hippuric.qeout */; };
 		493FBBB11A051C8A004749B5 /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = 493FBBAA1A051C8A004749B5 /* makefile */; };
 		49714D5505E3ADF9002CED9C /* libICE.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A848E059B206A005B1183 /* libICE.dylib */; };
 		49714D5B05E3ADF9002CED9C /* libSM.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A848F059B206A005B1183 /* libSM.dylib */; };
@@ -203,13 +202,7 @@
 		49884FA11A07BC9B00B54AD9 /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2A1A07BC9B00B54AD9 /* undo.c */; };
 		49884FA21A07BC9B00B54AD9 /* zmatrix.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2B1A07BC9B00B54AD9 /* zmatrix.c */; };
 		49884FA31A07BC9B00B54AD9 /* zone.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2C1A07BC9B00B54AD9 /* zone.c */; };
-		49BBAB201A051063001FB86B /* gdis.elements in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49BBAB1F1A051063001FB86B /* gdis.elements */; };
-		49BBAB221A05162A001FB86B /* gdis.library in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49BBAB211A05162A001FB86B /* gdis.library */; };
-		49BBAB241A0516A6001FB86B /* gdis.manual in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49BBAB231A0516A6001FB86B /* gdis.manual */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
-		49D5D4DB1A0D17C70008ED18 /* baso4.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D5D48F1A0D17330008ED18 /* baso4.gin */; };
-		49D5D4DC1A0D17C70008ED18 /* calcite_-114_0.0000.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D5D49F1A0D17330008ED18 /* calcite_-114_0.0000.gin */; };
-		49D5D4DD1A0D17C70008ED18 /* deoxygalactose.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D5D4B11A0D17330008ED18 /* deoxygalactose.gin */; };
 		49DCE35C1A050B040048BD5C /* libintl.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35B1A050B040048BD5C /* libintl.8.dylib */; };
 		49DCE35E1A050B220048BD5C /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35D1A050B220048BD5C /* libiconv.2.dylib */; };
 		49DCE3601A050B390048BD5C /* libatk-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */; };
@@ -241,13 +234,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				493D4F0B1A75219300F8D944 /* hippuric.qeout in CopyFiles */,
-				49D5D4DB1A0D17C70008ED18 /* baso4.gin in CopyFiles */,
-				49D5D4DC1A0D17C70008ED18 /* calcite_-114_0.0000.gin in CopyFiles */,
-				49D5D4DD1A0D17C70008ED18 /* deoxygalactose.gin in CopyFiles */,
-				49BBAB241A0516A6001FB86B /* gdis.manual in CopyFiles */,
-				49BBAB221A05162A001FB86B /* gdis.library in CopyFiles */,
-				49BBAB201A051063001FB86B /* gdis.elements in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,7 +248,6 @@
 		4927B95E1A0508CA001BF241 /* libgobject-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libgobject-2.0.0.dylib"; path = "../../../../../opt/local/lib/libgobject-2.0.0.dylib"; sourceTree = "<group>"; };
 		4927B9601A0509B3001BF241 /* libgthread-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libgthread-2.0.0.dylib"; path = "/opt/local/lib/libgthread-2.0.0.dylib"; sourceTree = "<absolute>"; };
 		493D4F081A749B4F00F8D944 /* file_qe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_qe.c; sourceTree = "<group>"; };
-		493D4F0A1A75212600F8D944 /* hippuric.qeout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hippuric.qeout; sourceTree = "<group>"; };
 		493FBBAA1A051C8A004749B5 /* makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
 		493FBBAB1A051C8A004749B5 /* makefile.linux */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = makefile.linux; sourceTree = "<group>"; };
 		493FBBAC1A051C8A004749B5 /* makefile.osx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = makefile.osx; sourceTree = "<group>"; };
@@ -498,94 +483,10 @@
 		498A848F059B206A005B1183 /* libSM.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSM.dylib; path = /usr/X11R6/lib/libSM.dylib; sourceTree = "<absolute>"; };
 		498A8490059B206A005B1183 /* libXmu.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXmu.dylib; path = /usr/X11R6/lib/libXmu.dylib; sourceTree = "<absolute>"; };
 		498A8491059B206A005B1183 /* libXt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXt.dylib; path = /usr/X11R6/lib/libXt.dylib; sourceTree = "<absolute>"; };
-		49BBAB1F1A051063001FB86B /* gdis.elements */ = {isa = PBXFileReference; lastKnownFileType = text; path = gdis.elements; sourceTree = "<group>"; };
-		49BBAB211A05162A001FB86B /* gdis.library */ = {isa = PBXFileReference; lastKnownFileType = text; path = gdis.library; sourceTree = "<group>"; };
-		49BBAB231A0516A6001FB86B /* gdis.manual */ = {isa = PBXFileReference; lastKnownFileType = text; path = gdis.manual; sourceTree = "<group>"; };
+		49B57CBD1A9B83A000205B78 /* gdis.manual */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.manual; sourceTree = "<group>"; };
+		49B57CBE1A9B83A000205B78 /* gdis.elements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.elements; sourceTree = "<group>"; };
+		49B57CBF1A9B83A000205B78 /* gdis.library */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.library; sourceTree = "<group>"; };
 		49D234271A84D31600319538 /* file_mol2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_mol2.c; sourceTree = "<group>"; };
-		49D5D4871A0D17330008ED18 /* 1_C2H4_HOOH_Tifer.arc */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1_C2H4_HOOH_Tifer.arc; sourceTree = "<group>"; };
-		49D5D4881A0D17330008ED18 /* 1FUF.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = 1FUF.gin; sourceTree = "<group>"; };
-		49D5D4891A0D17330008ED18 /* adp1.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = adp1.cif; sourceTree = "<group>"; };
-		49D5D48A1A0D17330008ED18 /* adp2.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = adp2.cif; sourceTree = "<group>"; };
-		49D5D48B1A0D17330008ED18 /* al2o3_BFDH.gmf */ = {isa = PBXFileReference; lastKnownFileType = text; path = al2o3_BFDH.gmf; sourceTree = "<group>"; };
-		49D5D48C1A0D17330008ED18 /* aloh4-.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = "aloh4-.car"; sourceTree = "<group>"; };
-		49D5D48D1A0D17330008ED18 /* arag.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = arag.gin; sourceTree = "<group>"; };
-		49D5D48E1A0D17330008ED18 /* baso4-011.mvnout */ = {isa = PBXFileReference; lastKnownFileType = text; path = "baso4-011.mvnout"; sourceTree = "<group>"; };
-		49D5D48F1A0D17330008ED18 /* baso4.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = baso4.gin; sourceTree = "<group>"; };
-		49D5D4901A0D17330008ED18 /* box.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = box.gin; sourceTree = "<group>"; };
-		49D5D4911A0D17330008ED18 /* BUG_MS1.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = BUG_MS1.gin; sourceTree = "<group>"; };
-		49D5D4921A0D17330008ED18 /* BUG_wrong_charges.gout */ = {isa = PBXFileReference; lastKnownFileType = text; path = BUG_wrong_charges.gout; sourceTree = "<group>"; };
-		49D5D4931A0D17330008ED18 /* burk1.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = burk1.cif; sourceTree = "<group>"; };
-		49D5D4941A0D17330008ED18 /* burk2.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = burk2.cif; sourceTree = "<group>"; };
-		49D5D4951A0D17330008ED18 /* burk3.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = burk3.cif; sourceTree = "<group>"; };
-		49D5D4961A0D17330008ED18 /* burkeite_p1.xtl */ = {isa = PBXFileReference; lastKnownFileType = text; path = burkeite_p1.xtl; sourceTree = "<group>"; };
-		49D5D4971A0D17330008ED18 /* butane.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = butane.gin; sourceTree = "<group>"; };
-		49D5D4981A0D17330008ED18 /* butanol.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = butanol.gin; sourceTree = "<group>"; };
-		49D5D4991A0D17330008ED18 /* caco3-5116.mvnout */ = {isa = PBXFileReference; lastKnownFileType = text; path = "caco3-5116.mvnout"; sourceTree = "<group>"; };
-		49D5D49A1A0D17330008ED18 /* caco3-5116.xtl */ = {isa = PBXFileReference; lastKnownFileType = text; path = "caco3-5116.xtl"; sourceTree = "<group>"; };
-		49D5D49B1A0D17330008ED18 /* caco3.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = caco3.gin; sourceTree = "<group>"; };
-		49D5D49C1A0D17330008ED18 /* calc2d.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = calc2d.gin; sourceTree = "<group>"; };
-		49D5D49D1A0D17330008ED18 /* calc2d.xtl */ = {isa = PBXFileReference; lastKnownFileType = text; path = calc2d.xtl; sourceTree = "<group>"; };
-		49D5D49E1A0D17330008ED18 /* calcite.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = calcite.gin; sourceTree = "<group>"; };
-		49D5D49F1A0D17330008ED18 /* calcite_-114_0.0000.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_-114_0.0000.gin"; sourceTree = "<group>"; };
-		49D5D4A01A0D17330008ED18 /* calcite_-114_0.0000.got */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_-114_0.0000.got"; sourceTree = "<group>"; };
-		49D5D4A11A0D17330008ED18 /* calcite_-114_0.0000.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_-114_0.0000.res"; sourceTree = "<group>"; };
-		49D5D4A21A0D17330008ED18 /* calcite_0-14_0.5000.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_0-14_0.5000.gin"; sourceTree = "<group>"; };
-		49D5D4A31A0D17330008ED18 /* calcite_0-14_0.5000.got */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_0-14_0.5000.got"; sourceTree = "<group>"; };
-		49D5D4A41A0D17330008ED18 /* calcite_0-14_0.5000.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = "calcite_0-14_0.5000.res"; sourceTree = "<group>"; };
-		49D5D4A51A0D17330008ED18 /* calcite_104_0.0000.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = calcite_104_0.0000.gin; sourceTree = "<group>"; };
-		49D5D4A61A0D17330008ED18 /* calcite_104_0.0000.got */ = {isa = PBXFileReference; lastKnownFileType = text; path = calcite_104_0.0000.got; sourceTree = "<group>"; };
-		49D5D4A71A0D17330008ED18 /* calcite_104_0.0000.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = calcite_104_0.0000.res; sourceTree = "<group>"; };
-		49D5D4A81A0D17330008ED18 /* calcite_rhomb.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = calcite_rhomb.gin; sourceTree = "<group>"; };
-		49D5D4A91A0D17330008ED18 /* canamgk.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = canamgk.gin; sourceTree = "<group>"; };
-		49D5D4AA1A0D17330008ED18 /* caox.cif */ = {isa = PBXFileReference; lastKnownFileType = text; path = caox.cif; sourceTree = "<group>"; };
-		49D5D4AB1A0D17330008ED18 /* caox.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = caox.gin; sourceTree = "<group>"; };
-		49D5D4AC1A0D17330008ED18 /* carbonate.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = carbonate.car; sourceTree = "<group>"; };
-		49D5D4AD1A0D17330008ED18 /* carbonate.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = carbonate.gin; sourceTree = "<group>"; };
-		49D5D4AE1A0D17330008ED18 /* caso4.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = caso4.gin; sourceTree = "<group>"; };
-		49D5D4AF1A0D17330008ED18 /* caso4_DH.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = caso4_DH.gin; sourceTree = "<group>"; };
-		49D5D4B01A0D17330008ED18 /* caso4_HH.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = caso4_HH.gin; sourceTree = "<group>"; };
-		49D5D4B11A0D17330008ED18 /* deoxygalactose.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = deoxygalactose.gin; sourceTree = "<group>"; };
-		49D5D4B21A0D17330008ED18 /* diamond.dfx */ = {isa = PBXFileReference; lastKnownFileType = text; path = diamond.dfx; sourceTree = "<group>"; };
-		49D5D4B31A0D17330008ED18 /* dummy.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = dummy.gin; sourceTree = "<group>"; };
-		49D5D4B41A0D17330008ED18 /* dummy.got */ = {isa = PBXFileReference; lastKnownFileType = text; path = dummy.got; sourceTree = "<group>"; };
-		49D5D4B51A0D17330008ED18 /* ethane.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = ethane.gin; sourceTree = "<group>"; };
-		49D5D4B61A0D17330008ED18 /* full.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = full.car; sourceTree = "<group>"; };
-		49D5D4B71A0D17330008ED18 /* gibb.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb.car; sourceTree = "<group>"; };
-		49D5D4B81A0D17330008ED18 /* gibb.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb.gin; sourceTree = "<group>"; };
-		49D5D4B91A0D17330008ED18 /* gibb_001.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_001.gin; sourceTree = "<group>"; };
-		49D5D4BA1A0D17330008ED18 /* gibb_best3.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_best3.gin; sourceTree = "<group>"; };
-		49D5D4BB1A0D17330008ED18 /* gibb_best3.got */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_best3.got; sourceTree = "<group>"; };
-		49D5D4BC1A0D17330008ED18 /* gibb_opt.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_opt.res; sourceTree = "<group>"; };
-		49D5D4BD1A0D17330008ED18 /* gibb_opt_bulk.arc */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_opt_bulk.arc; sourceTree = "<group>"; };
-		49D5D4BE1A0D17330008ED18 /* gibb_re.xtl */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibb_re.xtl; sourceTree = "<group>"; };
-		49D5D4BF1A0D17330008ED18 /* gibbsite.gmf */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibbsite.gmf; sourceTree = "<group>"; };
-		49D5D4C01A0D17330008ED18 /* gibbsite_BFDH.gmf */ = {isa = PBXFileReference; lastKnownFileType = text; path = gibbsite_BFDH.gmf; sourceTree = "<group>"; };
-		49D5D4C11A0D17330008ED18 /* iso_ribbon.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = iso_ribbon.gin; sourceTree = "<group>"; };
-		49D5D4C21A0D17330008ED18 /* la_rdefe_clus.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = la_rdefe_clus.car; sourceTree = "<group>"; };
-		49D5D4C31A0D17330008ED18 /* liox.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = liox.gin; sourceTree = "<group>"; };
-		49D5D4C41A0D17330008ED18 /* methane.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = methane.gin; sourceTree = "<group>"; };
-		49D5D4C51A0D17330008ED18 /* methane.inp */ = {isa = PBXFileReference; lastKnownFileType = text; path = methane.inp; sourceTree = "<group>"; };
-		49D5D4C61A0D17330008ED18 /* mgo.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = mgo.gin; sourceTree = "<group>"; };
-		49D5D4C71A0D17330008ED18 /* multi12.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = multi12.gin; sourceTree = "<group>"; };
-		49D5D4C81A0D17330008ED18 /* naox.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = naox.gin; sourceTree = "<group>"; };
-		49D5D4C91A0D17330008ED18 /* napth.xtl */ = {isa = PBXFileReference; lastKnownFileType = text; path = napth.xtl; sourceTree = "<group>"; };
-		49D5D4CA1A0D17330008ED18 /* napth_full.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = napth_full.gin; sourceTree = "<group>"; };
-		49D5D4CB1A0D17330008ED18 /* napth_re.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = napth_re.gin; sourceTree = "<group>"; };
-		49D5D4CC1A0D17330008ED18 /* natrite.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = natrite.gin; sourceTree = "<group>"; };
-		49D5D4CD1A0D17330008ED18 /* natrite_full8.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = natrite_full8.gin; sourceTree = "<group>"; };
-		49D5D4CE1A0D17330008ED18 /* natrite_gulpfull.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = natrite_gulpfull.gin; sourceTree = "<group>"; };
-		49D5D4CF1A0D17330008ED18 /* oxalate.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = oxalate.gin; sourceTree = "<group>"; };
-		49D5D4D01A0D17330008ED18 /* sio2.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = sio2.res; sourceTree = "<group>"; };
-		49D5D4D11A0D17330008ED18 /* so4_iso.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = so4_iso.gin; sourceTree = "<group>"; };
-		49D5D4D21A0D17330008ED18 /* trona.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = trona.gin; sourceTree = "<group>"; };
-		49D5D4D31A0D17330008ED18 /* urea.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = urea.gin; sourceTree = "<group>"; };
-		49D5D4D41A0D17330008ED18 /* urea_001_cut1.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = urea_001_cut1.gin; sourceTree = "<group>"; };
-		49D5D4D51A0D17330008ED18 /* urea_conp.castep */ = {isa = PBXFileReference; lastKnownFileType = text; path = urea_conp.castep; sourceTree = "<group>"; };
-		49D5D4D61A0D17330008ED18 /* urea_conv.castep */ = {isa = PBXFileReference; lastKnownFileType = text; path = urea_conv.castep; sourceTree = "<group>"; };
-		49D5D4D71A0D17330008ED18 /* water.car */ = {isa = PBXFileReference; lastKnownFileType = text; path = water.car; sourceTree = "<group>"; };
-		49D5D4D81A0D17330008ED18 /* zircon.gin */ = {isa = PBXFileReference; lastKnownFileType = text; path = zircon.gin; sourceTree = "<group>"; };
-		49D5D4D91A0D17330008ED18 /* zircon_BFDH.gmf */ = {isa = PBXFileReference; lastKnownFileType = text; path = zircon_BFDH.gmf; sourceTree = "<group>"; };
-		49D5D4DA1A0D17330008ED18 /* zno_beta.res */ = {isa = PBXFileReference; lastKnownFileType = text; path = zno_beta.res; sourceTree = "<group>"; };
 		49DCE35B1A050B040048BD5C /* libintl.8.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libintl.8.dylib; path = /opt/local/lib/libintl.8.dylib; sourceTree = "<absolute>"; };
 		49DCE35D1A050B220048BD5C /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = /opt/local/lib/libiconv.2.dylib; sourceTree = "<absolute>"; };
 		49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libatk-1.0.0.dylib"; path = "/opt/local/lib/libatk-1.0.0.dylib"; sourceTree = "<absolute>"; };
@@ -645,7 +546,6 @@
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 				4917CB27069EA18800A547A0 /* XPMs */,
 				493FBACF1A051B83004749B5 /* Data */,
-				49D5D4861A0D17330008ED18 /* Models */,
 				49B888B1060B462E00EF1F08 /* Makefiles */,
 			);
 			name = gdis;
@@ -836,12 +736,13 @@
 		493FBACF1A051B83004749B5 /* Data */ = {
 			isa = PBXGroup;
 			children = (
-				49BBAB231A0516A6001FB86B /* gdis.manual */,
-				49BBAB211A05162A001FB86B /* gdis.library */,
-				49BBAB1F1A051063001FB86B /* gdis.elements */,
+				49B57CBD1A9B83A000205B78 /* gdis.manual */,
+				49B57CBE1A9B83A000205B78 /* gdis.elements */,
+				49B57CBF1A9B83A000205B78 /* gdis.library */,
 			);
 			name = Data;
-			sourceTree = "<group>";
+			path = ../bin;
+			sourceTree = SOURCE_ROOT;
 		};
 		498A8453059B1E27005B1183 /* Libraries */ = {
 			isa = PBXGroup;
@@ -954,99 +855,6 @@
 				49884E6D1A07BC6600B54AD9 /* zone.h */,
 			);
 			name = Headers;
-			sourceTree = "<group>";
-		};
-		49D5D4861A0D17330008ED18 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				493D4F0A1A75212600F8D944 /* hippuric.qeout */,
-				49D5D4871A0D17330008ED18 /* 1_C2H4_HOOH_Tifer.arc */,
-				49D5D4881A0D17330008ED18 /* 1FUF.gin */,
-				49D5D4891A0D17330008ED18 /* adp1.cif */,
-				49D5D48A1A0D17330008ED18 /* adp2.cif */,
-				49D5D48B1A0D17330008ED18 /* al2o3_BFDH.gmf */,
-				49D5D48C1A0D17330008ED18 /* aloh4-.car */,
-				49D5D48D1A0D17330008ED18 /* arag.gin */,
-				49D5D48E1A0D17330008ED18 /* baso4-011.mvnout */,
-				49D5D48F1A0D17330008ED18 /* baso4.gin */,
-				49D5D4901A0D17330008ED18 /* box.gin */,
-				49D5D4911A0D17330008ED18 /* BUG_MS1.gin */,
-				49D5D4921A0D17330008ED18 /* BUG_wrong_charges.gout */,
-				49D5D4931A0D17330008ED18 /* burk1.cif */,
-				49D5D4941A0D17330008ED18 /* burk2.cif */,
-				49D5D4951A0D17330008ED18 /* burk3.cif */,
-				49D5D4961A0D17330008ED18 /* burkeite_p1.xtl */,
-				49D5D4971A0D17330008ED18 /* butane.gin */,
-				49D5D4981A0D17330008ED18 /* butanol.gin */,
-				49D5D4991A0D17330008ED18 /* caco3-5116.mvnout */,
-				49D5D49A1A0D17330008ED18 /* caco3-5116.xtl */,
-				49D5D49B1A0D17330008ED18 /* caco3.gin */,
-				49D5D49C1A0D17330008ED18 /* calc2d.gin */,
-				49D5D49D1A0D17330008ED18 /* calc2d.xtl */,
-				49D5D49E1A0D17330008ED18 /* calcite.gin */,
-				49D5D49F1A0D17330008ED18 /* calcite_-114_0.0000.gin */,
-				49D5D4A01A0D17330008ED18 /* calcite_-114_0.0000.got */,
-				49D5D4A11A0D17330008ED18 /* calcite_-114_0.0000.res */,
-				49D5D4A21A0D17330008ED18 /* calcite_0-14_0.5000.gin */,
-				49D5D4A31A0D17330008ED18 /* calcite_0-14_0.5000.got */,
-				49D5D4A41A0D17330008ED18 /* calcite_0-14_0.5000.res */,
-				49D5D4A51A0D17330008ED18 /* calcite_104_0.0000.gin */,
-				49D5D4A61A0D17330008ED18 /* calcite_104_0.0000.got */,
-				49D5D4A71A0D17330008ED18 /* calcite_104_0.0000.res */,
-				49D5D4A81A0D17330008ED18 /* calcite_rhomb.gin */,
-				49D5D4A91A0D17330008ED18 /* canamgk.gin */,
-				49D5D4AA1A0D17330008ED18 /* caox.cif */,
-				49D5D4AB1A0D17330008ED18 /* caox.gin */,
-				49D5D4AC1A0D17330008ED18 /* carbonate.car */,
-				49D5D4AD1A0D17330008ED18 /* carbonate.gin */,
-				49D5D4AE1A0D17330008ED18 /* caso4.gin */,
-				49D5D4AF1A0D17330008ED18 /* caso4_DH.gin */,
-				49D5D4B01A0D17330008ED18 /* caso4_HH.gin */,
-				49D5D4B11A0D17330008ED18 /* deoxygalactose.gin */,
-				49D5D4B21A0D17330008ED18 /* diamond.dfx */,
-				49D5D4B31A0D17330008ED18 /* dummy.gin */,
-				49D5D4B41A0D17330008ED18 /* dummy.got */,
-				49D5D4B51A0D17330008ED18 /* ethane.gin */,
-				49D5D4B61A0D17330008ED18 /* full.car */,
-				49D5D4B71A0D17330008ED18 /* gibb.car */,
-				49D5D4B81A0D17330008ED18 /* gibb.gin */,
-				49D5D4B91A0D17330008ED18 /* gibb_001.gin */,
-				49D5D4BA1A0D17330008ED18 /* gibb_best3.gin */,
-				49D5D4BB1A0D17330008ED18 /* gibb_best3.got */,
-				49D5D4BC1A0D17330008ED18 /* gibb_opt.res */,
-				49D5D4BD1A0D17330008ED18 /* gibb_opt_bulk.arc */,
-				49D5D4BE1A0D17330008ED18 /* gibb_re.xtl */,
-				49D5D4BF1A0D17330008ED18 /* gibbsite.gmf */,
-				49D5D4C01A0D17330008ED18 /* gibbsite_BFDH.gmf */,
-				49D5D4C11A0D17330008ED18 /* iso_ribbon.gin */,
-				49D5D4C21A0D17330008ED18 /* la_rdefe_clus.car */,
-				49D5D4C31A0D17330008ED18 /* liox.gin */,
-				49D5D4C41A0D17330008ED18 /* methane.gin */,
-				49D5D4C51A0D17330008ED18 /* methane.inp */,
-				49D5D4C61A0D17330008ED18 /* mgo.gin */,
-				49D5D4C71A0D17330008ED18 /* multi12.gin */,
-				49D5D4C81A0D17330008ED18 /* naox.gin */,
-				49D5D4C91A0D17330008ED18 /* napth.xtl */,
-				49D5D4CA1A0D17330008ED18 /* napth_full.gin */,
-				49D5D4CB1A0D17330008ED18 /* napth_re.gin */,
-				49D5D4CC1A0D17330008ED18 /* natrite.gin */,
-				49D5D4CD1A0D17330008ED18 /* natrite_full8.gin */,
-				49D5D4CE1A0D17330008ED18 /* natrite_gulpfull.gin */,
-				49D5D4CF1A0D17330008ED18 /* oxalate.gin */,
-				49D5D4D01A0D17330008ED18 /* sio2.res */,
-				49D5D4D11A0D17330008ED18 /* so4_iso.gin */,
-				49D5D4D21A0D17330008ED18 /* trona.gin */,
-				49D5D4D31A0D17330008ED18 /* urea.gin */,
-				49D5D4D41A0D17330008ED18 /* urea_001_cut1.gin */,
-				49D5D4D51A0D17330008ED18 /* urea_conp.castep */,
-				49D5D4D61A0D17330008ED18 /* urea_conv.castep */,
-				49D5D4D71A0D17330008ED18 /* water.car */,
-				49D5D4D81A0D17330008ED18 /* zircon.gin */,
-				49D5D4D91A0D17330008ED18 /* zircon_BFDH.gmf */,
-				49D5D4DA1A0D17330008ED18 /* zno_beta.res */,
-			);
-			name = Models;
-			path = models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
