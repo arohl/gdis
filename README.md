@@ -1,13 +1,23 @@
-###GDIS, Copyright (C) 2000-2015 by Sean Fleming, Andrew Rohl
+##GDIS, Copyright (C) 2000-2015 by Sean Fleming, Andrew Rohl
 
-a.rohl@curtin.edu.au
+<a.rohl@curtin.edu.au>
 
 GDIS comes with ABSOLUTELY NO WARRANTY.
 
-This is free software. You are welcome to redistribute copies provided the conditions of the GPL (GNU Public License) are met.
+This is free software. You are welcome to redistribute copies provided the conditions of the Version 2 GPL (GNU Public License) are met.
 
 Although you are not required to do so, the authors would consider it a courtesy if you submit to them any changes you consider to be worthwhile. The goal would be to keep the development of GDIS more
 or less centralized.
+
+###Installation
+
+To install GDIS from source you need a working C compiler, [gtk+2](http://www.gtk.org) and [gtkglext](https://projects.gnome.org/gtkglext/index.html). You then simply type:
+```
+./install
+```
+and follow the prompts. The script will check for the existence of gtk+2 and  gtkglext and then compile GDIS. If you don't specify an install directory, the GDIS executable will be in the `bin` directory.
+ 
+###Notes
 
 Some cool features of GDIS are entirely due to the hard work that has gone into creating the following packages:
 
@@ -22,8 +32,6 @@ Some cool features of GDIS are entirely due to the hard work that has gone into 
 
 4. [Brute force symmetry analyzer](http://www.cobalt.chem.ucalgary.ca/ps/symmetry/).
 	&copy;1996 S. Pachkovsky 
-
-###Notes
 
 There are a few optional packages that enhance the GDIS experience.
 
