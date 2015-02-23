@@ -3,3 +3,6 @@ src/*.d
 src/makefile
 install.log
 bin/gdis
+src/gdis.xcodeproj/project.xcworkspace/xcuserdata/andrew.xcuserdatad/UserInterfaceState.xcuserstate
+src/gdis.xcodeproj/xcuserdata/andrew.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+src/gdis.xcodeproj/project.xcworkspace/xcshareddata/
