@@ -1,12 +1,16 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
+use strict;
+
+use File::Copy;
+
 
 # --- config
-$logfile = "install.log";
-$makefile = "makefile";
-$use_gui=0;
-$use_grisu=0;
-$wsdl2h = "wsdl2h";
-$soapcpp2 = "soapcpp2";
+my $logfile = "install.log";
+my $makefile = "makefile";
+my $use_gui=0;
+my $use_grisu=0;
+my $wsdl2h = "wsdl2h";
+my $soapcpp2 = "soapcpp2";
 # --- CUTTING EDGE
 #$wsdl2h = "/home/sean/apps/bin/wsdl2h";
 #$soapcpp2 = "/home/sean/apps/bin/soapcpp2";
@@ -18,7 +22,7 @@ open(STDERR, ">$logfile");
 &user_prompt();
 
 # pre-checks os / files (eg pkg-config) / libs
-$osmakefile = &check_os();
+my $osmakefile = &check_os();
 
 # TODO - print help on where to get if not installed?
 &check_program("pkg-config") || die;
@@ -43,29 +47,30 @@ if ($use_grisu)
 # print current options + any warnings etc
 do
   {
-  print "Enter Install location: ";
+  print "Enter Install location (press return to not install): ";
   $_ = <>;
   chomp;
 # use current directory if enter pressed
-  if ($_ == "\n")
+  if ($_ eq '')
     {
     $_ = ".";
     }
   }
 while (&check_install($_));
 
-$dest = $_."/";
+my $dest = $_."/";
 
 # allow editing of make/install options
 # TODO - if cant open - attempt to open in current directory
 &build_makefile($osmakefile);
 
 # clean the build area
-unlink <*.o>;
-unlink gdis;
+unlink <src/*.o>;
+unlink <src/*.d>;
+unlink <src/gdis>;
 
 # perform make
-if (system("make -f $makefile") != 0)
+if (system("cd src; make -f $makefile") != 0)
   {
   print "GDIS compile failed - check $logfile\n";
   close(STDERR);
@@ -84,12 +89,13 @@ if (length($dest) > 2)
   print "Installing GDIS in: [$dest]\n";
 
 # FIXME - make this more portable
-  system("strip gdis");
+  system("pwd; ls -l bin/gdis");
+  system("strip bin/gdis");
 
-  copy("gdis", $dest) || die "Cannot copy gdis.\n";
-  copy("gdis.elements", $dest) || die "Cannot copy gdis.elements.\n";
-  copy("gdis.library", $dest) || die "Cannot copy gdis.library.\n";
-  copy("gdis.manual", $dest) || die "Cannot copy gdis.manual.\n";
+  copy("bin/gdis", $dest) || die "Cannot copy gdis.\n";
+  copy("bin/gdis.elements", $dest) || die "Cannot copy gdis.elements.\n";
+  copy("bin/gdis.library", $dest) || die "Cannot copy gdis.library.\n";
+  copy("bin/gdis.manual", $dest) || die "Cannot copy gdis.manual.\n";
 #  system("cp gdis $dest");
 #  system("cp gdis.elements $dest");
 #  system("cp gdis.library $dest");
@@ -111,9 +117,9 @@ print "GDIS Install options\n\n";
 print "1. Standard GUI package (default)\n";
 print "2. Command line only\n";
 
+my $repeat=0;
 do
   {
-  $repeat=0;
   print "Choice: ";
   $_ = <>;
 
@@ -145,7 +151,7 @@ while ($repeat);
 # --- returns the os specific makefile
 sub check_os
 {
-$os = "makefile.linux";
+my $os = "makefile.linux";
 
 open(OUT, "uname -a |");
 
@@ -169,27 +175,30 @@ return $os;
 # -- checks is directory is a valid install location
 sub check_install
 {
-print "$_[0] : ";
-
-stat($_[0]);
-
-if (!-e _)
+if ($_[0] ne ".")
   {
-  print "does not exist.\n";
-  return(1);
+  print "$_[0] : ";
+  
+  stat($_[0]);
+  
+  if (!-e _)
+    {
+    print "does not exist.\n";
+    return(1);
+    }
+  if (!-d _)
+    {
+    print "is not a directory.\n";
+    return(1);
+    }
+  if (!-w _)
+    {
+    print "is not writable by you.\n";
+    return(1);
+    }
+  
+  print " [ok]\n";
   }
-if (!-d _)
-  {
-  print "is not a directory.\n";
-  return(1);
-  }
-if (!-w _)
-  {
-  print "is not writable by you.\n";
-  return(1);
-  }
-
-print " [ok]\n";
 
 return(0);
 }
@@ -197,7 +206,7 @@ return(0);
 # -- checks if argument string is a valid executable
 sub check_program
 {
-$ret = system($_[0]);
+my $ret = system($_[0]);
 
 if ($ret == -1)
   {
@@ -365,7 +374,7 @@ return(1);
 # TODO - GPROF (-pg) -> CFLAGS/LIBS
 sub build_makefile
 {
-open(OUT, ">$makefile") || die;
+open(OUT, ">src/$makefile") || die;
 
 print OUT "# --- auto generated GDIS makefile\n\n";
 
@@ -391,9 +400,9 @@ else
 print OUT "include $_[0]\n";
 print OUT "include makefile.src\n\n";
 
-$cflags="";
-$incs="";
-$libs="";
+my $cflags="";
+my $incs="";
+my $libs="";
 
 if ($use_gui)
   {
@@ -424,7 +433,7 @@ print OUT "OBJ = \$(SRC:.c=.o)\n";
 print OUT "-include \$(OBJ:.o=.d)\n\n";
 
 print OUT "gdis: \$(OBJ)\n";
-print OUT "\t\$(CC) \$(OBJ) \$(LDFLAGS) -o gdis \$(LIBS)\n";
+print OUT "\t\$(CC) \$(OBJ) \$(LDFLAGS) -o ../bin/gdis \$(LIBS)\n";
 
 print OUT "%.o: %.c\n";
 print OUT "\t\$(CC) \$(CFLAGS) -c \$*.c \$(INCS)\n";

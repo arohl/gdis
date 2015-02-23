@@ -1,0 +1,39 @@
+# --- gdis Makefile (custom for Win32)
+
+NAME = gdis-0.90
+INSTALL = c:\apps\gdis
+USE_GUI = YES
+USE_GRISU = YES
+
+include makefile.src
+
+# under windows - manual cut/paste results from pkg-config
+
+CC = c:\dev\mingw\bin\gcc
+
+CFLAGS = -O2 -mwindows -mno-cygwin -mms-bitfields -DWITH_GUI -DWITH_GRISU
+
+INCS = -Ic:/dev/gtk_bundle/include/gtk-2.0 -Ic:/dev/gtk_bundle/lib/gtk-2.0/include -Ic:/dev/gtk_bundle/include/atk-1.0 -Ic:/dev/gtk_bundle/include/cairo -Ic:/dev/gtk_bundle/include/pango-1.0 -Ic:/dev/gtk_bundle/include/glib-2.0 -Ic:/dev/gtk_bundle/lib/glib-2.0/include -Ic:/dev/gtk_bundle/include/libpng12
+INCS := $(INCS) -Ic:/dev/gtkglext/include/gtkglext-1.0 -Ic:/dev/gtkglext/lib/gtkglext-1.0/include
+
+LIBS = -Lc:/dev/gtk_bundle/lib -lgtk-win32-2.0 -lgdk-win32-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lpangowin32-1.0 -lgdi32 -lpangocairo-1.0 -lpango-1.0 -lcairo -lgobject-2.0 -lgthread-2.0 -lgmodule-2.0 -lglib-2.0 -lintl 
+LIBS := $(LIBS) -Lc:/dev/gtkglext/lib -lgtkglext-win32-1.0 -lgdkglext-win32-1.0 -lopengl32 -lgdi32 -lglu32
+
+# --- openssl + gsoap stuff
+
+CFLAGS := $(CFLAGS) -DWITH_OPENSSL -DWITH_DOM
+INCS := $(INCS) -Ic:/dev/openssl-0.9.7c/include
+LIBS := $(LIBS) -Lc:/dev/openssl-0.9.7c/lib -lssl -lcrypto -lWs2_32
+SRC := $(SRC) stdsoap2.c dom.c
+
+# --- main target
+
+OBJ = $(SRC:.c=.o)
+
+gdis: $(OBJ)
+	$(CC) $(OBJ) $(LDFLAGS) -o gdis $(LIBS)
+
+# --- extra targets
+
+.c.o: 
+	$(CC) $(CFLAGS) -c $< $(INCS)

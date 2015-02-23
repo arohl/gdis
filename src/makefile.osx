@@ -1,0 +1,22 @@
+# --- gdis Makefile for OS-X
+
+FINK=/sw
+PLATYPUS=/usr/local/bin/platypus
+GTK2VERS=2.4.0
+
+CC = gcc
+CFLAGS = -O2 
+LDFLAGS =  -bind_at_load -headerpad_max_install_names
+INCS = `pkg-config --cflags gtk+-2.0 gtkglext-1.0 gmodule-2.0`
+LIBS = `pkg-config --libs gtk+-2.0 gtkglext-1.0 gthread-2.0 gmodule-2.0` -lGLU -lGL
+
+all: gdis
+
+export
+gdis.app: gdis.app/Contents/Resources/gdis
+
+gdis.app/Contents/Resources/gdis: gdis gdis.elements gdis.manual
+	./make_gdis.app
+
+gdis.dmg: gdis.app/Contents/Resources/gdis
+	hdiutil create -srcfolder gdis.app -ov -anyowners -volname "GDIS" gdis.dmg
