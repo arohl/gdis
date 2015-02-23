@@ -202,6 +202,8 @@
 		49884FA11A07BC9B00B54AD9 /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2A1A07BC9B00B54AD9 /* undo.c */; };
 		49884FA21A07BC9B00B54AD9 /* zmatrix.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2B1A07BC9B00B54AD9 /* zmatrix.c */; };
 		49884FA31A07BC9B00B54AD9 /* zone.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2C1A07BC9B00B54AD9 /* zone.c */; };
+		49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF31A9B853100205B78 /* example12.gin */; };
+		49B57D201A9B861500205B78 /* example12.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF41A9B853100205B78 /* example12.got */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
 		49DCE35C1A050B040048BD5C /* libintl.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35B1A050B040048BD5C /* libintl.8.dylib */; };
 		49DCE35E1A050B220048BD5C /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35D1A050B220048BD5C /* libiconv.2.dylib */; };
@@ -234,6 +236,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
+				49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */,
+				49B57D201A9B861500205B78 /* example12.got in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -486,6 +490,100 @@
 		49B57CBD1A9B83A000205B78 /* gdis.manual */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.manual; sourceTree = "<group>"; };
 		49B57CBE1A9B83A000205B78 /* gdis.elements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.elements; sourceTree = "<group>"; };
 		49B57CBF1A9B83A000205B78 /* gdis.library */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.library; sourceTree = "<group>"; };
+		49B57CC11A9B853100205B78 /* 1_C2H4_HOOH_Tifer.arc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = 1_C2H4_HOOH_Tifer.arc; sourceTree = "<group>"; };
+		49B57CC21A9B853100205B78 /* 1FUF.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = 1FUF.gin; sourceTree = "<group>"; };
+		49B57CC31A9B853100205B78 /* adp1.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = adp1.cif; sourceTree = "<group>"; };
+		49B57CC41A9B853100205B78 /* adp2.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = adp2.cif; sourceTree = "<group>"; };
+		49B57CC51A9B853100205B78 /* al2o3_BFDH.gmf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = al2o3_BFDH.gmf; sourceTree = "<group>"; };
+		49B57CC61A9B853100205B78 /* aloh4-.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "aloh4-.car"; sourceTree = "<group>"; };
+		49B57CC71A9B853100205B78 /* arag.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = arag.gin; sourceTree = "<group>"; };
+		49B57CC81A9B853100205B78 /* barite_210.pdb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = barite_210.pdb; sourceTree = "<group>"; };
+		49B57CC91A9B853100205B78 /* baso4-011.mvnout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "baso4-011.mvnout"; sourceTree = "<group>"; };
+		49B57CCA1A9B853100205B78 /* baso4.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = baso4.gin; sourceTree = "<group>"; };
+		49B57CCB1A9B853100205B78 /* box.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = box.gin; sourceTree = "<group>"; };
+		49B57CCC1A9B853100205B78 /* BUG_MS1.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BUG_MS1.gin; sourceTree = "<group>"; };
+		49B57CCD1A9B853100205B78 /* BUG_wrong_charges.gout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BUG_wrong_charges.gout; sourceTree = "<group>"; };
+		49B57CCE1A9B853100205B78 /* burk1.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = burk1.cif; sourceTree = "<group>"; };
+		49B57CCF1A9B853100205B78 /* burk2.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = burk2.cif; sourceTree = "<group>"; };
+		49B57CD01A9B853100205B78 /* burk3.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = burk3.cif; sourceTree = "<group>"; };
+		49B57CD11A9B853100205B78 /* burkeite_p1.xtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = burkeite_p1.xtl; sourceTree = "<group>"; };
+		49B57CD21A9B853100205B78 /* butane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = butane.gin; sourceTree = "<group>"; };
+		49B57CD31A9B853100205B78 /* butanol.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = butanol.gin; sourceTree = "<group>"; };
+		49B57CD41A9B853100205B78 /* caco3-5116.mvnout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "caco3-5116.mvnout"; sourceTree = "<group>"; };
+		49B57CD51A9B853100205B78 /* caco3-5116.xtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "caco3-5116.xtl"; sourceTree = "<group>"; };
+		49B57CD61A9B853100205B78 /* caco3.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caco3.gin; sourceTree = "<group>"; };
+		49B57CD71A9B853100205B78 /* calc2d.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calc2d.gin; sourceTree = "<group>"; };
+		49B57CD81A9B853100205B78 /* calc2d.xtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calc2d.xtl; sourceTree = "<group>"; };
+		49B57CD91A9B853100205B78 /* calcite.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calcite.gin; sourceTree = "<group>"; };
+		49B57CDA1A9B853100205B78 /* calcite_-114_0.0000.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_-114_0.0000.gin"; sourceTree = "<group>"; };
+		49B57CDB1A9B853100205B78 /* calcite_-114_0.0000.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_-114_0.0000.got"; sourceTree = "<group>"; };
+		49B57CDC1A9B853100205B78 /* calcite_-114_0.0000.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_-114_0.0000.res"; sourceTree = "<group>"; };
+		49B57CDD1A9B853100205B78 /* calcite_0-14_0.5000.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_0-14_0.5000.gin"; sourceTree = "<group>"; };
+		49B57CDE1A9B853100205B78 /* calcite_0-14_0.5000.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_0-14_0.5000.got"; sourceTree = "<group>"; };
+		49B57CDF1A9B853100205B78 /* calcite_0-14_0.5000.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "calcite_0-14_0.5000.res"; sourceTree = "<group>"; };
+		49B57CE01A9B853100205B78 /* calcite_104_0.0000.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calcite_104_0.0000.gin; sourceTree = "<group>"; };
+		49B57CE11A9B853100205B78 /* calcite_104_0.0000.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calcite_104_0.0000.got; sourceTree = "<group>"; };
+		49B57CE21A9B853100205B78 /* calcite_104_0.0000.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calcite_104_0.0000.res; sourceTree = "<group>"; };
+		49B57CE31A9B853100205B78 /* calcite_rhomb.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = calcite_rhomb.gin; sourceTree = "<group>"; };
+		49B57CE41A9B853100205B78 /* canamgk.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = canamgk.gin; sourceTree = "<group>"; };
+		49B57CE51A9B853100205B78 /* caox.cif */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caox.cif; sourceTree = "<group>"; };
+		49B57CE61A9B853100205B78 /* caox.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caox.gin; sourceTree = "<group>"; };
+		49B57CE71A9B853100205B78 /* carbonate.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = carbonate.car; sourceTree = "<group>"; };
+		49B57CE81A9B853100205B78 /* carbonate.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = carbonate.gin; sourceTree = "<group>"; };
+		49B57CE91A9B853100205B78 /* caso4.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caso4.gin; sourceTree = "<group>"; };
+		49B57CEA1A9B853100205B78 /* caso4_DH.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caso4_DH.gin; sourceTree = "<group>"; };
+		49B57CEB1A9B853100205B78 /* caso4_HH.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = caso4_HH.gin; sourceTree = "<group>"; };
+		49B57CEC1A9B853100205B78 /* deoxy.pdb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = deoxy.pdb; sourceTree = "<group>"; };
+		49B57CED1A9B853100205B78 /* deoxy2.pdb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = deoxy2.pdb; sourceTree = "<group>"; };
+		49B57CEE1A9B853100205B78 /* deoxygalactose.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = deoxygalactose.gin; sourceTree = "<group>"; };
+		49B57CEF1A9B853100205B78 /* diamond.dfx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = diamond.dfx; sourceTree = "<group>"; };
+		49B57CF01A9B853100205B78 /* dummy.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dummy.gin; sourceTree = "<group>"; };
+		49B57CF11A9B853100205B78 /* dummy.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dummy.got; sourceTree = "<group>"; };
+		49B57CF21A9B853100205B78 /* ethane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ethane.gin; sourceTree = "<group>"; };
+		49B57CF31A9B853100205B78 /* example12.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.gin; sourceTree = "<group>"; };
+		49B57CF41A9B853100205B78 /* example12.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.got; sourceTree = "<group>"; };
+		49B57CF51A9B853100205B78 /* full.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = full.car; sourceTree = "<group>"; };
+		49B57CF61A9B853100205B78 /* gibb.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb.car; sourceTree = "<group>"; };
+		49B57CF71A9B853100205B78 /* gibb.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb.gin; sourceTree = "<group>"; };
+		49B57CF81A9B853100205B78 /* gibb_001.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_001.gin; sourceTree = "<group>"; };
+		49B57CF91A9B853100205B78 /* gibb_best3.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_best3.gin; sourceTree = "<group>"; };
+		49B57CFA1A9B853100205B78 /* gibb_best3.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_best3.got; sourceTree = "<group>"; };
+		49B57CFB1A9B853100205B78 /* gibb_opt.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_opt.res; sourceTree = "<group>"; };
+		49B57CFC1A9B853100205B78 /* gibb_opt_bulk.arc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_opt_bulk.arc; sourceTree = "<group>"; };
+		49B57CFD1A9B853100205B78 /* gibb_re.xtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb_re.xtl; sourceTree = "<group>"; };
+		49B57CFE1A9B853100205B78 /* gibbsite.gmf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibbsite.gmf; sourceTree = "<group>"; };
+		49B57CFF1A9B853100205B78 /* gibbsite_BFDH.gmf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibbsite_BFDH.gmf; sourceTree = "<group>"; };
+		49B57D001A9B853100205B78 /* graphite.scf.qeout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = graphite.scf.qeout; sourceTree = "<group>"; };
+		49B57D011A9B853100205B78 /* hippuric.qeout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = hippuric.qeout; sourceTree = "<group>"; };
+		49B57D021A9B853100205B78 /* iso_ribbon.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = iso_ribbon.gin; sourceTree = "<group>"; };
+		49B57D031A9B853100205B78 /* la_rdefe_clus.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = la_rdefe_clus.car; sourceTree = "<group>"; };
+		49B57D041A9B853100205B78 /* liox.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = liox.gin; sourceTree = "<group>"; };
+		49B57D051A9B853100205B78 /* methane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = methane.gin; sourceTree = "<group>"; };
+		49B57D061A9B853100205B78 /* methane.inp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = methane.inp; sourceTree = "<group>"; };
+		49B57D071A9B853100205B78 /* mgo.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = mgo.gin; sourceTree = "<group>"; };
+		49B57D081A9B853100205B78 /* multi12.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = multi12.gin; sourceTree = "<group>"; };
+		49B57D091A9B853100205B78 /* naox.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = naox.gin; sourceTree = "<group>"; };
+		49B57D0A1A9B853100205B78 /* napth.xtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = napth.xtl; sourceTree = "<group>"; };
+		49B57D0B1A9B853100205B78 /* napth_full.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = napth_full.gin; sourceTree = "<group>"; };
+		49B57D0C1A9B853100205B78 /* napth_re.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = napth_re.gin; sourceTree = "<group>"; };
+		49B57D0D1A9B853100205B78 /* natrite.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = natrite.gin; sourceTree = "<group>"; };
+		49B57D0E1A9B853100205B78 /* natrite_full8.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = natrite_full8.gin; sourceTree = "<group>"; };
+		49B57D0F1A9B853100205B78 /* natrite_gulpfull.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = natrite_gulpfull.gin; sourceTree = "<group>"; };
+		49B57D101A9B853100205B78 /* oxalate.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = oxalate.gin; sourceTree = "<group>"; };
+		49B57D111A9B853100205B78 /* silica_clayff.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = silica_clayff.gin; sourceTree = "<group>"; };
+		49B57D121A9B853100205B78 /* silica_clayff.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = silica_clayff.got; sourceTree = "<group>"; };
+		49B57D131A9B853100205B78 /* silica_clayff.got.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = silica_clayff.got.orig; sourceTree = "<group>"; };
+		49B57D141A9B853100205B78 /* sio2.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sio2.res; sourceTree = "<group>"; };
+		49B57D151A9B853100205B78 /* so4_iso.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = so4_iso.gin; sourceTree = "<group>"; };
+		49B57D161A9B853100205B78 /* trona.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = trona.gin; sourceTree = "<group>"; };
+		49B57D171A9B853100205B78 /* urea.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = urea.gin; sourceTree = "<group>"; };
+		49B57D181A9B853100205B78 /* urea_001_cut1.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = urea_001_cut1.gin; sourceTree = "<group>"; };
+		49B57D191A9B853100205B78 /* urea_conp.castep */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = urea_conp.castep; sourceTree = "<group>"; };
+		49B57D1A1A9B853100205B78 /* urea_conv.castep */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = urea_conv.castep; sourceTree = "<group>"; };
+		49B57D1B1A9B853100205B78 /* water.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = water.car; sourceTree = "<group>"; };
+		49B57D1C1A9B853100205B78 /* zircon.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zircon.gin; sourceTree = "<group>"; };
+		49B57D1D1A9B853100205B78 /* zircon_BFDH.gmf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zircon_BFDH.gmf; sourceTree = "<group>"; };
+		49B57D1E1A9B853100205B78 /* zno_beta.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zno_beta.res; sourceTree = "<group>"; };
 		49D234271A84D31600319538 /* file_mol2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_mol2.c; sourceTree = "<group>"; };
 		49DCE35B1A050B040048BD5C /* libintl.8.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libintl.8.dylib; path = /opt/local/lib/libintl.8.dylib; sourceTree = "<absolute>"; };
 		49DCE35D1A050B220048BD5C /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = /opt/local/lib/libiconv.2.dylib; sourceTree = "<absolute>"; };
@@ -547,6 +645,7 @@
 				4917CB27069EA18800A547A0 /* XPMs */,
 				493FBACF1A051B83004749B5 /* Data */,
 				49B888B1060B462E00EF1F08 /* Makefiles */,
+				49B57CC01A9B853100205B78 /* Models */,
 			);
 			name = gdis;
 			sourceTree = "<group>";
@@ -768,6 +867,108 @@
 				49DCE3681A050BAC0048BD5C /* libgtkglext-x11-1.0.0.0.0.dylib */,
 			);
 			name = Libraries;
+			sourceTree = "<group>";
+		};
+		49B57CC01A9B853100205B78 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				49B57CC11A9B853100205B78 /* 1_C2H4_HOOH_Tifer.arc */,
+				49B57CC21A9B853100205B78 /* 1FUF.gin */,
+				49B57CC31A9B853100205B78 /* adp1.cif */,
+				49B57CC41A9B853100205B78 /* adp2.cif */,
+				49B57CC51A9B853100205B78 /* al2o3_BFDH.gmf */,
+				49B57CC61A9B853100205B78 /* aloh4-.car */,
+				49B57CC71A9B853100205B78 /* arag.gin */,
+				49B57CC81A9B853100205B78 /* barite_210.pdb */,
+				49B57CC91A9B853100205B78 /* baso4-011.mvnout */,
+				49B57CCA1A9B853100205B78 /* baso4.gin */,
+				49B57CCB1A9B853100205B78 /* box.gin */,
+				49B57CCC1A9B853100205B78 /* BUG_MS1.gin */,
+				49B57CCD1A9B853100205B78 /* BUG_wrong_charges.gout */,
+				49B57CCE1A9B853100205B78 /* burk1.cif */,
+				49B57CCF1A9B853100205B78 /* burk2.cif */,
+				49B57CD01A9B853100205B78 /* burk3.cif */,
+				49B57CD11A9B853100205B78 /* burkeite_p1.xtl */,
+				49B57CD21A9B853100205B78 /* butane.gin */,
+				49B57CD31A9B853100205B78 /* butanol.gin */,
+				49B57CD41A9B853100205B78 /* caco3-5116.mvnout */,
+				49B57CD51A9B853100205B78 /* caco3-5116.xtl */,
+				49B57CD61A9B853100205B78 /* caco3.gin */,
+				49B57CD71A9B853100205B78 /* calc2d.gin */,
+				49B57CD81A9B853100205B78 /* calc2d.xtl */,
+				49B57CD91A9B853100205B78 /* calcite.gin */,
+				49B57CDA1A9B853100205B78 /* calcite_-114_0.0000.gin */,
+				49B57CDB1A9B853100205B78 /* calcite_-114_0.0000.got */,
+				49B57CDC1A9B853100205B78 /* calcite_-114_0.0000.res */,
+				49B57CDD1A9B853100205B78 /* calcite_0-14_0.5000.gin */,
+				49B57CDE1A9B853100205B78 /* calcite_0-14_0.5000.got */,
+				49B57CDF1A9B853100205B78 /* calcite_0-14_0.5000.res */,
+				49B57CE01A9B853100205B78 /* calcite_104_0.0000.gin */,
+				49B57CE11A9B853100205B78 /* calcite_104_0.0000.got */,
+				49B57CE21A9B853100205B78 /* calcite_104_0.0000.res */,
+				49B57CE31A9B853100205B78 /* calcite_rhomb.gin */,
+				49B57CE41A9B853100205B78 /* canamgk.gin */,
+				49B57CE51A9B853100205B78 /* caox.cif */,
+				49B57CE61A9B853100205B78 /* caox.gin */,
+				49B57CE71A9B853100205B78 /* carbonate.car */,
+				49B57CE81A9B853100205B78 /* carbonate.gin */,
+				49B57CE91A9B853100205B78 /* caso4.gin */,
+				49B57CEA1A9B853100205B78 /* caso4_DH.gin */,
+				49B57CEB1A9B853100205B78 /* caso4_HH.gin */,
+				49B57CEC1A9B853100205B78 /* deoxy.pdb */,
+				49B57CED1A9B853100205B78 /* deoxy2.pdb */,
+				49B57CEE1A9B853100205B78 /* deoxygalactose.gin */,
+				49B57CEF1A9B853100205B78 /* diamond.dfx */,
+				49B57CF01A9B853100205B78 /* dummy.gin */,
+				49B57CF11A9B853100205B78 /* dummy.got */,
+				49B57CF21A9B853100205B78 /* ethane.gin */,
+				49B57CF31A9B853100205B78 /* example12.gin */,
+				49B57CF41A9B853100205B78 /* example12.got */,
+				49B57CF51A9B853100205B78 /* full.car */,
+				49B57CF61A9B853100205B78 /* gibb.car */,
+				49B57CF71A9B853100205B78 /* gibb.gin */,
+				49B57CF81A9B853100205B78 /* gibb_001.gin */,
+				49B57CF91A9B853100205B78 /* gibb_best3.gin */,
+				49B57CFA1A9B853100205B78 /* gibb_best3.got */,
+				49B57CFB1A9B853100205B78 /* gibb_opt.res */,
+				49B57CFC1A9B853100205B78 /* gibb_opt_bulk.arc */,
+				49B57CFD1A9B853100205B78 /* gibb_re.xtl */,
+				49B57CFE1A9B853100205B78 /* gibbsite.gmf */,
+				49B57CFF1A9B853100205B78 /* gibbsite_BFDH.gmf */,
+				49B57D001A9B853100205B78 /* graphite.scf.qeout */,
+				49B57D011A9B853100205B78 /* hippuric.qeout */,
+				49B57D021A9B853100205B78 /* iso_ribbon.gin */,
+				49B57D031A9B853100205B78 /* la_rdefe_clus.car */,
+				49B57D041A9B853100205B78 /* liox.gin */,
+				49B57D051A9B853100205B78 /* methane.gin */,
+				49B57D061A9B853100205B78 /* methane.inp */,
+				49B57D071A9B853100205B78 /* mgo.gin */,
+				49B57D081A9B853100205B78 /* multi12.gin */,
+				49B57D091A9B853100205B78 /* naox.gin */,
+				49B57D0A1A9B853100205B78 /* napth.xtl */,
+				49B57D0B1A9B853100205B78 /* napth_full.gin */,
+				49B57D0C1A9B853100205B78 /* napth_re.gin */,
+				49B57D0D1A9B853100205B78 /* natrite.gin */,
+				49B57D0E1A9B853100205B78 /* natrite_full8.gin */,
+				49B57D0F1A9B853100205B78 /* natrite_gulpfull.gin */,
+				49B57D101A9B853100205B78 /* oxalate.gin */,
+				49B57D111A9B853100205B78 /* silica_clayff.gin */,
+				49B57D121A9B853100205B78 /* silica_clayff.got */,
+				49B57D131A9B853100205B78 /* silica_clayff.got.orig */,
+				49B57D141A9B853100205B78 /* sio2.res */,
+				49B57D151A9B853100205B78 /* so4_iso.gin */,
+				49B57D161A9B853100205B78 /* trona.gin */,
+				49B57D171A9B853100205B78 /* urea.gin */,
+				49B57D181A9B853100205B78 /* urea_001_cut1.gin */,
+				49B57D191A9B853100205B78 /* urea_conp.castep */,
+				49B57D1A1A9B853100205B78 /* urea_conv.castep */,
+				49B57D1B1A9B853100205B78 /* water.car */,
+				49B57D1C1A9B853100205B78 /* zircon.gin */,
+				49B57D1D1A9B853100205B78 /* zircon_BFDH.gmf */,
+				49B57D1E1A9B853100205B78 /* zno_beta.res */,
+			);
+			name = Models;
+			path = ../models;
 			sourceTree = "<group>";
 		};
 		49B888B1060B462E00EF1F08 /* Makefiles */ = {
