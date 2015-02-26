@@ -38,7 +38,7 @@ typedef enum {
 } QECellUnits;
 
 typedef enum {
-  QE_COORD_ALAT, QE_COORD_FRAC, QE_COORD_ANGSTROM
+  QE_COORD_ALAT, QE_COORD_FRAC, QE_COORD_ANGSTROM, QE_COORD_BOHR
 } QECoordUnits;
 
 /* main structures */
@@ -353,21 +353,26 @@ while (TRUE)
     gdouble multiplier;
     
     buff = tokenize(line, &num_tokens);
-    strip_extra(*(buff+1));
-    if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
-      cell_units = QE_CELL_ALAT;
-    else if (g_ascii_strncasecmp(*(buff+1), "bohr", 4) == 0)
+    if (num_tokens == 1)
       cell_units = QE_CELL_BOHR;
-//    else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
-//      cell_units = QE_CELL_ANGSTROM;
     else
       {
-      gchar *msg;
-      
-      msg = g_strdup_printf("%s: Unknown units for cell parameters\n", *(buff+1));
-      gui_text_show(ERROR, msg);
-      g_free(msg);
-      return(2);
+      strip_extra(*(buff+1));
+      if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
+        cell_units = QE_CELL_ALAT;
+      else if (g_ascii_strncasecmp(*(buff+1), "bohr", 4) == 0)
+        cell_units = QE_CELL_BOHR;
+  //    else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
+  //      cell_units = QE_CELL_ANGSTROM;
+      else
+        {
+        gchar *msg;
+        
+        msg = g_strdup_printf("%s: Unknown units for cell parameters\n", *(buff+1));
+        gui_text_show(ERROR, msg);
+        g_free(msg);
+        return(2);
+        }
       }
     g_strfreev(buff);
     switch (cell_units)
@@ -446,21 +451,26 @@ while (TRUE)
     gdouble multiplier;
     
     buff = tokenize(line, &num_tokens);
-    strip_extra(*(buff+1));
-    if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
-      coord_units = QE_COORD_ALAT;
-    else if (g_ascii_strncasecmp(*(buff+1), "crystal", 7) == 0)
-      coord_units = QE_COORD_FRAC;
-    else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
-      coord_units = QE_COORD_ANGSTROM;
+    if (num_tokens == 1)
+      coord_units = QE_COORD_BOHR;
     else
       {
-      gchar *msg;
-      
-      msg = g_strdup_printf("%s: Unknown units for coordinates\n", *(buff+1));
-      gui_text_show(ERROR, msg);
-      g_free(msg);
-      return(2);
+      strip_extra(*(buff+1));
+      if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
+        coord_units = QE_COORD_ALAT;
+      else if (g_ascii_strncasecmp(*(buff+1), "crystal", 7) == 0)
+        coord_units = QE_COORD_FRAC;
+      else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
+        coord_units = QE_COORD_ANGSTROM;
+      else
+        {
+        gchar *msg;
+        
+        msg = g_strdup_printf("%s: Unknown units for coordinates\n", *(buff+1));
+        gui_text_show(ERROR, msg);
+        g_free(msg);
+        return(2);
+        }
       }
     g_strfreev(buff);
     switch (coord_units)
@@ -472,6 +482,10 @@ while (TRUE)
         case QE_COORD_ANGSTROM:
           model->fractional = FALSE;
           multiplier = 1.0;
+        break;
+        case QE_COORD_BOHR:
+          model->fractional = FALSE;
+          multiplier = BOHR_TO_ANGS;
         break;
         case QE_COORD_FRAC:
           model->fractional = TRUE;
@@ -509,6 +523,8 @@ while (TRUE)
         }
       }
     }
+  
+  /* CPMD specific quantities */
   
   /* energy */
   if (g_strrstr(line, "!") != NULL)
@@ -561,13 +577,29 @@ while (TRUE)
       }
     }
 
+  /* CPMD specific quantities */
   
+  /* energy */
+  if (g_strrstr(line, "total energy") != NULL)
+    {
+    buff = g_strsplit(line, "=", 2);
+    text = format_value_and_units(*(buff+1), 5);
+    property_add_ranked(3, "Energy", text, model);
+    g_free(text);
+    g_strfreev(buff);
+    }
+  
+
   /* end of first frame */
   if (g_strrstr(line, "init_run") != NULL)
     break;
   
   /* end of other frames */
   if (g_strrstr(line, "number of scf cycles    ") != NULL)
+    break;
+  
+  /* end of CP MD frame */
+  if (g_strrstr(line, "MLWF step") != NULL)
     break;
 
   /* end of optimisation */
@@ -612,10 +644,20 @@ while (!fgetline(fp, line))
     {
     property_add_ranked(2, "Calculation", "PWSCF", model);
     }
+  if (g_strrstr(line, "Program CP") != NULL)
+    {
+      property_add_ranked(2, "Calculation", "CPMD", model);
+    }
   if (g_strrstr(line, "Exchange-correlation") != NULL)
     {
     buff = tokenize((gchar *)(line), &num_tokens);
     property_add_ranked(7, "Ex-Corr", buff[2], model);
+    g_strfreev(buff);
+    }
+  if (g_strrstr(line, "EXX-fraction") != NULL)
+    {
+    buff = tokenize((gchar *)(line), &num_tokens);
+    property_add_ranked(8, "Ex-fraction", buff[2], model);
     g_strfreev(buff);
     }
   if (g_strrstr(line, "kinetic-energy cutoff") != NULL)
@@ -638,7 +680,7 @@ while (!fgetline(fp, line))
     alat = str_to_float(*(buff+4));
     g_strfreev(buff);
     }
-  if ((g_strrstr(line, "number of bfgs") != NULL) || (g_strrstr(line, "celldm") != NULL))
+  if ((g_strrstr(line, "number of bfgs") != NULL) || (g_strrstr(line, "celldm") != NULL) || (g_strrstr(line, "Physical Quantities at step") != NULL))
     {
 		/* go through all frames to count them */
 		add_frame_offset(fp, model);
