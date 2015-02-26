@@ -668,6 +668,14 @@ while (!fgetline(fp, line))
     g_free(text);
     g_strfreev(buff);
     }
+  if (g_strrstr(line, "Ecutwfc") != NULL)
+    {
+    buff = g_strsplit(line, "=", 2);
+    text = format_value_and_units(*(buff+1), 2);
+    property_add_ranked(6, "KE cutoff", text, model);
+    g_free(text);
+    g_strfreev(buff);
+    }
   if (g_strrstr(line, "number of k points") != NULL)
     {
     buff = tokenize((gchar *)(line), &num_tokens);
