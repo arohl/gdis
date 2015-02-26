@@ -2768,11 +2768,13 @@ g_free(text);
 #define DEBUG_READ_GULP_OUTPUT 0
 gint read_gulp_output(gchar *filename, struct model_pak *data)
 {
-gint i, j, m, n, flag, region, primitive=FALSE, comp=0, shift=0;
+gint i, j, m, n, flag, region, primitive=FALSE, shift=0 /*, comp=0,*/;
 gint status, count=0, dflag=0, fflag=0, pflag=0, read_pass=0, num_tokens;
+gint num_structures = 0;
 gchar line[LINELEN], **buff, *text, coord;
 gdouble *value;
 GSList *list, *flist=NULL, *ir_list=NULL, *raman_list=NULL, *model_list=NULL;
+GString *build_text;
 GHashTable *types=NULL;
 struct model_pak *temp;
 struct core_pak *core;
@@ -2807,7 +2809,8 @@ if (!data->grafted)
   g_free(data->basename);
   data->basename = parse_strip(filename);
   strcpy(data->filename, filename);
-  model_list = g_slist_prepend(model_list, data);
+  /* append to model list as its a relatively short list */
+  model_list = g_slist_append(model_list, data);
   }
 
 /* look for interesting output */
@@ -2837,7 +2840,63 @@ while(!fgetline(fp,line))
   if (g_ascii_strncasecmp("  **** Warning", line, 14) == 0)
     gui_text_show(WARNING, line);
 */
+  
+  /* make new model if new structure number */
+  if (g_ascii_strncasecmp("*  Input for Configuration", line, 26) == 0)
+    {
+    if (num_tokens > 5)
+      {
+      if ((gint) str_to_float(*(buff+5)) == (num_structures + 1))
+        num_structures++;
+      else
+        {
+        build_text = g_string_new("");
+        g_string_printf(build_text, "Inconsistent configuration numbers in GULP: Expecing %d, got %d\n", num_structures+1, (gint)str_to_float(*(buff+5)));
+        gui_text_show(ERROR, build_text->str);
+        g_string_free(build_text, TRUE);
+        return(1);
+        }
+      if (num_structures > 1)
+        {
+        /* create new model */
+        temp = model_new();
+        temp->id = GULPOUT;
+        /* this is now our new model */
+        data = temp;
+        model_list = g_slist_append(model_list, data);
+        }
+      }
+    /* have name? */
+    if (num_tokens > 7)
+      {
+      g_free(data->basename);
+      build_text = g_string_new("");
+      data->basename = g_strdup(buff[7]);
+      }
+    else
+      {
+      g_free(data->basename);
+      g_string_printf(build_text, "Configuration %d", (gint)str_to_float(*(buff+5)));
+      data->basename = build_text->str;
+      g_string_free(build_text, TRUE);
+      }
+    }
+  
+/* Swap structure if neccessary to match output with input */
+  if (g_ascii_strncasecmp("*  Output for Configuration", line, 17) == 0)
+    {
+    /* put energy property into model before switching */
 
+    text = g_strdup_printf("%.5f eV", data->gulp.energy);
+    property_add_ranked(2, "Energy", text, data);
+    g_free(text);
+
+#if DEBUG_READ_GULP_OUTPUT
+    printf("retrieving structure %d\n", (gint) str_to_float(*(buff+4)) - 1);
+#endif
+    data = g_slist_nth_data (model_list, (gint) str_to_float(*(buff+4)) - 1);
+    }
+  
 /* periodicity */
   if (g_ascii_strncasecmp("  Dimensionality", line, 16) == 0)
     {
@@ -2923,34 +2982,34 @@ printf("2 prim\n");
     temp->basename = g_strdup_printf("%s_defect_r1", data->basename);
 /* this is now our new model */
     data = temp;
-    model_list = g_slist_prepend(model_list, data);
+    model_list = g_slist_append(model_list, data);
     }
 
 /* create new model on multiple instances of output data */
 /* introducted to cope with output from the translate option */
-  if (g_ascii_strncasecmp("  Components of energy", line, 22) == 0)
-    {
-    if (comp && !(comp % 2))
-      {
-/* create new model */
-      temp = model_new();
-      temp->id = GULPOUT;
-/* pass model data through */
-      temp->fractional = data->fractional;
-      temp->periodic = data->periodic;
-      temp->sginfo.spacename = g_strdup(data->sginfo.spacename);
-      temp->sginfo.spacenum = -1;
-      temp->construct_pbc = data->construct_pbc;
-      if (data->construct_pbc)
-        memcpy(temp->latmat, data->latmat, 9*sizeof(gdouble));
-      else
-        memcpy(temp->pbc, data->pbc, 6*sizeof(gdouble));
-/* this is now our new model */
-      data = temp;
-      model_list = g_slist_prepend(model_list, data);
-      }
-    comp++;
-    }
+//  if (g_ascii_strncasecmp("  Components of energy", line, 22) == 0)
+//    {
+//    if (comp && !(comp % 2))
+//      {
+///* create new model */
+//      temp = model_new();
+//      temp->id = GULPOUT;
+///* pass model data through */
+//      temp->fractional = data->fractional;
+//      temp->periodic = data->periodic;
+//      temp->sginfo.spacename = g_strdup(data->sginfo.spacename);
+//      temp->sginfo.spacenum = -1;
+//      temp->construct_pbc = data->construct_pbc;
+//      if (data->construct_pbc)
+//        memcpy(temp->latmat, data->latmat, 9*sizeof(gdouble));
+//      else
+//        memcpy(temp->pbc, data->pbc, 6*sizeof(gdouble));
+///* this is now our new model */
+//      data = temp;
+//      model_list = g_slist_append(model_list, data);
+//      }
+//    comp++;
+//    }
 
 /* minimized energy search */
   if (g_ascii_strncasecmp("  Final energy =",line,16) == 0)
@@ -2959,6 +3018,7 @@ printf("2 prim\n");
       {
 /* record total energy */
       data->gulp.energy = str_to_float(*(buff+3));
+      printf("model %d energy %f\n", data,  data->gulp.energy);
       flag++;
       }
     }
@@ -3318,7 +3378,7 @@ printf("Labelling region 2...\n");
           i++;
 
 #if DEBUG_READ_GULP_OUTPUT
-printf("coords: %lf %lf %lf\n", core->x[0], core->x[1], core->x[2]);
+printf("core coords: %lf %lf %lf\n", core->x[0], core->x[1], core->x[2]);
 #endif
           }
 
@@ -3336,7 +3396,7 @@ printf("coords: %lf %lf %lf\n", core->x[0], core->x[1], core->x[2]);
           shell->lookup_charge = FALSE;
 
 #if DEBUG_READ_GULP_OUTPUT
-printf("coords: %lf %lf %lf\n", shell->x[0], shell->x[1], shell->x[2]);
+printf("shel coords: %lf %lf %lf\n", shell->x[0], shell->x[1], shell->x[2]);
 #endif
 
           j++;
@@ -3356,63 +3416,95 @@ printf("Retrieved %d atoms & %d shells (periodic).\n",i,j);
 #endif
     }
 
-/* cell parameters - search 1 */
-  if (g_ascii_strncasecmp("  Final cell parameters",line,22) == 0 && !data->grafted)
+/* cell parameters - search 1 - read from Final cell parameters block */
+if (g_ascii_strncasecmp("  Final cell parameters and derivatives", line, 39) == 0 && !data->grafted)
+  {
+  
+  data->periodic = 3;
+  data->construct_pbc = FALSE;
+  
+  /* skip to 1st line of data */
+  fgetline(fp,line);
+  fgetline(fp,line);
+  
+  /* read cell lengths */
+  for (i=0; i<3; i++)
     {
-/* skip to data */
-    fgetline(fp,line);
-    fgetline(fp,line);
-/* get cell lengths */
-    for (i=0 ; i<6 ; i++)
-      {
-      if (fgetline(fp,line))
-        break;
-      g_strfreev(buff);
-      buff = tokenize(line, &num_tokens);
-      if (num_tokens > 1)
-        data->pbc[i] = str_to_float(*(buff+1));
-      }
-/* convert to radians */
-    data->pbc[3] *= D2R;
-    data->pbc[4] *= D2R;
-    data->pbc[5] *= D2R;
+    g_strfreev(buff);
+    buff = get_tokenized_line(fp, &num_tokens);
+    if (num_tokens > 1)
+      data->pbc[i] = str_to_float(*(buff+1));
     }
 
-/* cell parameters - search 2 */
-  if (g_ascii_strncasecmp("  Non-primitive lattice parameters",line,34) == 0 && !data->grafted)
-    {
-/* skip to data */
-    if (fgetline(fp,line))
-      break;
-    if (fgetline(fp,line))
-      break;
+  /* read cell angles */
 
-/* get cell lengths */
+  for (i=3; i<6; i++)
+    {
     g_strfreev(buff);
-    buff = tokenize(line, &num_tokens);
-    if (num_tokens > 8)
-      {
-      data->pbc[0] = str_to_float(*(buff+2));
-      data->pbc[1] = str_to_float(*(buff+5));
-      data->pbc[2] = str_to_float(*(buff+8));
-      }   
-/* get cell angles */
-    if (fgetline(fp,line))
-      break;
-    g_strfreev(buff);
-    buff = tokenize(line, &num_tokens);
-    if (num_tokens > 5)
-      {
-      data->pbc[3] = D2R*str_to_float(*(buff+1));
-      data->pbc[4] = D2R*str_to_float(*(buff+3));
-      data->pbc[5] = D2R*str_to_float(*(buff+5));
-      }
+    buff = get_tokenized_line(fp, &num_tokens);
+    if (num_tokens > 1)
+      data->pbc[i] = D2R*str_to_float(*(buff+1));
     }
+  }
+  
+///* cell parameters - search 1 */
+//  if (g_ascii_strncasecmp("  Final cell parameters",line,22) == 0 && !data->grafted)
+//    {
+///* skip to data */
+//    fgetline(fp,line);
+//    fgetline(fp,line);
+///* get cell lengths */
+//    for (i=0 ; i<6 ; i++)
+//      {
+//      if (fgetline(fp,line))
+//        break;
+//      g_strfreev(buff);
+//      buff = tokenize(line, &num_tokens);
+//      if (num_tokens > 1)
+//        data->pbc[i] = str_to_float(*(buff+1));
+//      }
+///* convert to radians */
+//    data->pbc[3] *= D2R;
+//    data->pbc[4] *= D2R;
+//    data->pbc[5] *= D2R;
+//    }
+//
+///* cell parameters - search 2 */
+//  if (g_ascii_strncasecmp("  Non-primitive lattice parameters",line,34) == 0 && !data->grafted)
+//    {
+///* skip to data */
+//    if (fgetline(fp,line))
+//      break;
+//    if (fgetline(fp,line))
+//      break;
+//
+///* get cell lengths */
+//    g_strfreev(buff);
+//    buff = tokenize(line, &num_tokens);
+//    if (num_tokens > 8)
+//      {
+//      data->pbc[0] = str_to_float(*(buff+2));
+//      data->pbc[1] = str_to_float(*(buff+5));
+//      data->pbc[2] = str_to_float(*(buff+8));
+//      }   
+///* get cell angles */
+//    if (fgetline(fp,line))
+//      break;
+//    g_strfreev(buff);
+//    buff = tokenize(line, &num_tokens);
+//    if (num_tokens > 5)
+//      {
+//      data->pbc[3] = D2R*str_to_float(*(buff+1));
+//      data->pbc[4] = D2R*str_to_float(*(buff+3));
+//      data->pbc[5] = D2R*str_to_float(*(buff+5));
+//      }
+//    }
 
 /* cell parameters - search 3 */
-  if (g_ascii_strncasecmp("  Final surface cell parameters ",line,32) == 0 && !data->grafted)
+  if (g_ascii_strncasecmp("  Final surface cell parameters ", line, 32) == 0 && !data->grafted)
     {
     data->periodic = 2;
+    data->construct_pbc = FALSE;
     data->fractional = TRUE;
     data->pbc[2] = 0.0;
     data->pbc[3] = PI/2.0;
@@ -3442,6 +3534,7 @@ printf("Retrieved %d atoms & %d shells (periodic).\n",i,j);
   if (g_ascii_strncasecmp("  Surface cell parameters ",line, 26) == 0 && !data->grafted)
     {
     data->periodic = 2;
+    data->construct_pbc = FALSE;
     data->fractional = TRUE;
     data->pbc[2] = 0.0;
     data->pbc[3] = PI/2.0;
@@ -3460,7 +3553,13 @@ printf("Retrieved %d atoms & %d shells (periodic).\n",i,j);
     buff = get_tokenized_line(fp, &num_tokens);
     if (num_tokens > 1)
       data->pbc[1] = str_to_float(*(buff+2));
+#if DEBUG_READ_GULP_OUTPUT
+    printf("Search 4\n");
+    P3VEC("cell lengths ",&data->pbc[0]);
+    P3VEC("cell angles ",&data->pbc[3]);
+#endif
     }
+  
 
 /* cell parameters - search 5 (unrelaxed) */
   if (g_ascii_strncasecmp("  Cell parameters (Angstroms/Degrees):",line,38) == 0 && !data->grafted)
@@ -3709,8 +3808,8 @@ property_add_ranked(2, "Energy", text, data);
 g_free(text);
 
 /* surfaces are always const vol */
-if (data->periodic == 2)
-  data->gulp.method = CONV;
+//if (data->periodic == 2)
+//  data->gulp.method = CONV;
 
 /* init lists */
 if (flist)
@@ -3731,7 +3830,6 @@ if (data->num_phonons)
 #endif
 
 /* initialize the models for display */
-model_list = g_slist_reverse(model_list);
 for (list=model_list ; list ; list=g_slist_next(list))
   {
   temp = list->data;
