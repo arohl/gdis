@@ -2867,18 +2867,18 @@ while(!fgetline(fp,line))
         }
       }
     /* have name? */
+    build_text = g_string_new("");
     if (num_tokens > 7)
       {
       g_free(data->basename);
-      build_text = g_string_new("");
       data->basename = g_strdup(buff[7]);
+      g_string_free(build_text, TRUE);
       }
     else
       {
+      g_string_printf(build_text, "%s_%d", data->basename, (gint)str_to_float(*(buff+5)));
       g_free(data->basename);
-      g_string_printf(build_text, "Configuration %d", (gint)str_to_float(*(buff+5)));
       data->basename = build_text->str;
-      g_string_free(build_text, TRUE);
       }
     }
   
@@ -3018,7 +3018,6 @@ printf("2 prim\n");
       {
 /* record total energy */
       data->gulp.energy = str_to_float(*(buff+3));
-      printf("model %d energy %f\n", data,  data->gulp.energy);
       flag++;
       }
     }
