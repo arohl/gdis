@@ -2868,16 +2868,15 @@ while(!fgetline(fp,line))
       }
     /* have name? */
     build_text = g_string_new("");
-    if (num_tokens > 7)
+    g_free(data->basename);
+   if (num_tokens > 7)
       {
-      g_free(data->basename);
       data->basename = g_strdup(buff[7]);
       g_string_free(build_text, TRUE);
       }
     else
       {
-      g_string_printf(build_text, "%s_%d", data->basename, (gint)str_to_float(*(buff+5)));
-      g_free(data->basename);
+      g_string_printf(build_text, "%model_%d", (gint)str_to_float(*(buff+5))-1);
       data->basename = build_text->str;
       }
     }
