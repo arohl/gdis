@@ -1969,7 +1969,7 @@ while (list)
       shell = core[0]->shell;
       q += shell->charge;
       }
-    g_string_sprintfa(label, "{%6.3f}", q);
+    g_string_sprintfa(label, "{%6.4f}", q);
     }
 
 /* print */
