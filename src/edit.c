@@ -413,7 +413,7 @@ core->atom_type = NULL;
 core->atom_label = NULL;
 core->res_name = NULL;
 core->res_no = 1;
-core->chain = NULL;
+core->chain = 'A';
 core->atom_order = 0;
 
 /* default values for NMR values */

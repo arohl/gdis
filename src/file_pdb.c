@@ -70,7 +70,7 @@ Note that in common with GPTA from Paolo Raiteri, we have used columns 81-100 fo
 void write_pdb_core(FILE *fp, gint i, struct core_pak *core, struct model_pak *model)
 {
 gdouble x[3];
-gchar *res_name, *chain;
+gchar *res_name;
 
 ARR3SET(x, core->x);
 vecmat(model->latmat, x);
@@ -80,14 +80,9 @@ if (!core->res_name)
 else
   res_name = core->res_name;
 
-if (!core->chain)
-  chain = "A";
-else
-  chain = core->chain;
-
 /* NEW - enforce string length minimums */
-fprintf(fp,"ATOM  %5d %-4.4s %3.3s %1.1s %3d    %8.3f%8.3f%8.3f%6.2f%6.2f      %-4.4s%2.2s%-2.2s",
-            i, core->atom_label, res_name, chain, core->res_no,
+fprintf(fp,"ATOM  %5d %-4.4s %3.3s %c %3d    %8.3f%8.3f%8.3f%6.2f%6.2f      %-4.4s%2.2s%-2.2s",
+            i, core->atom_label, res_name, core->chain, core->res_no,
             x[0], x[1], x[2], core->sof, 0.0, "", elements[core->atom_code].symbol, "");
 if (!core->lookup_charge)
   fprintf(fp,"%12.8f", core->charge);
@@ -264,12 +259,23 @@ return(value);
 /*************************************************/
 gchar *fort_read_string(char *line, gint start_col, gint end_col)
 {
-gchar *field;
+  gchar *field;
+  
+  g_return_val_if_fail(start_col > 0, "");
+  g_return_val_if_fail(start_col <= end_col, "");
+  field = g_strndup(line+start_col-1, end_col-start_col+1);
+  return(field);
+}
 
-g_return_val_if_fail(start_col > 0, "");
-g_return_val_if_fail(start_col <= end_col, "");
-field = g_strndup(line+start_col-1, end_col-start_col+1);
-return(field);
+/*************************************************/
+/* read a character from a line of FORTRAN output  */
+/*************************************************/
+gchar fort_read_char(char *line, gint start_col)
+{
+  gchar *field;
+  
+  g_return_val_if_fail(start_col > 0, "");
+  return(line[start_col-1]);
 }
 
 /*************************************************/
@@ -375,9 +381,9 @@ while (!fort_read_line(fp, &line))
     core->res_name = g_strdup(res_name);
     g_free(res_name);
   
-    core->chain = fort_read_string(line, 22, 22);
-    if ((core->chain[0] > 'A') && (core->chain[0] < 'Z'))
-      core->region = core->chain[0] - 'A' + 1;
+    core->chain = fort_read_char(line, 22);
+    if ((core->chain > 'A') && (core->chain < 'Z'))
+      core->region = core->chain - 'A' + 1;
 
     core->res_no = fort_read_gint(line, 23, 26);
     

@@ -40,7 +40,7 @@ gdouble atom_nmr_efgasym;//EFG assymetry
 /* TODO - data structure that contains res_name and res_no and each atom points to this */
 gchar *res_name;   /* NEW - residue name */
 gint res_no;       /* NEW - residue number */
-gchar *chain;       /* NEW - chaincw name */
+gchar chain;       /* NEW - chaincw name */
 
 /* flags */
 gint status;

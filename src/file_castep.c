@@ -656,7 +656,7 @@ for (list=model->cores ; list ; list=g_slist_next(list))
   i++;
   fprintf(fp,"%s   %f   %f   %f\n",elements[core->atom_code].symbol,x[0], x[1], x[2]);
 
-/*     fprintf(fp,"ATOM  %5d %-4.4s %-3.3s  %1.1s %3d %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s%-2s\n",
+/*     fprintf(fp,"ATOM  %5d %-4.4s %-3.3s  %c %3d %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s%-2s\n",
               i, core->atom_label, core->res_name, core->chain, core->res_no, x[0], x[1], x[2], core->sof, 0.0, "", elements[core->atom_code].symbol, "");*/
 }
 

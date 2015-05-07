@@ -987,7 +987,6 @@ g_free(core->atom_label);
 g_free(core->atom_type);
 g_free(core->res_name);
 g_free(core->flags);
-g_free(core->chain);
 g_slist_free(core->bonds);
 
 free_slist(core->vibx_list);
