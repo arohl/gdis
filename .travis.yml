@@ -1,0 +1,15 @@
+sudo: required
+before_script:
+  - sudo apt-get update -q
+  - sudo apt-get install -y expect libgtk2.0-dev libgtkglext1-dev
+script:
+  - |
+    expect <<SCRIPT
+    spawn ./install
+    set timeout 3600
+    expect "Choice: "
+    send -- "1\r"
+    expect "Enter Install location"
+    send -- "\r"
+    expect eof
+    SCRIPT
