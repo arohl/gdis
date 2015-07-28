@@ -60,7 +60,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #define DEFAULT_SS 10
 #define BOND_FUDGE 0.1
 #define RMAX_FUDGE 1.1
-#define ROTATE_SCALE 1.0
+/*#define ROTATE_SCALE 1.0*/
+#define ROTATE_SCALE 0.05
 #define SCALE_MAG 10
 #define MESH_POINTS_MIN 2
 #define MESH_POINTS_MAX 20
@@ -103,7 +104,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #endif
 */
 #define GTK_FONT "Sans 10"
-#define GL_FONT "Sans 14"
+/*#define GL_FONT "Sans 14"*/
+#define GL_FONT "Helvetica 14"
 
 /* camera placement for POVray */
 #define FRAMEZ 2003
