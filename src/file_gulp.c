@@ -2809,9 +2809,10 @@ if (!data->grafted)
   g_free(data->basename);
   data->basename = parse_strip(filename);
   strcpy(data->filename, filename);
-  /* append to model list as its a relatively short list */
-  model_list = g_slist_append(model_list, data);
   }
+
+/* append model to list irrespective of whether its grafted or not */
+  model_list = g_slist_append(model_list, data);
 
 /* look for interesting output */
 flag=status=0;
