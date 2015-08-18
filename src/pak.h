@@ -503,6 +503,8 @@ GtkWidget *sdipole_entry;
 GtkWidget *esurf_entry;
 GtkWidget *eatt_entry;
 GtkWidget *sbe_entry;
+/* HACK - store pointer to GULP dialog so can destroy after read in GULP output */
+GtkWidget *dialog;
 
 /* element/potentials data */
 gchar *potentials;

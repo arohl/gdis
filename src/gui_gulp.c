@@ -206,6 +206,8 @@ printf("WARNING: GULP calculation has possibly failed.\n");
     break;
   }
 
+gtk_widget_destroy(data->gulp.dialog);
+
 g_free(inp);
 g_free(res);
 g_free(out);
@@ -1928,6 +1930,8 @@ dialog = dialog_request(GULP, "GULP configuration", NULL, gulp_cleanup, model);
 if (!dialog)
   return;
 window = dialog_window(dialog);
+
+model->gulp.dialog = window;
 
 vbox = gui_frame_vbox(NULL, FALSE, FALSE, GTK_DIALOG(window)->vbox);
 
