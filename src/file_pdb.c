@@ -382,8 +382,8 @@ while (!fort_read_line(fp, &line))
     g_free(res_name);
   
     core->chain = fort_read_char(line, 22);
-    if ((core->chain > 'A') && (core->chain < 'Z'))
-      core->region = core->chain - 'A' + 1;
+    if ((core->chain >= 'A') && (core->chain <= 'Z'))
+      core->region = core->chain - 'A';
 
     core->res_no = fort_read_gint(line, 23, 26);
     
