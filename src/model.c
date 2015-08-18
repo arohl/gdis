@@ -258,9 +258,12 @@ data->castep.have_energy = data->castep.have_max_grad = data->castep.have_rms_gr
   
 data->qe.energy = data->qe.max_grad = data->qe.rms_grad = 0.0;
 data->qe.have_energy = data->qe.have_max_grad = data->qe.have_rms_grad = data->qe.min_ok = FALSE;
-data->qe.ke_cutoff = 75.0;
 data->qe.have_species = FALSE;
 data->qe.species = NULL;
+  
+data->qe.input_dft = "";
+data->qe.ecutwfc = 75.0;
+data->qe.unparsed_system = NULL;
 
 /* SIESTA defaults */
 data->siesta.num_atoms = 0;

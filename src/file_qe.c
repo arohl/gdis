@@ -30,8 +30,10 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "matrix.h"
 #include "model.h"
 #include "interface.h"
+#include "math.h"
 
 #define DEBUG_READ_QE_OUT 0
+#define DEBUG_READ_QE_IN 0
 
 typedef enum {
   QE_CELL_ALAT, QE_CELL_BOHR /*, QE_CELL_ANGSTROM*/
@@ -127,7 +129,7 @@ fprintf(fp, "\n&system\n");
 fprintf(fp, "  ibrav = 0,\n");
 fprintf(fp, "  nat = %d,\n", model->num_atoms);
 fprintf(fp, "  ntyp = %d,\n", g_slist_length(model->qe.species));
-fprintf(fp, "  ecutwfc = %11.4f,\n", model->qe.ke_cutoff);
+fprintf(fp, "  ecutwfc = %11.4f,\n", model->qe.ecutwfc);
 fprintf(fp, "/\n");
   
 fprintf(fp, "\n&electrons\n");
@@ -710,3 +712,242 @@ model_prep(model);
 
 return(0);
 }
+
+
+/*********************************************/
+/* get a non trivial line from QE input file */
+/*********************************************/
+gint fgetqeline(FILE *fp, gchar *line)
+{
+  gint i, linlen;
+  gboolean found_comment;
+  
+    /* get a line */
+  if (fgets(line, LINELEN/2, fp) == NULL)
+    return(1);
+  linlen = strlen(line);
+  /* only treated as data if not a comment and non empty */
+  if (line[0] != '!' && linlen)
+    {
+    /* Anything following a ! is a comment so remove */
+    found_comment = FALSE;
+    for (i=0; i<strlen(line); i++)
+      {
+      if (line[i] == '!')
+        found_comment = TRUE;
+      if (found_comment)
+        line[i] = ' ';
+      /* strip quotes and commas */
+      if (line[i] == ',' || line[i] == '\"' || line[i] == '\'')
+        line[i] = ' ';
+      }
+    g_strstrip(line);
+    }
+  /* all clear */
+  return(0);
+}
+
+
+/******************************************/
+/* Read in a Quantum ESPRESSO input file */
+/******************************************/
+gint read_qe(gchar *filename, struct model_pak *model)
+{
+  gint i, num_tokens;
+  gint nat=0, ntyp=0, ibrav=0;
+  gdouble celldm[6] ={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  gchar **buff, *text, line[LINELEN];
+  FILE *fp;
+  GSList *clist;
+  struct core_pak *core;
+
+  fp = fopen(filename, "rt");
+  if (!fp)
+    return(1);
+  
+  clist = model->cores;
+  
+  model->periodic = 3;
+  
+  while (!fgetqeline(fp, line))
+    {
+    /* convert line to lower case */
+    for (i=0; i<strlen(line); i++)
+      {
+      line[i] = g_ascii_tolower(line[i]);
+      }
+
+    if (g_strrstr(line, "&system") != NULL)
+      {
+      while (TRUE)
+        {
+        /* TODO: should case be changed? */
+        /* or write own strrstr which copies strings, converts both to lowercase and then does the strstr */
+        fgetqeline(fp, line);
+        if (line[0] == '/')
+          break;
+        if (g_strrstr(line, "nat") != NULL)
+          {
+          buff = g_strsplit(line, "=", 2);
+          nat = (gint) str_to_float(*(buff+1));
+          g_strfreev(buff);
+          }
+        else if (g_strrstr(line, "ntyp") != NULL)
+          {
+          buff = g_strsplit(line, "=", 2);
+          ntyp = (gint) str_to_float(*(buff+1));
+          g_strfreev(buff);
+          }
+        else if (g_strrstr(line, "ecutwfc") != NULL)
+          {
+          buff = g_strsplit(line, "=", 2);
+          model->qe.ecutwfc = str_to_float(*(buff+1));
+          text = format_value_and_units(*(buff+1), 2);
+          property_add_ranked(6, "KE cutoff", text, model);
+          g_free(text);
+          g_strfreev(buff);
+          }
+        else if (g_strrstr(line, "input_dft") != NULL)
+          {
+          buff = g_strsplit(line, "=", 2);
+          model->qe.input_dft = g_strdup(*(buff+1));
+          property_add_ranked(7, "Ex-Corr", model->qe.input_dft, model);
+          g_strfreev(buff);
+          }
+        else if (g_strrstr(line, "celldm") != NULL)
+          {
+          gint index;
+          
+          index = line[7] - '1';
+          buff = g_strsplit(line, "=", 2);
+          celldm[index] = str_to_float(*(buff+1));
+          g_strfreev(buff);
+          }
+        else if (g_strrstr(line, "ibrav") != NULL)
+          {
+          buff = g_strsplit(line, "=", 2);
+          ibrav = (gint) str_to_float(*(buff+1));
+          g_strfreev(buff);
+          }
+        }
+      }
+    if (g_strrstr(line, "atomic_positions") != NULL)
+      {
+      QECoordUnits coord_units;
+      gdouble multiplier;
+      
+      if (nat < 1)
+        {
+        gui_text_show(ERROR, "number of atoms not defined or less than 1");
+        return(2);
+        }
+        
+      buff = tokenize(line, &num_tokens);
+      if (num_tokens == 1)
+        coord_units = QE_COORD_BOHR;
+      else
+        {
+        strip_extra(*(buff+1));
+        if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
+          coord_units = QE_COORD_ALAT;
+        else if (g_ascii_strncasecmp(*(buff+1), "crystal", 7) == 0)
+          coord_units = QE_COORD_FRAC;
+        else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
+          coord_units = QE_COORD_ANGSTROM;
+        else if (g_ascii_strncasecmp(*(buff+1), "bohr", 8) == 0)
+          coord_units = QE_COORD_BOHR;
+        else
+          {
+          gchar *msg;
+          
+          msg = g_strdup_printf("%s: Unknown units for coordinates\n", *(buff+1));
+          gui_text_show(ERROR, msg);
+          g_free(msg);
+          return(2);
+          }
+        }
+      g_strfreev(buff);
+      switch (coord_units)
+        {
+          case QE_COORD_ALAT:
+          model->fractional = FALSE;
+          multiplier = alat*BOHR_TO_ANGS;
+          break;
+          case QE_COORD_ANGSTROM:
+          model->fractional = FALSE;
+          multiplier = 1.0;
+          break;
+          case QE_COORD_BOHR:
+          model->fractional = FALSE;
+          multiplier = BOHR_TO_ANGS;
+          break;
+          case QE_COORD_FRAC:
+          model->fractional = TRUE;
+          multiplier = 1.0;
+          break;
+        }
+      for (i=0; i< nat; i++)
+        {
+        fgetqeline(fp, line);
+        buff = tokenize(line, &num_tokens);
+        if (num_tokens == 4)
+          {
+          if (clist)
+            {
+            core = (struct core_pak *) clist->data;
+            clist = g_slist_next(clist);
+            }
+          else
+            {
+            core = new_core(*(buff+0), model);
+            model->cores = g_slist_append(model->cores, core);
+            }
+          core->x[0] = str_to_float(*(buff+1))*multiplier;
+          core->x[1] = str_to_float(*(buff+2))*multiplier;
+          core->x[2] = str_to_float(*(buff+3))*multiplier;
+#if DEBUG_READ_QE_OUT
+          printf("new coords %f %f %f\n", core->x[0], core->x[1], core->x[2]);
+#endif
+          g_strfreev(buff);
+          }
+        else
+          {
+          g_strfreev(buff);
+          break;
+          }
+        }
+      }
+    }
+  
+  /* sort out lattice vectors */
+  model->construct_pbc = TRUE;
+  celldm[0] *= BOHR_TO_ANGS;
+  switch (ibrav)
+  {
+    case 0:
+    break;
+    case 1:
+    model->latmat[0] = model->latmat[4] = model->latmat[8] = celldm[0];
+    break;
+    case 4:
+    model->latmat[0] = celldm[0];
+    model->latmat[1] = celldm[0]*-0.5;
+    model->latmat[4] = celldm[0]*0.5*sqrt(3);
+    model->latmat[8] = celldm[0]*celldm[2];
+    break;
+    default:
+    text = g_strdup_printf("ibrav = %d not yet implemented\n", ibrav);
+    gui_text_show(ERROR, text);
+    g_free(text);
+    return(2);
+  }
+  
+  strcpy(model->filename, filename);
+  g_free(model->basename);
+  model->basename = parse_strip(filename);
+  
+  model_prep(model);
+  
+  return(0);
+}
+

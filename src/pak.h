@@ -973,9 +973,13 @@ struct qe_pak
   gint have_energy;
   gint have_max_grad;
   gint have_rms_grad;
-  gdouble ke_cutoff;
   gdouble have_species;
   GSList *species;
+  
+  /* SYSTEM namelist */
+  gchar *input_dft;
+  gdouble ecutwfc;
+  GSList *unparsed_system;
 };
 
 /**********************/

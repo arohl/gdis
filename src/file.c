@@ -348,7 +348,7 @@ file_data->label = g_strdup("QE");
 file_data->ext = NULL;
 file_data->ext = g_slist_append(file_data->ext, "qein");
 file_data->write_file = write_qe;
-file_data->read_file = NULL;
+file_data->read_file = read_qe;
 file_data->read_frame = NULL;
 sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
