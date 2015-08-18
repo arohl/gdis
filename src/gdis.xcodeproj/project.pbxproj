@@ -15,11 +15,16 @@
 		4927B95F1A0508CA001BF241 /* libgobject-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B95E1A0508CA001BF241 /* libgobject-2.0.0.dylib */; };
 		4927B9611A0509B3001BF241 /* libgthread-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B9601A0509B3001BF241 /* libgthread-2.0.0.dylib */; };
 		493D4F091A749B4F00F8D944 /* file_qe.c in Sources */ = {isa = PBXBuildFile; fileRef = 493D4F081A749B4F00F8D944 /* file_qe.c */; };
-		493FBBB11A051C8A004749B5 /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = 493FBBAA1A051C8A004749B5 /* makefile */; };
+		495093BB1A9F19CF001C74C4 /* gdis.manual in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CBD1A9B83A000205B78 /* gdis.manual */; };
+		495093BC1A9F19CF001C74C4 /* gdis.elements in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CBE1A9B83A000205B78 /* gdis.elements */; };
+		495093BD1A9F19CF001C74C4 /* gdis.library in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CBF1A9B83A000205B78 /* gdis.library */; };
+		495093BE1A9F19CF001C74C4 /* water.qeout in CopyFiles */ = {isa = PBXBuildFile; fileRef = 495093BA1A9F19AB001C74C4 /* water.qeout */; };
 		49714D5505E3ADF9002CED9C /* libICE.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A848E059B206A005B1183 /* libICE.dylib */; };
 		49714D5B05E3ADF9002CED9C /* libSM.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A848F059B206A005B1183 /* libSM.dylib */; };
 		49714D5C05E3ADF9002CED9C /* libXmu.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A8490059B206A005B1183 /* libXmu.dylib */; };
 		49714D5D05E3ADF9002CED9C /* libXt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A8491059B206A005B1183 /* libXt.dylib */; };
+		4979FCDC1AA0910400898946 /* water.qein in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4979FCDB1AA090F400898946 /* water.qein */; };
+		4979FCDF1AA4905C00898946 /* octane.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4979FCDE1AA4904900898946 /* octane.got */; };
 		49884E6E1A07BC6600B54AD9 /* analysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E261A07BC6600B54AD9 /* analysis.h */; };
 		49884E6F1A07BC6600B54AD9 /* colourlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E271A07BC6600B54AD9 /* colourlib.h */; };
 		49884E701A07BC6600B54AD9 /* command.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E281A07BC6600B54AD9 /* command.h */; };
@@ -138,7 +143,6 @@
 		49884F5D1A07BC9B00B54AD9 /* gl_primitives.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EE61A07BC9B00B54AD9 /* gl_primitives.c */; };
 		49884F5E1A07BC9B00B54AD9 /* gl_stereo.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EE71A07BC9B00B54AD9 /* gl_stereo.c */; };
 		49884F5F1A07BC9B00B54AD9 /* gl_varray.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EE81A07BC9B00B54AD9 /* gl_varray.c */; };
-		49884F601A07BC9B00B54AD9 /* grid.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EE91A07BC9B00B54AD9 /* grid.c */; };
 		49884F621A07BC9B00B54AD9 /* gui_analysis.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EEB1A07BC9B00B54AD9 /* gui_analysis.c */; };
 		49884F631A07BC9B00B54AD9 /* gui_animate.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EEC1A07BC9B00B54AD9 /* gui_animate.c */; };
 		49884F641A07BC9B00B54AD9 /* gui_canvas.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EED1A07BC9B00B54AD9 /* gui_canvas.c */; };
@@ -148,7 +152,6 @@
 		49884F681A07BC9B00B54AD9 /* gui_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF11A07BC9B00B54AD9 /* gui_edit.c */; };
 		49884F691A07BC9B00B54AD9 /* gui_gms.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF21A07BC9B00B54AD9 /* gui_gms.c */; };
 		49884F6A1A07BC9B00B54AD9 /* gui_gperiodic.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF31A07BC9B00B54AD9 /* gui_gperiodic.c */; };
-		49884F6B1A07BC9B00B54AD9 /* gui_grid.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF41A07BC9B00B54AD9 /* gui_grid.c */; };
 		49884F6C1A07BC9B00B54AD9 /* gui_gulp.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF51A07BC9B00B54AD9 /* gui_gulp.c */; };
 		49884F6D1A07BC9B00B54AD9 /* gui_help.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF61A07BC9B00B54AD9 /* gui_help.c */; };
 		49884F6E1A07BC9B00B54AD9 /* gui_job.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884EF71A07BC9B00B54AD9 /* gui_job.c */; };
@@ -205,6 +208,7 @@
 		49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF31A9B853100205B78 /* example12.gin */; };
 		49B57D201A9B861500205B78 /* example12.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF41A9B853100205B78 /* example12.got */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
+		49D696DC1A9C2F3300239D39 /* test_surf.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D696DB1A9C2F1C00239D39 /* test_surf.got */; };
 		49DCE35C1A050B040048BD5C /* libintl.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35B1A050B040048BD5C /* libintl.8.dylib */; };
 		49DCE35E1A050B220048BD5C /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35D1A050B220048BD5C /* libiconv.2.dylib */; };
 		49DCE3601A050B390048BD5C /* libatk-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */; };
@@ -226,6 +230,7 @@
 			isEditable = 1;
 			outputFiles = (
 			);
+			script = "";
 		};
 /* End PBXBuildRule section */
 
@@ -236,6 +241,13 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
+				4979FCDF1AA4905C00898946 /* octane.got in CopyFiles */,
+				4979FCDC1AA0910400898946 /* water.qein in CopyFiles */,
+				495093BB1A9F19CF001C74C4 /* gdis.manual in CopyFiles */,
+				495093BC1A9F19CF001C74C4 /* gdis.elements in CopyFiles */,
+				495093BD1A9F19CF001C74C4 /* gdis.library in CopyFiles */,
+				495093BE1A9F19CF001C74C4 /* water.qeout in CopyFiles */,
+				49D696DC1A9C2F3300239D39 /* test_surf.got in CopyFiles */,
 				49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */,
 				49B57D201A9B861500205B78 /* example12.got in CopyFiles */,
 			);
@@ -258,6 +270,11 @@
 		493FBBAE1A051C8A004749B5 /* makefile.sgi */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = makefile.sgi; sourceTree = "<group>"; };
 		493FBBAF1A051C8A004749B5 /* makefile.src */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = makefile.src; sourceTree = "<group>"; };
 		493FBBB01A051C8A004749B5 /* makefile.win32 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = makefile.win32; sourceTree = "<group>"; };
+		495093BA1A9F19AB001C74C4 /* water.qeout */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = water.qeout; sourceTree = "<group>"; };
+		4979FCDB1AA090F400898946 /* water.qein */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = water.qein; sourceTree = "<group>"; };
+		4979FCDD1AA4904900898946 /* octane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octane.gin; sourceTree = "<group>"; };
+		4979FCDE1AA4904900898946 /* octane.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octane.got; sourceTree = "<group>"; };
+		4979FCE01AA4B76000898946 /* vdw1.qein */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = vdw1.qein; path = ../src/vdw1.qein; sourceTree = "<group>"; };
 		49884E261A07BC6600B54AD9 /* analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = analysis.h; sourceTree = "<group>"; };
 		49884E271A07BC6600B54AD9 /* colourlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = colourlib.h; sourceTree = "<group>"; };
 		49884E281A07BC6600B54AD9 /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = command.h; sourceTree = "<group>"; };
@@ -376,7 +393,6 @@
 		49884EE61A07BC9B00B54AD9 /* gl_primitives.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_primitives.c; sourceTree = "<group>"; };
 		49884EE71A07BC9B00B54AD9 /* gl_stereo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_stereo.c; sourceTree = "<group>"; };
 		49884EE81A07BC9B00B54AD9 /* gl_varray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_varray.c; sourceTree = "<group>"; };
-		49884EE91A07BC9B00B54AD9 /* grid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = grid.c; sourceTree = "<group>"; };
 		49884EEB1A07BC9B00B54AD9 /* gui_analysis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_analysis.c; sourceTree = "<group>"; };
 		49884EEC1A07BC9B00B54AD9 /* gui_animate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_animate.c; sourceTree = "<group>"; };
 		49884EED1A07BC9B00B54AD9 /* gui_canvas.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_canvas.c; sourceTree = "<group>"; };
@@ -386,7 +402,6 @@
 		49884EF11A07BC9B00B54AD9 /* gui_edit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_edit.c; sourceTree = "<group>"; };
 		49884EF21A07BC9B00B54AD9 /* gui_gms.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_gms.c; sourceTree = "<group>"; };
 		49884EF31A07BC9B00B54AD9 /* gui_gperiodic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_gperiodic.c; sourceTree = "<group>"; };
-		49884EF41A07BC9B00B54AD9 /* gui_grid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_grid.c; sourceTree = "<group>"; };
 		49884EF51A07BC9B00B54AD9 /* gui_gulp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_gulp.c; sourceTree = "<group>"; };
 		49884EF61A07BC9B00B54AD9 /* gui_help.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_help.c; sourceTree = "<group>"; };
 		49884EF71A07BC9B00B54AD9 /* gui_job.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_job.c; sourceTree = "<group>"; };
@@ -585,6 +600,7 @@
 		49B57D1D1A9B853100205B78 /* zircon_BFDH.gmf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zircon_BFDH.gmf; sourceTree = "<group>"; };
 		49B57D1E1A9B853100205B78 /* zno_beta.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zno_beta.res; sourceTree = "<group>"; };
 		49D234271A84D31600319538 /* file_mol2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_mol2.c; sourceTree = "<group>"; };
+		49D696DB1A9C2F1C00239D39 /* test_surf.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_surf.got; sourceTree = "<group>"; };
 		49DCE35B1A050B040048BD5C /* libintl.8.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libintl.8.dylib; path = /opt/local/lib/libintl.8.dylib; sourceTree = "<absolute>"; };
 		49DCE35D1A050B220048BD5C /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = /opt/local/lib/libiconv.2.dylib; sourceTree = "<absolute>"; };
 		49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libatk-1.0.0.dylib"; path = "/opt/local/lib/libatk-1.0.0.dylib"; sourceTree = "<absolute>"; };
@@ -706,7 +722,6 @@
 				49884EE61A07BC9B00B54AD9 /* gl_primitives.c */,
 				49884EE71A07BC9B00B54AD9 /* gl_stereo.c */,
 				49884EE81A07BC9B00B54AD9 /* gl_varray.c */,
-				49884EE91A07BC9B00B54AD9 /* grid.c */,
 				49884EEB1A07BC9B00B54AD9 /* gui_analysis.c */,
 				49884EEC1A07BC9B00B54AD9 /* gui_animate.c */,
 				49884EED1A07BC9B00B54AD9 /* gui_canvas.c */,
@@ -716,7 +731,6 @@
 				49884EF11A07BC9B00B54AD9 /* gui_edit.c */,
 				49884EF21A07BC9B00B54AD9 /* gui_gms.c */,
 				49884EF31A07BC9B00B54AD9 /* gui_gperiodic.c */,
-				49884EF41A07BC9B00B54AD9 /* gui_grid.c */,
 				49884EF51A07BC9B00B54AD9 /* gui_gulp.c */,
 				49884EF61A07BC9B00B54AD9 /* gui_help.c */,
 				49884EF71A07BC9B00B54AD9 /* gui_job.c */,
@@ -872,6 +886,12 @@
 		49B57CC01A9B853100205B78 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				4979FCE01AA4B76000898946 /* vdw1.qein */,
+				4979FCDD1AA4904900898946 /* octane.gin */,
+				4979FCDE1AA4904900898946 /* octane.got */,
+				4979FCDB1AA090F400898946 /* water.qein */,
+				49D696DB1A9C2F1C00239D39 /* test_surf.got */,
+				495093BA1A9F19AB001C74C4 /* water.qeout */,
 				49B57CC11A9B853100205B78 /* 1_C2H4_HOOH_Tifer.arc */,
 				49B57CC21A9B853100205B78 /* 1FUF.gin */,
 				49B57CC31A9B853100205B78 /* adp1.cif */,
@@ -1165,7 +1185,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 0640;
 			};
 			buildConfigurationList = 031A1EA70855448700FAD56D /* Build configuration list for PBXProject "gdis" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1232,7 +1252,6 @@
 				49884F4D1A07BC9B00B54AD9 /* file_gms.c in Sources */,
 				49884F9C1A07BC9B00B54AD9 /* spatial.c in Sources */,
 				49884F371A07BC9B00B54AD9 /* dock.c in Sources */,
-				49884F601A07BC9B00B54AD9 /* grid.c in Sources */,
 				49884F761A07BC9B00B54AD9 /* gui_setup.c in Sources */,
 				49884F421A07BC9B00B54AD9 /* file_cgf.c in Sources */,
 				49884F5B1A07BC9B00B54AD9 /* gl_graph.c in Sources */,
@@ -1246,7 +1265,6 @@
 				49884F961A07BC9B00B54AD9 /* sgclib.c in Sources */,
 				49884F561A07BC9B00B54AD9 /* file_xml.c in Sources */,
 				49884F311A07BC9B00B54AD9 /* connect.c in Sources */,
-				493FBBB11A051C8A004749B5 /* makefile in Sources */,
 				49884F2E1A07BC9B00B54AD9 /* camera.c in Sources */,
 				49884F331A07BC9B00B54AD9 /* coords.c in Sources */,
 				49884F751A07BC9B00B54AD9 /* gui_render.c in Sources */,
@@ -1263,7 +1281,6 @@
 				49884F9E1A07BC9B00B54AD9 /* task.c in Sources */,
 				49884F7F1A07BC9B00B54AD9 /* hirshfeld.c in Sources */,
 				49884F571A07BC9B00B54AD9 /* file_xtl.c in Sources */,
-				49884F6B1A07BC9B00B54AD9 /* gui_grid.c in Sources */,
 				493D4F091A749B4F00F8D944 /* file_qe.c in Sources */,
 				49884F8E1A07BC9B00B54AD9 /* numeric.c in Sources */,
 				49884F851A07BC9B00B54AD9 /* main.c in Sources */,
@@ -1349,21 +1366,11 @@
 				GENERATE_PKGINFO_FILE = NO;
 				GENERATE_PROFILING_CODE = YES;
 				HEADER_SEARCH_PATHS = (
-					/sw/include,
-					"/sw/include/gtk-2.0",
-					"/sw/lib/gtk-2.0/include",
-					"/sw/include/glib-2.0",
-					"/sw/lib/glib-2.0/include",
-					"/sw/include/atk-1.0",
-					"/sw/include/pango-1.0",
 					/usr/X11R6/include,
 					/usr/X11R6/include/freetype2,
-					"/sw/include/gtkglext-1.0",
-					"/sw/lib/gtkglext-1.0/include",
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/sw/lib,
 					/usr/X11R6/lib,
 					/opt/local/lib,
 				);
@@ -1409,21 +1416,11 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PROFILING_CODE = NO;
 				HEADER_SEARCH_PATHS = (
-					/sw/include,
-					"/sw/include/gtk-2.0",
-					"/sw/lib/gtk-2.0/include",
-					"/sw/include/glib-2.0",
-					"/sw/lib/glib-2.0/include",
-					"/sw/include/atk-1.0",
-					"/sw/include/pango-1.0",
 					/usr/X11R6/include,
 					/usr/X11R6/include/freetype2,
-					"/sw/include/gtkglext-1.0",
-					"/sw/lib/gtkglext-1.0/include",
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/sw/lib,
 					/usr/X11R6/lib,
 					/opt/local/lib,
 				);
@@ -1466,21 +1463,11 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PROFILING_CODE = YES;
 				HEADER_SEARCH_PATHS = (
-					/sw/include,
-					"/sw/include/gtk-2.0",
-					"/sw/lib/gtk-2.0/include",
-					"/sw/include/glib-2.0",
-					"/sw/lib/glib-2.0/include",
-					"/sw/include/atk-1.0",
-					"/sw/include/pango-1.0",
 					/usr/X11R6/include,
 					/usr/X11R6/include/freetype2,
-					"/sw/include/gtkglext-1.0",
-					"/sw/lib/gtkglext-1.0/include",
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/sw/lib,
 					/usr/X11R6/lib,
 					/opt/local/lib,
 				);
