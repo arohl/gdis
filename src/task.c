@@ -91,7 +91,6 @@ gdk_beep();
 void task_queue_init(void)
 {
 #ifdef G_THREADS_ENABLED
-g_thread_init(NULL);
 gdk_threads_init();
 if (!g_thread_supported())
   {
