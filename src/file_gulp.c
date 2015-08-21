@@ -3469,36 +3469,37 @@ if (g_ascii_strncasecmp("  Final cell parameters and derivatives", line, 39) == 
 //    data->pbc[5] *= D2R;
 //    }
 //
-///* cell parameters - search 2 */
-//  if (g_ascii_strncasecmp("  Non-primitive lattice parameters",line,34) == 0 && !data->grafted)
-//    {
-///* skip to data */
-//    if (fgetline(fp,line))
-//      break;
-//    if (fgetline(fp,line))
-//      break;
-//
-///* get cell lengths */
-//    g_strfreev(buff);
-//    buff = tokenize(line, &num_tokens);
-//    if (num_tokens > 8)
-//      {
-//      data->pbc[0] = str_to_float(*(buff+2));
-//      data->pbc[1] = str_to_float(*(buff+5));
-//      data->pbc[2] = str_to_float(*(buff+8));
-//      }   
-///* get cell angles */
-//    if (fgetline(fp,line))
-//      break;
-//    g_strfreev(buff);
-//    buff = tokenize(line, &num_tokens);
-//    if (num_tokens > 5)
-//      {
-//      data->pbc[3] = D2R*str_to_float(*(buff+1));
-//      data->pbc[4] = D2R*str_to_float(*(buff+3));
-//      data->pbc[5] = D2R*str_to_float(*(buff+5));
-//      }
-//    }
+
+/* cell parameters - search 2 */
+  if (g_ascii_strncasecmp("  Non-primitive lattice parameters",line,34) == 0 && !data->grafted)
+    {
+/* skip to data */
+    if (fgetline(fp,line))
+      break;
+    if (fgetline(fp,line))
+      break;
+
+/* get cell lengths */
+    g_strfreev(buff);
+    buff = tokenize(line, &num_tokens);
+    if (num_tokens > 8)
+      {
+      data->pbc[0] = str_to_float(*(buff+2));
+      data->pbc[1] = str_to_float(*(buff+5));
+      data->pbc[2] = str_to_float(*(buff+8));
+      }   
+/* get cell angles */
+    if (fgetline(fp,line))
+      break;
+    g_strfreev(buff);
+    buff = tokenize(line, &num_tokens);
+    if (num_tokens > 5)
+      {
+      data->pbc[3] = D2R*str_to_float(*(buff+1));
+      data->pbc[4] = D2R*str_to_float(*(buff+3));
+      data->pbc[5] = D2R*str_to_float(*(buff+5));
+      }
+    }
 
 /* cell parameters - search 3 */
   if (g_ascii_strncasecmp("  Final surface cell parameters ", line, 32) == 0 && !data->grafted)
