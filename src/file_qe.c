@@ -917,6 +917,71 @@ gint read_qe(gchar *filename, struct model_pak *model)
           }
         }
       }
+    if (g_strrstr(line, "cell_parameters") != NULL)
+      {
+      QECoordUnits cell_units;
+      gdouble multiplier;
+
+      buff = tokenize(line, &num_tokens);
+      if (num_tokens == 1)
+        cell_units = QE_COORD_BOHR;
+      else
+        {
+        strip_extra(*(buff+1));
+        if (g_ascii_strncasecmp(*(buff+1), "alat", 4) == 0)
+          cell_units = QE_COORD_ALAT;
+        else if (g_ascii_strncasecmp(*(buff+1), "angstrom", 8) == 0)
+          cell_units = QE_COORD_ANGSTROM;
+        else if (g_ascii_strncasecmp(*(buff+1), "bohr", 8) == 0)
+          cell_units = QE_COORD_BOHR;
+        else
+          {
+          gchar *msg;
+          
+          printf("%s: Unknown units for cell\n", *(buff+1));
+          msg = g_strdup_printf("%s: Unknown units for cell\n", *(buff+1));
+          gui_text_show(ERROR, msg);
+          g_free(msg);
+          return(2);
+          }
+        }
+      g_strfreev(buff);
+      switch (cell_units)
+        {
+          case QE_COORD_ALAT:
+          multiplier = alat*BOHR_TO_ANGS;
+          break;
+          case QE_COORD_ANGSTROM:
+          multiplier = 1.0;
+          break;
+          case QE_COORD_BOHR:
+          model->fractional = FALSE;
+          multiplier = BOHR_TO_ANGS;
+          break;
+        }
+      for (i=0; i< 3; i++)
+        {
+        fgetqeline(fp, line);
+        buff = tokenize(line, &num_tokens);
+
+        if (num_tokens == 3)
+          {
+#if DEBUG_READ_QE_OUT
+          printf("cell params %s %s %s\n", buff[0], buff[1], buff[2]);
+#endif
+          model->latmat[0+i] = str_to_float(*(buff+0))*multiplier;
+          model->latmat[3+i] = str_to_float(*(buff+1))*multiplier;
+          model->latmat[6+i] = str_to_float(*(buff+2))*multiplier;
+
+          g_strfreev(buff);
+          }
+        else
+          {
+          g_strfreev(buff);
+          break;
+          }
+        }
+      }
     }
   
   /* sort out lattice vectors */
