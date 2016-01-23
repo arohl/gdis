@@ -7,7 +7,7 @@ use File::Copy;
 # --- config
 my $logfile = "install.log";
 my $makefile = "makefile";
-my $use_gui=0;
+my $use_gui=1;
 my $use_grisu=0;
 my $wsdl2h = "wsdl2h";
 my $soapcpp2 = "soapcpp2";
@@ -18,8 +18,14 @@ my $soapcpp2 = "soapcpp2";
 # --- redirect errors
 open(STDERR, ">$logfile");
 
+if ($ARGV[0] eq "default")
+  {
+  }
+else
+  { 
 # --- get compile preferences from user
-&user_prompt();
+  &user_prompt();
+  }
 
 # pre-checks os / files (eg pkg-config) / libs
 my $osmakefile = &check_os();
@@ -45,18 +51,25 @@ if ($use_grisu)
   }
 
 # print current options + any warnings etc
-do
+if ($ARGV[0] eq "default")
   {
-  print "Enter Install location (press return to not install): ";
-  $_ = <>;
-  chomp;
-# use current directory if enter pressed
-  if ($_ eq '')
-    {
-    $_ = ".";
-    }
+  $_ = ".";
   }
-while (&check_install($_));
+else
+  { 
+  do
+    {
+    print "Enter Install location (press return to not install): ";
+    $_ = <>;
+    chomp;
+  # use current directory if enter pressed
+    if ($_ eq '')
+      {
+      $_ = ".";
+      }
+    }
+  while (&check_install($_));
+  }
 
 my $dest = $_."/";
 
