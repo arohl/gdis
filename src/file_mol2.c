@@ -80,7 +80,11 @@ gint read_mol2(gchar *filename, struct model_pak *data)
           core->x[1] = str_to_float(*(buff+3));
           core->x[2] = str_to_float(*(buff+4));
           
-          if (num_tokens > 9)
+          if (num_tokens >= 6)
+            {
+            core->atom_type = g_strdup(*(buff+5));
+            }
+          if (num_tokens >= 9)
             {
             core->charge = str_to_float(*(buff+8));
             core->lookup_charge = FALSE;
