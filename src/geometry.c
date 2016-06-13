@@ -389,7 +389,7 @@ for (i=0 ; i<m ; i++)
   if (g_slist_length(vlist) > 2)
     {
 #if MORPH_BUILD
-printf("facet %d: %d vertices\n", i, g_slist_length(vlist));
+printf("facet %d: (%d%d%d): %d vertices\n", i, hkl[i][0], hkl[i][1], hkl[i][2], g_slist_length(vlist));
 for (list1=vlist ; list1 ; list1=g_slist_next(list1))
   {
   v1 = list1->data;
