@@ -705,7 +705,7 @@ if (data->gulp.nosym)
   g_string_append(line," nosym full");
 /* electrostatic potential calcs */
 if (g_slist_length(data->gulp.epot_vecs))
-  g_string_append(line," epot");
+  g_string_append(line," pot");
 
 /* print out the keywords line */
 if (data->gulp.output_extra_keywords && data->gulp.extra_keywords)
