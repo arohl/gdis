@@ -1117,19 +1117,19 @@ GString *buff;
 /* checks */
 g_assert(fp != NULL);
 c = fgetc(fp);
-if (c == EOF)
+if (feof(fp))
   return(NULL);
 
 /* read single chars into an expandable buffer */
 buff = g_string_new(NULL);
-while (c != EOF)
+while (!feof(fp))
   {
   skip = FALSE;
   if (c == '#' && skip_comment)
     skip = TRUE;
 
 /* read a complete line */
-  while (c != EOF)
+  while (!feof(fp))
     {
     g_string_append_c(buff, c);
     if (c == '\n')
