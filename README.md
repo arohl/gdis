@@ -1,4 +1,4 @@
-##GDIS, Copyright (C) 2000-2015 by Sean Fleming, Andrew Rohl
+## GDIS, Copyright (C) 2000-2015 by Sean Fleming, Andrew Rohl
 
 <a.rohl@curtin.edu.au>
 
@@ -9,7 +9,7 @@ This is free software. You are welcome to redistribute copies provided the condi
 Although you are not required to do so, the authors would consider it a courtesy if you submit to them any changes you consider to be worthwhile. The goal would be to keep the development of GDIS more
 or less centralized.
 
-###Installation
+### Installation
 
 To install GDIS from source you need a working C compiler, [gtk+2](http://www.gtk.org) and [gtkglext](https://projects.gnome.org/gtkglext/index.html). You then simply type:
 ```
@@ -17,7 +17,7 @@ To install GDIS from source you need a working C compiler, [gtk+2](http://www.gt
 ```
 and follow the prompts. The script will check for the existence of gtk+2 and  gtkglext and then compile GDIS. If you don't specify an install directory, the GDIS executable will be in the `bin` directory.
  
-###Notes
+### Notes
 
 Some cool features of GDIS are entirely due to the hard work that has gone into creating the following packages:
 
