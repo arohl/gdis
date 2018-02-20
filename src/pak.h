@@ -862,6 +862,19 @@ gdouble electrostatic_pot_on_mesh;
 gchar * modelfilename;
 };
 
+/*********** */
+/* VASP pack */
+/*************/
+struct vasp_pak
+{
+gint num_atoms;
+gint num_species;
+gint num_iter;
+gdouble energy;
+GSList *species_list; /*atom def does not change*/
+};
+
+
 /***************/
 /* Monty2 data */
 /***************/
@@ -1220,6 +1233,7 @@ GString *error_file_read;
 struct gulp_pak gulp;
 struct gamess_pak gamess;
 struct siesta_pak siesta;
+struct vasp_pak vasp;
 struct abinit_pak abinit;
 struct nwchem_pak nwchem;
 struct castep_pak castep;

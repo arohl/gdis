@@ -9,7 +9,7 @@ SRC =	main.c model.c coords.c connect.c matrix.c module.c task.c \
 	mesch.c mesch_core.c host.c job.c command.c undo.c count.c \
 	ff.c ff_gulp.c test.c \
 	file.c file_cif.c file_gulp.c file_gmf.c file_marvin.c file_xtl.c \
-	file_arc.c file_xyz.c file_fdf.c file_gms.c file_diff.c file_xml.c \
+	file_arc.c file_xyz.c file_fdf.c file_vasp.c file_gms.c file_diff.c file_xml.c \
 	file_abinit.c file_pdb.c file_povray.c file_nwchem.c file_castep.c \
 	file_gauss.c file_qe.c file_rietica.c file_geomview.c file_cssr.c file_cel.c \
 	file_dmol.c file_dlpoly.c file_bgf.c file_cgf.c file_dlp.c \

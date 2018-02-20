@@ -625,6 +625,19 @@ sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */
 file_data = g_malloc(sizeof(struct file_pak));
+file_data->id = VASP;
+file_data->group = VASP;
+file_data->menu = TRUE;
+file_data->label = g_strdup("VASP xml");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "xml");
+file_data->write_file = NULL;
+file_data->read_file = read_xml_vasp;
+file_data->read_frame = read_xml_vasp_frame;
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = TEXT;
 file_data->group = TEXT;
 file_data->menu = FALSE;
