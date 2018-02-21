@@ -69,7 +69,7 @@ int vasp_xml_read_header(FILE *vf){
 	while (line){
 		if (find_in_string("/generator",line) != NULL) break;
 		if (find_in_string("program",line) != NULL) isok+=10*(find_in_string("vasp", line)!=NULL);
-		/*TODO: read version*/
+		/* TODO: read version*/
 		g_free(line);
 		line = file_read_line(vf);
 	}
@@ -116,7 +116,6 @@ int vasp_xml_read_kpoints(FILE *vf){
 int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 /* This is the 'full length' INCAR (mostly ignored). */
 	gchar *line;
-	gchar *title;
 	int isok=0;
 	int ii=0;
 	line = file_read_line(vf);
@@ -124,17 +123,11 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 	        if (find_in_string("/parameters",line) != NULL) break;
 		if (find_in_string("SYSTEM",line) != NULL) {
 			g_free(model->basename);
-			title=find_in_string("SYSTEM",line);
-			title+=8*sizeof(gchar);
-			/*stupid mode: ON*/
-			while (title[ii] != '/') ii++;
-			model->basename=g_malloc(ii*sizeof(gchar));
-			ii=0;
-			while (title[ii] != '/') {
-				model->basename[ii]=title[ii];
-				ii++;
-			}
-			model->basename[ii-1]='\0';
+			model->basename=g_malloc((strlen(line)-35)*sizeof(gchar));
+			sscanf(line," <i type=\"string\" name=\"SYSTEM\"> %s",model->basename);
+			/*get rid of the </i> part*/
+			while((model->basename[ii] != '<')&&(model->basename[ii] != '\0')) ii++;
+			model->basename[ii]='\0';
 		}
 		g_free(line);
 		line = file_read_line(vf);
@@ -237,9 +230,9 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	model->coord_units=ANGSTROM;
 	model->construct_pbc = TRUE;
 	model->periodic = 3;
-	/*TODO: gdouble rlatmat[9] can be fill */
-	/*TODO: find the difference between ilatmat and rlatmat */
-	/*TODO: gdouble volume can be fixed */
+	/* TODO: gdouble rlatmat[9] can be filled */
+	/* TODO: find the difference between ilatmat and rlatmat */
+	/* TODO: gdouble volume can be filled */
 	/* Goto to "positions" */
 	if(fetch_in_file(vf,"positions")==0) return -1;
 	/* fill every atom position */
@@ -259,8 +252,6 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->vasp.num_atoms,idx);
 	/* look for energies */
 	vasp_xml_read_energy(vf,model);
-	/* Goto </structure> */
-	if(fetch_in_file(vf,"</structure>")==0) return -1;
 	return 0;
 }
 
