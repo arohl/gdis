@@ -134,7 +134,7 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 				model->basename[ii]=title[ii];
 				ii++;
 			}
-			model->basename[ii]='\0';
+			model->basename[ii-1]='\0';
 		}
 		g_free(line);
 		line = file_read_line(vf);
@@ -189,12 +189,35 @@ int vasp_xml_read_atominfo(FILE *vf, struct model_pak *model){
 	return 0;
 }
 
-int vasp_xml_read_pos(FILE *vf,struct model_pak *model,int overwrite){
+int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
+	gchar *line;
+	long int vfpos=ftell(vf);
+	if(fetch_in_file(vf,"<energy>")==0) {
+		/*we didnt't get it until EOF, which is normal when using finalpos*/
+		rewind(vf);
+		/*find the last valid <structure>*/
+		while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		if(fetch_in_file(vf,"<energy>")==0) return -1;/*still no <energy> tag?*/
+	}
+	if(fetch_in_file(vf,"e_fr_energy")==0) return -1;/*no energy information in <energy>?*/
+	line = file_read_line(vf);/*next line is e_wo_entrp*/
+	if (find_in_string("e_wo_entrp",line) != NULL) {
+		sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&model->vasp.energy);
+		sprintf(line,"%lf eV",model->vasp.energy);
+		property_add_ranked(3, "Energy", line, model);
+	} else {
+		return -1;
+	}
+	g_free(line);
+	return 0;
+}
+
+
+int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 /* read the atoms positions */
 	gchar *line;
 	int idx=0;
-	int ii=0;
-	long int tmppos;
 	struct core_pak *core;
 	/* Goto crystal varray "basis" */
 	if(fetch_in_file(vf,"basis")==0) return -1;
@@ -233,23 +256,9 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model,int overwrite){
 	if (line == NULL) return -1;/*incomplete positions*/
 	g_free(line);
 	if (idx != model->vasp.num_atoms) /* This should not happen */
-		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->vasp.num_atoms,ii);
+		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->vasp.num_atoms,idx);
 	/* look for energies */
-	tmppos=ftell(vf);
-	line = file_read_line(vf);
-	while (line) {
-		if (find_in_string("/calculation",line) != NULL) break;
-		if (find_in_string("/modeling",line) != NULL) break;
-		if (find_in_string("e_wo_entrp",line) != NULL) {
-			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&model->vasp.energy);
-			sprintf(line,"%lf eV",model->vasp.energy);
-			property_add_ranked(3, "Energy", line, model);
-		}
-		g_free(line);
-		line = file_read_line(vf);
-	}
-	g_free(line);
-	fseek(vf,tmppos,SEEK_SET);/* rewind */
+	vasp_xml_read_energy(vf,model);
 	/* Goto </structure> */
 	if(fetch_in_file(vf,"</structure>")==0) return -1;
 	return 0;
@@ -259,7 +268,7 @@ int vasp_xml_read_eigenvalues(FILE *vf){
 /* TODO: read the eigenvalues plot the corresponding DOS / band diagram? */
 	return 0;/* But not ready now */
 }
-/* here will lie some more features */
+/* here will be some more features */
 /* general parser / writter */
 gint read_xml_vasp(gchar *filename, struct model_pak *model){
 /* READER init for VASP XML
@@ -280,14 +289,15 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	vf = fopen(filename, "rt");
 	if (!vf) return 1;
 	error_table_clear();
+	/* some defaults */
+	sysenv.render.show_energy = TRUE;
+	/* start reading */
 	line = file_read_line(vf);
 	/* the first xml tag ie <?xml version="x.x" encoding="ISO-xxxx-x"?> */
 	if (find_in_string("xml",line) == NULL) return 3;/* not even an xml file */
 	g_free(line);
 	/* <generator> tag */
-//	if(fetch_in_file(vf,"<modeling>")==0) return 3;
 	if(fetch_in_file(vf,"<generator>")==0) return 3;
-vfpos=ftell(vf);/*flag*/
 	isok=vasp_xml_read_header(vf);
 	if (isok == 10) gui_text_show(STANDARD,g_strdup_printf("VASP detected\n"));
 	else {
@@ -306,7 +316,6 @@ vfpos=ftell(vf);/*flag*/
 	/* <parameters> tag - if none, rewind and ignore */
 	if(fetch_in_file(vf,"<parameters>")==0) fseek(vf,vfpos,SEEK_SET);
 	else vasp_xml_read_incar(vf,model);
-vfpos=ftell(vf);/*flag*/
 	/* <atominfo> tag - mandatory */
 	if(fetch_in_file(vf,"<atominfo>")==0) return 3;
 	if(vasp_xml_read_atominfo(vf,model)<0) return 3;
@@ -328,24 +337,23 @@ vfpos=ftell(vf);/*flag*/
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 0){
 		model->animation=FALSE;
-		if(vasp_xml_read_pos(vf,model,0)<0) return 3;
+		if(vasp_xml_read_pos(vf,model)<0) return 3;
 	} else { /* we have num_frames-1 frames */
 		model->cur_frame=1;
 		if (num_frames <= 2){/* special cases, only initialpos and finalpos or single point calculation */
 			model->animation=FALSE;/* get rid of frame display */
 			if(fetch_in_file(vf,"finalpos")==0) {
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-				/*try to display at least the initial position, with a warning*/
+				/*display at least the initial position, with a warning*/
 				if(fetch_in_file(vf,"initialpos")==0) return 3;
-				if(vasp_xml_read_pos(vf,model,0)<0) return 3;
 				line = g_strdup_printf("WARNING: incomplete calculation!\n");
 				gui_text_show(ERROR, line);
 				g_free(line);
 			}
-			if(vasp_xml_read_pos(vf,model,0)<0) return 3;
+			if(vasp_xml_read_pos(vf,model)<0) return 3;
 		} else {
 			model->animation=TRUE;
-			num_frames--;/* because the initialpos and finalpos are already part of the ionic steps */
+			num_frames--;/* because the finalpos is already part of the ionic steps */
 			if(fetch_in_file(vf,"finalpos")==0) {
 				/*imcomplete calculation, go the the last valid <structure>*/
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -355,13 +363,13 @@ vfpos=ftell(vf);/*flag*/
 				gui_text_show(ERROR, line);
 				g_free(line);
 			}
-			if(vasp_xml_read_pos(vf,model,0)<0) return 3;
+			if(vasp_xml_read_pos(vf,model)<0) return 3;
 			model->cur_frame = num_frames-1;
 		}
 	}
 	/* at the end of file, or </modeling> tag */
-	redraw_canvas(SINGLE);/* useful? */
 	model->num_frames = num_frames;
+	model->redraw = TRUE;
 	/* always show this information */
 	gui_text_show(ITALIC,g_strdup_printf("-> %i frames detected.\n",num_frames));
 	strcpy(model->filename, filename);/* strcpy is ok? */
@@ -375,7 +383,7 @@ vfpos=ftell(vf);/*flag*/
 gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 	g_assert(vf != NULL);
 	if(fetch_in_file(vf,"scstep")==0) return 3;
-	if(vasp_xml_read_pos(vf,model,0)<0) return 3;
+	if(vasp_xml_read_pos(vf,model)<0) return 3;
 	return 0;
 }
 
