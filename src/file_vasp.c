@@ -271,7 +271,7 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
  * 	normal calculation -> display finalpos (w/ frame)
 */
 	int isok=0;
-	int num_frames=0;
+	int num_frames=1;
 	FILE *vf;
 	long int vfpos;
 	gchar *line;
@@ -326,12 +326,13 @@ vfpos=ftell(vf);/*flag*/
 	}
 	g_free(line);
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-	if (num_frames == 0){
+	if (num_frames == 1){
 		model->animation=FALSE;
 		if(vasp_xml_read_pos(vf,model)<0) return 3;
 	} else { /* we have num_frames-1 frames */
 		model->cur_frame=1;
 		if (num_frames <= 2){/* special cases, only initialpos and finalpos or single point calculation */
+			num_frames=1;
 			model->animation=FALSE;/* get rid of frame display */
 			if(fetch_in_file(vf,"finalpos")==0) {
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -344,7 +345,7 @@ vfpos=ftell(vf);/*flag*/
 			if(vasp_xml_read_pos(vf,model)<0) return 3;
 		} else {
 			model->animation=TRUE;
-			num_frames--;/* because the finalpos is already part of the ionic steps */
+			num_frames=num_frames-2;/* because the finalpos is already part of the ionic steps */
 			if(fetch_in_file(vf,"finalpos")==0) {
 				/*imcomplete calculation, go the the last valid <structure>*/
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -355,7 +356,7 @@ vfpos=ftell(vf);/*flag*/
 				g_free(line);
 			}
 			if(vasp_xml_read_pos(vf,model)<0) return 3;
-			model->cur_frame = num_frames-1;
+			model->cur_frame = num_frames - 1;
 		}
 	}
 	/* at the end of file, or </modeling> tag */
