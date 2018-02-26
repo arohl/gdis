@@ -205,6 +205,7 @@
 		49884FA11A07BC9B00B54AD9 /* undo.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2A1A07BC9B00B54AD9 /* undo.c */; };
 		49884FA21A07BC9B00B54AD9 /* zmatrix.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2B1A07BC9B00B54AD9 /* zmatrix.c */; };
 		49884FA31A07BC9B00B54AD9 /* zone.c in Sources */ = {isa = PBXBuildFile; fileRef = 49884F2C1A07BC9B00B54AD9 /* zone.c */; };
+		4993D3DC2044155D0025E74F /* file_vasp.c in Sources */ = {isa = PBXBuildFile; fileRef = 4993D3DB2044155C0025E74F /* file_vasp.c */; };
 		49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF31A9B853100205B78 /* example12.gin */; };
 		49B57D201A9B861500205B78 /* example12.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF41A9B853100205B78 /* example12.got */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
@@ -502,6 +503,7 @@
 		498A848F059B206A005B1183 /* libSM.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSM.dylib; path = /usr/X11R6/lib/libSM.dylib; sourceTree = "<absolute>"; };
 		498A8490059B206A005B1183 /* libXmu.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXmu.dylib; path = /usr/X11R6/lib/libXmu.dylib; sourceTree = "<absolute>"; };
 		498A8491059B206A005B1183 /* libXt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libXt.dylib; path = /usr/X11R6/lib/libXt.dylib; sourceTree = "<absolute>"; };
+		4993D3DB2044155C0025E74F /* file_vasp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_vasp.c; sourceTree = "<group>"; };
 		49B57CBD1A9B83A000205B78 /* gdis.manual */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.manual; sourceTree = "<group>"; };
 		49B57CBE1A9B83A000205B78 /* gdis.elements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.elements; sourceTree = "<group>"; };
 		49B57CBF1A9B83A000205B78 /* gdis.library */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gdis.library; sourceTree = "<group>"; };
@@ -712,6 +714,7 @@
 				49884EDD1A07BC9B00B54AD9 /* file_povray.c */,
 				493D4F081A749B4F00F8D944 /* file_qe.c */,
 				49884EDE1A07BC9B00B54AD9 /* file_rietica.c */,
+				4993D3DB2044155C0025E74F /* file_vasp.c */,
 				49884EDF1A07BC9B00B54AD9 /* file_xml.c */,
 				49884EE01A07BC9B00B54AD9 /* file_xtl.c */,
 				49884EE11A07BC9B00B54AD9 /* file_xyz.c */,
@@ -1185,7 +1188,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0640;
+				LastUpgradeCheck = 0920;
 			};
 			buildConfigurationList = 031A1EA70855448700FAD56D /* Build configuration list for PBXProject "gdis" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1275,6 +1278,7 @@
 				49884F921A07BC9B00B54AD9 /* quaternion.c in Sources */,
 				49884F481A07BC9B00B54AD9 /* file_dmol.c in Sources */,
 				49884F661A07BC9B00B54AD9 /* gui_dialog.c in Sources */,
+				4993D3DC2044155D0025E74F /* file_vasp.c in Sources */,
 				49884F811A07BC9B00B54AD9 /* image.c in Sources */,
 				49884F461A07BC9B00B54AD9 /* file_dlp.c in Sources */,
 				49884F7D1A07BC9B00B54AD9 /* gui_tree.c in Sources */,
@@ -1366,12 +1370,12 @@
 				GENERATE_PKGINFO_FILE = NO;
 				GENERATE_PROFILING_CODE = YES;
 				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
+					/usr/X11/include,
+					/usr/X11/include/freetype2,
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
+					/usr/X11/lib,
 					/opt/local/lib,
 				);
 				OPTIMIZATION_CFLAGS = "-O0";
@@ -1416,12 +1420,12 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PROFILING_CODE = NO;
 				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
+					/usr/X11/include,
+					/usr/X11/include/freetype2,
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
+					/usr/X11/lib,
 					/opt/local/lib,
 				);
 				LIBRARY_STYLE = STATIC;
@@ -1463,12 +1467,12 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = NO;
 				GENERATE_PROFILING_CODE = YES;
 				HEADER_SEARCH_PATHS = (
-					/usr/X11R6/include,
-					/usr/X11R6/include/freetype2,
+					/usr/X11/include,
+					/usr/X11/include/freetype2,
 				);
 				INSTALL_PATH = "$(HOME)/bin";
 				LIBRARY_SEARCH_PATHS = (
-					/usr/X11R6/lib,
+					/usr/X11/lib,
 					/opt/local/lib,
 				);
 				OTHER_CFLAGS = "";
@@ -1490,17 +1494,42 @@
 		031A1EA80855448700FAD56D /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					WITH_GUI,
 					_REENTRANT,
 				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "/opt/local/include/glib-2.0/** /opt/local/include/gtk-2.0/** /opt/local/lib/glib-2.0/include/** /opt/local/lib/gtk-2.0/include/** /opt/local/include/cairo/** /opt/local/include/pango-1.0/** /opt/local/include/gdk-pixbuf-2.0/** /opt/local/include/atk-1.0/** /opt/local/include/gtkglext-1.0 /opt/local/lib/gtkglext-1.0/include";
 			};
@@ -1509,16 +1538,39 @@
 		031A1EAA0855448700FAD56D /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_AUTO_VECTORIZATION = YES;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_PPC64 = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					WITH_GUI,
 					_REENTRANT,
 				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -1533,10 +1585,33 @@
 		031A1EAB0855448700FAD56D /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					WITH_GUI,
 					_REENTRANT,
 				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
