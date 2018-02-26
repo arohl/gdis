@@ -147,7 +147,7 @@ return(0);
 /***************/
 /* CIF loading */
 /***************/
-#define DEBUG_LOAD_CIF 0
+#define DEBUG_LOAD_CIF 1
 gint read_cif(gchar *filename, struct model_pak *data)
 {
 gint i, j, n, first, new, order, pos, keyword, loop_count=0;

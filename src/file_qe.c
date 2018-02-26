@@ -48,7 +48,7 @@ extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
 /* global variables */
-gint last_frame;
+
 gdouble alat;
 
 
@@ -631,6 +631,7 @@ gint read_qe_out(gchar *filename, struct model_pak *model)
 gint frame, num_tokens;
 gchar **buff, *text, line[LINELEN];
 FILE *fp;
+gint last_frame;
   
 fp = fopen(filename, "rt");
 if (!fp)
