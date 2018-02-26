@@ -1,7 +1,7 @@
 /*
-Copyright (C) 2003 by Sean David Fleming
+Copyright (C) 2018 by Okadome Valencia
 
-sean@ivec.org
+hubert.valencia _at_ imass.nagoya-u.ac.jp
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,10 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
-/*
-simple VASP xml Parser, _not_ using xml parser (libxml2 was buggy).
-Send comments to Okadome Valencia: hubert.valencia _at_ imass.nagoya-u.ac.jp
-*/
+/* simple VASP xml Parser, _not_ using xml parser (libxml2 was buggy). */
 
 #include <stdio.h>
 #include <string.h>
