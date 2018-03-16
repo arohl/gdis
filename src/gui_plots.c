@@ -343,6 +343,7 @@ void plot_initialize(struct model_pak *data){
 	plot->nfreq=0;
 	plot->nraman=0;
 	plot->plot_mask=PLOT_NONE;
+	plot->plot_sel=0;
 	if(data->num_frames>1){
 		if(property_lookup("Energy",data)) plot->plot_mask+=PLOT_ENERGY;
 		if(property_lookup("Force",data)) plot->plot_mask+=PLOT_FORCE;
