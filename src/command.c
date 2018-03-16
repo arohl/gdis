@@ -31,7 +31,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "test.h"
 
 /* main data structures */
-struct sysenv_pak sysenv;
+extern struct sysenv_pak sysenv;
 
 /***************************/
 /* command line processing */

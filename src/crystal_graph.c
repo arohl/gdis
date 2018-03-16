@@ -79,7 +79,7 @@ GSList * create_pair(struct model_pak * model, struct mol_pak * mol1, struct mol
 /* some tree functions for setting up a tree with energies as keys */
 
 GMemChunk *key_chunk;
-GTree *tree;
+//GTree *tree;
 
 gint energy_comp(gconstpointer a_ptr, gconstpointer b_ptr, gpointer ignored)
 {
@@ -147,6 +147,7 @@ gint calculate_crystal_graph(struct model_pak * model)
 {
   gint m1 = 0, m2 = 0;
 
+  GTree *tree;
 
   struct mol_pak *mol1, *mol2;
   struct core_pak *core;
