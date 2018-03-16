@@ -203,6 +203,60 @@ int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
 	return 0;
 }
 
+int vasp_xml_read_frequency(FILE *vf, struct model_pak *model){
+/*factor is actually:
+ * factor = sqrt((1.60217733e-19/1e-20)/1.6605402e-27)/(2.*PI*2.99792458e+10)
+ * calculated with quadmath precision. It convert eigenvalue of hessian to
+ * frequency, in cm^{-1} 
+*/
+	gdouble factor=521.4708336735473879;
+	gchar *line;
+	long int vfpos=ftell(vf);
+	gint idx,jdx;
+
+	if(fetch_in_file(vf,"<dynmat>")==0) {
+		/*we don't have a dynmat array... rewind and return */
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;
+		/*TODO: check if dynmat array exists in vaspxml prior to 5.1*/
+	}
+	vfpos=ftell(vf);
+	if(fetch_in_file(vf,"eigenvalues")==0) {
+		/* no eigenvalues -> no frequency (unfinished calculation?) */
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;
+	}
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	fetch_in_file(vf,"</varray>");
+	line = file_read_line(vf);/*next line is eigenvalues*/
+	/* count eigenvalues*/
+	idx=0;
+	while(line[idx]!='>') idx++;
+	/*from here the number of eigenvalues is equal to the number of space characters :)*/
+	model->nfreq=0;
+	while(line[idx]!='\0') {
+		if(line[idx]==' ') model->nfreq++;
+		idx++;
+	}
+	if(model->nfreq>0) model->have_frequency=TRUE;
+	else return -1;/*an eigenvalue array but no data?*/
+	model->freq=g_malloc(model->nfreq*(sizeof(gdouble)));
+	/*now, scan for each value TODO: do both at once?*/
+	idx=0;jdx=0;
+	while(line[idx]!='>') idx++;
+	idx++;
+	while(idx++){
+		sscanf(&line[idx],"%lE %*s",&(model->freq[jdx]));
+		model->freq[jdx]=factor*sqrt(fabs(model->freq[jdx]));
+		while((line[idx]!='\0')&&(line[idx]!=' ')) idx++;/*go to next number, if any*/
+		if(line[idx]=='\0') break;
+		jdx++;
+	}
+	g_free(line);
+	/*note that there is no frequency intensity information in vaspxml 
+ * 	  and AFAIK there is no easy way to obtain such information. OVHPA*/
+}
+
 
 int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 /* read the atoms positions */
@@ -227,9 +281,14 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	model->coord_units=ANGSTROM;
 	model->construct_pbc = TRUE;
 	model->periodic = 3;
+	/* next line should be volume */
+	line = file_read_line(vf);
+	if (find_in_string("volume",line) != NULL) {
+		sscanf(line," <i name=\"volume\"> %lf </i>",&model->volume);
+	}
+	g_free(line);
 	/* TODO: gdouble rlatmat[9] can be filled */
 	/* TODO: find the difference between ilatmat and rlatmat */
-	/* TODO: gdouble volume can be filled */
 	/* Goto to "positions" */
 	if(fetch_in_file(vf,"positions")==0) return -1;
 	/* fill every atom position */
@@ -322,6 +381,9 @@ vfpos=ftell(vf);/*flag*/
 		line = file_read_line(vf);
 	}
 	g_free(line);
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+/* Read frequency here, because why not ?*/
+	vasp_xml_read_frequency(vf,model);
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){
 		model->animation=FALSE;

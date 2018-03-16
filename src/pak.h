@@ -1244,6 +1244,22 @@ struct surface_pak surface;
 /* NEW: Monty settings */
 struct monty_pak monty;
 
+/* plots */
+gint plots;
+
+/* What about a shared area for similar data
+ * other that property_list / property_table 
+ * So one can directly access an array/value 
+ * for frequency, raman, dos, band, etc.. */
+
+/* frequency */
+gboolean have_frequency;
+gint nfreq;
+gdouble *freq;
+gdouble *freq_intens;
+
+
+
 /* element data */
 /*
 gint num_elem;

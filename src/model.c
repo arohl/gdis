@@ -520,6 +520,15 @@ matrix_identity(data->latmat);
 matrix_identity(data->ilatmat);
 matrix_identity(data->rlatmat);
 
+/* plots */
+data->plots = FALSE;
+
+/* frequency */
+data->have_frequency = FALSE;
+data->nfreq=0;
+data->freq=NULL;
+data->freq_intens=NULL;
+
 /* no non-default element data for the model (yet) */
 data->elements = NULL;
 data->unique_atom_list = NULL;
