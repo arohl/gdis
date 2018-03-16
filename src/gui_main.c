@@ -1366,6 +1366,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Analysis",                        NULL, NULL, 0, "<Branch>" },
   { "/Tools/Analysis/Dynamics...",            NULL, gui_analysis_dialog, 0, NULL },
   { "/Tools/Analysis/Measurements...",        NULL, gui_measure_dialog, 0, NULL },
+  { "/Tools/Analysis/Plots...",               NULL, gui_plots_dialog, 0, NULL },
 
   { "/_View",                       NULL, NULL, 0, "<Branch>"},
   { "/View/Display properties...",  NULL, gui_render_dialog, 0, NULL},

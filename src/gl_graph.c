@@ -58,6 +58,9 @@ gdouble wavelength;
 gint xlabel;
 gint ylabel;
 
+gboolean reverse;/*reverse x and y axis (needed for plots -> BANDOS)*/
+gboolean impulse;/*just impulse (needed for plots -> FREQ)*/
+
 /* graph layout */
 gint xticks;
 gint yticks;
@@ -151,6 +154,8 @@ graph->size = 0;
 graph->select = -1;
 graph->select_label = NULL;
 graph->set_list = NULL;
+graph->reverse=FALSE;
+graph->impulse=FALSE;
 
 /* append to preserve intuitive graph order on the model tree */
 model->graph_list = g_slist_append(model->graph_list, graph);
@@ -201,7 +206,7 @@ void graph_set_xticks(gint label, gint ticks, gpointer ptr_graph)
 struct graph_pak *graph = ptr_graph;
 
 g_assert(graph != NULL);
-g_assert(ticks > 1);
+g_assert(ticks > 1);/* FIXME: ticks shouldn't matter if label=FALSE */
 
 graph->xlabel = label;
 graph->xticks = ticks;
@@ -215,7 +220,7 @@ void graph_set_yticks(gint label, gint ticks, gpointer ptr_graph)
 struct graph_pak *graph = ptr_graph;
 
 g_assert(graph != NULL);
-g_assert(ticks > 1);
+g_assert(ticks > 1);/* FIXME: ticks shouldn't matter if label=FALSE */
 
 graph->ylabel = label;
 graph->yticks = ticks;
@@ -288,6 +293,37 @@ graph_init_y(x, graph);
 graph->set_list = g_slist_append(graph->set_list, ptr);
 }
 
+/*********************************/
+/* add borned (x,y) data (ovhpa) */
+/*********************************/
+void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gboolean reverse,gboolean impulse,gpointer data)
+{
+gdouble *ptr;
+struct graph_pak *graph = data;
+
+g_assert(graph != NULL);
+
+/* try to prevent the user supplying different sized data */
+/* TODO - sample in some fashion if different? */
+if (graph->size)
+  g_assert(graph->size == size);
+else
+  graph->size = size;
+
+ptr = g_malloc(size*sizeof(gdouble));
+
+memcpy(ptr, x, size*sizeof(gdouble));
+
+graph->xmin = x_min;
+graph->xmax = x_max;
+/* because graph_init_y destroy supplied graph limits */
+graph->ymin = y_min;
+graph->ymax = y_max;
+graph->reverse=reverse;
+graph->impulse=impulse;
+
+graph->set_list = g_slist_append(graph->set_list, ptr);
+}
 /************************************/
 /* graph data extraction primitives */
 /************************************/
@@ -432,7 +468,46 @@ glLineWidth(1.0);
 flag = FALSE;
 sx = sy = 0;
 
+if(graph->impulse==TRUE){
+/* plot 1 unit rectangle */
+for (list=graph->set_list ; list ; list=g_slist_next(list))
+  {
+	ptr = (gdouble *) list->data;
+	glBegin(GL_LINE_STRIP);
+	i=0;
+	while(i<graph->size){
+		/*each peak is listed here*/
+		xf = ptr[i]-1.0;/*1/2 size of rectangle*/
+		xf -= graph->xmin;
+		xf /= (graph->xmax - graph->xmin);
+		x = ox + xf*dx;
+		y = oy;/*base*/
+		gl_vertex_window(x, y-1, canvas);/*go to*/
+		yf = ptr[i+1];/*aka intensity*/
+		yf -= graph->ymin;
+		yf /= (graph->ymax - graph->ymin);
+		yf *= dy;
+		y = (gint) yf;
+		y *= -1;
+		y += oy;
+		gl_vertex_window(x, y-1, canvas);/*go up*/
+		xf = ptr[i]+1.0;/*1/2 size of rectangle*/
+		xf -= graph->xmin;
+		xf /= (graph->xmax - graph->xmin);
+		x = ox + xf*dx;
+		gl_vertex_window(x, y-1, canvas);/*move up*/
+		y = oy;/*base*/
+		gl_vertex_window(x, y-1, canvas);/*go down*/
+/* TODO: peak selection? */
+		i+=2;
+	}
+	glEnd();
+  }
+return;
+}
+
 /* graph the data sets */
+if(graph->reverse==FALSE){
 for (list=graph->set_list ; list ; list=g_slist_next(list))
   {
   ptr = (gdouble *) list->data;
@@ -490,6 +565,38 @@ if (i == graph->select)
     glDisable(GL_LINE_STIPPLE);
     }
   }
+} else {/*ie reverse==TRUE*/
+  /*let's do exactly the same thing but with x <-> y axis*/
+for (list=graph->set_list ; list ; list=g_slist_next(list))
+  {
+  ptr = (gdouble *) list->data;
+
+  glBegin(GL_LINE_STRIP);
+  for (i=0 ; i<graph->size ; i++)
+    {
+    xf = (gdouble) i / (gdouble) (graph->size-1);
+    xf *= dy;
+    x = (gint) xf;
+    x *= -1;
+    x += oy;
+
+/* scale real value to screen coords */
+    yf = ptr[i];
+    yf -= graph->ymin;
+    yf /= (graph->ymax - graph->ymin);
+
+    y = ox + yf*dx;/*TODO: here dx*0.3 to obtain small DOS part*/
+
+/* no selection, since the graph is rotate by 90*/
+
+/* lift y axis 1 pixel up so y=0 won't overwrite the x axis */
+    gl_vertex_window(y, x-1, canvas);/*this one should not be reversed.. right?*/
+    }
+  glEnd();
+
+/* no peak selector (see above)*/
+  }
+ }
 }
 
 /*********************************/

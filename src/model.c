@@ -1196,10 +1196,28 @@ p = g_hash_table_lookup(model->property_table, key);
 if (p)
   {
 /* update existing property */
-  g_free(p->value); 
+/* BUG: freeing p->value will cause a g_free exception
+ * 	during multiple frame read/re-read.
+ * WORKAROUND: not freeing p->value (MEM_LEAK)
+ * FIX: NONE FOUND YET: FIXME*/
+#ifdef _BUG_
+  g_free(p->value);
   p->value = g_strdup(value);
   p->rank = rank;
   model->property_list = g_slist_remove(model->property_list, p);
+#else
+#define DEBUG_PROPERTY 0
+	if(value==NULL) return;/*refuse to update with a null value*/
+	if(value[0]=='\0') return;/*refuse to update with no value*/
+//	g_free(p->value);// <- BUG IS HERE
+	p->value = g_strdup(value);
+	p->rank = rank;
+	model->property_list = g_slist_remove(model->property_list, p);
+#if DEBUG_PROPERTY
+fprintf(stdout,"#DBG: update old %i: %s %s -> ",p->rank,p->label,p->value);
+fprintf(stdout,"new %i: %s %s\n",rank,key,value);
+#endif
+#endif
   }
 else
   {
@@ -1210,6 +1228,9 @@ else
   p->label = g_strdup(key);
   p->rank = rank;
   g_hash_table_replace(model->property_table, p->label, p);
+#if DEBUG_PROPERTY
+fprintf(stdout,"#DBG: create new %i: %s %s\n",rank,key,value);
+#endif
   }
 
 /* update sorted property list */
