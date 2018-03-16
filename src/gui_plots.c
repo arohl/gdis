@@ -379,7 +379,8 @@ void plot_initialize(struct model_pak *data){
 				if(data->freq_intens[i]>plot->frequency.ymax) plot->frequency.ymax=data->freq_intens[i];
 			j=j+2;
 			}
-		plot->frequency.xmax=((gint)(plot->frequency.xmax/1000)+1)*1000.0;
+			plot->frequency.xmax=((gint)(plot->frequency.xmax/1000)+1)*1000.0;
+		}
 	}
 }
 /************************/
