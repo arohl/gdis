@@ -583,6 +583,8 @@ while (TRUE)
   
   /* energy */
   if (g_strrstr(line, "total energy") != NULL)
+    {/* _BUG_ this will catch "The total energy is the sum of (...)" line as well*/
+ if(g_strrstr(line, "total energy is the sum of") == NULL)/* FIX: exclude this line */
     {
     buff = g_strsplit(line, "=", 2);
     text = format_value_and_units(*(buff+1), 5);
@@ -590,7 +592,7 @@ while (TRUE)
     g_free(text);
     g_strfreev(buff);
     }
-  
+ }
 
   /* end of first frame */
   if (g_strrstr(line, "init_run") != NULL)
