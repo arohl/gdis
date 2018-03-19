@@ -72,10 +72,16 @@ void set_auto_x(void){
 		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->pressure.xmin));
 		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->pressure.xmax));
 		break;
-	case PLOT_BAND:
 	case PLOT_DOS:
-	case PLOT_BANDOS:
+		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->dos.xmin));
+		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->dos.xmax));
+		break;
 	case PLOT_FREQUENCY:
+		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->frequency.xmin));
+		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->frequency.xmax));
+		break;
+	case PLOT_BAND:
+	case PLOT_BANDOS:
 	case PLOT_RAMAN:
 	case PLOT_NONE:
 	default:
@@ -101,10 +107,16 @@ void set_auto_y(void){
                 gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->pressure.ymin));
                 gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->pressure.ymax));
                 break;
-        case PLOT_BAND:
         case PLOT_DOS:
-        case PLOT_BANDOS:
+		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->dos.ymin));
+		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->dos.ymax));
+		break;
         case PLOT_FREQUENCY:
+		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->frequency.ymin));
+		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->frequency.ymax));
+		break;
+	case PLOT_BAND:
+	case PLOT_BANDOS:
 	case PLOT_RAMAN:
         case PLOT_NONE:
         default:
@@ -291,12 +303,12 @@ void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpoin
 		case 1:/*Electronic*/
 			if(plot->plot_sel&PLOT_BAND) plot_band();
 			else if(plot->plot_sel&PLOT_DOS) plot_dos();
-			else if(plot->plot_sel&PLOT_BANDOS) plot_bandos();
+			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos();
 			else {/*no plot selected, but plot_selection possible?*/
                                 if(!(plot->plot_mask&(48))) plot->type=PLOT_NONE;
                                 else if(plot->plot_mask&PLOT_BAND) plot_band();
                                 else if(plot->plot_mask&PLOT_DOS) plot_dos();
-                                else if(plot->plot_mask&PLOT_BANDOS) plot_bandos();
+                                else if(!((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS)) plot_bandos();
 			}
 			break;
 		case 2:/*Frequency*/
@@ -343,7 +355,7 @@ void plot_initialize(struct model_pak *data){
 	plot->nfreq=0;
 	plot->nraman=0;
 	plot->plot_mask=PLOT_NONE;
-	plot->plot_sel=0;
+	/*dynamics*/
 	if(data->num_frames>1){
 		if(property_lookup("Energy",data)) plot->plot_mask+=PLOT_ENERGY;
 		if(property_lookup("Force",data)) plot->plot_mask+=PLOT_FORCE;
@@ -355,6 +367,26 @@ void plot_initialize(struct model_pak *data){
 		else if((plot->plot_mask&PLOT_VOLUME)!=0) plot->type=PLOT_VOLUME;
 		else if((plot->plot_mask&PLOT_PRESSURE)!=0) plot->type=PLOT_PRESSURE;
 	}
+	/*electronics*/
+	if(data->ndos>1) {
+		/*we have some dos... preload (will be scaled later on a thread)*/
+		plot->plot_mask+=PLOT_DOS;
+		plot->ndos=data->ndos;
+		plot->dos.size=plot->ndos*2;
+		if(plot->dos.data!=NULL) {
+			g_free(plot->dos.data);
+			plot->dos.data=NULL;
+		}
+		plot->dos.data=(gdouble *)g_malloc(plot->dos.size*sizeof(gdouble));
+		
+	}
+	if(data->nband>1) {
+		plot->plot_mask+=PLOT_BAND;
+	}
+	if(!((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS)) {
+		/*bandos type is possible*/
+	}
+	/*frequency*/
 	if(data->have_frequency==TRUE) {
 		/*this don't need to be loaded from outside.. it won't change*/
 		plot->plot_mask+=PLOT_FREQUENCY;
@@ -582,10 +614,11 @@ void gui_plots_dialog(void){
 	if (!(plot->plot_mask&PLOT_BAND)) gtk_widget_set_sensitive(button,FALSE);
 	button = add_radio_button("Band / DOS", (gpointer) plot_bandos,NULL);
 	if (plot->type == PLOT_BANDOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_BANDOS)) gtk_widget_set_sensitive(button,FALSE);
+	if ((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS) gtk_widget_set_sensitive(button,FALSE);
 /* Set availability */
 /* TODO: DOS/BAND availability */
-	gtk_widget_set_sensitive(electronic_box, FALSE);
+	if (plot->plot_mask&PLOT_DOS) gtk_widget_set_sensitive(electronic_box, TRUE);
+	else gtk_widget_set_sensitive(electronic_box, FALSE);
 /* --- Page 3 -> TODO: Frequency */
         page = gtk_vbox_new(FALSE, PANEL_SPACING);
         label = gtk_label_new("Frequency");

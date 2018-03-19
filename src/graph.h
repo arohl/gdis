@@ -20,11 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
+typedef enum {
+        GRAPH_REGULAR=0,/*previous plain graph*/
+        GRAPH_FREQUENCY,/*impulse graph for frequency*/
+        GRAPH_BAND,/*kpoints/state energy graph */
+	GRAPH_DOS,/*interleave e,dos plot*/
+        GRAPH_DOS90,/*90 degrees rotated DOS plot*/
+        GRAPH_BANDOS,/*dual BAND & DOS graph*/
+        GRAPH_UNKNOWN,/*for catching wrong type*/
+} graph_type;
+
 gpointer graph_new(const gchar *, struct model_pak *);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
 void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
-void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gboolean reverse,gboolean impulse,gpointer data);
+void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
 void graph_set_grafted(gint, gpointer);
 void graph_set_xticks(gint, gint, gpointer);
 void graph_set_yticks(gint, gint, gpointer);

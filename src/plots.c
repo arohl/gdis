@@ -41,9 +41,42 @@ extern struct sysenv_pak sysenv;
 
 
 void plot_prepare_data(struct plot_pak *plot){
+	int i,j;
+	gdouble x,y;
+	struct model_pak *model;
+	g_assert(plot != NULL);
+	g_assert(plot->model != NULL);
+	model=plot->model;
+
 /* task cleanup will interpolate some graph (DOS/BAND + FREQ...) */
 	/* TODO: DOS/BAND */
+/* add DOS data */
+        if(plot->plot_mask&PLOT_DOS){
+                j=0;
+		/*initial values*/
+                plot->dos.xmin=model->dos_eval[0]-model->efermi;
+		plot->dos.xmax=model->dos_eval[model->ndos-1]-model->efermi;
+		plot->dos.ymin=0.;/*for now: all dos positive*/
+		plot->dos.ymax=model->dos_spin_up[0];
+		/*all values*/
+                for(i=0;i<model->ndos;++i){
+                        x=model->dos_eval[i];
+			x-=model->efermi;/*scale to fermi level!*/
+			if(x<plot->dos.xmin) plot->dos.xmin=x;
+			if(x>plot->dos.xmax) plot->dos.xmax=x;
+			y=model->dos_spin_up[i];
+			if(model->spin_polarized) y+=model->dos_spin_down[i];
+			if(y>plot->dos.ymax) plot->dos.ymax=y;
+			if(y<plot->dos.ymin) y=0.;/*no negative value*/
+			plot->dos.data[j]=x;
+			plot->dos.data[j+1]=y;
+                        j+=2;
+                }
+
+        }
 	/* TODO: FREQ: add intensities */
+
+        plot->data_changed=FALSE;/*protect data until changed*/
 }
 void plot_load_data(struct plot_pak *plot,struct task_pak *task){
 	struct model_pak *model;
@@ -55,7 +88,7 @@ void plot_load_data(struct plot_pak *plot,struct task_pak *task){
 	gdouble y=0.0;
         gint nframes;
 	gint cur_frame;
-/* begin */
+/* This part will populate everything that depends on frame reading (ie dynamics) */
 if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 	/* TODO: prevent update while reading frame? */
 	g_assert(plot != NULL);
@@ -63,6 +96,7 @@ if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 	g_assert(plot->model != NULL);
 /* simply use model provided in plot */
 	model=plot->model;
+	if(model->num_frames<2) return;/*no frame -> skip this part*/
 	/*open file*/
         fp=fopen(model->filename, "r");
         if (!fp){
@@ -233,15 +267,11 @@ if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 			}
                 }
         }
-/* unique data BAND/DOS/FREQ */
-	/* TODO: populate everything */
-
 /* ending */
 	model->cur_frame=cur_frame;/*go back to current frame <- useful?*/
 	read_raw_frame(fp,cur_frame,model);/*here?*/
         fclose(fp);
 	/* all done */
-	plot->data_changed=FALSE;/*protect data until changed*/
 }
 /***************/
 /* energy plot */
@@ -270,7 +300,7 @@ void draw_plot_energy(struct model_pak *model,struct plot_pak *plot){
                 ymax=ymax+1.0;
         }
         plot->graph=graph_new("ENERGY",model);
-        graph_add_borned_data(plot->energy.size,plot->energy.data,xmin,xmax,ymin,ymax,FALSE,FALSE,plot->graph);
+        graph_add_borned_data(plot->energy.size,plot->energy.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
         /* set tics */
         /* due to assert xtics and ytics needs to be set > 1 even if they are unused */
 	/* see FIXME in gl_graph.c */
@@ -306,7 +336,7 @@ void draw_plot_force(struct model_pak *model,struct plot_pak *plot){
                 ymax=ymax+1.0;
         }
         plot->graph=graph_new("FORCE",model);
-        graph_add_borned_data(plot->force.size,plot->force.data,xmin,xmax,ymin,ymax,FALSE,FALSE,plot->graph);
+        graph_add_borned_data(plot->force.size,plot->force.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
         /* set tics */
         if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
         else graph_set_xticks(TRUE,plot->xtics,plot->graph);
@@ -340,7 +370,7 @@ void draw_plot_volume(struct model_pak *model,struct plot_pak *plot){
 		ymax=ymax+1.0;
 	}
         plot->graph=graph_new("VOLUME",model);
-        graph_add_borned_data(plot->volume.size,plot->volume.data,xmin,xmax,ymin,ymax,FALSE,FALSE,plot->graph);
+        graph_add_borned_data(plot->volume.size,plot->volume.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
         /* set tics */
         if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
         else graph_set_xticks(TRUE,plot->xtics,plot->graph);
@@ -374,7 +404,41 @@ void draw_plot_pressure(struct model_pak *model,struct plot_pak *plot){
                 ymax=ymax+1.0;
         }
         plot->graph=graph_new("PRESSURE",model);
-        graph_add_borned_data(plot->pressure.size,plot->pressure.data,xmin,xmax,ymin,ymax,FALSE,FALSE,plot->graph);
+        graph_add_borned_data(plot->pressure.size,plot->pressure.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
+        /* set tics */
+        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
+        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
+        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+}
+/************/
+/* plot DOS */
+/************/
+void draw_plot_dos(struct model_pak *model,struct plot_pak *plot){
+        /*draw density of state (dos)*/
+        gdouble xmin,xmax;
+        gdouble ymin,ymax;
+        /* get limits */
+        if(plot->auto_x==FALSE){
+                xmin=plot->xmin;
+                xmax=plot->xmax;
+        }else{
+                xmin=plot->dos.xmin;
+                xmax=plot->dos.xmax;
+        }
+        if(plot->auto_y==FALSE){
+                ymin=plot->ymin;
+                ymax=plot->ymax;
+        }else{
+                ymin=plot->dos.ymin;
+                ymax=plot->dos.ymax;
+        }
+        if(ymin==ymax) {
+                ymin=ymin-1.0;
+                ymax=ymax+1.0;
+        }
+        plot->graph=graph_new("DOS",model);
+        graph_add_borned_data(plot->dos.size,plot->dos.data,xmin,xmax,ymin,ymax,GRAPH_DOS,plot->graph);
         /* set tics */
         if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
         else graph_set_xticks(TRUE,plot->xtics,plot->graph);
@@ -385,7 +449,7 @@ void draw_plot_pressure(struct model_pak *model,struct plot_pak *plot){
 /* plot frequency */
 /******************/
 void draw_plot_frequency(struct model_pak *model,struct plot_pak *plot){
-        /*draw volume for each ionic step iterations*/
+        /*draw all frequency values*/
         gdouble xmin,xmax;
         gdouble ymin,ymax;
         /* get limits */
@@ -408,7 +472,7 @@ void draw_plot_frequency(struct model_pak *model,struct plot_pak *plot){
                 ymax=ymax+1.0;
         }
         plot->graph=graph_new("FREQUENCY",model);
-        graph_add_borned_data(plot->frequency.size,plot->frequency.data,xmin,xmax,ymin,ymax,FALSE,TRUE,plot->graph);
+        graph_add_borned_data(plot->frequency.size,plot->frequency.data,xmin,xmax,ymin,ymax,GRAPH_FREQUENCY,plot->graph);
         /* set tics */
         if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
         else graph_set_xticks(TRUE,plot->xtics,plot->graph);
@@ -439,7 +503,11 @@ void plot_draw_graph(struct plot_pak *plot,struct task_pak *task){
 			return;
                 break;
                 case PLOT_BAND:
+		fprintf(stdout,"ERROR: plot type not available (yet)!\n");
+		break;
                 case PLOT_DOS:
+			draw_plot_dos(data,plot);
+			return;
                 case PLOT_BANDOS:
 		fprintf(stdout,"ERROR: plot type not available (yet)!\n");
 		break;
