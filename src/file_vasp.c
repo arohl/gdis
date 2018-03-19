@@ -115,6 +115,7 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 	gchar *line;
 	int isok=0;
 	int ii=0;
+	int ispin=0;
 	line = file_read_line(vf);
 	while (line) {
 	        if (find_in_string("/parameters",line) != NULL) break;
@@ -126,6 +127,13 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 			while((model->basename[ii] != '<')&&(model->basename[ii] != '\0')) ii++;
 			model->basename[ii]='\0';
 		}
+		/*fill needed properties*/
+		if (find_in_string("ISPIN",line) != NULL){
+			sscanf(line," <i type=\"int\" name=\"ISPIN\"> %i</i> ",&ispin);
+			if(ispin>1) model->spin_polarized=TRUE;
+		}
+		if (find_in_string("NEDOS",line) != NULL)
+			sscanf(line," <i type=\"int\" name=\"NEDOS\"> %i</i> ",&(model->ndos));
 		g_free(line);
 		line = file_read_line(vf);
 	}
@@ -211,21 +219,12 @@ int vasp_xml_read_frequency(FILE *vf, struct model_pak *model){
 */
 	gdouble factor=521.4708336735473879;
 	gchar *line;
-	long int vfpos=ftell(vf);
+	long int vfpos;
 	gint idx,jdx;
 
-	if(fetch_in_file(vf,"<dynmat>")==0) {
-		/*we don't have a dynmat array... rewind and return */
-		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-		return -1;
-		/*TODO: check if dynmat array exists in vaspxml prior to 5.1*/
-	}
+	if(fetch_in_file(vf,"<dynmat>")==0) return -1;/*we don't have a dynmat array*/
 	vfpos=ftell(vf);
-	if(fetch_in_file(vf,"eigenvalues")==0) {
-		/* no eigenvalues -> no frequency (unfinished calculation?) */
-		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-		return -1;
-	}
+	if(fetch_in_file(vf,"eigenvalues")==0) return -1;/* no eigenvalues -> no frequency */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	fetch_in_file(vf,"</varray>");
 	line = file_read_line(vf);/*next line is eigenvalues*/
@@ -311,9 +310,63 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	return 0;
 }
 
-int vasp_xml_read_eigenvalues(FILE *vf){
-/* TODO: read the eigenvalues plot the corresponding DOS / band diagram? */
-	return 0;/* But not ready now */
+int vasp_xml_read_dos(FILE *vf, struct model_pak *model){
+	/* get the final density of states (total dos only) */
+	gchar *line;
+	gint idx;
+	long int vfpos;
+	/*start*/
+	if(fetch_in_file(vf,"<dos>")==0) return -1;/* no dos information */
+	line = file_read_line(vf);
+	sscanf(line," <i name=\"efermi\"> %lf </i> ",&(model->efermi));
+#define DEBUG_DOS 0
+#if DEBUG_DOS
+fprintf(stdout,"#DBG: FERMI ENERGY: %lf\n",model->efermi);
+#endif
+	/* the next line should contain <total> */
+	line = file_read_line(vf);
+	if(find_in_string(vf,"</set>") == NULL) {
+		/*there is a pb: we have a dos, but not a total one*/
+		/*solution: rewind and look for <total> keyword*/
+		rewind(vf);
+		if(fetch_in_file(vf,"<total>")==0) return -1;/*no total dos info?*/
+	}
+	/*go to first spin component*/
+	if(fetch_in_file(vf,"spin 1")==0) return -1;/*no component*/
+	if(model->dos_eval!=NULL) g_free(model->dos_eval);
+	if(model->dos_spin_up!=NULL) g_free(model->dos_spin_up);
+	model->dos_eval=g_malloc(model->ndos*sizeof(gdouble));
+	model->dos_spin_up=g_malloc(model->ndos*sizeof(gdouble));
+	line = file_read_line(vf);
+	idx=0;
+	while(line){
+		if(idx>(model->ndos-1)) break;
+		if(find_in_string(vf,"</set>") != NULL) break;
+		sscanf(line," <r> %lf %lf %*s",&(model->dos_eval[idx]),&(model->dos_spin_up[idx]));
+#if DEBUG_DOS
+fprintf(stdout,"#DBG: CATCH SPIN UP: %i %lf \t %lf\n",idx,model->dos_eval[idx],model->dos_spin_up[idx]);
+#endif
+		idx++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	if(!model->spin_polarized) return 0;/*only one component*/
+	if(model->dos_spin_down!=NULL) g_free(model->dos_spin_down);
+	model->dos_spin_down=g_malloc(model->ndos*sizeof(gdouble));
+	line = file_read_line(vf);
+	idx=0;
+	while(line){
+		if(idx>(model->ndos-1)) break;
+		if(find_in_string(vf,"</set>") != NULL) break;
+		sscanf(line," <r> %*lf %lf %*s",&(model->dos_spin_down[idx]));
+#if DEBUG_DOS
+fprintf(stdout,"#DBG: CATCH SPIN DOWN: %i %lf \t %lf\n",idx,model->dos_eval[idx],model->dos_spin_down[idx]);
+#endif
+		idx++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	return 0;
 }
 /* here will be some more features */
 /* general parser / writter */
@@ -382,8 +435,9 @@ vfpos=ftell(vf);/*flag*/
 	}
 	g_free(line);
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-/* Read frequency here, because why not ?*/
-	vasp_xml_read_frequency(vf,model);
+	vasp_xml_read_frequency(vf,model);/* Read Frequency */
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	vasp_xml_read_dos(vf,model);/* Read DOS */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){
 		model->animation=FALSE;

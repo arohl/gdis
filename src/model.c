@@ -523,6 +523,17 @@ matrix_identity(data->rlatmat);
 /* plots */
 data->plots = FALSE;
 
+/* density of states (DOS) */
+data->spin_polarized=FALSE;
+data->efermi=0.0;
+data->ndos=0;
+data->dos_eval=NULL;
+data->dos_spin_up=NULL;
+data->dos_spin_down=NULL;
+
+/* bandstructure */
+data->nband=0;
+
 /* frequency */
 data->have_frequency = FALSE;
 data->nfreq=0;
