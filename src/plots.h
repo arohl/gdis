@@ -61,7 +61,7 @@ struct plot_pak {
 	preload_plot_data raman;
         /* plot parameter */
 	gint ndos;
-	gint nband;
+	gint nbands;
 	gint nfreq;
 	gint nraman;
         gdouble xmin;

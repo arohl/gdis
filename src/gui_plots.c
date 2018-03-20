@@ -282,6 +282,7 @@ void plot_none(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 
 void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpointer user_data){
@@ -293,7 +294,7 @@ void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpoin
 			else if(plot->plot_sel&PLOT_VOLUME) plot_volume();
 			else if(plot->plot_sel&PLOT_PRESSURE) plot_pressure();
 			else {/*no plot selected, but plot_selection possible?*/
-			        if(!(plot->plot_mask&(15))) plot->type=PLOT_NONE;
+			        if(!(plot->plot_mask&(15))) plot_none();
 			        else if(plot->plot_mask&PLOT_ENERGY) plot_energy();
 			        else if(plot->plot_mask&PLOT_FORCE) plot_force();
 			        else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
@@ -305,7 +306,7 @@ void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpoin
 			else if(plot->plot_sel&PLOT_DOS) plot_dos();
 			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos();
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(48))) plot->type=PLOT_NONE;
+                                if(!(plot->plot_mask&(48))) plot_none();
                                 else if(plot->plot_mask&PLOT_BAND) plot_band();
                                 else if(plot->plot_mask&PLOT_DOS) plot_dos();
                                 else if(!((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS)) plot_bandos();
@@ -315,7 +316,7 @@ void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpoin
 			if(plot->plot_sel&PLOT_FREQUENCY) plot_frequency();
 			else if(plot->plot_sel&PLOT_RAMAN) plot_raman();
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(192))) plot->type=PLOT_NONE;
+                                if(!(plot->plot_mask&(192))) plot_none();
                                 else if(plot->plot_mask&PLOT_FREQUENCY) plot_frequency();
                                 else if(plot->plot_mask&PLOT_RAMAN) plot_raman();
 			}
@@ -351,7 +352,7 @@ void plot_initialize(struct model_pak *data){
 	plot->dos.data=NULL;
 	plot->frequency.data=NULL;
 	plot->ndos=0;
-	plot->nband=0;
+	plot->nbands=0;
 	plot->nfreq=0;
 	plot->nraman=0;
 	plot->plot_mask=PLOT_NONE;
@@ -380,8 +381,13 @@ void plot_initialize(struct model_pak *data){
 		plot->dos.data=(gdouble *)g_malloc(plot->dos.size*sizeof(gdouble));
 		
 	}
-	if(data->nband>1) {
+	if(data->nbands>1) {
 		plot->plot_mask+=PLOT_BAND;
+		plot->nbands=data->nbands;
+		/*the sizes!*/
+		plot->band.size=data->nkpoints;
+		if(data->spin_polarized) plot->band.data=(gdouble *)g_malloc(((1+plot->nbands)*plot->band.size+4)*sizeof(gdouble));
+		else plot->band.data=(gdouble *)g_malloc(((1+2*plot->nbands)*plot->band.size+4)*sizeof(gdouble));
 	}
 	if(!((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS)) {
 		/*bandos type is possible*/
@@ -429,7 +435,7 @@ void plot_cleanup(struct model_pak *model){
 		g_free(plot->force.data);
 		g_free(plot->volume.data);
 		g_free(plot->pressure.data);
-		g_free(plot->band.data);
+		g_free(plot->band.data);/*so what?*/
 		g_free(plot->dos.data);
 		g_free(plot->frequency.data);
 		g_free(plot);
@@ -596,7 +602,7 @@ void gui_plots_dialog(void){
 	gtk_box_pack_start(GTK_BOX(electronic_box), hbox, FALSE, FALSE, 0);
 	label = gtk_label_new("BAND present:");
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	tmp = g_strdup_printf("%9d", plot->nband);
+	tmp = g_strdup_printf("%9d", plot->nbands);
 	label = gtk_label_new(tmp);
 	g_free(tmp);
 	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 0);

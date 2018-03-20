@@ -41,15 +41,47 @@ extern struct sysenv_pak sysenv;
 
 
 void plot_prepare_data(struct plot_pak *plot){
-	int i,j;
+	int i,j,idx;
 	gdouble x,y;
 	struct model_pak *model;
 	g_assert(plot != NULL);
 	g_assert(plot->model != NULL);
 	model=plot->model;
-
-/* task cleanup will interpolate some graph (DOS/BAND + FREQ...) */
+/* task cleanup set plots that does not depend on frames */
 	/* TODO: DOS/BAND */
+/* add BAND data */
+	if(plot->plot_mask&PLOT_BAND){
+	/*we have an array of [kpts_d,band_up,band_down] which size is [nkpoints*nbands]*/
+		/*pass all parameters as the begining of an array*/
+		plot->band.data[0]=model->nbands;
+		plot->band.data[1]=model->nkpoints;
+		plot->band.data[2]=model->efermi;/*necessary?*/
+		if(model->spin_polarized) plot->band.data[3]=2;
+		else plot->band.data[3]=1;
+		plot->band.xmin=model->kpts_d[0];
+		plot->band.xmax=model->kpts_d[0];
+		plot->band.ymin=model->band_up[0]-model->efermi;
+		plot->band.ymax=model->band_up[0]-model->efermi;
+		/*first prepare the x*/
+		for(i=0;i<(model->nkpoints);++i){
+			x=model->kpts_d[i];/*kpoint distance*/
+			if(x<plot->band.xmin) plot->band.xmin=x;
+			if(x>plot->band.xmax) plot->band.xmax=x;
+			plot->band.data[i+4]=x;/*mind the shift*/
+		}
+		/*very tricky: reorder all kpoints energy per band*/
+		idx=4+model->nkpoints;/*origin shift*/
+		for(i=0;i<model->nbands;i++)
+			for(j=0;j<model->nkpoints;j++){
+				y=model->band_up[i+j*model->nbands]-model->efermi;
+				if(y<plot->band.ymin) plot->band.ymin=y;
+				if(y>plot->band.ymax) plot->band.ymax=y;
+				plot->band.data[idx]=y;/*mind the shift*/
+//fprintf(stdout,"#DBG: REG: %lf %lf (%i %i %i)\n",plot->band.data[j+4],y,j,i,idx);
+				idx++;
+			}
+		/*all done*/
+	}
 /* add DOS data */
         if(plot->plot_mask&PLOT_DOS){
                 j=0;
@@ -75,7 +107,6 @@ void plot_prepare_data(struct plot_pak *plot){
 
         }
 	/* TODO: FREQ: add intensities */
-
         plot->data_changed=FALSE;/*protect data until changed*/
 }
 void plot_load_data(struct plot_pak *plot,struct task_pak *task){
@@ -445,6 +476,47 @@ void draw_plot_dos(struct model_pak *model,struct plot_pak *plot){
         if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
         else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
+/*************/
+/* plot BAND */
+/*************/
+void draw_plot_band(struct model_pak *model,struct plot_pak *plot){
+        /*draw bandstructure*/
+        gdouble xmin,xmax;
+        gdouble ymin,ymax;
+	gint index;
+	int i;
+        /* get limits */
+        if(plot->auto_x==FALSE){
+                xmin=plot->xmin;
+                xmax=plot->xmax;
+        }else{
+                xmin=plot->band.xmin;
+                xmax=plot->band.xmax;
+        }
+        if(plot->auto_y==FALSE){
+                ymin=plot->ymin;
+                ymax=plot->ymax;
+        }else{
+                ymin=plot->band.ymin;
+                ymax=plot->band.ymax;
+        }
+        if(ymin==ymax) {
+                ymin=ymin-1.0;
+                ymax=ymax+1.0;
+        }
+        plot->graph=graph_new("BAND",model);
+	graph_add_borned_data(plot->band.size+4,plot->band.data,xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
+	/*then send each individual bands*/
+	for(i=0;i<plot->nbands;i++){
+		index=4+(plot->band.size)*(i+1);
+		graph_add_borned_data(plot->band.size,&(plot->band.data[index]),xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
+	}
+        /* set tics */
+        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
+        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
+        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+}
 /******************/
 /* plot frequency */
 /******************/
@@ -503,7 +575,8 @@ void plot_draw_graph(struct plot_pak *plot,struct task_pak *task){
 			return;
                 break;
                 case PLOT_BAND:
-		fprintf(stdout,"ERROR: plot type not available (yet)!\n");
+			draw_plot_band(data,plot);
+			return;
 		break;
                 case PLOT_DOS:
 			draw_plot_dos(data,plot);

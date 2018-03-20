@@ -303,10 +303,18 @@ g_assert(graph != NULL);
 
 /* try to prevent the user supplying different sized data */
 /* TODO - sample in some fashion if different? */
+if(type==GRAPH_BAND){
+	/*the first set of a GRAPH_BAND is _not_ the same size*/
+	if(graph->set_list!=NULL) {/*in other cases, proceed as usual*/
+		if (graph->size) g_assert(graph->size == size);
+		else graph->size = size;
+	}
+}else{
 if (graph->size)
   g_assert(graph->size == size);
 else
   graph->size = size;
+}
 
 ptr = g_malloc(size*sizeof(gdouble));
 
@@ -644,6 +652,8 @@ gint i, x, y, oldx, oldy, ox, oy;
 gchar *text;
 gdouble *ptr;
 gdouble xf, yf, dx, dy;
+gdouble nbands, nkpoints, efermi, ispin;
+gdouble *eval;
 GSList *list;
 
 /* compute origin */
@@ -718,18 +728,32 @@ for (i=0 ; i<graph->yticks ; i++)
 glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
 glLineWidth(1.0);
 
-/* This is a copy of REGULAR. TODO: make proper band plot */
-for (list=graph->set_list ; list ; list=g_slist_next(list))
+/*the first set of GRAPH_BAND data have a special 4 value header*/
+list=graph->set_list;
+ptr = (gdouble *) list->data;
+nbands=ptr[0];
+nkpoints=ptr[1];
+efermi=ptr[2];
+ispin=ptr[3];
+/*x is then stored as the next nkpoints value */
+eval=g_malloc(nkpoints*sizeof(gdouble));/*TODO: eliminate the need of g_malloc/g_free*/
+for(i=4;i<(graph->size+4);i++) eval[i-4]=ptr[i];
+/*now back to "regular"*/
+for (list=g_slist_next(list) ; list ; list=g_slist_next(list))
   {
   ptr = (gdouble *) list->data;
 
   glBegin(GL_LINE_STRIP);
   for (i=0 ; i<graph->size ; i++)
     {
-    xf = (gdouble) i / (gdouble) (graph->size-1);
+    xf = eval[i];
+	if((xf<graph->xmin)||(xf>graph->xmax)) continue;
+    xf -= graph->xmin;
+    xf /= (graph->xmax - graph->xmin);
     x = ox + xf*dx;
 
     yf = ptr[i];
+	if((yf<graph->ymin)||(yf>graph->ymax)) continue;
     yf -= graph->ymin;
     yf /= (graph->ymax - graph->ymin);
     yf *= dy;
@@ -743,6 +767,19 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
   glEnd();
 
   }
+/*BAND requires a special axis at fermi level*/
+  glBegin(GL_LINE_STRIP);
+  glColor3f(0.9, 0.7, 0.4);
+  glLineWidth(2.0);
+  x = ox;
+  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+  y = oy - dy*yf;
+  gl_vertex_window(x, y-1, canvas);
+  x = ox+dx;
+  gl_vertex_window(x, y-1, canvas);
+  glEnd();
+
+g_free(eval);
 }
 void graph_draw_1d_dos(struct canvas_pak *canvas, struct graph_pak *graph)
 {
