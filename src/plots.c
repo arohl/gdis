@@ -476,6 +476,50 @@ void draw_plot_dos(struct model_pak *model,struct plot_pak *plot){
         if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
         else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
+/***************/
+/* plot BANDOS */
+/***************/
+void draw_plot_bandos(struct model_pak *model,struct plot_pak *plot){
+        /*draw density of state (dos) AND bandstructure*/
+        gdouble xmin,xmax;
+        gdouble ymin,ymax;
+	gint index;
+	int i;
+        /* get limits */
+        if(plot->auto_x==FALSE){
+                xmin=plot->xmin;
+                xmax=plot->xmax;
+        }else{
+                xmin=plot->dos.ymin;
+                xmax=plot->dos.ymax;
+        }
+        if(plot->auto_y==FALSE){
+                ymin=plot->ymin;
+                ymax=plot->ymax;
+        }else{
+                ymin=plot->band.ymin;
+                ymax=plot->band.ymax;
+        }
+        if(ymin==ymax) {
+                ymin=ymin-1.0;
+                ymax=ymax+1.0;
+        }
+        plot->graph=graph_new("BANDOS",model);
+	/*send dos*/
+        graph_add_borned_data(plot->dos.size,plot->dos.data,xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
+	/*send bands*/
+	graph_add_borned_data(plot->band.size+4,plot->band.data,xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
+        for(i=0;i<plot->nbands;i++){
+                index=4+(plot->band.size)*(i+1);
+                graph_add_borned_data(plot->band.size,&(plot->band.data[index]),xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
+        }
+        /* set tics */
+/*only ytics make sense though*/
+        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
+        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
+        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+}
 /*************/
 /* plot BAND */
 /*************/
@@ -506,7 +550,6 @@ void draw_plot_band(struct model_pak *model,struct plot_pak *plot){
         }
         plot->graph=graph_new("BAND",model);
 	graph_add_borned_data(plot->band.size+4,plot->band.data,xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
-	/*then send each individual bands*/
 	for(i=0;i<plot->nbands;i++){
 		index=4+(plot->band.size)*(i+1);
 		graph_add_borned_data(plot->band.size,&(plot->band.data[index]),xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
@@ -582,7 +625,8 @@ void plot_draw_graph(struct plot_pak *plot,struct task_pak *task){
 			draw_plot_dos(data,plot);
 			return;
                 case PLOT_BANDOS:
-		fprintf(stdout,"ERROR: plot type not available (yet)!\n");
+			draw_plot_bandos(data,plot);
+			return;
 		break;
                 case PLOT_FREQUENCY:
 			draw_plot_frequency(data,plot);

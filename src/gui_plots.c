@@ -81,7 +81,13 @@ void set_auto_x(void){
 		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->frequency.xmax));
 		break;
 	case PLOT_BAND:
+		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->band.xmin));
+		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->band.xmax));
+		break;
 	case PLOT_BANDOS:
+		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",0.0));
+		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",10.0));
+		break;
 	case PLOT_RAMAN:
 	case PLOT_NONE:
 	default:
@@ -117,6 +123,9 @@ void set_auto_y(void){
 		break;
 	case PLOT_BAND:
 	case PLOT_BANDOS:
+		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->band.ymin));
+		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->band.ymax));
+		break;
 	case PLOT_RAMAN:
         case PLOT_NONE:
         default:
@@ -236,10 +245,10 @@ void plot_bandos(){
         plot->type=PLOT_BANDOS;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_BANDOS;/*selected*/
-        plot->xmin=plot->band.xmin;
-        plot->xmax=plot->band.xmax;
-        plot->ymin=plot->dos.ymin;
-        plot->ymax=plot->dos.ymax;
+        plot->xmin=0.;
+        plot->xmax=10.;
+        plot->ymin=plot->band.ymin;
+        plot->ymax=plot->band.ymax;
         plot->auto_x=TRUE;
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);

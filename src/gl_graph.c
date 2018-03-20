@@ -303,13 +303,19 @@ g_assert(graph != NULL);
 
 /* try to prevent the user supplying different sized data */
 /* TODO - sample in some fashion if different? */
+if(type==GRAPH_BANDOS){
+	/*the first *two* sets of a GRAPH_BANDOS are _not_ the same size*/
+	/*also it doesn't make much sense to allow anything on that one.*/
+	if(graph->set_list==NULL) graph->size = size;/*only first size matter*/ 
+}
 if(type==GRAPH_BAND){
 	/*the first set of a GRAPH_BAND is _not_ the same size*/
 	if(graph->set_list!=NULL) {/*in other cases, proceed as usual*/
 		if (graph->size) g_assert(graph->size == size);
 		else graph->size = size;
 	}
-}else{
+}
+if((type!=GRAPH_BAND)&&(type!=GRAPH_BANDOS)){
 if (graph->size)
   g_assert(graph->size == size);
 else
@@ -652,7 +658,7 @@ gint i, x, y, oldx, oldy, ox, oy;
 gchar *text;
 gdouble *ptr;
 gdouble xf, yf, dx, dy;
-gdouble nbands, nkpoints, efermi, ispin;
+gint nbands, nkpoints, efermi, ispin;
 gdouble *eval;
 GSList *list;
 
@@ -1037,9 +1043,13 @@ void graph_draw_1d_bandos(struct canvas_pak *canvas, struct graph_pak *graph)
 {
 gint i, x, y, oldx, oldy, ox, oy;
 gchar *text;
-gdouble *ptr;
+gdouble *ptr,*xptr;
 gdouble xf, yf, dx, dy;
+gdouble xmin=0.;
+gdouble xmax=1.;
+gint nbands, nkpoints, efermi, ispin;
 GSList *list;
+GSList *xlist;
 
 /* compute origin */
 ox = canvas->x + 4*gl_fontsize;
@@ -1065,8 +1075,8 @@ for (i=0 ; i<graph->xticks ; i++)
   x = ox + xf*dx;
   if (graph->xlabel)
     {/*only calculate real value when needed*/
-    xf *= (graph->xmax-graph->xmin);
-    xf += graph->xmin;
+    xf *= (xmax-xmin);
+    xf += xmin;
     text = g_strdup_printf("%.2f", xf);
     gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
     g_free(text);
@@ -1108,31 +1118,103 @@ for (i=0 ; i<graph->yticks ; i++)
   glEnd();
   oldy = y;
   }
+/*second axis*/
+  x=ox+0.4*dx;
+  y=oy-dy;
+  oldy=oy;
+  glBegin(GL_LINE_STRIP);
+  gl_vertex_window(x, oldy, canvas);
+  gl_vertex_window(x, y-1, canvas);
+  gl_vertex_window(x-5, y-1, canvas);
+  glEnd();
 
 /* data drawing colour */
 glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
 glLineWidth(1.0);
 
-/* copy of DOS90 TODO: proper bandos */
-for (list=graph->set_list ; list ; list=g_slist_next(list))
+/*first set is the DOS, which we need to put on [0,0.3] of x, rotated by 90 degrees*/
+list=graph->set_list;
+ptr = (gdouble *) list->data;
+glBegin(GL_LINE_STRIP);
+        for (i=0 ; i<graph->size ; i+=2) {
+                xf = ptr[i+1];
+                xf -= graph->xmin;
+                xf /= (graph->xmax - graph->xmin);
+                x = ox+xf*dx*0.3;
+                yf = ptr[i];
+		if((yf<graph->ymin)||(yf>graph->ymax)) continue;
+                yf -= graph->ymin;
+                yf /= (graph->ymax - graph->ymin);
+                yf *= dy;
+                y = (gint) yf;
+                y *= -1;
+                y += oy;
+                gl_vertex_window(x, y-1, canvas);
+        }
+  glEnd();
+/*BANDOS requires two special axis at fermi level*/
+  glBegin(GL_LINE_STRIP);
+  glColor3f(0.9, 0.7, 0.4);
+  glLineWidth(2.0);
+  x = ox;
+  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+  y = oy - dy*yf;
+  gl_vertex_window(x, y-1, canvas);
+  x = ox+dx*0.3;
+  gl_vertex_window(x, y-1, canvas);
+  glEnd();
+/* data drawing colour */
+glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
+glLineWidth(1.0);
+/* next set contain the header of bands + x values */
+xlist=g_slist_next(list);
+xptr = (gdouble *) xlist->data;
+nbands=xptr[0];
+nkpoints=xptr[1];
+efermi=xptr[2];
+ispin=xptr[3];
+xmin=xptr[4];
+xmax=xptr[nkpoints+3];
+/*now to BAND plotting*/
+for (list=g_slist_next(xlist) ; list ; list=g_slist_next(list))
   {
   ptr = (gdouble *) list->data;
+
   glBegin(GL_LINE_STRIP);
-  for (i=0 ; i<graph->size ; i++)
+  for (i=0 ; i<nkpoints ; i++)
     {
-    xf = (gdouble) i / (gdouble) (graph->size-1);
-    xf *= dy;
-    x = (gint) xf;
-    x *= -1;
-    x += oy;
+    xf = xptr[i+4];
+    xf -= xmin;
+    xf /= (xmax - xmin);
+    x = ox + dx*0.4 + xf*dx*0.6;
+
     yf = ptr[i];
+	if((yf<graph->ymin)||(yf>graph->ymax)) continue;
     yf -= graph->ymin;
     yf /= (graph->ymax - graph->ymin);
-    y = ox + yf*dx;/*here dx*0.3 to obtain small DOS left part (TODO)*/
-    gl_vertex_window(y, x-1, canvas);
+    yf *= dy;
+
+    y = (gint) yf;
+    y *= -1;
+    y += oy;
+
+    gl_vertex_window(x, y-1, canvas);
     }
   glEnd();
+
   }
+/*BANDOS requires two special axis at fermi level*/
+  glBegin(GL_LINE_STRIP);
+  glColor3f(0.9, 0.7, 0.4);
+  glLineWidth(2.0);
+  x = ox+dx*0.4;
+  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+  y = oy - dy*yf;
+  gl_vertex_window(x, y-1, canvas);
+  x = ox+dx;
+  gl_vertex_window(x, y-1, canvas);
+  glEnd();
+
 }
 void graph_draw_1d(struct canvas_pak *canvas, struct graph_pak *graph)
 {/* NEW graph selector */
@@ -1153,7 +1235,7 @@ void graph_draw_1d(struct canvas_pak *canvas, struct graph_pak *graph)
 		graph_draw_1d_dos90(canvas,graph);
 		break;
 	case GRAPH_BANDOS:
-
+		graph_draw_1d_bandos(canvas,graph);
 		break;
 	case GRAPH_UNKNOWN:
 	default:
