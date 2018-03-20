@@ -390,7 +390,7 @@ void plot_initialize(struct model_pak *data){
 		plot->dos.data=(gdouble *)g_malloc(plot->dos.size*sizeof(gdouble));
 		
 	}
-	if(data->nbands>1) {
+	if((data->nbands>1)&&(data->band_up!=NULL)) {
 		plot->plot_mask+=PLOT_BAND;
 		plot->nbands=data->nbands;
 		/*the sizes!*/
