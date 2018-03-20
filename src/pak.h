@@ -1252,6 +1252,8 @@ gint plots;
  * So one can directly access an array/value 
  * for frequency, raman, dos, band, etc.. */
 
+/*TODO: pack all that into a "structure_pak"?*/
+
 /* density of states (DOS) */
 gboolean spin_polarized;
 gdouble efermi;
@@ -1261,7 +1263,11 @@ gdouble *dos_spin_up;
 gdouble *dos_spin_down;
 
 /* bandstructure */
-gint nband;
+gint nbands;
+gint nkpoints;
+gdouble *kpts_d;
+gdouble *band_up;
+gdouble *band_down;
 
 /* frequency */
 gboolean have_frequency;

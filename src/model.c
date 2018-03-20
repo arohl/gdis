@@ -532,7 +532,11 @@ data->dos_spin_up=NULL;
 data->dos_spin_down=NULL;
 
 /* bandstructure */
-data->nband=0;
+data->nbands=0;
+data->nkpoints=0;
+data->kpts_d=NULL;
+data->band_up=NULL;
+data->band_down=NULL;
 
 /* frequency */
 data->have_frequency = FALSE;

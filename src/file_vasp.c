@@ -95,19 +95,61 @@ int vasp_xml_read_org_incar(FILE *vf){
 	return (isok);
 }
 
-int vasp_xml_read_kpoints(FILE *vf){
-/* TODO: include some KPOINTS definition */
+int vasp_xml_read_kpoints(FILE *vf,struct model_pak *model){
+/* get number of kpoints and their distance to gamma */
 	gchar *line;
-	int isok;
+	gint nkpts;
+	gdouble xo,yo,zo;
+	gdouble xi,yi,zi;
+	gdouble dist=0.;
+	long int vfpos=ftell(vf);/*flag begining of kpoints*/
 	line = file_read_line(vf);
-	while (line) {
-	        if (find_in_string("/kpoints",line) != NULL) break;
+/*unfortunately, there is no NKPTS entry in vasprun.xml!*/
+	if(fetch_in_file(vf,"kpointlist")==0) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;/*broken kpoints entry*/
+	}
+	vfpos=ftell(vf);/*flag begining of kpointlist*/
+	nkpts=0;
+	line = file_read_line(vf);
+	while (line) {/*first get the number of kpoints*/
+	        if (find_in_string("/varray",line) != NULL) break;
+		nkpts++;
 		g_free(line);
 		line = file_read_line(vf);
 	}
-	isok=(int)(line != 0);
-	g_free(line);
-	return (isok);
+	if (line == NULL) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;/* Incomplete kpoint list? */
+	}
+	model->nkpoints=nkpts;
+	if(model->kpts_d!=NULL) g_free(model->kpts_d);
+	model->kpts_d=g_malloc((model->nkpoints)*sizeof(gdouble));
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	/*now get kpoints distances*/
+	nkpts=0;
+	xo=0.;
+	yo=0.;
+	zo=0.;
+	line = file_read_line(vf);
+	while (line) {/*now get kpoints distances*/
+		if (find_in_string("/varray",line) != NULL) break;
+		sscanf(line," <v> %lf %lf %lf </v> ",&xi,&yi,&zi);
+		dist+=sqrt((xi-xo)*(xi-xo)+(yi-yo)*(yi-yo)+(zi-zo)*(zi-zo));
+		model->kpts_d[nkpts]=dist;
+//fprintf(stdout,"#DBG: kpt[%i]={%lf,%lf,%lf} d=%lf\n",nkpts,xi,yi,zi,model->kpts_d[nkpts]);
+		xo=xi;yo=yi;zo=zi;
+		nkpts++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	vfpos=ftell(vf);/*flag end of kpointlist*/
+	/*all done for now! TODO: get kpoints coordinates and weights*/
+	if(fetch_in_file(vf,"</kpoints>")==0) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;/*broken kpoints entry*/
+	}
+	return 0;
 }
 
 int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
@@ -128,6 +170,8 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 			model->basename[ii]='\0';
 		}
 		/*fill needed properties*/
+		if (find_in_string("NBANDS",line) != NULL)
+			sscanf(line," <i type=\"int\" name=\"NBANDS\"> %i</i> ",&(model->nbands));
 		if (find_in_string("ISPIN",line) != NULL){
 			sscanf(line," <i type=\"int\" name=\"ISPIN\"> %i</i> ",&ispin);
 			if(ispin>1) model->spin_polarized=TRUE;
@@ -254,6 +298,7 @@ int vasp_xml_read_frequency(FILE *vf, struct model_pak *model){
 	g_free(line);
 	/*note that there is no frequency intensity information in vaspxml 
  * 	  and AFAIK there is no easy way to obtain such information. OVHPA*/
+	return 0;
 }
 
 
@@ -309,12 +354,106 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	vasp_xml_read_energy(vf,model);
 	return 0;
 }
+int vasp_xml_read_bands(FILE *vf,struct model_pak *model){
+/* get the (non-projected) bandstructure */
+        gchar *line;
+        gint idx;
+	gint ik,ib;
+        long int vfpos=ftell(vf);
+        /*start*/
+#define DEBUG_BAND 0
+	if(model->nkpoints<2) return 1;/*there is only one k-point*/
+	if(model->nbands<2) return 1;/*there is only one band (how is that even possible?)*/
+	if(fetch_in_file(vf,"<eigenvalues>")==0) {
+		/*when there is no band information after <dos>
+ * 		it is still possible to find some before.. */
+		rewind(vf);
+		if(fetch_in_file(vf,"<eigenvalues>")==0) {
+			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+			return -1;/* no band information */
+		}
+	}
+	/*NOTE: the projected information should be an <array> *AFTER* </eigenvalues>*/
+	/*there is nbands * nkpoints * nspin values of energy to get*/
+/*spin up*/
+	if(fetch_in_file(vf,"kpoint 1")==0) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return -1;/*no values*/
+	}
+        if(model->band_up != NULL) g_free(model->band_up);
+        /*allocation TODO: g_malloc_try?*/
+        model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
+	ik=0;ib=0;
+	idx=0;
+	line = file_read_line(vf);
+	while(line){
+		if(ib>(model->nbands-1)) {
+			ik++;
+			ib=0;
+		}
+		if(ik>(model->nkpoints-1)) break;
+		if(find_in_string("</set>",line) != NULL) {
+			g_free(line);
+			line = file_read_line(vf);
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		if(find_in_string("set comment",line) != NULL) break;/*next component*/
+		if(find_in_string("</array>",line) != NULL) break;/*end of array*/
+		idx=ik*(model->nbands)+ib;/*current index*/
+		sscanf(line," <r> %lf %*s </r> ",&(model->band_up[idx]));
+#if DEBUG_BAND
+fprintf(stdout,"#DBG: spin=  up kpt=%i band=%i eval=%lf\n",ik,ib,model->band_up[idx]);
+#endif
+		ib++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	if(line == NULL) return -1;/*incomplete set*/
+	if(!model->spin_polarized) return 0;/*only one component*/
+/*spin down*/
+        if(fetch_in_file(vf,"kpoint 1")==0) {
+                fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+                return -1;/*no values*/
+        }
+        if(model->band_down != NULL) g_free(model->band_down);
+        model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
+        ik=0;ib=0;
+        idx=0;
+        line = file_read_line(vf);
+        while(line){
+                if(ib>(model->nbands-1)) {
+                        ik++;
+                        ib=0;
+                }
+                if(ik>(model->nkpoints-1)) break;
+                if(find_in_string("</set>",line) != NULL) {
+                        g_free(line);
+                        line = file_read_line(vf);
+			g_free(line);
+			line = file_read_line(vf);
+                }
+                if(find_in_string("set comment",line) != NULL) break;/*next (very unexpected) component*/
+                if(find_in_string("</array>",line) != NULL) break;/*end of array*/
+                idx=ik*(model->nbands)+ib;/*current index*/
+                sscanf(line," <r> %lf %*s </r> ",&(model->band_down[idx]));
+#if DEBUG_BAND
+fprintf(stdout,"#DBG: spin=down kpt=%i band=%i eval=%lf\n",ik,ib,model->band_up[idx]);
+#endif
+                ib++;
+                g_free(line);
+                line = file_read_line(vf);
+        }
+        if(line == NULL) return -1;/*incomplete set*/
+	return 0;
+}
+
+
 
 int vasp_xml_read_dos(FILE *vf, struct model_pak *model){
 	/* get the final density of states (total dos only) */
 	gchar *line;
 	gint idx;
-	long int vfpos;
 	/*start*/
 	if(fetch_in_file(vf,"<dos>")==0) return -1;/* no dos information */
 	line = file_read_line(vf);
@@ -325,7 +464,7 @@ fprintf(stdout,"#DBG: FERMI ENERGY: %lf\n",model->efermi);
 #endif
 	/* the next line should contain <total> */
 	line = file_read_line(vf);
-	if(find_in_string(vf,"</set>") == NULL) {
+	if(find_in_string("</set>",line) == NULL) {
 		/*there is a pb: we have a dos, but not a total one*/
 		/*solution: rewind and look for <total> keyword*/
 		rewind(vf);
@@ -341,7 +480,7 @@ fprintf(stdout,"#DBG: FERMI ENERGY: %lf\n",model->efermi);
 	idx=0;
 	while(line){
 		if(idx>(model->ndos-1)) break;
-		if(find_in_string(vf,"</set>") != NULL) break;
+		if(find_in_string("</set>",line) != NULL) break;
 		sscanf(line," <r> %lf %lf %*s",&(model->dos_eval[idx]),&(model->dos_spin_up[idx]));
 #if DEBUG_DOS
 fprintf(stdout,"#DBG: CATCH SPIN UP: %i %lf \t %lf\n",idx,model->dos_eval[idx],model->dos_spin_up[idx]);
@@ -357,8 +496,8 @@ fprintf(stdout,"#DBG: CATCH SPIN UP: %i %lf \t %lf\n",idx,model->dos_eval[idx],m
 	idx=0;
 	while(line){
 		if(idx>(model->ndos-1)) break;
-		if(find_in_string(vf,"</set>") != NULL) break;
-		sscanf(line," <r> %*lf %lf %*s",&(model->dos_spin_down[idx]));
+		if(find_in_string("</set>",line) != NULL) break;
+		sscanf(line," <r> %*f %lf %*s",&(model->dos_spin_down[idx]));
 #if DEBUG_DOS
 fprintf(stdout,"#DBG: CATCH SPIN DOWN: %i %lf \t %lf\n",idx,model->dos_eval[idx],model->dos_spin_down[idx]);
 #endif
@@ -411,8 +550,8 @@ vfpos=ftell(vf);/*flag*/
 /* Starting vasp 5.4.X with X>1 primitive_cell and primitive_index are provided here. */
 /* For now this information is discarded. */
 	/* <kpoints> tag - if none, rewind and ignore */	
-	if(fetch_in_file(vf,"<incar>")==0) fseek(vf,vfpos,SEEK_SET);
-	else vasp_xml_read_kpoints(vf);
+	if(fetch_in_file(vf,"<kpoints>")==0) fseek(vf,vfpos,SEEK_SET);
+	else vasp_xml_read_kpoints(vf,model);
 	/* <parameters> tag - if none, rewind and ignore */
 	if(fetch_in_file(vf,"<parameters>")==0) fseek(vf,vfpos,SEEK_SET);
 	else vasp_xml_read_incar(vf,model);
@@ -438,6 +577,7 @@ vfpos=ftell(vf);/*flag*/
 	vasp_xml_read_frequency(vf,model);/* Read Frequency */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	vasp_xml_read_dos(vf,model);/* Read DOS */
+	vasp_xml_read_bands(vf,model);/* Read bands */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){
 		model->animation=FALSE;
