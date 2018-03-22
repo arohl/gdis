@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
+#define MAX_VALUE_SIZE 64 /*_BUG_OVHPA_1*/
+
 /**********************************/
 /* global unified rendering setup */
 /**********************************/

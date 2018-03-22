@@ -178,6 +178,7 @@ void plot_energy(){
 	plot->auto_y=TRUE;
 	auto_x_toggle(NULL,NULL);
 	auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_force(){
 	plot->type=PLOT_FORCE;
@@ -191,6 +192,7 @@ void plot_force(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_volume(){
 	plot->type=PLOT_VOLUME;
@@ -204,6 +206,7 @@ void plot_volume(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_pressure(){
 	plot->type=PLOT_PRESSURE;
@@ -217,6 +220,7 @@ void plot_pressure(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_band(){
         plot->type=PLOT_BAND;
@@ -230,6 +234,7 @@ void plot_band(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_dos(){
         plot->type=PLOT_DOS;
@@ -243,6 +248,7 @@ void plot_dos(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_bandos(){
         plot->type=PLOT_BANDOS;
@@ -256,6 +262,7 @@ void plot_bandos(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_frequency(){
         plot->type=PLOT_FREQUENCY;
@@ -269,6 +276,7 @@ void plot_frequency(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_raman(){
         plot->type=PLOT_RAMAN;
@@ -282,6 +290,7 @@ void plot_raman(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gui_relation_update(plot->model);
 }
 void plot_none(){
 	plot->type=PLOT_NONE;
@@ -367,6 +376,7 @@ void plot_initialize(struct model_pak *data){
 	plot->nfreq=0;
 	plot->nraman=0;
 	plot->plot_mask=PLOT_NONE;
+	plot->plot_sel=0;
 	/*dynamics*/
 	if(data->num_frames>1){
 		if(property_lookup("Energy",data)) plot->plot_mask+=PLOT_ENERGY;
@@ -465,11 +475,13 @@ void plot_quit(GtkWidget *w, gpointer data){
 /* start plotting */
 /******************/
 void exec_plot(){
+	FILE *fp;
 	struct model_pak *data;
 	g_assert(plot != NULL);
 	data = sysenv.active_model;
 	g_assert(data != NULL);
 	/*get limit values if not auto*/
+	if(plot->type==PLOT_NONE) return;
 	if(plot->auto_x==FALSE){
 		plot->xmin=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmin)));
 		plot->xmax=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmax)));
@@ -491,12 +503,20 @@ void exec_plot(){
 	task_new("PLOT-DRAW",&plot_draw_graph,plot,&plot_show_graph,plot,data);
         data->locked=FALSE;
 /*finalize drawing graph*/
+/* There is a _BUG_ in QE redisplay that makes the atom distances shrink for each
+ * plot that is displayed after the first one.
+ * The only solution I found is to reload the current frame.*/
+        fp=fopen(data->filename, "r");
+        if (!fp){
+                gui_text_show(ERROR,g_strdup_printf("I/O ERROR: can't open!\n"));
+                return;
+        }
+        read_raw_frame(fp,data->cur_frame,data);
+	fclose(fp);
+	tree_model_refresh(data);
 	model_prep(data);
-	model_content_refresh(data);
-	gui_relation_update(data);
-        data->picture_active = NULL;
-        tree_model_refresh(data);
         redraw_canvas(ALL);
+	
 }
 /******************/
 /* configure plot */
@@ -755,11 +775,12 @@ void gui_plots_dialog(void){
 	else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
 	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
 /* That's all folks */
-	gtk_widget_show_all(window);
-	sysenv.refresh_dialog=TRUE;
-	model_prep(data);
-	gui_relation_update(data);
-	data->redraw=1;/*we need a redraw*/
-	tree_model_refresh(data);
-	redraw_canvas(ALL);
+        gtk_widget_show_all(window);
+        sysenv.refresh_dialog=TRUE;
+        model_prep(data);
+        gui_relation_update(data);
+        data->redraw=1;/*we need a redraw*/
+        tree_model_refresh(data);
+//	model_prep(data);
+        redraw_canvas(ALL);
 }

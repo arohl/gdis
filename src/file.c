@@ -1187,12 +1187,12 @@ return(g_string_free(buff, FALSE));
 /**********************************************************/
 gchar *format_value_and_units(gchar *string, gint dp)
 {
-/* BUG: a malloc/free bug is hidden in there, with the combo tokenize/g_strfreev
- * 	during multiple frame read/re-read.
- * FIX: sanitize by removing glib calls */
-#ifndef _BUG_ //previous version
 gint num_tokens;
+#ifdef _BUG_
 GString *text, *format_string;
+#else
+gchar *format_str;
+#endif //_BUG_ (OVHPA_1)
 gchar *text_str, *units, **buff;
 gdouble float_val;
 
@@ -1202,42 +1202,24 @@ if (num_tokens < 2)
   units = "";
 else
   units = *(buff+1);
+#ifdef _BUG_
 format_string = g_string_new("");
 g_string_append_printf(format_string, "%%.%df %%s", dp);
 text = g_string_new("");
-g_string_append_printf(text, format_string->str, float_val, units);
+g_string_append_printf(text, format_string->str, float_val, units);/*why append?*/
 text_str = text->str;
 g_string_free(format_string, TRUE); 
-g_string_free(text, FALSE); 
+g_string_free(text, FALSE);/*in that case, text MUST be freed manually */ 
 g_strfreev(buff);
+#else
+format_str=malloc(32*sizeof(char));
+text_str=calloc(MAX_VALUE_SIZE,sizeof(char));
+sprintf(format_str,"%%.%df %%s", dp);
+sprintf(text_str,format_str,float_val,units);
+free(format_str);
+g_strfreev(buff);
+#endif //_BUG_ (OVHPA_1)
 return (text_str);
-#else //current version
-	int i=0;
-	gchar *temp;
-	gchar *result;
-	gdouble value;
-	gchar *format_string;
-	
-	result=calloc(64,sizeof(char));/*64 should be enough*/
-	if(string==NULL) return result;
-	sscanf(string,"%lf %*s",&value);/*get value*/
-	if(sscanf(string,"%*s %s %*s",result)==0){
-		/*no unit*/
-		format_string=calloc(10,sizeof(char));
-		sprintf(format_string,"%%.%df",dp);
-		sprintf(result,format_string,value);
-		sprintf(result,"%lf",value);
-	}else{
-		/*unit in temp*/
-		temp=g_strdup(result);
-		format_string=calloc(10,sizeof(char));
-		sprintf(format_string,"%%.%df %%s",dp);
-		sprintf(result,format_string,value,temp);
-		g_free(temp);
-	}
-	g_free(format_string);
-	return result;
-#endif
 }
 
 /************************************************/
