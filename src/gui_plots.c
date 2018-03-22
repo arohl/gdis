@@ -122,6 +122,9 @@ void set_auto_y(void){
 		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->frequency.ymax));
 		break;
 	case PLOT_BAND:
+		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->band.ymin));
+		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->band.ymax));
+		break;
 	case PLOT_BANDOS:
 		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->band.ymin));
 		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->band.ymax));
@@ -316,9 +319,8 @@ void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpoin
 			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos();
 			else {/*no plot selected, but plot_selection possible?*/
                                 if(!(plot->plot_mask&(48))) plot_none();
-                                else if(plot->plot_mask&PLOT_BAND) plot_band();
-                                else if(plot->plot_mask&PLOT_DOS) plot_dos();
-                                else if(!((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS)) plot_bandos();
+				else if(plot->plot_mask&PLOT_DOS) plot_dos();
+				else if(plot->plot_mask&PLOT_BAND) plot_band();
 			}
 			break;
 		case 2:/*Frequency*/
@@ -496,7 +498,6 @@ void exec_plot(){
         tree_model_refresh(data);
         redraw_canvas(ALL);
 }
-
 /******************/
 /* configure plot */
 /******************/

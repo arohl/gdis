@@ -120,8 +120,10 @@ if (event->button != 1)
 
 /* NEW - diffraction peak search */
 if (data->graph_active)
-  {
-  diffract_select_peak(x, y, data);
+  {/*FIXME: why only diffract?*/
+  struct graph_pak *graph=(struct graph_pak *)data->graph_active;
+  if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
+  if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
   return(FALSE);
   }
 

@@ -25,16 +25,42 @@ typedef enum {
         GRAPH_FREQUENCY,/*impulse graph for frequency*/
         GRAPH_BAND,/*kpoints/state energy graph */
 	GRAPH_DOS,/*interleave e,dos plot*/
-        GRAPH_DOS90,/*90 degrees rotated DOS plot*/
         GRAPH_BANDOS,/*dual BAND & DOS graph*/
         GRAPH_UNKNOWN,/*for catching wrong type*/
 } graph_type;
-
+/*******************/
+/* data structures */
+/*******************/
+struct graph_pak
+{
+	gint grafted;
+	gchar *treename;
+	/* graph generation parameters */
+	gdouble wavelength;
+	/* flags */
+	gint xlabel;
+	gint ylabel;
+	graph_type type;
+	/* graph layout */
+	gint xticks;
+	gint yticks;
+	gdouble xmin;
+	gdouble xmax;
+	gdouble ymin;
+	gdouble ymax;
+	/* NB: all sets are required to be <= size */
+	gint size;
+	GSList *set_list;
+	/* peak selection */
+	gint select;
+	gchar *select_label;
+};
 gpointer graph_new(const gchar *, struct model_pak *);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
 void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
 void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
+void graph_frequency_select(gint x, gint y, struct model_pak *model);
 void graph_set_grafted(gint, gpointer);
 void graph_set_xticks(gint, gint, gpointer);
 void graph_set_yticks(gint, gint, gpointer);
