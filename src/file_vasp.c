@@ -454,6 +454,7 @@ int vasp_xml_read_dos(FILE *vf, struct model_pak *model){
 	/* get the final density of states (total dos only) */
 	gchar *line;
 	gint idx;
+	gdouble init;
 	/*start*/
 	if(fetch_in_file(vf,"<dos>")==0) return -1;/* no dos information */
 	line = file_read_line(vf);
@@ -478,6 +479,13 @@ fprintf(stdout,"#DBG: FERMI ENERGY: %lf\n",model->efermi);
 	model->dos_spin_up=g_malloc(model->ndos*sizeof(gdouble));
 	line = file_read_line(vf);
 	idx=0;
+	/*The first line is special: when integration is not 0, it contain a huge value:
+ * 	  while this value makes intergration of DOS (ie. nb of electron) correct, it is
+ * 	  not a correct representation of DOS at that point... (FIXED by setting to 0)*/
+	sscanf(line," <r> %lf %lf %lf %*s",&(model->dos_eval[idx]),&(model->dos_spin_up[idx]),&init);
+	if(init > 0.0) model->dos_spin_up[0]=0.0;
+	line = file_read_line(vf);
+	idx++;
 	while(line){
 		if(idx>(model->ndos-1)) break;
 		if(find_in_string("</set>",line) != NULL) break;
@@ -494,6 +502,11 @@ fprintf(stdout,"#DBG: CATCH SPIN UP: %i %lf \t %lf\n",idx,model->dos_eval[idx],m
 	model->dos_spin_down=g_malloc(model->ndos*sizeof(gdouble));
 	line = file_read_line(vf);
 	idx=0;
+/*same as above*/
+	sscanf(line," <r> %lf %lf %lf %*s",&(model->dos_eval[idx]),&(model->dos_spin_down[idx]),&init);
+	if(init > 0.0) model->dos_spin_up[0]=0.0;
+	line = file_read_line(vf);
+	idx++;
 	while(line){
 		if(idx>(model->ndos-1)) break;
 		if(find_in_string("</set>",line) != NULL) break;
