@@ -477,11 +477,13 @@ void plot_quit(GtkWidget *w, gpointer data){
 void exec_plot(){
 	FILE *fp;
 	struct model_pak *data;
+	gpointer camera=NULL;
 	g_assert(plot != NULL);
 	data = sysenv.active_model;
 	g_assert(data != NULL);
 	/*get limit values if not auto*/
 	if(plot->type==PLOT_NONE) return;
+	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
 	if(plot->auto_x==FALSE){
 		plot->xmin=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmin)));
 		plot->xmax=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmax)));
@@ -505,7 +507,8 @@ void exec_plot(){
 /*finalize drawing graph*/
 /* There is a _BUG_ in QE redisplay that makes the atom distances shrink for each
  * plot that is displayed after the first one.
- * The only solution I found is to reload the current frame.*/
+ * The only solution I found is to reload the current frame. (OVHPA)*/
+if(data->id==QE_OUT){
         fp=fopen(data->filename, "r");
         if (!fp){
                 gui_text_show(ERROR,g_strdup_printf("I/O ERROR: can't open!\n"));
@@ -513,8 +516,14 @@ void exec_plot(){
         }
         read_raw_frame(fp,data->cur_frame,data);
 	fclose(fp);
+}
 	tree_model_refresh(data);
 	model_prep(data);
+/*restore camera*/
+        data->camera = camera;
+        g_free(data->camera_default);
+        data->camera_default = camera;
+/*update everything*/
         redraw_canvas(ALL);
 	
 }
@@ -530,6 +539,7 @@ void gui_plots_dialog(void){
 	/* special */
 	GtkWidget *ionic_box, *electronic_box, *frequency_box;
 	struct model_pak *data;
+	gpointer camera=NULL;
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
@@ -537,6 +547,7 @@ void gui_plots_dialog(void){
 	if (data->plots) return;
 	data->plots=TRUE;
 /* initialization */
+	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
 	gui_mode_switch(FREE);
 	plot=NULL;
 	plot_initialize(data);
@@ -776,11 +787,21 @@ void gui_plots_dialog(void){
 	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
 /* That's all folks */
         gtk_widget_show_all(window);
-        sysenv.refresh_dialog=TRUE;
+/* There is a _BUG_ while reading the model file: 1_C2H4_HOOH_Tifer.arc.
+ * The display get scrambled after an initial load of all the plot data.
+ * After plotting, everything is back to normal though, which usually is
+ * an indication of memory leaks and/or improper combination of g_malloc
+ * and g_free.
+ * FIXME: no fix found yet... */
+	sysenv.refresh_dialog=TRUE;
         model_prep(data);
+/*restore camera*/
+	data->camera = camera;
+	g_free(data->camera_default);
+	data->camera_default = camera;
+/*update everything*/
         gui_relation_update(data);
         data->redraw=1;/*we need a redraw*/
         tree_model_refresh(data);
-//	model_prep(data);
         redraw_canvas(ALL);
 }
