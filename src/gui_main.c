@@ -120,8 +120,10 @@ if (event->button != 1)
 
 /* NEW - diffraction peak search */
 if (data->graph_active)
-  {
-  diffract_select_peak(x, y, data);
+  {/*FIXME: why only diffract?*/
+  struct graph_pak *graph=(struct graph_pak *)data->graph_active;
+  if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
+  if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
   return(FALSE);
   }
 
@@ -1366,6 +1368,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Analysis",                        NULL, NULL, 0, "<Branch>" },
   { "/Tools/Analysis/Dynamics...",            NULL, gui_analysis_dialog, 0, NULL },
   { "/Tools/Analysis/Measurements...",        NULL, gui_measure_dialog, 0, NULL },
+  { "/Tools/Analysis/Plots...",               NULL, gui_plots_dialog, 0, NULL },
 
   { "/_View",                       NULL, NULL, 0, "<Branch>"},
   { "/View/Display properties...",  NULL, gui_render_dialog, 0, NULL},

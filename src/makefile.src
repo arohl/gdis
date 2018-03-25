@@ -2,7 +2,7 @@
 
 SRC =	main.c model.c coords.c connect.c matrix.c module.c task.c \
 	type.c measure.c parse.c edit.c elem.c select.c surface.c \
-	analysis.c spatial.c render.c numeric.c project.c \
+	analysis.c plots.c spatial.c render.c numeric.c project.c \
 	molsurf.c hirshfeld.c zone.c contents.c quaternion.c zmatrix.c \
 	library.c geometry.c space.c sginfo.c sgclib.c sgio.c error.c \
 	scan.c camera.c defect.c colourlib.c crystal_graph.c mdi.c \
@@ -21,7 +21,7 @@ SRC := $(SRC) gui_main.c gui_canvas.c gui_shorts.c \
 	gui_gulp.c gui_siesta.c gui_render.c gui_mdi.c gui_animate.c \
 	gui_edit.c gui_surface.c gui_analysis.c gui_defect.c \
 	gui_molsurf.c gui_diffract.c gui_gms.c gui_library.c gui_setup.c \
-	gui_gperiodic.c gui_space.c gui_measure.c gui_symmetry.c gui_zmatrix.c \
+	gui_gperiodic.c gui_plots.c gui_space.c gui_measure.c gui_symmetry.c gui_zmatrix.c \
 	gui_dialog.c gui_tree.c gui_task.c gui_help.c gui_monty.c gui_job.c \
         dock.c image.c 
 endif

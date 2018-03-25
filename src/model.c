@@ -520,6 +520,30 @@ matrix_identity(data->latmat);
 matrix_identity(data->ilatmat);
 matrix_identity(data->rlatmat);
 
+/* plots */
+data->plots = FALSE;
+
+/* density of states (DOS) */
+data->spin_polarized=FALSE;
+data->efermi=0.0;
+data->ndos=0;
+data->dos_eval=NULL;
+data->dos_spin_up=NULL;
+data->dos_spin_down=NULL;
+
+/* bandstructure */
+data->nbands=0;
+data->nkpoints=0;
+data->kpts_d=NULL;
+data->band_up=NULL;
+data->band_down=NULL;
+
+/* frequency */
+data->have_frequency = FALSE;
+data->nfreq=0;
+data->freq=NULL;
+data->freq_intens=NULL;
+
 /* no non-default element data for the model (yet) */
 data->elements = NULL;
 data->unique_atom_list = NULL;
@@ -1140,7 +1164,19 @@ struct property_pak
 {
 guint rank;
 gchar *label;
+/* _BUG_OVHPA_1
 gchar *value;
+ * The gchar *value; part is updated many times
+ * during the reading of a file or file frames.
+ * Each rewrite of its value involves using the
+ * g_malloc (via g_strdup)/g_free couple which,
+ * in a threaded environment, will fail.
+ * This is due to the g_malloc "smart" re-alloc
+ * which is using memory unreachable by current
+ * thread.
+ * FIX: use static allocation for value.
+ */
+gchar value[MAX_VALUE_SIZE];//_BUG_OVHPA_1
 };
 
 /*************************/
@@ -1151,7 +1187,7 @@ void property_free(gpointer ptr_property)
 struct property_pak *p = ptr_property;
 
 /* NB: the label/key is free'd elsewhere */
-g_free(p->value);
+//g_free(p->value);//_BUG_OVHPA_1
 g_free(p);
 }
 
@@ -1185,22 +1221,31 @@ g_assert(model != NULL);
 /* check if label already exists */
 p = g_hash_table_lookup(model->property_table, key);
 if (p)
-  {
-/* update existing property */
-  g_free(p->value); 
-  p->value = g_strdup(value);
-  p->rank = rank;
-  model->property_list = g_slist_remove(model->property_list, p);
+  {//_BUG_OVHPA_1
+#define DEBUG_PROPERTY 0
+	if(value==NULL) return;/*refuse to update with a null value*/
+	if(value[0]=='\0') return;/*refuse to update with no value*/
+	if(g_strlcpy(p->value,value,MAX_VALUE_SIZE)>=MAX_VALUE_SIZE)
+		fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increase and code recompiled!.\n",MAX_VALUE_SIZE);
+	p->rank = rank;
+	model->property_list = g_slist_remove(model->property_list, p);
+#if DEBUG_PROPERTY
+fprintf(stdout,"#DBG: update old %i: %s %s -> ",p->rank,p->label,p->value);
+fprintf(stdout,"new %i: %s %s\n",rank,key,value);
+#endif//DEBUG_PROPERTY
   }
 else
   {
 /* create new property */
   p = g_malloc(sizeof(struct property_pak));
-
-  p->value = g_strdup(value);
+  if(g_strlcpy(p->value,value,MAX_VALUE_SIZE)>=MAX_VALUE_SIZE)
+		fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increase and code recompiled!.\n",MAX_VALUE_SIZE);
   p->label = g_strdup(key);
   p->rank = rank;
   g_hash_table_replace(model->property_table, p->label, p);
+#if DEBUG_PROPERTY
+fprintf(stdout,"#DBG: create new %i: %s %s\n",rank,key,value);
+#endif
   }
 
 /* update sorted property list */
@@ -1256,7 +1301,7 @@ g_assert(model != NULL);
 
 p = g_hash_table_lookup(model->property_table, key);
 if (p)
-  return(p->value);
+  return(g_strdup (p->value));//_BUG_OVHPA_1
 return(NULL);
 }
 

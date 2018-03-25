@@ -1188,7 +1188,11 @@ return(g_string_free(buff, FALSE));
 gchar *format_value_and_units(gchar *string, gint dp)
 {
 gint num_tokens;
+#ifdef _BUG_
 GString *text, *format_string;
+#else
+gchar *format_str;
+#endif //_BUG_ (OVHPA_1)
 gchar *text_str, *units, **buff;
 gdouble float_val;
 
@@ -1198,14 +1202,23 @@ if (num_tokens < 2)
   units = "";
 else
   units = *(buff+1);
+#ifdef _BUG_
 format_string = g_string_new("");
 g_string_append_printf(format_string, "%%.%df %%s", dp);
 text = g_string_new("");
-g_string_append_printf(text, format_string->str, float_val, units);
+g_string_append_printf(text, format_string->str, float_val, units);/*why append?*/
 text_str = text->str;
 g_string_free(format_string, TRUE); 
-g_string_free(text, FALSE); 
+g_string_free(text, FALSE);/*in that case, text MUST be freed manually */ 
 g_strfreev(buff);
+#else
+format_str=malloc(32*sizeof(char));
+text_str=calloc(MAX_VALUE_SIZE,sizeof(char));
+sprintf(format_str,"%%.%df %%s", dp);
+sprintf(text_str,format_str,float_val,units);
+free(format_str);
+g_strfreev(buff);
+#endif //_BUG_ (OVHPA_1)
 return (text_str);
 }
 

@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
+#define MAX_VALUE_SIZE 64 /*_BUG_OVHPA_1*/
+
 /**********************************/
 /* global unified rendering setup */
 /**********************************/
@@ -1243,6 +1245,39 @@ struct diffract_pak diffract;
 struct surface_pak surface;
 /* NEW: Monty settings */
 struct monty_pak monty;
+
+/* plots */
+gint plots;
+
+/* What about a shared area for similar data
+ * other that property_list / property_table 
+ * So one can directly access an array/value 
+ * for frequency, raman, dos, band, etc.. */
+
+/*TODO: pack all that into a "structure_pak"?*/
+
+/* density of states (DOS) */
+gboolean spin_polarized;
+gdouble efermi;
+gint ndos;
+gdouble *dos_eval;
+gdouble *dos_spin_up;
+gdouble *dos_spin_down;
+
+/* bandstructure */
+gint nbands;
+gint nkpoints;
+gdouble *kpts_d;
+gdouble *band_up;
+gdouble *band_down;
+
+/* frequency */
+gboolean have_frequency;
+gint nfreq;
+gdouble *freq;
+gdouble *freq_intens;
+
+
 
 /* element data */
 /*

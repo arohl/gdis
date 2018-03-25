@@ -60,7 +60,7 @@ ANIMATING, RECORD
 enum 
 {
 GDIS, SGINFO, SYMMETRY, GPERIODIC, ELEM_EDIT, POVRAY, GENSURF,
-ABOUT, ANIM, SURF, DISPLAY, GEOMETRY, SPATIAL, TASKMAN, MANUAL, SETUP,
+ABOUT, ANIM, PLOTS, SURF, DISPLAY, GEOMETRY, SPATIAL, TASKMAN, MANUAL, SETUP,
 FILE_SELECT, FILE_LOAD, FILE_SAVE, FILE_SAVE_AS,
 NODATA, DATA, BIOSYM, CIF, FDF, GULP, MONTY, MARVIN, MORPH,
 META_DATA, XML, XTL, XYZ, MOL2,
@@ -140,6 +140,7 @@ void gui_edit_dialog(void);
 void gui_analysis_dialog(void);
 void gui_isosurf_dialog(void);
 void gui_gperiodic_dialog(void);
+void gui_plots_dialog(void);
 void gui_render_dialog(void);
 void gui_mdi_dialog(void);
 void gui_help_dialog(void);
