@@ -202,14 +202,18 @@ return(FALSE);
 /*************************************************/
 /* read a car/arc block into the model structure */
 /*************************************************/
-/* NB: assumes fp is at a !DATE line */
+/* NB: assumes fp is at a line before !DATE line */
 void read_arc_block(FILE *fp, struct model_pak *data)
 {
-gint region, core_flag, end_count, num_tokens;
-gchar **buff;
+gint region, core_flag, end_count;
 GSList *clist, *slist;
 struct core_pak *core;
 struct shel_pak *shel;
+gchar *line;
+gdouble energy;
+#define DEBUG_ARC 0
+gchar c_type[5],c_ptype[8],c_symb[3];
+gdouble x,y,z,charge;
 
 g_assert(fp != NULL);
 g_assert(data != NULL);
@@ -224,157 +228,146 @@ clist = data->cores;
 slist = data->shels;
 end_count=0;
 
+	/*The energy is stored on the frame 1st line starting from the 65th caracter*/
+line = file_read_line(fp);
+sscanf(&(line[65])," %lf",&energy);
+sprintf(line,"%lf eV",energy);/*is it really always eV?*/
+property_add_ranked(3,"Energy",line,data);
+	/*Note that title of calculation is given in the first 64 character BUT it can be empty*/
+/*get to the begining*/
+while(g_ascii_strncasecmp("!date", line, 5)!=0) {
+	g_free(line);
+	line = file_read_line(fp);
+}
+g_free(line);/*should we do something with the !DATE line?*/
 /* loop while there's data */
-for (;;)
-  {
-  buff = get_tokenized_line(fp, &num_tokens);
-  if (!buff)
-    break;
+for (;;) {
+/*we do not use the tokenized method to avoid some break in threaded environment*/
+  line = file_read_line(fp);
+  if(!line) break;
 
-/* increment/reset end counter according to input line */
-  if (g_ascii_strncasecmp("end", *buff, 3) == 0)
-    end_count++;
-  else
-    end_count = 0;
-
+/* increment/reset end counter according to input line <- strstr at the begining of the line*/
+  if (g_ascii_strncasecmp("end", line, 3) == 0) end_count++;
+  else end_count = 0;
 /* skip single end, terminate on double end */
-  if (end_count == 1)
-    {
-    g_strfreev(buff);
-    continue;
-    }
-  if (end_count == 2)
-    break;
+  if (end_count == 1) {
+	continue;
+  }
+  if (end_count == 2) break;/*normal exit*/
 
 /* cell dimension search */
-  if (g_ascii_strncasecmp("pbc", *buff, 3) == 0)
-    {
-    if (num_tokens > 6)
-      {
-      data->pbc[0] = str_to_float(*(buff+1));
-      data->pbc[1] = str_to_float(*(buff+2));
-      data->pbc[2] = str_to_float(*(buff+3));
-      data->pbc[3] = PI*str_to_float(*(buff+4))/180.0;
-      data->pbc[4] = PI*str_to_float(*(buff+5))/180.0;
-      data->pbc[5] = PI*str_to_float(*(buff+6))/180.0;
-/* implicit 2D */
-      if (data->pbc[2] == 0)
-        {
-        data->pbc[2] = 1.0;
-        data->pbc[3] = 0.5*PI;
-        data->pbc[4] = 0.5*PI;
-        data->periodic = 2;
-        }
-      }
-    else if (num_tokens > 3)
-      {
-      data->pbc[0] = str_to_float(*(buff+1));
-      data->pbc[1] = str_to_float(*(buff+2));
-      data->pbc[5] = PI*str_to_float(*(buff+3))/180.0;
-      }
-
-    g_strfreev(buff);
+  if (g_ascii_strncasecmp("pbc", line, 3) == 0){
+    data->pbc[5]=-1.;
+sscanf(line,"PBC %lf %lf %lf %lf %lf %lf %*s",&(data->pbc[0]),&(data->pbc[1]),&(data->pbc[2]),&(data->pbc[3]),&(data->pbc[4]),&(data->pbc[5]));
+#if DEBUG_ARC
+fprintf(stdout,"#DBG: LINE:  %lf %lf %lf %lf %lf %lf\n",data->pbc[0],data->pbc[1],data->pbc[2],data->pbc[3],data->pbc[4],data->pbc[5]);
+#endif
+    if((data->pbc[5])>=0){/*6 tokens -> PCB=ON with or without implicit 2D*/
+		data->pbc[3] *= PI/180.0;
+		data->pbc[4] *= PI/180.0;
+		data->pbc[5] *= PI/180.0;
+		if((data->pbc[2])==0){/*implicit 2D*/
+			data->pbc[2] = 1.0;
+			data->pbc[3] = 0.5*PI;
+			data->pbc[4] = 0.5*PI;
+			data->periodic = 2;
+		}
+    }else{/*less than 6 tokens -> PCB=2D */
+		data->pbc[5] = PI*(data->pbc[2])/180.0;
+		data->pbc[2] = 1.0;
+		data->pbc[3] = 0.5*PI;
+		data->pbc[4] = 0.5*PI;
+    }
+#if DEBUG_ARC
+fprintf(stdout,"#DBG: a=%lf b=%lf c=%lf alpha=%lf beta=%lf gamma=%lf\n",data->pbc[0],data->pbc[1],data->pbc[2],data->pbc[3],data->pbc[4],data->pbc[5]);
+#endif
+    matrix_lattice_init(data);/*initialize matrix now*/
+    data->fractional = TRUE;/*set fractional now*/
+    g_free(line);
     continue;
-    }
+  }
 
-/* process a single coord line */
-  if (num_tokens < 8) 
-    {
-    gui_text_show(ERROR, "unexpected end of file reading arc file\n");
-    g_strfreev(buff);
-    return;
-    }
-
+/* each coord line is defined as:
+ * [name], x, y, z, type, [seq. nb], pot. type, elem symbol, charge [, atom nb] */
+  c_symb[0]='-';c_symb[1]='\0';
+  sscanf(line,"%*s %lf %lf %lf %s %*s %s %s %lf %*s",&x,&y,&z,&(c_type[0]),&(c_ptype[0]),&(c_symb[0]),&charge);
+#if DEBUG_ARC
+fprintf(stdout,"#DBG: LINE: %lf %lf %lf %s %s %s %f\n",x,y,z,c_type,c_ptype,c_symb,charge);
+#endif
+  if(c_symb[0]=='-'){
+	gui_text_show(ERROR, "unexpected end of file reading arc file\n");
+	g_free(line);
+	return;
+  }
 /* process core/shell candidates */
-  if (num_tokens > 8)
-  if (elem_symbol_test(*(buff+7)))
-    {
-    core_flag=TRUE;
-    region = 0;
-
-/* MARVIN core/shell/region parse */ 
-    if (is_marvin_label(*(buff+4)))
-      {
-      if (!marvin_core(*(buff+4)))
-        core_flag = FALSE;
-      region = marvin_region(*(buff+4));
-      data->region_empty[region] = FALSE;
-      }
-
+  if (elem_symbol_test(c_symb)){
+	core_flag=TRUE;
+	region = 0;
+/* MARVIN core/shell/region parse */
+	if (is_marvin_label(c_type)){
+		if (!marvin_core(c_type)) core_flag = FALSE;
+		region = marvin_region(c_type);
+		data->region_empty[region] = FALSE;
+	}
 /* overwrite existing core (if any) */
-    if (core_flag)
-      {
-      if (clist)
-        {
-        core = clist->data;
-        clist = g_slist_next(clist);
-        }
-      else
-        {
+	if (core_flag){
+		if (clist){
+			core = clist->data;
+			clist = g_slist_next(clist);
+		}else{
 /* otherwise, add a new core */
 /* NB: must append (not prepend) since we may overwrite & the order must be the same */
 /* TODO - we could prepend cores (it's faster) and then reverse the list at the end */
 /* but it's more complicated as we should ONLY reverse newly added cores */
-        core = new_core(*(buff+7), data);
-        data->cores = g_slist_append(data->cores, core);
-        }
-
+			core=core_new(c_symb,"---",data);/*to make sure we don't need to free/dup atom_label all the time*/
+			core->atom_type=g_malloc(9*sizeof(gchar));/*same here for atom_type*/
+			data->cores = g_slist_append(data->cores, core);
+		}
+	}
 /* set the proper label */
-g_free(core->atom_label);
-core->atom_label = g_strdup(*buff);
-
+	sprintf(core->atom_label,"%s",c_symb);
 /* set values */
-      core->x[0] = str_to_float(*(buff+1));
-      core->x[1] = str_to_float(*(buff+2));
-      core->x[2] = str_to_float(*(buff+3));
-      core->charge = str_to_float(*(buff+8));
-
-g_free(core->atom_type);
-core->atom_type = g_strdup(*(buff+6));
-
-      core->region = region;
-      core->lookup_charge = FALSE;
-      }
-    else
-      {
+	core->x[0] = x;core->x[1] = y;core->x[2] = z;core->charge = charge;
+if(data->periodic) {
+	/* convert input cartesian coords to fractional now */
+	vecmat(data->ilatmat, core->x);
+	if(core->x[0]<0) core->x[0]+=1.0;
+	if(core->x[1]<0) core->x[1]+=1.0;
+	if(core->x[2]<0) core->x[2]+=1.0;
+	if(core->x[0]>1.0) core->x[0]-=1.0;
+	if(core->x[1]>1.0) core->x[1]-=1.0;
+	if(core->x[2]>1.0) core->x[2]-=1.0;
+}
+	sprintf(core->atom_type,"%s",c_ptype);
+	core->region = region;core->lookup_charge = FALSE;
+  }else{
 /* overwrite existing shell (if any) */
-      if (slist)
-        {
-        shel = slist->data;
-        slist = g_slist_next(slist);
-        }
-      else
-        {
+	if (slist){
+        	shel = slist->data;
+        	slist = g_slist_next(slist);
+        }else{
 /* otherwise, add a new shell */
-        shel = new_shell(*(buff+7), data);
-        data->shels = g_slist_append(data->shels, shel);
-        }
-
+		shel=shell_new(c_symb,"---",data);/*to make sure we don't need to free/dup shell_label all the time*/
+		data->shels = g_slist_append(data->shels, shel);
+	}
 /* set the proper label */
-g_free(shel->shell_label);
-shel->shell_label = g_strdup(*buff);
-
+  sprintf(shel->shell_label,"%s",c_symb);
 /* set values */
-      shel->x[0] = str_to_float(*(buff+1));
-      shel->x[1] = str_to_float(*(buff+2));
-      shel->x[2] = str_to_float(*(buff+3));
-      shel->charge = str_to_float(*(buff+8));
-      shel->region = region;
-      shel->lookup_charge = FALSE;
-      }
-    }
-  g_strfreev(buff);
+  shel->x[0] = x;shel->x[1] = y;shel->x[2] = z;shel->charge = charge;
+if(data->periodic) {
+	/* convert input cartesian coords to fractional now */
+	vecmat(data->ilatmat, shel->x);
+	if(shel->x[0]<0) shel->x[0]+=1.0;
+	if(shel->x[1]<0) shel->x[1]+=1.0;
+	if(shel->x[2]<0) shel->x[2]+=1.0;
+	if(shel->x[0]>1.0) shel->x[0]-=1.0;
+	if(shel->x[1]>1.0) shel->x[1]-=1.0;
+	if(shel->x[2]>1.0) shel->x[2]-=1.0;
+}
+  shel->region = region;shel->lookup_charge = FALSE;
   }
-
-/* convert input cartesian coords to fractional */
-if( data->periodic)
-  {
-  matrix_lattice_init(data);
-  coords_make_fractional(data);
-  }
-data->fractional = TRUE;
-
-g_strfreev(buff);
+}
+g_free(line);
 }
 
 /*********************/
@@ -392,9 +385,10 @@ return(0);
 /******************/
 gint read_arc(gchar *filename, struct model_pak *data)
 {
-gint frame=0, num_tokens;
-gchar **buff;
+gint frame=0;
+gchar *line;
 FILE *fp;
+long int fp_pos,old_fp_pos;
 
 /* checks */
 g_return_val_if_fail(data != NULL, 1);
@@ -408,37 +402,46 @@ if (!fp)
 /* loop while there's data */
 for (;;)
   {
-  buff = get_tokenized_line(fp, &num_tokens);
-  if (!buff)
-    {
-    g_strfreev(buff);
-    break;
-    }
+  fp_pos=ftell(fp);/*get the past line*/
+  line = file_read_line(fp);
+  if(feof(fp)) break;
 
 /* pbc on/off search */
-  if (g_ascii_strncasecmp("pbc=on", *buff, 6) == 0)
-    data->periodic = 3;
-  else if (g_ascii_strncasecmp("pbc=off", *buff, 7) == 0)
-    data->periodic = 0;
-  else if (g_ascii_strncasecmp("pbc=2d", *buff, 6) == 0)
-    data->periodic = 2;
-
+if(g_ascii_strncasecmp("pbc=on", line, 6) == 0) {
+	data->periodic = 3;
+	old_fp_pos=fp_pos;
+	g_free(line);
+	continue;
+}
+if(g_ascii_strncasecmp("pbc=off", line, 7) == 0) {
+	data->periodic = 0;
+	old_fp_pos=fp_pos;
+	g_free(line);
+	continue;
+}
+if(g_ascii_strncasecmp("pbc=2d", line, 6) == 0) {
+	data->periodic = 2;
+	old_fp_pos=fp_pos;
+	g_free(line);
+	continue;
+}
 /* coords search */
-  if (g_ascii_strncasecmp("!date", *buff, 5) == 0)
-    {
+if(g_ascii_strncasecmp("!date", line, 5) == 0) {
 /* NEW */
+    fp_pos=ftell(fp);/*tag here*/
+    fseek(fp,old_fp_pos,SEEK_SET);/* rewind a line before !date (to get energy) */
     add_frame_offset(fp, data);
-
+    
 /* only load the required frame */
     if (frame == data->cur_frame)
       read_arc_block(fp, data);
-
+    fseek(fp,fp_pos,SEEK_SET);/*go just after !date*/
 /* increment counter */
     frame++;
     }
-  g_strfreev(buff);
+  old_fp_pos=fp_pos;
   }
-
+g_free(line);
 /* got everything */
 data->num_frames = frame;
 
