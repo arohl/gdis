@@ -107,6 +107,9 @@ void plot_prepare_data(struct plot_pak *plot){
 
         }
 	/* TODO: FREQ: add intensities */
+	/* TODO: how to signal task is completed?*/
+	plot->task->progress=100.0;/*job done*/
+	plot->task->status=COMPLETED;
         plot->data_changed=FALSE;/*protect data until changed*/
 }
 void plot_load_data(struct plot_pak *plot,struct task_pak *task){
@@ -123,11 +126,14 @@ void plot_load_data(struct plot_pak *plot,struct task_pak *task){
 if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 	/* TODO: prevent update while reading frame? */
 	g_assert(plot != NULL);
-	if(plot->plot_mask==0) return;/*no data to crunch*/
 	g_assert(plot->model != NULL);
 /* simply use model provided in plot */
 	model=plot->model;
-	if(model->num_frames<2) return;/*no frame -> skip this part*/
+	plot->task=task;
+	if((model->num_frames<2)||(plot->plot_mask==0)) {
+		task->progress=50.0;/*job half done (that was fast)*/
+		return;/*skip this part*/
+	}
 	/*open file*/
         fp=fopen(model->filename, "r");
         if (!fp){
@@ -303,6 +309,7 @@ if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 	read_raw_frame(fp,cur_frame,model);/*here?*/
         fclose(fp);
 	/* all done */
+	task->progress=50.0;/*job half done*/
 }
 /***************/
 /* energy plot */

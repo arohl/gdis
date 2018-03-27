@@ -21,6 +21,7 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* Plot simple data, such as energy, force, volume, etc. */
+#define BREAKPOINT __asm__("int $3")
 
 #include <math.h>
 #include <stdio.h>
@@ -377,6 +378,7 @@ void plot_initialize(struct model_pak *data){
 	plot->nraman=0;
 	plot->plot_mask=PLOT_NONE;
 	plot->plot_sel=0;
+	plot->task=NULL;
 	/*dynamics*/
 	if(data->num_frames>1){
 		if(property_lookup("Energy",data)) plot->plot_mask+=PLOT_ENERGY;
@@ -540,12 +542,14 @@ void gui_plots_dialog(void){
 	GtkWidget *ionic_box, *electronic_box, *frequency_box;
 	struct model_pak *data;
 	gpointer camera=NULL;
+	gint cur_frame;
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
 	/*Only one active at a time*/
 	if (data->plots) return;
 	data->plots=TRUE;
+	cur_frame=data->cur_frame;
 /* initialization */
 	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
 	gui_mode_switch(FREE);
@@ -559,8 +563,8 @@ void gui_plots_dialog(void){
 /*2- do some work*/
 	task_new("PLOT-INIT",&plot_load_data,plot,&plot_prepare_data,plot,data);
 /*3- unlock model*/
-	data->locked=FALSE;
-	model_content_refresh(data);
+//	data->locked=FALSE;
+//	model_content_refresh(data);
 /* dialog setup */
 	title = g_strdup_printf("Plots: %s", data->basename);
 	dialog = dialog_request(PLOTS, title, NULL, plot_cleanup, data);
@@ -786,22 +790,22 @@ void gui_plots_dialog(void){
 	else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
 	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
 /* That's all folks */
-        gtk_widget_show_all(window);
-/* There is a _BUG_ while reading the model file: 1_C2H4_HOOH_Tifer.arc.
- * The display get scrambled after an initial load of all the plot data.
- * After plotting, everything is back to normal though, which usually is
- * an indication of memory leaks and/or improper combination of g_malloc
- * and g_free.
- * FIXME: no fix found yet... */
+//        sysenv.refresh_dialog=TRUE;
+if((plot->task)!=NULL) {
+	while(plot->task->progress<50.0) usleep(50*1000);/*sleep 50ms until half job is done*/
+}
+
+	gtk_widget_show_all(window);
 	sysenv.refresh_dialog=TRUE;
-        model_prep(data);
-/*restore camera*/
-	data->camera = camera;
-	g_free(data->camera_default);
-	data->camera_default = camera;
-/*update everything*/
-        gui_relation_update(data);
-        data->redraw=1;/*we need a redraw*/
+	data->locked=FALSE;
+	data->cur_frame=cur_frame;
+
         tree_model_refresh(data);
-        redraw_canvas(ALL);
+        model_prep(data); 
+/*restore camera*/
+        data->camera = camera;
+        g_free(data->camera_default);
+        data->camera_default = camera;
+/*update everything*/
+	redraw_canvas(ALL);
 }

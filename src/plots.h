@@ -73,6 +73,7 @@ struct plot_pak {
         gboolean auto_x;
         gboolean auto_y;
         gboolean data_changed;
+	struct task_pak *task;/*attached task*/
 };
 
 /* prototypes */
