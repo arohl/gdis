@@ -251,6 +251,7 @@ for (;;) {
   else end_count = 0;
 /* skip single end, terminate on double end */
   if (end_count == 1) {
+	g_free(line);
 	continue;
   }
   if (end_count == 2) break;/*normal exit*/
@@ -366,6 +367,7 @@ if(data->periodic) {
 }
   shel->region = region;shel->lookup_charge = FALSE;
   }
+  g_free(line);
 }
 g_free(line);
 }
@@ -404,7 +406,7 @@ for (;;)
   {
   fp_pos=ftell(fp);/*get the past line*/
   line = file_read_line(fp);
-  if(feof(fp)) break;
+  if(!line) break;
 
 /* pbc on/off search */
 if(g_ascii_strncasecmp("pbc=on", line, 6) == 0) {
@@ -439,6 +441,7 @@ if(g_ascii_strncasecmp("!date", line, 5) == 0) {
 /* increment counter */
     frame++;
     }
+  g_free(line);
   old_fp_pos=fp_pos;
   }
 g_free(line);
