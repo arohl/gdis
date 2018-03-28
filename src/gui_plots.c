@@ -21,7 +21,6 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* Plot simple data, such as energy, force, volume, etc. */
-#define BREAKPOINT __asm__("int $3")
 
 #include <math.h>
 #include <stdio.h>
@@ -46,11 +45,25 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 struct plot_pak *plot;
-/* add widgets */
+/* text widgets */
 GtkWidget *plot_xmin;
 GtkWidget *plot_xmax;
 GtkWidget *plot_ymin;
 GtkWidget *plot_ymax;
+/* radio buttons */
+/*1st page*/
+GtkWidget *b_1_e;
+GtkWidget *b_1_f;
+GtkWidget *b_1_v;
+GtkWidget *b_1_p;
+/*2nd page*/
+GtkWidget *b_2_d;
+GtkWidget *b_2_b;
+GtkWidget *b_2_bd;
+/*3rd page*/
+GtkWidget *b_3_f;
+GtkWidget *b_3_r;
+
 
 /************************/
 /* plot toggle checkbox */
@@ -179,6 +192,7 @@ void plot_energy(){
 	plot->auto_y=TRUE;
 	auto_x_toggle(NULL,NULL);
 	auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_force(){
@@ -193,6 +207,7 @@ void plot_force(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_volume(){
@@ -207,6 +222,7 @@ void plot_volume(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_pressure(){
@@ -221,6 +237,7 @@ void plot_pressure(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_band(){
@@ -235,6 +252,7 @@ void plot_band(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_dos(){
@@ -249,6 +267,7 @@ void plot_dos(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_bandos(){
@@ -263,6 +282,7 @@ void plot_bandos(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_frequency(){
@@ -277,6 +297,7 @@ void plot_frequency(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_raman(){
@@ -291,6 +312,7 @@ void plot_raman(){
         plot->auto_y=TRUE;
         auto_x_toggle(NULL,NULL);
         auto_y_toggle(NULL,NULL);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r),TRUE);
 	gui_relation_update(plot->model);
 }
 void plot_none(){
@@ -606,18 +628,18 @@ void gui_plots_dialog(void){
 /* radio buttons */
 	new_radio_group(0, ionic_box, FF);
 /*by default any data not available _now_ will not be available later*/
-	button = add_radio_button("Energy / step", (gpointer) plot_energy,NULL);
-	if (plot->type == PLOT_ENERGY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_ENERGY)) gtk_widget_set_sensitive(button,FALSE);
-	button = add_radio_button("Forces / step", (gpointer) plot_force,NULL);
-	if (plot->type == PLOT_FORCE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_FORCE)) gtk_widget_set_sensitive(button,FALSE);
-	button = add_radio_button("Volume / step", (gpointer) plot_volume,NULL);
-	if (plot->type == PLOT_VOLUME) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_VOLUME)) gtk_widget_set_sensitive(button,FALSE);
-	button = add_radio_button("Pressure / step", (gpointer) plot_pressure,NULL);
-	if (plot->type == PLOT_PRESSURE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_PRESSURE)) gtk_widget_set_sensitive(button,FALSE);
+	b_1_e = add_radio_button("Energy / step", (gpointer) plot_energy,NULL);
+	if (plot->type == PLOT_ENERGY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e), TRUE);
+	if (!(plot->plot_mask&PLOT_ENERGY)) gtk_widget_set_sensitive(b_1_e,FALSE);
+	b_1_f = add_radio_button("Forces / step", (gpointer) plot_force,NULL);
+	if (plot->type == PLOT_FORCE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f), TRUE);
+	if (!(plot->plot_mask&PLOT_FORCE)) gtk_widget_set_sensitive(b_1_f,FALSE);
+	b_1_v = add_radio_button("Volume / step", (gpointer) plot_volume,NULL);
+	if (plot->type == PLOT_VOLUME) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v), TRUE);
+	if (!(plot->plot_mask&PLOT_VOLUME)) gtk_widget_set_sensitive(b_1_v,FALSE);
+	b_1_p = add_radio_button("Pressure / step", (gpointer) plot_pressure,NULL);
+	if (plot->type == PLOT_PRESSURE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p), TRUE);
+	if (!(plot->plot_mask&PLOT_PRESSURE)) gtk_widget_set_sensitive(b_1_p,FALSE);
 /*Set availability of the whole selection TODO: base on plot->plot_mask?*/
 	if(data->num_frames>1) gtk_widget_set_sensitive(ionic_box, TRUE);
 	else gtk_widget_set_sensitive(ionic_box, FALSE);
@@ -657,18 +679,18 @@ void gui_plots_dialog(void){
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
 	new_radio_group(0, electronic_box, FF);
-	button = add_radio_button("Density Of States", (gpointer) plot_dos,NULL);
-	if (plot->type == PLOT_DOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_DOS)) gtk_widget_set_sensitive(button,FALSE);
-	button = add_radio_button("Band structure", (gpointer) plot_band,NULL);
-	if (plot->type == PLOT_BAND) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_BAND)) gtk_widget_set_sensitive(button,FALSE);
-	button = add_radio_button("Band / DOS", (gpointer) plot_bandos,NULL);
-	if (plot->type == PLOT_BANDOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if ((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS) gtk_widget_set_sensitive(button,FALSE);
+	b_2_d = add_radio_button("Density Of States", (gpointer) plot_dos,NULL);
+	if (plot->type == PLOT_DOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d), TRUE);
+	if (!(plot->plot_mask&PLOT_DOS)) gtk_widget_set_sensitive(b_2_d,FALSE);
+	b_2_b = add_radio_button("Band structure", (gpointer) plot_band,NULL);
+	if (plot->type == PLOT_BAND) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b), TRUE);
+	if (!(plot->plot_mask&PLOT_BAND)) gtk_widget_set_sensitive(b_2_b,FALSE);
+	b_2_bd = add_radio_button("Band / DOS", (gpointer) plot_bandos,NULL);
+	if (plot->type == PLOT_BANDOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd), TRUE);
+	if ((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS) gtk_widget_set_sensitive(b_2_bd,FALSE);
 /* Set availability */
 /* TODO: DOS/BAND availability */
-	if (plot->plot_mask&PLOT_DOS) gtk_widget_set_sensitive(electronic_box, TRUE);
+	if (plot->plot_mask&PLOT_BANDOS) gtk_widget_set_sensitive(electronic_box, TRUE);
 	else gtk_widget_set_sensitive(electronic_box, FALSE);
 /* --- Page 3 -> TODO: Frequency */
         page = gtk_vbox_new(FALSE, PANEL_SPACING);
@@ -706,12 +728,12 @@ void gui_plots_dialog(void){
         gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
         new_radio_group(0, frequency_box, FF);
-        button = add_radio_button("Vibrational", (gpointer) plot_frequency,NULL);
-        if (plot->type == PLOT_FREQUENCY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_FREQUENCY)) gtk_widget_set_sensitive(button,FALSE);
-        button = add_radio_button("Raman", (gpointer) plot_raman,NULL);
-        if (plot->type == PLOT_RAMAN) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	if (!(plot->plot_mask&PLOT_RAMAN)) gtk_widget_set_sensitive(button,FALSE);
+        b_3_f = add_radio_button("Vibrational", (gpointer) plot_frequency,NULL);
+        if (plot->type == PLOT_FREQUENCY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f), TRUE);
+	if (!(plot->plot_mask&PLOT_FREQUENCY)) gtk_widget_set_sensitive(b_3_f,FALSE);
+        b_3_r = add_radio_button("Raman", (gpointer) plot_raman,NULL);
+        if (plot->type == PLOT_RAMAN) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r), TRUE);
+	if (!(plot->plot_mask&PLOT_RAMAN)) gtk_widget_set_sensitive(b_3_r,FALSE);
 /* Set availability */
 /* TODO: FREQUENCY/RAMAN availability */
 	if (plot->plot_mask&PLOT_FREQUENCY) gtk_widget_set_sensitive(frequency_box, TRUE);
