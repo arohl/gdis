@@ -626,6 +626,7 @@ if(band_structure) {/*try to read band structure information, if any.*/
 	y=g_malloc((model->nkpoints)*sizeof(gdouble));
 	z=g_malloc((model->nkpoints)*sizeof(gdouble));
 	model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
+	if(model->spin_polarized) model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	evmin=0.;evmax=0.;
 	while(line){
 		sscanf(line,"K-point  %i %lf %lf %lf %*f",&ik,&xi,&yi,&zi);
@@ -648,6 +649,16 @@ if(band_structure) {/*try to read band structure information, if any.*/
 		}
 		if(fgetline(fp, line)) break;
 		if(model->spin_polarized){/*read component 2*/
+			/* line should contain "Spin component 2", skipping */
+			ib=0;
+			while(ib<model->nbands) {
+				if(fgetline(fp, line)) break;
+				sscanf(line," %lf",&(ev));
+				if(ev<evmin) evmin=ev;
+				if(ev>evmax) evmax=ev;
+				model->band_down[ik*(model->nbands)+ib]=ev;
+				ib++;
+			}
 		}
 	}
 	xi=x[0];yi=y[0];zi=z[0];dist=0.;
@@ -672,23 +683,32 @@ if(band_structure) {/*try to read band structure information, if any.*/
 gdouble emin=((int)(evmin*10.))/10.;
 gdouble emax=((int)(0.5+evmax*10.))/10.;
 gdouble dos;
+gdouble dos_dn;
 gdouble de;
 gdouble delta;
 int i;
 	model->ndos=DOS_NB;
 	model->dos_eval=g_malloc(DOS_NB*sizeof(gdouble));
 	model->dos_spin_up=g_malloc(DOS_NB*sizeof(gdouble));
+	if(model->spin_polarized) model->dos_spin_down=g_malloc(DOS_NB*sizeof(gdouble));
 	for(i=0;i<DOS_NB;++i){
 		model->dos_eval[i]=emin+i*(emax-emin)/DOS_NB;
-		dos=0.;
+		dos=0.;dos_dn=0.;
 		for(ik=0;ik<model->nkpoints;ik++)
 			for(ib=0;ib<model->nbands;ib++){
 				de=model->dos_eval[i]-model->band_up[ik*(model->nbands)+ib];
 				de=de/SIGMA;
 				delta=exp(-1.0*de*de)/(sqrt(PI));/*GAUSSIAN SMEARING*/
 				dos+=delta/SIGMA;
+				if(model->spin_polarized){/*process spin down*/
+					de=model->dos_eval[i]-model->band_down[ik*(model->nbands)+ib];
+					de=de/SIGMA;
+					delta=exp(-1.0*de*de)/(sqrt(PI));/*GAUSSIAN SMEARING*/
+					dos_dn+=delta/SIGMA;
+				}
 			}
 		model->dos_spin_up[i]=dos;
+		if(model->spin_polarized) model->dos_spin_down[i]=dos_dn;
 	}
   }
   }
