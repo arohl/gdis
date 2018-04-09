@@ -673,44 +673,7 @@ if(band_structure) {/*try to read band structure information, if any.*/
 	g_free(z);
 	fclose(fp);
 	g_free(band_filename);
-/* BAND reading is done, now let's calculate DOS
- * because CASTEP does not provide it directly..*/
-  if(model->nbands>2)
-  {
-/*we want DOS_NB DOS using a gaussian smearing of SIGMA (in au)*/
-#define DOS_NB 1000
-#define SIGMA 0.005
-gdouble emin=((int)(evmin*10.))/10.;
-gdouble emax=((int)(0.5+evmax*10.))/10.;
-gdouble dos;
-gdouble dos_dn;
-gdouble de;
-gdouble delta;
-int i;
-	model->ndos=DOS_NB;
-	model->dos_eval=g_malloc(DOS_NB*sizeof(gdouble));
-	model->dos_spin_up=g_malloc(DOS_NB*sizeof(gdouble));
-	if(model->spin_polarized) model->dos_spin_down=g_malloc(DOS_NB*sizeof(gdouble));
-	for(i=0;i<DOS_NB;++i){
-		model->dos_eval[i]=emin+i*(emax-emin)/DOS_NB;
-		dos=0.;dos_dn=0.;
-		for(ik=0;ik<model->nkpoints;ik++)
-			for(ib=0;ib<model->nbands;ib++){
-				de=model->dos_eval[i]-model->band_up[ik*(model->nbands)+ib];
-				de=de/SIGMA;
-				delta=exp(-1.0*de*de)/(sqrt(PI));/*GAUSSIAN SMEARING*/
-				dos+=delta/SIGMA;
-				if(model->spin_polarized){/*process spin down*/
-					de=model->dos_eval[i]-model->band_down[ik*(model->nbands)+ib];
-					de=de/SIGMA;
-					delta=exp(-1.0*de*de)/(sqrt(PI));/*GAUSSIAN SMEARING*/
-					dos_dn+=delta/SIGMA;
-				}
-			}
-		model->dos_spin_up[i]=dos;
-		if(model->spin_polarized) model->dos_spin_down[i]=dos_dn;
-	}
-  }
+/* BAND reading is done, DOS will be calculated somewhere else */
   }
 /* done */
 
