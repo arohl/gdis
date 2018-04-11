@@ -150,6 +150,12 @@ gchar *viewer_path;
 gchar *gamess_exe;
 gchar *gamess_path;
 
+gchar *vasp_exe;
+gchar *vasp_path;
+
+gchar *mpirun_exe;
+gchar *mpirun_path;
+
 gchar *monty_exe;
 gchar *monty_path;
 

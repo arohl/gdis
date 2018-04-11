@@ -1364,6 +1364,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Computation/GAMESS...",           NULL, gamess_dialog, 0, NULL },
   { "/Tools/Computation/Monty...",            NULL, monty_dialog, 0, NULL },
   { "/Tools/Computation/SIESTA...",           NULL, gui_siesta_dialog, 0, NULL },
+  { "/Tools/Computation/VASP...",             NULL, gui_vasp_dialog, 0, NULL },
 
   { "/Tools/Analysis",                        NULL, NULL, 0, "<Branch>" },
   { "/Tools/Analysis/Dynamics...",            NULL, gui_analysis_dialog, 0, NULL },
