@@ -241,13 +241,14 @@ struct vasp_calc_gui{
 	gboolean rions;
 	gboolean rshape;
 	gboolean rvolume;
+	gboolean have_result;
 /* CALCUL */
 	GtkWidget *job_vasp_exe;/*will be taken directly from gdis in the future*/
 	GtkWidget *job_mpirun;
 	GtkWidget *job_path;
 	GtkWidget *job_nproc;
-
-
+/* RESULT */
+	struct model_pak *result_model;
 };
 /* calcul structure*/
 typedef enum {
