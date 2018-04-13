@@ -385,7 +385,7 @@ typedef struct {
 	gboolean ldiag;
 	gboolean auto_elec;
 	gint nbands;
-	gint nelect;
+	gdouble nelect;
 	gint iwavpr;
 	gint nsim;
 	gdouble vtime;
@@ -410,7 +410,7 @@ typedef struct {
 	gboolean ispin;
 	gboolean non_collinear;
 	gchar *magmom;
-	gint nupdown;
+	gdouble nupdown;
 	/*advanced*/
 	gboolean lsorbit;
 	gchar *saxis;
@@ -433,13 +433,12 @@ typedef struct {
 	gchar *ldauu;
 	gchar *ldauj;
 	/* vdw -> advanced */
-/* TODO: NOT READY YET
+/* TODO: NOT READY YET */
 	gboolean use_vdw;
 	gdouble zab_vdw;
 	gdouble param1_vdw;
 	gdouble param2_vdw;
 	gdouble param3_vdw;
-*/
 /*I-7-convergence*/
 	gint nelm;
 	gint nelmdl;
@@ -484,7 +483,7 @@ typedef struct {
 /*II-2-MD*/
 	gdouble tebeg;
 	gdouble teend;
-	gint smass;
+	gdouble smass;
 	gint nblock;
 	gint kblock;
 	gint npaco;
@@ -554,12 +553,14 @@ typedef struct {
 /*IV-advanced*/
 /*IV-1-DOS*/
 	gboolean lorbit;
-	gdouble *rwigs;
+	gchar *rwigs;
 	gint nedos;
 	gdouble emin;
 	gdouble emax;
 	gdouble efermi;
 /*IV-2-linear response*/
+	gboolean loptics;
+	gboolean lcalceps;
 	gboolean lepsilon;
 	gboolean lrpa;
 	gboolean lnabla;
@@ -568,24 +569,16 @@ typedef struct {
 	gdouble cshift;
 	gdouble omegamax;
 	gdouble deg_thershold;
-/*IV-3-magnetization*/
-	gboolean nucind;
-	gdouble magpos[3];
-	gboolean lnicsall;
-	gboolean orbitalmag;
-	gboolean lmagbloch;
-	gboolean lchimag;
-	gboolean lgauge;
-	gint magatom;
-	gdouble magdipol[3];
-	gdouble avecconst[3];
-/*V-performance*/
+/* (adv.) */
+/*V-1-performance*/
+	gint npar;
 	gdouble ncore;
 	gdouble kpar;
 	gboolean lplane;
 	gboolean lscalu;
 	gboolean lscalapack;
-/**/
+/*V-2-writting*/
+	gint nwrite;
 	gboolean lwave;
 	gboolean lcharg;
 	gboolean lvtot;
@@ -602,11 +595,10 @@ typedef struct {
 
 
 /*methods of interest*/
-
-
-void vasp_calc_to_incar(FILE *output,vasp_calc_struct vasp_calc);
-
-
+/* from file_vasp.c */
+int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc);
+void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
+gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
 
 
 

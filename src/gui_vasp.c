@@ -71,172 +71,6 @@ void gui_vasp_init(){
 		vasp_gui.poscar_dirty=TRUE;
 	}
 }
-/*******************************************************/
-/* update calculation setting with that of vasprun.xml */
-/* TODO move to file_vasp.c                            */
-/*******************************************************/
-gint vasprun_update(gchar *filename){
-	struct model_pak *data;
-	if(filename){
-		/*load most values from provided file*/
-		/*TODO: add vaspxml reader*/
-	}else{
-		data = sysenv.active_model;/*try to fillup using model*/
-		/* use what is known from current model */
-		/*use some default values*/
-/*name*/
-		vasp_calc.name=NULL;
-/*1-general*/
-		vasp_calc.prec=VP_NORM;
-		vasp_calc.use_prec=TRUE;
-		vasp_calc.encut=0.0;/*ie not set*/
-		vasp_calc.enaug=0.0;/*ie not set*/
-		vasp_calc.ediff=1e-4;
-		vasp_calc.algo=VA_NORM;
-		vasp_calc.ialgo=VIA_KOSUGI;
-		vasp_calc.ldiag=TRUE;
-		vasp_calc.auto_elec=TRUE;
-		vasp_calc.nbands=0;/*ie not set*/
-		vasp_calc.nelect=0;/*ie not set*/
-		vasp_calc.iwavpr=10;
-		vasp_calc.nsim=4;
-		vasp_calc.vtime=0.4;
-/*2-smearing*/
-		vasp_calc.ismear=1;
-		vasp_calc.sigma=0.2;
-		vasp_calc.fermwe=NULL;
-		vasp_calc.fermdo=NULL;
-		vasp_calc.kspacing=0.5;
-		vasp_calc.kgamma=TRUE;
-/*3-projector*/
-	        vasp_calc.lreal=VLR_FALSE;
-	        vasp_calc.ropt=NULL;
-	        vasp_calc.addgrid=FALSE;
-	        vasp_calc.lmaxmix=2;
-	        vasp_calc.lmaxpaw=-100;/*ie don't show*/
-/*4-startup*/
-		vasp_calc.istart=-1;/*ie not set*/
-		vasp_calc.icharg=-1;/*ie not set*/
-		vasp_calc.iniwav=TRUE;
-/*5-spin*/
-		vasp_calc.ispin=FALSE;
-		vasp_calc.non_collinear=FALSE;
-		vasp_calc.magmom=NULL;
-		vasp_calc.nupdown=-1;/*ie not set*/
-		vasp_calc.lsorbit=FALSE;
-		vasp_calc.saxis=NULL;
-		vasp_calc.gga_compat=TRUE;
-/*6-xc*/
-		vasp_calc.gga=VG_PE;
-		vasp_calc.voskown=FALSE;
-		vasp_calc.lasph=FALSE;
-		vasp_calc.lmaxtau=0;
-		vasp_calc.lmixtau=FALSE;
-		vasp_calc.lmetagga=FALSE;
-		vasp_calc.mgga=VMG_MBJ;/*default is none actually*/
-		vasp_calc.cmbj=NULL;
-		vasp_calc.cmbja=-0.012;
-		vasp_calc.cmbjb=1.023;
-		/*vdw part*/
-/*7-convergence*/
-		vasp_calc.nelm=60;
-		vasp_calc.nelmdl=-12;
-		vasp_calc.nelmin=2;
-/*8-mixer*/
-		vasp_calc.auto_mixer=TRUE;
-		vasp_calc.imix=VM_4;
-		vasp_calc.amix=0.4;
-		vasp_calc.bmix=1.0;
-		vasp_calc.amin=0.1;
-		vasp_calc.amix_mag=1.6;
-		vasp_calc.bmix_mag=1.0;
-		vasp_calc.maxmix=-45;
-		vasp_calc.wc=1000.;
-		vasp_calc.inimix=VIM_1;
-		vasp_calc.mixpre=VMP_1;
-/*9-dipole*/
-		vasp_calc.idipol=VID_0;
-		vasp_calc.ldipol=FALSE;
-		vasp_calc.lmono=FALSE;
-		vasp_calc.epsilon=1.0;/*assuming dielectric constant for vacuum*/
-		vasp_calc.dipol=NULL;
-		vasp_calc.efield=0.0;
-/*10-grid*/
-		/*no default values for grid*/
-		vasp_calc.auto_grid=TRUE;
-/*ionic*/
-/*1-general*/
-		vasp_calc.nsw=0;
-		vasp_calc.ibrion=-1;
-		vasp_calc.isif=2;
-		vasp_calc.pstress=0.0;
-		vasp_calc.ediffg=vasp_calc.ediff*10.0;
-		vasp_calc.potim=0.5;
-		vasp_calc.nfree=2;/*actually there is no default*/
-/*2-md*/
-		vasp_calc.smass=-3;
-		vasp_calc.npaco=256;
-		vasp_calc.apaco=16.;/*an integer in Ang?*/
-		vasp_calc.tebeg=0.0;
-		vasp_calc.teend=vasp_calc.tebeg;
-		vasp_calc.nblock=1;
-		vasp_calc.kblock=vasp_calc.nsw;
-/*3-symmetry*/
-		vasp_calc.isym=2;/*let's take the PAW default*/
-		vasp_calc.sym_prec=1e-5;
-/*4-POSCAR*/
-		vasp_calc.poscar_sd=TRUE;
-		vasp_calc.poscar_direct=TRUE;
-		vasp_calc.poscar_a0=1.0;
-		vasp_calc.poscar_ux=data->latmat[0];
-		vasp_calc.poscar_uy=data->latmat[3];
-		vasp_calc.poscar_uz=data->latmat[6];
-		vasp_calc.poscar_vx=data->latmat[1];
-		vasp_calc.poscar_vy=data->latmat[4];
-		vasp_calc.poscar_vz=data->latmat[7];
-		vasp_calc.poscar_wx=data->latmat[2];
-		vasp_calc.poscar_wy=data->latmat[5];
-		vasp_calc.poscar_wz=data->latmat[8];
-		/* unexposed */
-		vasp_calc.species_symbols=NULL;
-		vasp_calc.species_numbers=NULL;
-		/* exposed */
-		vasp_calc.poscar_x=0.;
-		vasp_calc.poscar_y=0.;
-		vasp_calc.poscar_z=0.;
-/*5-KPOINTS*/
-		vasp_calc.kpoints_nkpts=0;
-/*...*/
-		vasp_calc.tetra_a=1;
-		vasp_calc.tetra_b=1;
-		vasp_calc.tetra_c=1;
-		vasp_calc.tetra_d=1;
-/*6-POTCAR*/
-		vasp_calc.potcar_folder=NULL;
-		vasp_calc.potcar_file=NULL;
-		vasp_calc.potcar_species=NULL;
-
-/*7-RUN*/
-		vasp_calc.job_vasp_exe=g_strdup_printf("%s",sysenv.vasp_path);
-		vasp_calc.job_mpirun=g_strdup_printf("%s",sysenv.mpirun_path);
-		vasp_calc.job_path=g_strdup_printf("%s",sysenv.cwd);
-		vasp_calc.job_nproc=1.;
-		vasp_calc.ncore=1.;
-		vasp_calc.kpar=1.;
-		vasp_calc.lplane=TRUE;
-		vasp_calc.lscalu=TRUE;
-		vasp_calc.lscalapack=TRUE;
-
-		vasp_calc.lwave=TRUE;
-		vasp_calc.lcharg=TRUE;
-		vasp_calc.lvtot=FALSE;
-		vasp_calc.lvhar=FALSE;
-		vasp_calc.lelf=FALSE;
-/**/
-	}
-
-	return 0;
-}
 /*********************************************************/
 /* Load calculation setting from an included vasprun.xml */
 /*********************************************************/
@@ -255,7 +89,7 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(filename) {
 	gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),g_strdup_printf("%s",filename));
-	vasprun_update(filename);/*<- update everything according to the new vasprun.xml*/
+	vasprun_update(filename,&vasp_calc);/*<- update everything according to the new vasprun.xml*/
 	g_free (filename);
     }
   }
@@ -411,7 +245,7 @@ void elec_toggle(GtkWidget *w, GtkWidget *box){
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsim),g_strdup_printf("%i",vasp_calc.nsim));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.vtime),g_strdup_printf("%.4lf",vasp_calc.vtime));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nbands),g_strdup_printf("%i",vasp_calc.nbands));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelect),g_strdup_printf("%i",vasp_calc.nelect));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelect),g_strdup_printf("%.4lf",vasp_calc.nelect));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.iwavpr),g_strdup_printf("%i",vasp_calc.iwavpr));
 	}else{
 		/*switch to automatic values*/
@@ -1403,7 +1237,7 @@ void vasp_gui_sync(){
 	//ldiag already sync
 	if(!vasp_calc.auto_elec){
 		VASP_REG_VAL(nbands,"%i");
-		VASP_REG_VAL(nelect,"%i");
+		VASP_REG_VAL(nelect,"%lf");
 		VASP_REG_VAL(iwavpr,"%i");
 		VASP_REG_VAL(nsim,"%i");
 		VASP_REG_VAL(vtime,"%lf");
@@ -1425,7 +1259,7 @@ void vasp_gui_sync(){
 	//ispin already sync
 	//non_collinear already sync
 	VASP_REG_TEXT(magmom);
-	VASP_REG_VAL(nupdown,"%i");
+	VASP_REG_VAL(nupdown,"%lf");
 	//lsorbit already sync
 	VASP_REG_TEXT(saxis);
 	//gga_compat already sync
@@ -1480,7 +1314,7 @@ void vasp_gui_sync(){
 	VASP_REG_VAL(potim,"%lf");
 	VASP_REG_VAL(tebeg,"%lf");
 	VASP_REG_VAL(teend,"%lf");
-	VASP_REG_VAL(smass,"%i");
+	VASP_REG_VAL(smass,"%lf");
 	VASP_REG_VAL(nblock,"%i");
 	VASP_REG_VAL(kblock,"%i");
 	VASP_REG_VAL(npaco,"%i");
@@ -1524,218 +1358,6 @@ void vasp_gui_sync(){
 	VASP_REG_VAL(ncore,"%lf");
 	VASP_REG_VAL(kpar,"%lf");
 	VASP_REG_VAL(job_nproc,"%lf");
-}
-/***************************************************************/
-/* convert vasp structure to INCAR <- TODO move to file_vasp.c */
-/***************************************************************/
-void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc){
-/*skipping default parts*/
-	fprintf(output,"!INCAR GENERATED BY GDIS %4.2f.%d (C) %d\n",VERSION,PATCH,YEAR);
-	if(calc.name!=NULL) fprintf(output,"SYSTEM=%s\n",calc.name);
-	fprintf(output,"PREC=");
-	switch (calc.prec){
-		case VP_SINGLE:
-			fprintf(output,"SINGLE\n");break;
-		case VP_ACCURATE:
-			fprintf(output,"ACCURATE\n");break;
-		case VP_HIGH:
-			fprintf(output,"HIGH\n");break;
-		case VP_MED:
-			fprintf(output,"MEDIUM\n");break;
-		case VP_LOW:
-			fprintf(output,"LOW\n");break;
-		case VP_NORM:
-		default:
-			fprintf(output,"NORMAL\n");
-	}
-	if(calc.use_prec) fprintf(output,"!USING PREC SETTINGS FOR ENCUT and ENAUG\n");
-	else{
-		if(calc.encut!=0.0) fprintf(output,"ENCUT=%lf\n",calc.encut);
-		if(calc.enaug!=0.0) fprintf(output,"ENAUG=%lf\n",calc.enaug);
-	}
-	if(calc.ediff!=1E-4) fprintf(output,"EDIFF=%lE\n",calc.ediff);
-	if(calc.algo!=VA_IALGO){
-		fprintf(output,"ALGO=");
-		switch (calc.algo){
-		case VA_NORM:
-			fprintf(output,"NORMAL\n");break;
-		case VA_VERYFAST:
-			fprintf(output,"VERYFAST\n");break;
-		case VA_FAST:
-			fprintf(output,"FAST\n");break;
-		case VA_CONJ:
-			fprintf(output,"CONJ\n");break;
-		case VA_ALL:
-			fprintf(output,"ALL\n");break;
-		case VA_DAMPED:
-			fprintf(output,"DAMPED\n");break;
-		case VA_SUBROT:
-			fprintf(output,"SUBROT\n");break;
-		case VA_EIGEN:
-			fprintf(output,"EIGENVAL\n");break;
-		case VA_NONE:
-			fprintf(output,"NONE\n");break;
-		case VA_NOTHING:
-			fprintf(output,"NOTHING\n");break;
-		case VA_EXACT:
-			fprintf(output,"EXACT\n");break;
-		case VA_DIAG:
-			fprintf(output,"DIAG\n");break;
-		case VA_IALGO:
-		default:
-			/*should never happen*/
-			fprintf(output,"NORMAL\n");
-		}
-	} else fprintf(output,"IALGO=%i\n",(gint)calc.ialgo);
-	if(!(calc.ldiag)) fprintf(output,"LDIAG=.FALSE.\n");
-	if(!(calc.auto_elec)){
-		if(calc.nbands!=0) fprintf(output,"NBANDS=%i\n",calc.nbands);
-		if(calc.nelect!=0) fprintf(output,"NELECT=%i\n",calc.nelect);
-		if(calc.iwavpr!=10) fprintf(output,"IWAVPR=%i\n",calc.iwavpr);
-		if(calc.nsim!=4) fprintf(output,"NSIM=%i\n",calc.nsim);
-		if(calc.vtime!=0.4) fprintf(output,"VTIME=%lf\n",calc.vtime);
-	}
-	if(calc.ismear!=1) fprintf(output,"ISMEAR=%i\n",calc.ismear);
-	if(calc.sigma!=0.2) fprintf(output,"SIGMA=%lf\n",calc.sigma);
-	if(calc.fermwe!=NULL) fprintf(output,"FERMWE=%s\n",calc.fermwe);
-	if(calc.fermdo!=NULL) fprintf(output,"FERMDO=%s\n",calc.fermdo);
-	if(calc.kspacing!=0.5) fprintf(output,"KSPACING=%lf\n",calc.kspacing);
-	if(!calc.kgamma) fprintf(output,"KGAMMA=.FALSE.\n");
-	/*always write LREAL tag*/
-	fprintf(output,"LREAL=");
-	switch (calc.lreal){
-	case VLR_AUTO:
-		fprintf(output,"AUTO\n");break;
-	case VLR_ON:
-		fprintf(output,"ON\n");break;
-	case VLR_TRUE:
-		fprintf(output,".TRUE.\n");break;
-	case VLR_FALSE:
-	default:
-		fprintf(output,".FALSE.\n");
-	}
-	if(calc.ropt!=NULL) fprintf(output,"ROPT=%s\n",calc.ropt);
-	if(calc.addgrid) fprintf(output,"ADDGRID=.TRUE.\n");
-	if(calc.lmaxmix!=2) fprintf(output,"LMAXMIX=%i\n",calc.lmaxmix);
-	if(calc.lmaxpaw!=-100) fprintf(output,"LMAXPAW=%i\n",calc.lmaxpaw);
-        if(calc.istart!=-1) fprintf(output,"ISTART=%i\n",calc.istart);
-        if(calc.icharg!=-1) fprintf(output,"ICHARG=%i\n",calc.icharg);
-        if(!calc.iniwav) fprintf(output,"INIWAV=0\n");
-	if(calc.ispin) fprintf(output,"ISPIN=2\n");
-	if(calc.non_collinear) fprintf(output,"LNONCOLLINEAR=.TRUE.\n");
-	if(calc.magmom!=NULL) fprintf(output,"MAGMOM=%s\n",calc.magmom);
-	if(calc.nupdown!=-1) fprintf(output,"NUPDOWN=%i\n",calc.nupdown);
-	if(calc.lsorbit) fprintf(output,"LSORBIT=.TRUE.\n");
-	if(calc.saxis!=NULL) fprintf(output,"MAGMOM=%s\n",calc.saxis);
-	if(!calc.gga_compat) fprintf(output,"GGA_COMPAT=.FALSE.\n");
-	/*always write GGA tag*/
-	fprintf(output,"GGA=");
-	switch (calc.gga){
-	case VG_91:
-		fprintf(output,"91\n");break;
-	case VG_RP:
-		fprintf(output,"RP\n");break;
-	case VG_AM:
-		fprintf(output,"AM\n");break;
-	case VG_PS:
-		fprintf(output,"PS\n");break;
-	case VG_PE:
-	default:
-		fprintf(output,"PE\n");
-	}
-	if(calc.voskown) fprintf(output,"VOSKOWN=1\n");
-	if(calc.lasph) fprintf(output,"LASPH=.TRUE.\n");
-	if(calc.lmaxtau!=0) fprintf(output,"LMAXTAU=%i\n",calc.lmaxtau);
-	if(calc.lmixtau) fprintf(output,"LMIXTAU=.TRUE.\n");
-	if(calc.lmetagga){
-		fprintf(output,"METAGGA=");
-		switch (calc.mgga){
-		case VMG_TPSS:
-			fprintf(output,"TPSS\n");break;
-		case VMG_RTPSS:
-			fprintf(output,"RTPSS\n");break;
-		case VMG_M06L:
-			fprintf(output,"M06L\n");break;
-		case VMG_MBJ:
-		default:
-			fprintf(output,"MBJ\n");
-		}
-		if(calc.mgga==VMG_MBJ){/*print parameters as well*/
-			if(calc.cmbj!=NULL) fprintf(output,"CMBJ=%s\n",calc.cmbj);
-			if(calc.cmbja!=-0.012) fprintf(output,"CMBJA=%lf\n",calc.cmbja);
-			if(calc.cmbjb!=1.023) fprintf(output,"CMBJB=%lf\n",calc.cmbjb);
-		}
-	}
-	if(calc.ldau){
-		fprintf(output,"LDAU=.TRUE.\n");
-		fprintf(output,"LDAUTYPE=%i\n",(gint)calc.ldau_type);/*always write*/
-		fprintf(output,"LDAUPRINT=%i\n",(gint)calc.ldau_output);/*always write*/
-		if(calc.ldaul!=NULL) fprintf(output,"LDAUL=%s\n",calc.ldaul);
-		if(calc.ldauu!=NULL) fprintf(output,"LDAUU=%s\n",calc.ldauu);
-		if(calc.ldauj!=NULL) fprintf(output,"LDAUJ=%s\n",calc.ldauj);
-	}
-	if(calc.nelm!=60) fprintf(output,"NELM=%i\n",calc.nelm);
-	if(calc.nelmdl!=-12) fprintf(output,"NELMDL=%i\n",calc.nelmdl);
-	if(calc.nelmin!=2) fprintf(output,"NELMIN=%i\n",calc.nelmin);
-	if(!calc.auto_mixer){
-		fprintf(output,"IMIX=%i\n",(gint)calc.imix);/*always write*/
-		if(calc.amix!=0.4) fprintf(output,"AMIX=%lf\n",calc.amix);
-		if(calc.bmix!=1.0) fprintf(output,"BMIX=%lf\n",calc.bmix);
-		if(calc.amin!=0.1) fprintf(output,"AMIN=%lf\n",calc.amin);
-		if(calc.amix_mag!=1.6) fprintf(output,"AMIX_MAG=%lf\n",calc.amix_mag);
-		if(calc.bmix_mag!=1.0) fprintf(output,"BMIX_MAG=%lf\n",calc.bmix_mag);
-		if(calc.maxmix!=-45) fprintf(output,"MAXMIX=%i\n",calc.maxmix);
-		if(calc.wc!=1000.0) fprintf(output,"WC=%lf\n",calc.wc);
-		if(vasp_calc.inimix!=VIM_1) fprintf(output,"INIMIX=%i\n",(gint)calc.inimix);
-		if(vasp_calc.mixpre!=VMP_1) fprintf(output,"MIXPRE=%i\n",(gint)calc.mixpre);
-	}
-	if(calc.idipol!=VID_0){
-		if(calc.ldipol) fprintf(output,"LDIPOL=.TRUE.\n");
-		if(calc.lmono) fprintf(output,"LMONO=.TRUE.\n");
-		if(calc.epsilon!=1.0) fprintf(output,"EPSILON=%lf\n",calc.epsilon);
-		if(calc.dipol!=NULL) fprintf(output,"DIPOL=%s\n",calc.dipol);
-		if((calc.efield!=0.0)&&(calc.idipol!=VID_4)) fprintf(output,"EFIELD=%lf\n",calc.efield);
-	}
-	if(!calc.auto_grid){
-		if(calc.ngx>0) fprintf(output,"NGX=%i\n",(gint)calc.ngx);
-		if(calc.ngy>0) fprintf(output,"NGY=%i\n",(gint)calc.ngy);
-		if(calc.ngz>0) fprintf(output,"NGZ=%i\n",(gint)calc.ngz);
-		if(calc.ngxf>0) fprintf(output,"NGXF=%i\n",(gint)calc.ngxf);
-		if(calc.ngyf>0) fprintf(output,"NGYF=%i\n",(gint)calc.ngyf);
-		if(calc.ngzf>0) fprintf(output,"NGZF=%i\n",(gint)calc.ngzf);
-	}
-	if(calc.nsw!=0) fprintf(output,"NSW=%i\n",calc.nsw);
-	if(calc.ibrion!=-1) fprintf(output,"IBRION=%i\n",calc.ibrion);
-	if(calc.isif!=2) fprintf(output,"ISIF=%i\n",calc.isif);
-	if(calc.pstress!=0.0) fprintf(output,"PSTRESS=%lf\n",calc.pstress);
-	if(calc.ediffg!=(vasp_calc.ediff*10.0)) fprintf(output,"EDIFFG=%lE\n",calc.ediffg);
-	if(calc.potim!=0.5) fprintf(output,"POTIM=%lf\n",calc.potim);
-	if(calc.nfree!=2) fprintf(output,"NFREE=%i\n",calc.nfree);
-	if(calc.ibrion==0){
-		if(calc.smass!=-3) fprintf(output,"SMASS=%i\n",calc.smass);
-		if(calc.npaco!=256) fprintf(output,"NPACO=%i\n",calc.npaco);
-		if(calc.apaco!=16.) fprintf(output,"APACO=%lf\n",calc.apaco);
-		if(vasp_calc.tebeg!=0.0) fprintf(output,"TEBEG=%lf\n",calc.tebeg);
-		if(vasp_calc.teend!=vasp_calc.tebeg) fprintf(output,"TEEND=%lf\n",calc.teend);
-		if(calc.nblock!=1) fprintf(output,"NBLOCK=%i\n",calc.nblock);
-		if(calc.kblock!=vasp_calc.nsw) fprintf(output,"KBLOCK=%i\n",calc.kblock);
-	}
-	if(calc.isym!=2) fprintf(output,"ISYM=%i\n",calc.isym);
-	if((calc.isym>0)&&(calc.sym_prec!=1e-5)) fprintf(output,"SYM_PREC=%lE\n",calc.sym_prec);
-	/*PERF*/
-	if(calc.ncore>1.) fprintf(output,"NCORE=%i\n",(gint)calc.ncore);
-	if(calc.kpar>1.) fprintf(output,"KPAR=%i\n",(gint)calc.ncore);
-	if(!calc.lplane) fprintf(output,"LPLANE=.FALSE.\n");
-	if(!calc.lscalu) fprintf(output,"LSCALU=.FALSE.\n");
-	if(!calc.lscalapack) fprintf(output,"LSCALAPACK=.FALSE.\n");
-	if(!calc.lwave) fprintf(output,"LWAVE=.FALSE.\n");
-	if(!calc.lcharg) fprintf(output,"LCHARG=.FALSE.\n");
-	if(calc.lvtot) fprintf(output,"LVTOT=.TRUE.\n");
-	if(calc.lvhar) fprintf(output,"LVHAR=.TRUE.\n");
-	if(calc.lelf) fprintf(output,"LELF=.TRUE.\n");
-
-	/*TODO advanced settings*/
-	
 }
 /***************************************************/
 /* convert vasp structure to POSCAR (not gui_free) */
@@ -2041,11 +1663,11 @@ void gui_vasp_dialog(void){
 	if (data->id == VASP) {
 		vasp_gui.have_xml=TRUE;
 		gui_vasp_init();
-		vasprun_update(data->filename);/*initialize according to vasprun.xml*/
+		vasprun_update(data->filename,&vasp_calc);/*initialize according to vasprun.xml*/
 	} else {
 		vasp_gui.have_xml=FALSE;/*initialize with default values*/
 		gui_vasp_init();
-		vasprun_update(NULL);
+		vasprun_update(NULL,&vasp_calc);
 	}
 /* dialog setup */
 	title = g_strdup_printf("VASP: %s", data->basename);
@@ -2199,7 +1821,7 @@ void gui_vasp_dialog(void){
 	VASP_NEW_LABEL("NBANDS=");
 	VASP_ENTRY(vasp_gui.nbands,vasp_calc.nbands,"%i",6);
 	VASP_NEW_LABEL("NELECT=");
-	VASP_ENTRY(vasp_gui.nelect,vasp_calc.nelect,"%i",6);
+	VASP_ENTRY(vasp_gui.nelect,vasp_calc.nelect,"%.4lf",6);
 	VASP_NEW_LABEL("INIWAVPR=");
 	VASP_ENTRY(vasp_gui.iwavpr,vasp_calc.iwavpr,"%i",3);/*<- should be a combo?*/
 	elec_toggle(NULL,NULL);/*initialize TODO: move to end*/
@@ -2383,7 +2005,7 @@ void gui_vasp_dialog(void){
         gui_direct_check("SPIN POLARIZED",&(vasp_calc.ispin),NULL,NULL,hbox);/*not calling anything*/
         vasp_gui.lnoncoll=gui_direct_check("NON COLLINEAR",&(vasp_calc.non_collinear),lnoncoll_toggle,NULL,hbox);
         VASP_NEW_LABEL("NUPDOWN=");
-        VASP_ENTRY(vasp_gui.nupdown,vasp_calc.nupdown,"%i",3);
+        VASP_ENTRY(vasp_gui.nupdown,vasp_calc.nupdown,"%.1lf",4);
         VASP_NEW_LABEL("MAGMOM=");
         VASP_TEXT_ENTRY(vasp_gui.magmom,vasp_calc.magmom,TRUE);
 /* 2nd line */
@@ -2592,7 +2214,7 @@ if(vasp_calc.idipol!=VID_0) {
 	VASP_NEW_LABEL("TEEND=");
 	VASP_ENTRY(vasp_gui.teend,vasp_calc.teend,"%.1lf",6);
 	VASP_NEW_LABEL("SMASS=");
-	VASP_ENTRY(vasp_gui.smass,vasp_calc.smass,"%i",3);
+	VASP_ENTRY(vasp_gui.smass,vasp_calc.smass,"%.1f",4);
 	VASP_NEW_SEPARATOR();
 	VASP_NEW_LABEL("NBLOCK=");
 	VASP_ENTRY(vasp_gui.nblock,vasp_calc.nblock,"%i",3);
