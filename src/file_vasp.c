@@ -191,7 +191,7 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 /**********************************************************/
 int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc){
 #define CALC (*calc)
-#define DEBUG_XML2CALC 1
+#define DEBUG_XML2CALC 0
 #define XC_REG_DOUBLE(field,value) do{\
         if (find_in_string(field,line) != NULL) {\
                 sscanf(line," <i name=\"%*[^\"]\"> %[^<]</i>",tamp);\
@@ -1059,7 +1059,7 @@ void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc){
 	if(calc.ispin) fprintf(output,"ISPIN=2\n");
 	if(calc.non_collinear) fprintf(output,"LNONCOLLINEAR=.TRUE.\n");
 	if(calc.magmom!=NULL) fprintf(output,"MAGMOM=%s\n",calc.magmom);
-	if(calc.nupdown!=-1) fprintf(output,"NUPDOWN=%i\n",calc.nupdown);
+	if(calc.nupdown!=-1) fprintf(output,"NUPDOWN=%lf\n",calc.nupdown);
 	if(calc.lsorbit) fprintf(output,"LSORBIT=.TRUE.\n");
 	if(calc.saxis!=NULL) fprintf(output,"MAGMOM=%s\n",calc.saxis);
 	if(!calc.gga_compat) fprintf(output,"GGA_COMPAT=.FALSE.\n");

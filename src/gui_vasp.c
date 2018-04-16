@@ -163,7 +163,7 @@ file_chooser=gtk_file_chooser_dialog_new("Select working folder",GTK_WINDOW(vasp
 /******************/
 void vasp_prec_selected(GtkWidget *w, struct model_pak *model){
 /*how much more simple it could be?*/
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"Normal") == 0) vasp_calc.prec=VP_NORM;
 else if (g_ascii_strcasecmp(label,"Single") == 0) vasp_calc.prec=VP_SINGLE;
 else if (g_ascii_strcasecmp(label,"Accurate") == 0)vasp_calc.prec=VP_ACCURATE;
@@ -193,7 +193,7 @@ void prec_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting ALGO */
 /******************/
 void vasp_algo_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
 if (g_ascii_strcasecmp(label,"NORMAL") == 0) vasp_calc.algo=VA_NORM;
 else if (g_ascii_strcasecmp(label,"USE_IALGO") == 0) vasp_calc.algo=VA_IALGO;
@@ -214,7 +214,7 @@ if(vasp_calc.algo==VA_IALGO) gtk_widget_set_sensitive(vasp_gui.ialgo,TRUE);
 /* selecting IALGO */
 /*******************/
 void vasp_ialgo_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"2:FIXED ORB/1E") == 0) vasp_calc.ialgo=VIA_OE_FIXED;
 else if (g_ascii_strcasecmp(label,"3:FIXED ORB") == 0) vasp_calc.ialgo=VIA_O_FIXED;
 else if (g_ascii_strcasecmp(label,"4:SUBROT ONLY") == 0) vasp_calc.ialgo=VIA_SUBROT;
@@ -260,7 +260,7 @@ void elec_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting LREAL */
 /*******************/
 void vasp_lreal_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"Auto") == 0) vasp_calc.lreal=VLR_AUTO;
 else if (g_ascii_strcasecmp(label,"On") == 0) vasp_calc.lreal=VLR_ON;
 else if (g_ascii_strcasecmp(label,"TRUE") == 0) vasp_calc.lreal=VLR_TRUE;
@@ -300,8 +300,14 @@ void grid_toggle(GtkWidget *w, GtkWidget *box){
 void ismear_changed(GtkWidget *w, struct model_pak *model){
         const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
         sscanf(label,"%i",&(vasp_calc.ismear));
-	if(vasp_calc.ismear==-5) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),TRUE);
-	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),FALSE);
+	if(vasp_calc.ismear==-5) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),TRUE);
+		gtk_widget_set_sensitive(vasp_gui.have_tetra,TRUE);
+	}
+	else {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),FALSE);
+		gtk_widget_set_sensitive(vasp_gui.have_tetra,FALSE);
+	}
 }
 /*****************************/
 /* kspacing value is changed */
@@ -328,7 +334,7 @@ void lsorbit_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting GGA */
 /*****************/
 void vasp_gga_selected(GtkWidget *w, struct model_pak *model){
-        const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"91:PW91") == 0) vasp_calc.gga=VG_91;
 else if (g_ascii_strcasecmp(label,"PE:PBE") == 0) vasp_calc.gga=VG_PE;
 else if (g_ascii_strcasecmp(label,"RP:rPBE") == 0) vasp_calc.gga=VG_RP;
@@ -336,7 +342,7 @@ else if (g_ascii_strcasecmp(label,"AM:AM05") == 0) vasp_calc.gga=VG_AM;
 else if (g_ascii_strcasecmp(label,"PS:PBEsol") == 0) vasp_calc.gga=VG_PS;
 }
 void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
-        const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 gtk_widget_set_sensitive(vasp_gui.cmbj,FALSE);
 gtk_widget_set_sensitive(vasp_gui.cmbja,FALSE);
 gtk_widget_set_sensitive(vasp_gui.cmbjb,FALSE);
@@ -363,7 +369,7 @@ void metagga_toggle(GtkWidget *w, GtkWidget *box){
         }else{
                 /*switch to automatic values*/
                 gtk_widget_set_sensitive(vasp_gui.metagga,TRUE);
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.metagga)->entry),"MBJ");/*actually, there is no default*/
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),3);//MBJ (actually there is no default)
 		gtk_widget_set_sensitive(vasp_gui.cmbj,TRUE);
 		gtk_widget_set_sensitive(vasp_gui.cmbja,TRUE);
 		gtk_widget_set_sensitive(vasp_gui.cmbjb,TRUE);
@@ -377,19 +383,26 @@ void ldau_toggle(GtkWidget *w, GtkWidget *box){
                 /*switch to manual values*/
                 gtk_widget_set_sensitive(vasp_gui.ldau,FALSE);
 		gtk_widget_set_sensitive(vasp_gui.ldau_print,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.ldaul,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.ldauu,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.ldauj,FALSE);
         }else{
                 /*switch to automatic values*/
                 gtk_widget_set_sensitive(vasp_gui.ldau,TRUE);
 		gtk_widget_set_sensitive(vasp_gui.ldau_print,TRUE);
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.ldau)->entry),"2:LSDA+U Dudarev");
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.ldau_print)->entry),"0:Silent");
+		gtk_widget_set_sensitive(vasp_gui.ldaul,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.ldauu,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.ldauj,TRUE);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),1);//2:LSDA+U Dudarev
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),0);//0:Silent
+		/*TODO: update ldaul, ldauu, ldauj*/
         }
 }
 /***************************/
 /* selecting L(S)DA+U type */
 /***************************/
 void vasp_ldau_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"1:LSDA+U Liechtenstein") == 0) vasp_calc.ldau_type=VU_1;
 else if (g_ascii_strcasecmp(label,"2:LSDA+U Dudarev") == 0) vasp_calc.ldau_type=VU_2;
 else if (g_ascii_strcasecmp(label,"4:LDA+U Liechtenstein") == 0) vasp_calc.ldau_type=VU_4;
@@ -398,7 +411,7 @@ else if (g_ascii_strcasecmp(label,"4:LDA+U Liechtenstein") == 0) vasp_calc.ldau_
 /* selecting L(S)DA+U output verbosity */
 /***************************************/
 void vasp_ldau_print_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"0:Silent") == 0) vasp_calc.ldau_output=VUO_0;
 else if (g_ascii_strcasecmp(label,"1:Occupancy matrix") == 0) vasp_calc.ldau_output=VUO_1;
 else if (g_ascii_strcasecmp(label,"2:Full output") == 0) vasp_calc.ldau_output=VUO_2;
@@ -428,7 +441,7 @@ void mixer_toggle(GtkWidget *w, GtkWidget *box){
                 gtk_widget_set_sensitive(vasp_gui.amix_mag,TRUE);
                 gtk_widget_set_sensitive(vasp_gui.bmix_mag,TRUE);
 		gtk_widget_set_sensitive(vasp_gui.maxmix,TRUE);
-                gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.mixer)->entry),"4:BROYDEN");
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),3);//4:BROYDEN
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.amix),g_strdup_printf("%.4lf",vasp_calc.amix));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.bmix),g_strdup_printf("%.4lf",vasp_calc.bmix));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.amin),g_strdup_printf("%.4lf",vasp_calc.amin));
@@ -447,7 +460,7 @@ void mixer_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting mixer */
 /*******************/
 void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
-        const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 gtk_widget_set_sensitive(vasp_gui.wc,FALSE);
 gtk_widget_set_sensitive(vasp_gui.inimix,FALSE);
 gtk_widget_set_sensitive(vasp_gui.mixpre,FALSE);
@@ -465,7 +478,7 @@ if(vasp_calc.imix==VM_4) {
 /* selecting initial mixer */
 /***************************/
 void vasp_inimix_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"0:LINEAR") == 0) vasp_calc.inimix=VIM_0;
 else if (g_ascii_strcasecmp(label,"1:KERKER") == 0) vasp_calc.inimix=VIM_1;
 }
@@ -473,7 +486,7 @@ else if (g_ascii_strcasecmp(label,"1:KERKER") == 0) vasp_calc.inimix=VIM_1;
 /* selecting pre-mixing */
 /************************/
 void vasp_mixpre_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"0:NONE") == 0) vasp_calc.mixpre=VMP_0;
 else if (g_ascii_strcasecmp(label,"1:F=20 INVERSE KERKER") == 0) vasp_calc.mixpre=VMP_1;
 else if (g_ascii_strcasecmp(label,"2:F=200 INVERSE KERKER") == 0) vasp_calc.mixpre=VMP_2;
@@ -482,7 +495,7 @@ else if (g_ascii_strcasecmp(label,"2:F=200 INVERSE KERKER") == 0) vasp_calc.mixp
 /* selecting idipol */
 /********************/
 void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 gtk_widget_set_sensitive(vasp_gui.ldipol,FALSE);
 gtk_widget_set_sensitive(vasp_gui.lmono,FALSE);
 gtk_widget_set_sensitive(vasp_gui.dipol,FALSE);
@@ -506,7 +519,7 @@ if(vasp_calc.idipol!=VID_0) {
 /* selecting ibrion */
 /********************/
 void vasp_ibrion_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 gtk_widget_set_sensitive(vasp_gui.tebeg,FALSE);
 gtk_widget_set_sensitive(vasp_gui.teend,FALSE);
 gtk_widget_set_sensitive(vasp_gui.smass,FALSE);
@@ -539,7 +552,7 @@ gtk_widget_set_sensitive(vasp_gui.apaco,TRUE);
 /******************/
 void vasp_isif_selected(GtkWidget *w, struct model_pak *model){
 /*is it even going to work?*/
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"0:F_0_I_0_0") == 0) vasp_calc.isif=0;
 else if (g_ascii_strcasecmp(label,"1:F_P_I_0_0") == 0) vasp_calc.isif=1;
 else if (g_ascii_strcasecmp(label,"2:F_S_I_0_0") == 0) vasp_calc.isif=2;
@@ -608,35 +621,7 @@ if((!vasp_gui.rions)&&(!vasp_gui.rshape)&&(!vasp_gui.rvolume)) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
 	vasp_calc.isif=2;
 }
-switch (vasp_calc.isif){
-	case 0:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"0:F_0_I_0_0");
-		break;
-	case 1:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"1:F_P_I_0_0");
-		break;
-	case 2:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"2:F_S_I_0_0");
-		break;
-	case 3:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"3:F_S_I_S_V");
-		break;
-	case 4:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"4:F_S_I_S_0");
-		break;
-	case 5:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"5:F_S_0_S_0");
-		break;
-	case 6:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"6:F_S_0_S_V");
-		break;
-	case 7:
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"7:F_S_0_0_V");
-		break;
-	default:
-		vasp_calc.isif=2;//this should never happen
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(vasp_gui.isif)->entry),"2:F_S_I_0_0");
-}
+gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.isif),vasp_calc.isif);/*more simple than before*/
 }
 /*****************************/
 /* selective dynamics toggle */
@@ -660,7 +645,7 @@ void toggle_poscar_sd(){
 /*************************/
 void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
 	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*for the push-pull*/
-	const gchar *label = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(vasp_gui.poscar_free)->entry));
+	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
 if (g_ascii_strcasecmp(label,"All atom FIXED") == 0) vasp_calc.poscar_free=VPF_FIXED;
 else if (g_ascii_strcasecmp(label,"All atom FREE") == 0) vasp_calc.poscar_free=VPF_FREE;
 else if (g_ascii_strcasecmp(label,"Manual selection") == 0) vasp_calc.poscar_free=VPF_MAN;
@@ -734,9 +719,9 @@ void vasp_poscar_atoms_selected(GtkWidget *w, struct model_pak *model){
 		/*populate atom properties*/
 		sscanf(text,"%lf %lf %lf %c %c %c ! atom: %*i (%[^)])",&x,&y,&z,&tx,&ty,&tz,&(symbol[0]));
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_symbol),g_strdup_printf("%s",symbol));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_x),g_strdup_printf("%.8lf",x));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_y),g_strdup_printf("%.8lf",y));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_z),g_strdup_printf("%.8lf",z));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_x),g_strdup_printf("%.6lf",x));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_y),g_strdup_printf("%.6lf",y));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_z),g_strdup_printf("%.6lf",z));
 		/* register all that */
 		vasp_calc.poscar_index=index;
 		vasp_calc.poscar_x=x;
@@ -752,6 +737,13 @@ void vasp_poscar_atoms_selected(GtkWidget *w, struct model_pak *model){
 	gtk_widget_set_sensitive(vasp_gui.poscar_tx,(vasp_calc.poscar_free==VPF_MAN));
 	gtk_widget_set_sensitive(vasp_gui.poscar_ty,(vasp_calc.poscar_free==VPF_MAN));
 	gtk_widget_set_sensitive(vasp_gui.poscar_tz,(vasp_calc.poscar_free==VPF_MAN));
+	/* (re)set tags value! */
+	if(vasp_calc.poscar_tx) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tx),TRUE);
+	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tx),FALSE);
+	if(vasp_calc.poscar_ty) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_ty),TRUE);
+	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_ty),FALSE);
+	if(vasp_calc.poscar_tz) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tz),TRUE);
+	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tz),FALSE);
 }
 /**************************/
 /* modify/add poscar atom */
@@ -768,21 +760,21 @@ void vasp_atom_modified(){
 	VASP_REG_VAL(poscar_y,"%lf");
 	VASP_REG_VAL(poscar_z,"%lf");
 	sprintf(vasp_calc.poscar_symbol,"%s",gtk_entry_get_text(GTK_ENTRY(vasp_gui.poscar_symbol)));
+	tx='F';
+	ty='F';
+	tz='F';
 	switch (vasp_calc.poscar_free){
 	case VPF_MAN:
 		if(vasp_calc.poscar_tx) tx='T';
-		else tx='F';
 		if(vasp_calc.poscar_ty) ty='T';
-		else ty='F';
 		if(vasp_calc.poscar_tz) tz='T';
-		else tz='F';
 		break;
 	case VPF_FREE:
 		tx='T';ty='T';tz='T';
 		break;
 	case VPF_FIXED:
 	default:
-		tx='F';ty='F';tz='F';
+		break;
 	}
 	/* add/modify */
 	if(g_ascii_strcasecmp(text,"ADD atom") == 0){
@@ -1086,6 +1078,33 @@ file_chooser=gtk_file_chooser_dialog_new("Select the POTCAR folder",GTK_WINDOW(v
   }
   gtk_widget_destroy (GTK_WIDGET(file_chooser));
 }
+/*************************************/
+/* Select POTCAR information by file */
+/*************************************/
+void toggle_potcar_file(GtkWidget *w, GtkWidget *box){
+	gtk_widget_set_sensitive(vasp_gui.potcar_folder,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.species,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.species_flavor,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.species_button,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_file,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_file_button,TRUE);
+}
+/*************************************/
+/* Select POTCAR information by path */
+/*************************************/
+void toggle_potcar_folder(GtkWidget *w, GtkWidget *box){
+	gtk_widget_set_sensitive(vasp_gui.potcar_file,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_file_button,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_folder,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.species,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.species_flavor,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.species_button,TRUE);
+}
+/************************************************************************/
+/* tentative to equilibrate the NPAR,NCORE,KPAR with the number of CPUs */
+/************************************************************************/
 void parallel_eq(GtkWidget *w, GtkWidget *box){
 	gchar *tamp;
 	/*parallel equilibration*/
@@ -1217,7 +1236,7 @@ void vasp_calc_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,
 		toogle_tetra();/*in case we need*/
 	} else if (page_num==VASP_PAGE_POTCAR){
 		vasp_poscar_sync();/*we need to know species_symbols*/
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.species),g_strdup_printf("%s",vasp_calc.species_symbols));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_species),g_strdup_printf("%s",vasp_calc.species_symbols));
 	}
 	/*to be continued...*/
 }
@@ -1475,9 +1494,9 @@ void vasp_calc_to_kpoints(FILE *output,vasp_calc_struct calc){
 	/*return to previous postition*/
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.tetra),index);
 }
-/**/
-/**/
-/**/
+/***********************************/
+/* copy or concatenation of POTCAR */
+/***********************************/
 void vasp_calc_to_potcar(FILE *output,vasp_calc_struct calc){
 	FILE *org_potcar;
 	gchar *line;
@@ -1645,11 +1664,10 @@ void gui_vasp_dialog(void){
 /*TODO: use distant connections*/
 	gchar *title;
 	gpointer dialog;
-	GtkWidget *frame, *vbox, *hbox;
+	GtkWidget *frame, *vbox, *hbox, *table;
 	GtkWidget *notebook, *page, *button, *label;
-	GtkWidget *combo, *separator, *spinner;
+	GtkWidget *separator;
 	/* special */
-	GList *list;
 	GSList *list2;
 	struct model_pak *data;
 	struct core_pak *core;
@@ -1714,26 +1732,27 @@ void gui_vasp_dialog(void){
 /* --- DISCLAMER */
         frame = gtk_frame_new("DISCLAMER");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
-/* text */
-        VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-	spinner=gtk_spinner_new();
-	gtk_box_pack_start(GTK_BOX(hbox),spinner, FALSE, FALSE, 0);
-	VASP_NEW_LABEL("UNDER CONSTRUCTION");
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("Please report bugs at https://github.com/ovhpa/gdis/tree/gui_vasp");
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-/* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
+/* create a table in the frame*/
+        table = gtk_table_new(5, 3,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
+/* 1st line */
+        VASP_LABEL_TABLE("CALCUL TYPE:",0,1,0,1);
+        label = gtk_label_new("UNDER CONSTRUCTION");
+        gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,0,1);
+/* 2nd line */
+	VASP_LABEL_TABLE("SYSTEM TYPE:",0,1,1,2);
+	label = gtk_label_new("UNDER CONSTRUCTION");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,1,2);
+/* 3rd line */
+	label = gtk_label_new("This simplified interface is aimed at pre-loading parameters with guessed values");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,2,3);
+/* 4th line */
+	label = gtk_label_new("for a given calculation type. User should then check them extremely carefuly...");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,3,4);
+/* 5th line */
+	label = gtk_label_new("YOU have been WARNED! ;)        --OVHPA");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,4,5);
 
 /*-----------------------*/
 /* page 1 -> CONVERGENCE */
@@ -1744,223 +1763,151 @@ void gui_vasp_dialog(void){
 /* --- general */
 	frame = gtk_frame_new("General");
 	gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-	vbox = gtk_vbox_new(TRUE, 0);
-	gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+	table = gtk_table_new(5, 4, FALSE);
+	gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("PREC=");
-	/*TODO: folding */
-	list = NULL;
-	list = g_list_append(list,"Normal");
-	list = g_list_append(list,"Single");
-	list = g_list_append(list,"Accurate");
-	list = g_list_append(list,"High");
-	list = g_list_append(list,"Medium");
-	list = g_list_append(list,"Low");
-	VASP_REG_COMBO(combo,"Normal",vasp_prec_selected);
-	VASP_NEW_LABEL("ENCUT=");
-	VASP_ENTRY(vasp_gui.encut,vasp_calc.encut,"%.2lf",6);
-	VASP_NEW_LABEL("eV ");
-	VASP_NEW_LABEL("ENAUG=");
-	VASP_ENTRY(vasp_gui.enaug,vasp_calc.enaug,"%.2lf",6);
-	VASP_NEW_LABEL("eV ");
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("EDIFF=");
-	VASP_ENTRY(vasp_gui.ediff,vasp_calc.ediff,"%.2lE",8);
-	VASP_NEW_LABEL("eV");
+        VASP_COMBOBOX_TABLE(vasp_gui.prec,"PREC=",0,1,0,1);
+        VASP_COMBOBOX_ADD(vasp_gui.prec,"Normal");
+        VASP_COMBOBOX_ADD(vasp_gui.prec,"Single");
+        VASP_COMBOBOX_ADD(vasp_gui.prec,"Accurate");
+        VASP_COMBOBOX_ADD(vasp_gui.prec,"High");
+        VASP_COMBOBOX_ADD(vasp_gui.prec,"Medium");
+	VASP_COMBOBOX_ADD(vasp_gui.prec,"Low");
+	VASP_CHECK_TABLE(button,vasp_calc.use_prec,prec_toggle,"USE PREC",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.encut,vasp_calc.encut,"%.2lf","ENCUT=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.enaug,vasp_calc.enaug,"%.2lf","ENAUG=",3,4,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.ediff,vasp_calc.ediff,"%.2lE","EDIFF=",4,5,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	gui_direct_check("USE PREC",&(vasp_calc.use_prec),prec_toggle,NULL,hbox);
-	prec_toggle(NULL,NULL);/*initialize TODO: move to end*/
-	VASP_NEW_LABEL("ALGO=");
-        list = NULL;
-        list = g_list_append(list,"NORMAL");
-	list = g_list_append(list,"USE_IALGO");
-        list = g_list_append(list,"VERYFAST");
-        list = g_list_append(list,"FAST");
-        list = g_list_append(list,"CONJUGATE");
-	list = g_list_append(list,"ALL");
-	list = g_list_append(list,"DAMPED");
-	list = g_list_append(list,"SUBROT");
-	list = g_list_append(list,"EIGENVAL");
-	list = g_list_append(list,"NONE");
-	list = g_list_append(list,"NOTHING");
-	list = g_list_append(list,"EXACT");
-        list = g_list_append(list,"DIAG");
-	VASP_REG_COMBO(combo,"NORMAL",vasp_algo_selected);/*no need to register widget*/
-	VASP_NEW_LABEL("IALGO=");
-	list = NULL;
-	list = g_list_append(list,"2:FIXED ORB/1E");
-	list = g_list_append(list,"3:FIXED ORB");
-	list = g_list_append(list,"4:SUBROT ONLY");
-	list = g_list_append(list,"4:SUBROT ONLY");
-	list = g_list_append(list,"5:STEEPEST");
-	list = g_list_append(list,"6:CONJUGUATE GRADIENTS");
-	list = g_list_append(list,"7:PRECOND. STEEPEST");
-	list = g_list_append(list,"8:PRECOND. CG");
-	list = g_list_append(list,"38:KOSUGI");
-	list = g_list_append(list,"44:RMM STEEPEST");
-	list = g_list_append(list,"46:RMM PRECOND.");
-	list = g_list_append(list,"48:PRECOND. RMM");
-	list = g_list_append(list,"53:VAR DAMPED MD");
-	list = g_list_append(list,"54:VAR DAMPED QUENCH MD");
-	list = g_list_append(list,"58:VAR PRECOND. CG");
-	list = g_list_append(list,"90:EXACT");
-	VASP_REG_COMBO(vasp_gui.ialgo,"38:KOSUGI",vasp_ialgo_selected);
-	if(vasp_calc.algo!=VA_IALGO) gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
-	else gtk_widget_set_sensitive(vasp_gui.ialgo,TRUE);
-	gui_direct_check("LDIAG",&(vasp_calc.ldiag),NULL,NULL,hbox);/*not calling anything*/
+	VASP_COMBOBOX_TABLE(vasp_gui.algo,"ALGO=",0,1,1,2);
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"NORMAL");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"USE_IALGO");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"VERYFAST");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"FAST");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"CONJUGATE");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"ALL");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"DAMPED");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"SUBROT");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"EIGENVAL");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"NONE");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"NOTHING");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"EXACT");
+	VASP_COMBOBOX_ADD(vasp_gui.algo,"DIAG");
+	VASP_CHECK_TABLE(button,vasp_calc.ldiag,NULL,"LDIAG",1,2,1,2);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.nsim,vasp_calc.nsim,"%i","NSIM=",2,3,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.vtime,vasp_calc.vtime,"%.4lf","TIME=",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.iwavpr,vasp_calc.iwavpr,"%i","INIWAVPR=",4,5,1,2);
 /* 3rd line */
-	VASP_NEW_LINE();
-	gui_direct_check("AUTO",&(vasp_calc.auto_elec),elec_toggle,NULL,hbox);
-	VASP_NEW_LABEL("NSIM=");
-	VASP_ENTRY(vasp_gui.nsim,vasp_calc.nsim,"%i",3);
-	VASP_NEW_LABEL("TIME=");
-	VASP_ENTRY(vasp_gui.vtime,vasp_calc.vtime,"%.4lf",6);
-	VASP_NEW_LABEL("NBANDS=");
-	VASP_ENTRY(vasp_gui.nbands,vasp_calc.nbands,"%i",6);
-	VASP_NEW_LABEL("NELECT=");
-	VASP_ENTRY(vasp_gui.nelect,vasp_calc.nelect,"%.4lf",6);
-	VASP_NEW_LABEL("INIWAVPR=");
-	VASP_ENTRY(vasp_gui.iwavpr,vasp_calc.iwavpr,"%i",3);/*<- should be a combo?*/
+	VASP_COMBOBOX_TABLE(vasp_gui.ialgo,"IALGO=",0,1,2,3);
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"2:FIXED ORB/1E");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"3:FIXED ORB");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"4:SUBROT ONLY");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"5:STEEPEST");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"6:CONJUGUATE GRADIENTS");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"7:PRECOND. STEEPEST");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"8:PRECOND. CG");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"38:KOSUGI");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"44:RMM STEEPEST");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"46:RMM PRECOND.");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"48:PRECOND. RMM");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"53:VAR DAMPED MD");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"54:VAR DAMPED QUENCH MD");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"58:VAR PRECOND. CG");
+	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"90:EXACT");
+	VASP_CHECK_TABLE(button,vasp_calc.auto_elec,elec_toggle,"AUTO",1,2,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.nbands,vasp_calc.nbands,"%i","NBANDS=",2,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.nelect,vasp_calc.nelect,"%.2lf","NELECT=",3,4,2,3);
+	/*empty: col4*/
+/* 4th line */
+	/*empty: col0*/
+	VASP_CHECK_TABLE(button,vasp_calc.iniwav,NULL,"INIWAV",1,2,3,4);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.istart,vasp_calc.istart,"%i","ISTART=",2,3,3,4);
+	VASP_ENTRY_TABLE(vasp_gui.icharg,vasp_calc.icharg,"%i","ICHARG=",3,4,3,4);
+	/*empty: col4*/
+/* initialize */
+	VASP_COMBOBOX_SETUP(vasp_gui.prec,0,vasp_prec_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.algo,0,vasp_algo_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.ialgo,7,vasp_ialgo_selected);
+	gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
+	prec_toggle(NULL,NULL);/*initialize TODO: move to end*/
 	elec_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
-/* --- unnamed frame */
-        frame = gtk_frame_new(NULL);
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
-/* 1st line */
-        /* TODO: this whole thing should move to another page */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("ISTART=");
-        VASP_ENTRY(vasp_gui.istart,vasp_calc.istart,"%i",3);/*<- should be a combo?*/
-        VASP_NEW_LABEL("ICHARG=");
-        VASP_ENTRY(vasp_gui.icharg,vasp_calc.icharg,"%i",3);/*<- should be a combo?*/
-        gui_direct_check("INIWAV",&(vasp_calc.iniwav),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_SEPARATOR();
-        label = gtk_label_new(" ");/*TODO trick to be removed*/
-        gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-/* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- mixing */
         frame = gtk_frame_new("Mixing");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(5, 3, FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("NELM=");
-	VASP_ENTRY(vasp_gui.nelm,vasp_calc.nelm,"%i",3);
-	VASP_NEW_LABEL("NELMDL=");
-	VASP_ENTRY(vasp_gui.nelmdl,vasp_calc.nelmdl,"%i",3);
-	VASP_NEW_LABEL("NELMIN=");
-	VASP_ENTRY(vasp_gui.nelmin,vasp_calc.nelmin,"%i",3);
-	gui_direct_check("AUTO MIXER",&(vasp_calc.auto_mixer),mixer_toggle,NULL,hbox);
-	VASP_NEW_LABEL("IMIX=");
-        list = NULL;
-        list = g_list_append(list,"0:NO MIXING");
-        list = g_list_append(list,"1:KERKER");
-        list = g_list_append(list,"2:TCHEBYCHEV");
-        list = g_list_append(list,"4:BROYDEN");
-	VASP_REG_COMBO(vasp_gui.mixer,"4:BROYDEN",vasp_mixer_selected);
+	VASP_COMBOBOX_TABLE(vasp_gui.mixer,"IMIX=",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.mixer,"0:NONE");
+	VASP_COMBOBOX_ADD(vasp_gui.mixer,"1:KERKER");
+	VASP_COMBOBOX_ADD(vasp_gui.mixer,"2:TCHEBYCHEV");
+	VASP_COMBOBOX_ADD(vasp_gui.mixer,"4:BROYDEN");
+	VASP_CHECK_TABLE(button,vasp_calc.auto_mixer,mixer_toggle,"AUTO MIXER",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.nelm,vasp_calc.nelm,"%i","NELM=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.nelmdl,vasp_calc.nelmdl,"%i","NELMDL=",3,4,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.nelmin,vasp_calc.nelmin,"%i","NELMIN=",4,5,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("AMIX=");
-	VASP_ENTRY(vasp_gui.amix,vasp_calc.amix,"%.4lf",6);
-	VASP_NEW_LABEL("BMIX=");
-	VASP_ENTRY(vasp_gui.bmix,vasp_calc.bmix,"%.4lf",6);
-	VASP_NEW_LABEL("AMIN=");
-	VASP_ENTRY(vasp_gui.amin,vasp_calc.amin,"%.4lf",6);
-        VASP_NEW_LABEL("AMIX_MAG=");
-	VASP_ENTRY(vasp_gui.amix_mag,vasp_calc.amix_mag,"%.4lf",6);
-        VASP_NEW_LABEL("BMIX_MAG=");
-	VASP_ENTRY(vasp_gui.bmix_mag,vasp_calc.bmix_mag,"%.4lf",6);
+	VASP_COMBOBOX_TABLE(vasp_gui.mixpre,"MIXPRE=",0,1,1,2);
+	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"0:NONE");
+	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"1:F=20 INVERSE KERKER");
+	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"2:F=200 INVERSE KERKER");
+	/*empty: col1*/
+        VASP_ENTRY_TABLE(vasp_gui.amix,vasp_calc.amix,"%.4lf","AMIX=",2,3,1,2);
+        VASP_ENTRY_TABLE(vasp_gui.bmix,vasp_calc.bmix,"%.4lf","BMIX=",3,4,1,2);
+        VASP_ENTRY_TABLE(vasp_gui.amin,vasp_calc.amin,"%.4lf","AMIN=",4,5,1,2);
 /* 3rd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("MAXMIX=");
-	VASP_ENTRY(vasp_gui.maxmix,vasp_calc.maxmix,"%i",3);
-	VASP_NEW_LABEL("WC=");
-	VASP_ENTRY(vasp_gui.wc,vasp_calc.wc,"%.1lf",8);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("INIMIX=");
-        list = NULL;
-        list = g_list_append(list,"0:LINEAR");
-        list = g_list_append(list,"1:KERKER");
-	VASP_REG_COMBO(vasp_gui.inimix,"1:KERKER",vasp_inimix_selected);
-	VASP_NEW_LABEL("MIXPRE=");
-        list = NULL;
-        list = g_list_append(list,"0:NONE");
-        list = g_list_append(list,"1:F=20 INVERSE KERKER");
-        list = g_list_append(list,"2:F=200 INVERSE KERKER");
-	VASP_REG_COMBO(vasp_gui.mixpre,"1:F=20 INVERSE KERKER",vasp_mixpre_selected);
+	VASP_COMBOBOX_TABLE(vasp_gui.inimix,"INIMIX=",0,1,2,3);
+	VASP_COMBOBOX_ADD(vasp_gui.inimix,"0:LINEAR");
+	VASP_COMBOBOX_ADD(vasp_gui.inimix,"1:KERKER");
+	VASP_ENTRY_TABLE(vasp_gui.maxmix,vasp_calc.maxmix,"%i","MAXMIX=",1,2,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.amix_mag,vasp_calc.amix_mag,"%.4lf","AMIX_MAG=",2,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.bmix_mag,vasp_calc.bmix_mag,"%.4lf","BMIX_MAG=",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.wc,vasp_calc.wc,"%.1lf","WC=",4,5,2,3);
+/* initialize */
+	VASP_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.inimix,1,vasp_inimix_selected);
 	mixer_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- projector */
         frame = gtk_frame_new("Projector");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(5, 4, FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("LREAL=");
-        list = NULL;
-        list = g_list_append(list,"Auto");
-        list = g_list_append(list,"On");
-        list = g_list_append(list,"TRUE");
-        list = g_list_append(list,"FALSE");
-        VASP_REG_COMBO(combo,"FALSE",vasp_lreal_selected);
-        VASP_NEW_LABEL("ROPT=");
-        VASP_TEXT_ENTRY(vasp_gui.ropt,vasp_calc.ropt,TRUE);
+	VASP_COMBOBOX_TABLE(vasp_gui.lreal,"LREAL=",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.lreal,"Auto");
+	VASP_COMBOBOX_ADD(vasp_gui.lreal,"On");
+	VASP_COMBOBOX_ADD(vasp_gui.lreal,"TRUE");
+	VASP_COMBOBOX_ADD(vasp_gui.lreal,"FALSE");
+	/*empty: col2*/
+	VASP_TEXT_TABLE(vasp_gui.ropt,vasp_calc.ropt,"ROPT=",2,5,0,1);
 /* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_SEPARATOR();
-        gui_direct_check("ADDGRID",&(vasp_calc.addgrid),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_LABEL("LMAXMIX=");
-        VASP_ENTRY(vasp_gui.lmaxmix,vasp_calc.lmaxmix,"%i",3);
-        VASP_NEW_LABEL("LMAXPAW=");
-        VASP_ENTRY(vasp_gui.lmaxpaw,vasp_calc.lmaxpaw,"%i",4);
-/* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
-/* --- grids */
-        frame = gtk_frame_new("Grids");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
-/* 1st line */
-        VASP_NEW_LINE();
-	gui_direct_check("AUTO",&(vasp_calc.auto_grid),grid_toggle,NULL,hbox);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("NGX=");
-	VASP_ENTRY(vasp_gui.ngx,vasp_calc.ngx,"%i",4);
-	VASP_NEW_LABEL("NGY=");
-	VASP_ENTRY(vasp_gui.ngy,vasp_calc.ngy,"%i",4);
-	VASP_NEW_LABEL("NGZ=");
-	VASP_ENTRY(vasp_gui.ngz,vasp_calc.ngz,"%i",4);
-/* 2nd line */
-        VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-        VASP_NEW_LABEL("NGXF=");
-        VASP_ENTRY(vasp_gui.ngxf,vasp_calc.ngxf,"%i",4);
-        VASP_NEW_LABEL("NGYF=");
-        VASP_ENTRY(vasp_gui.ngyf,vasp_calc.ngyf,"%i",4);
-        VASP_NEW_LABEL("NGZF=");
-        VASP_ENTRY(vasp_gui.ngzf,vasp_calc.ngzf,"%i",4);
+	/*empty: col1*/
+	VASP_CHECK_TABLE(button,vasp_calc.addgrid,NULL,"ADDGRID",1,2,1,2);/*not calling anything*/
+        VASP_ENTRY_TABLE(vasp_gui.lmaxmix,vasp_calc.lmaxmix,"%i","LMAXMIX=",2,3,1,2);
+	/*empty: col4*/
+        VASP_ENTRY_TABLE(vasp_gui.lmaxpaw,vasp_calc.lmaxpaw,"%i","LMAXPAW=",4,5,1,2);
+/* 3rd line */
+	/*empty: col1*/
+	VASP_CHECK_TABLE(button,vasp_calc.auto_grid,grid_toggle,"AUTO GRID",1,2,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.ngx,vasp_calc.ngx,"%i","NGX=",2,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.ngy,vasp_calc.ngy,"%i","NGY=",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.ngz,vasp_calc.ngz,"%i","NGZ=",4,5,2,3);
+/* 4th line */
+	/*empty: col1*/
+	/*empty: col2*/
+	VASP_ENTRY_TABLE(vasp_gui.ngxf,vasp_calc.ngxf,"%i","NGXF=",2,3,3,4);
+	VASP_ENTRY_TABLE(vasp_gui.ngyf,vasp_calc.ngyf,"%i","NGYF=",3,4,3,4);
+	VASP_ENTRY_TABLE(vasp_gui.ngzf,vasp_calc.ngzf,"%i","NGZF=",4,5,3,4);
+/* initialize */
+	VASP_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
 	grid_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
+
 /*----------------------*/
 /* page 2 -> ELECTRONIC */
 /*----------------------*/
@@ -1970,154 +1917,115 @@ void gui_vasp_dialog(void){
 /* --- smearing */
         frame = gtk_frame_new("Smearing");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(4, 2, FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("ISMEAR=");
-        VASP_ENTRY(vasp_gui.ismear,vasp_calc.ismear,"%i",3);/*<- should be a combo?*/
-	g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
-        VASP_NEW_LABEL("SIGMA=");
-        VASP_ENTRY(vasp_gui.sigma,vasp_calc.sigma,"%.4lf",6);
-        VASP_NEW_SEPARATOR();
-        vasp_gui.kgamma=gui_direct_check("KGAMMA",&(vasp_calc.kgamma),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_LABEL("KSPACING=");
-        VASP_ENTRY(vasp_gui.kspacing,vasp_calc.kspacing,"%.4lf",6);
-	g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
+	VASP_ENTRY_TABLE(vasp_gui.ismear,vasp_calc.ismear,"%i","ISMEAR=",0,1,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.sigma,vasp_calc.sigma,"%.4lf","SIGMA=",1,2,0,1);
+	VASP_CHECK_TABLE(vasp_gui.kgamma,vasp_calc.kgamma,NULL,"KGAMMA",2,3,0,1);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.kspacing,vasp_calc.kspacing,"%.4lf","KSPACING=",3,4,0,1);
 /* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("FERMWE=");
-        VASP_TEXT_ENTRY(vasp_gui.fermwe,vasp_calc.fermwe,TRUE);
-        VASP_NEW_LABEL("FERMDO=");
-        VASP_TEXT_ENTRY(vasp_gui.fermdo,vasp_calc.fermdo,TRUE);
+	VASP_TEXT_TABLE(vasp_gui.fermwe,vasp_calc.fermwe,"FERMWE=",0,2,1,2);
+	VASP_TEXT_TABLE(vasp_gui.fermdo,vasp_calc.fermdo,"FERMDO=",2,4,1,2);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- spin */
         frame = gtk_frame_new("Spin");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+	table = gtk_table_new(5, 2,FALSE);
+	gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        gui_direct_check("SPIN POLARIZED",&(vasp_calc.ispin),NULL,NULL,hbox);/*not calling anything*/
-        vasp_gui.lnoncoll=gui_direct_check("NON COLLINEAR",&(vasp_calc.non_collinear),lnoncoll_toggle,NULL,hbox);
-        VASP_NEW_LABEL("NUPDOWN=");
-        VASP_ENTRY(vasp_gui.nupdown,vasp_calc.nupdown,"%.1lf",4);
-        VASP_NEW_LABEL("MAGMOM=");
-        VASP_TEXT_ENTRY(vasp_gui.magmom,vasp_calc.magmom,TRUE);
+	VASP_CHECK_TABLE(button,vasp_calc.ispin,NULL,"SPIN POLARIZED",0,1,0,1);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.lnoncoll,vasp_calc.non_collinear,lnoncoll_toggle,"NON COLLINEAR",1,2,0,1);
+	VASP_CHECK_TABLE(vasp_gui.lsorbit,vasp_calc.lsorbit,lsorbit_toggle,"LSORBIT",2,3,0,1);
+	VASP_CHECK_TABLE(button,vasp_calc.gga_compat,NULL,"GGA_COMPAT",3,4,0,1);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.nupdown,vasp_calc.nupdown,"%.1f","NUPDOWN=",4,5,0,1);
 /* 2nd line */
-        VASP_NEW_LINE();
-        vasp_gui.lsorbit=gui_direct_check("LSORBIT",&(vasp_calc.lsorbit),lsorbit_toggle,NULL,hbox);
-        VASP_NEW_LABEL("SAXIS=");
-        VASP_TEXT_ENTRY(vasp_gui.saxis,vasp_calc.saxis,TRUE);
-        gui_direct_check("GGA_COMPAT",&(vasp_calc.gga_compat),NULL,NULL,hbox);/*not calling anything*/
+	VASP_TEXT_TABLE(vasp_gui.magmom,vasp_calc.magmom,"MAGMOM=",0,3,1,2);
+	VASP_TEXT_TABLE(vasp_gui.saxis,vasp_calc.saxis,"SAXIS=",3,5,1,2);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- exchange correlation */
         frame = gtk_frame_new("Exchange Correlation");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+	table = gtk_table_new(5, 5,FALSE);
+	gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("GGA=");
-        list = NULL;
-        list = g_list_append(list,"91:PW91");
-        list = g_list_append(list,"PE:PBE");
-        list = g_list_append(list,"RP:rPBE");
-        list = g_list_append(list,"AM:AM05");
-        list = g_list_append(list,"PS:PBEsol");
-        VASP_REG_COMBO(combo,"PE:PBE",vasp_gga_selected);
-        gui_direct_check("VOSKOWN",&(vasp_calc.voskown),NULL,NULL,hbox);/*not calling anything*/
-        gui_direct_check("LASPH",&(vasp_calc.lasph),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_LABEL("LMAXTAU=");
-        VASP_ENTRY(vasp_gui.lmaxtau,vasp_calc.lmaxtau,"%i",3);
+        VASP_COMBOBOX_TABLE(vasp_gui.gga,"GGA=",0,1,0,1);
+        VASP_COMBOBOX_ADD(vasp_gui.gga,"91:PW91");
+	VASP_COMBOBOX_ADD(vasp_gui.gga,"PE:PBE");
+	VASP_COMBOBOX_ADD(vasp_gui.gga,"RP:rPBE");
+	VASP_COMBOBOX_ADD(vasp_gui.gga,"AM:AM05");
+	VASP_COMBOBOX_ADD(vasp_gui.gga,"PS:PBEsol");
+	VASP_CHECK_TABLE(button,vasp_calc.voskown,NULL,"VOSKOWN",1,2,0,1);/*not calling anything*/
+	/*empty: col2*/
+	/*empty: col3*/
+	/*empty: col4*/
 /* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("META GGA=");
-        list = NULL;
-        list = g_list_append(list,"TPSS");
-        list = g_list_append(list,"rTPSS");
-        list = g_list_append(list,"M06L");
-        list = g_list_append(list,"MBJ");
-        VASP_REG_COMBO(vasp_gui.metagga,"MBJ",vasp_metagga_selected);
-if(vasp_calc.lmetagga) gtk_widget_set_sensitive(vasp_gui.metagga,TRUE);
-else gtk_widget_set_sensitive(vasp_gui.metagga,FALSE);
-        gui_direct_check("LMETAGGA",&(vasp_calc.lmetagga),metagga_toggle,NULL,hbox);
-        VASP_NEW_SEPARATOR();
-        gui_direct_check("LMIXTAU",&(vasp_calc.lmixtau),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("CMBJ=");
-        VASP_TEXT_ENTRY(vasp_gui.cmbj,vasp_calc.cmbj,TRUE);
-        VASP_NEW_LABEL("CMBJA=");
-        VASP_ENTRY(vasp_gui.cmbja,vasp_calc.cmbja,"%.4lf",6);
-        VASP_NEW_LABEL("CMBJB=");
-        VASP_ENTRY(vasp_gui.cmbjb,vasp_calc.cmbjb,"%.4lf",6);
-        metagga_toggle(NULL,NULL);/*initialize TODO: move to end*/
+	VASP_COMBOBOX_TABLE(vasp_gui.metagga,"METAGGA=",0,1,1,2);
+	VASP_COMBOBOX_ADD(vasp_gui.metagga,"TPSS");
+	VASP_COMBOBOX_ADD(vasp_gui.metagga,"rTPSS");
+	VASP_COMBOBOX_ADD(vasp_gui.metagga,"M06L");
+	VASP_COMBOBOX_ADD(vasp_gui.metagga,"MBJ");
+	VASP_CHECK_TABLE(button,vasp_calc.lmetagga,metagga_toggle,"LMETAGGA",1,2,1,2);
+	VASP_CHECK_TABLE(button,vasp_calc.lasph,NULL,"LASPH",2,3,1,2);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lmixtau,NULL,"LMIXTAU",3,4,1,2);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.lmaxtau,vasp_calc.lmaxtau,"%i","LMAXTAU=",4,5,1,2);
+/* 3rd line */
+	VASP_TEXT_TABLE(vasp_gui.cmbj,vasp_calc.cmbj,"CMBJ=",0,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.cmbja,vasp_calc.cmbja,"%.4lf","CMBJA=",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.cmbjb,vasp_calc.cmbjb,"%.4lf","CMBJB=",4,5,2,3);
 /* 4th line */
-        VASP_NEW_LINE();
-        gui_direct_check("LDA+U",&(vasp_calc.ldau),ldau_toggle,NULL,hbox);
-        VASP_NEW_LABEL("TYPE=");
-        list = NULL;
-        list = g_list_append(list,"1:LSDA+U Liechtenstein");
-        list = g_list_append(list,"2:LSDA+U Dudarev");
-        list = g_list_append(list,"4:LDA+U Liechtenstein");
-        VASP_REG_COMBO(vasp_gui.ldau,"2:LSDA+U Dudarev",vasp_ldau_selected);
-if(vasp_calc.ldau) gtk_widget_set_sensitive(vasp_gui.ldau,TRUE);
-else gtk_widget_set_sensitive(vasp_gui.ldau,FALSE);
-        VASP_NEW_LABEL("Print=");
-        list = NULL;
-        list = g_list_append(list,"0:Silent");
-        list = g_list_append(list,"1:Occupancy matrix");
-        list = g_list_append(list,"2:Full output");
-        VASP_REG_COMBO(vasp_gui.ldau_print,"0:Silent",vasp_ldau_print_selected);
-if(vasp_calc.ldau) gtk_widget_set_sensitive(vasp_gui.ldau_print,TRUE);
-else gtk_widget_set_sensitive(vasp_gui.ldau_print,FALSE);
+	VASP_COMBOBOX_TABLE(vasp_gui.ldau,"LDAUTYPE=",0,1,3,4);
+	VASP_COMBOBOX_ADD(vasp_gui.ldau,"1:LSDA+U Liechtenstein");
+	VASP_COMBOBOX_ADD(vasp_gui.ldau,"2:LSDA+U Dudarev");
+	VASP_COMBOBOX_ADD(vasp_gui.ldau,"4:LDA+U Liechtenstein");
+	VASP_CHECK_TABLE(button,vasp_calc.ldau,ldau_toggle,"LDAU",1,2,3,4);
+	VASP_TEXT_TABLE(vasp_gui.ldaul,vasp_calc.ldaul,"LDAUL=",2,5,3,4);
 /* 5th line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("LDAU-L=");
-        VASP_TEXT_ENTRY(vasp_gui.ldaul,vasp_calc.ldaul,FALSE);
-        VASP_NEW_LABEL("LDAU-U=");
-        VASP_TEXT_ENTRY(vasp_gui.ldauu,vasp_calc.ldauu,FALSE);
-        VASP_NEW_LABEL("LDAU-J=");
-        VASP_TEXT_ENTRY(vasp_gui.ldauj,vasp_calc.ldauj,FALSE);
+	VASP_COMBOBOX_TABLE(vasp_gui.ldau_print,"LDAUPRINT=",0,1,4,5);
+	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"0:Silent");
+	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"1:Occupancy matrix");
+	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"2:Full output");
+	VASP_TEXT_TABLE(vasp_gui.ldauu,vasp_calc.ldauu,"LDAUU=",1,3,4,5);
+	VASP_TEXT_TABLE(vasp_gui.ldauj,vasp_calc.ldauj,"LDAUJ=",3,5,4,5);
+/* initialize */
+	VASP_COMBOBOX_SETUP(vasp_gui.gga,1,vasp_gga_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.metagga,3,vasp_metagga_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.ldau,1,vasp_ldau_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.ldau_print,0,vasp_ldau_print_selected);
+	metagga_toggle(NULL,NULL);/*initialize TODO: move to end*/
+	ldau_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- dipole */
         frame = gtk_frame_new("Dipole");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-	VASP_NEW_LABEL("IDIPOL=");
-	list = NULL;
-	list = g_list_append(list,"0:no calcul");
-	list = g_list_append(list,"1:u axis");
-	list = g_list_append(list,"2:v axis");
-	list = g_list_append(list,"3:w axis");
-	list = g_list_append(list,"4:all axis");
-	VASP_REG_COMBO(vasp_gui.idipol,"0:no calcul",vasp_idipol_selected);
-	VASP_NEW_SEPARATOR();
-	vasp_gui.ldipol=gui_direct_check("LDIPOL",&(vasp_calc.ldipol),NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.lmono=gui_direct_check("LMONO",&(vasp_calc.lmono),NULL,NULL,hbox);/*not calling anything*/
+	VASP_COMBOBOX_TABLE(vasp_gui.idipol,"IDIPOL=",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.idipol,"0:no calcul");
+	VASP_COMBOBOX_ADD(vasp_gui.idipol,"1:u axis");
+	VASP_COMBOBOX_ADD(vasp_gui.idipol,"2:v axis");
+	VASP_COMBOBOX_ADD(vasp_gui.idipol,"3:w axis");
+	VASP_COMBOBOX_ADD(vasp_gui.idipol,"4:all axis");
+	VASP_CHECK_TABLE(vasp_gui.ldipol,vasp_calc.ldipol,NULL,"LDIPOL",1,2,0,1);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.lmono,vasp_calc.lmono,NULL,"LMONO",2,3,0,1);/*not calling anything*/
+	VASP_TEXT_TABLE(vasp_gui.dipol,vasp_calc.dipol,"DIPOL=",3,5,0,1);
 /* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("EPSILON=");
-        VASP_ENTRY(vasp_gui.epsilon,vasp_calc.epsilon,"%.4lf",6);
-        VASP_NEW_LABEL("EFIELD=");
-        VASP_ENTRY(vasp_gui.efield,vasp_calc.efield,"%.4lf",6);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("DIPOL=");
-	VASP_TEXT_ENTRY(vasp_gui.dipol,vasp_calc.dipol,TRUE);
-	/*setup sensitive widget*/
+	/*empty: col0*/
+	/*empty: col1*/
+	/*empty: col2*/
+	VASP_ENTRY_TABLE(vasp_gui.epsilon,vasp_calc.epsilon,"%.4lf","EPSILON=",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.efield,vasp_calc.efield,"%.4lf","EFIELD=",4,5,2,3);
+/*initialize sensitive widget*/
+	VASP_COMBOBOX_SETUP(vasp_gui.idipol,0,vasp_idipol_selected);
 if(vasp_calc.idipol!=VID_0) {
         gtk_widget_set_sensitive(vasp_gui.ldipol,TRUE);
         gtk_widget_set_sensitive(vasp_gui.lmono,TRUE);
@@ -2132,8 +2040,6 @@ if(vasp_calc.idipol!=VID_0) {
         gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
 }
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 
 /*-----------------*/
 /* page 3 -> IONIC */
@@ -2144,92 +2050,65 @@ if(vasp_calc.idipol!=VID_0) {
 /* --- general */
         frame = gtk_frame_new("General");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("NSW=");
-	VASP_ENTRY(vasp_gui.nsw,vasp_calc.nsw,"%i",4);
-	VASP_NEW_LABEL("IBRION=");
-        list = NULL;
-        list = g_list_append(list,"-1:Nothing");
-	list = g_list_append(list,"0:Molecular Dynamics");
-	list = g_list_append(list,"1:Quasi-Newton");
-	list = g_list_append(list,"2:Conjugate Gradients");
-	list = g_list_append(list,"3:Damped");
-	list = g_list_append(list,"5:Finite Differences");
-	list = g_list_append(list,"6:Finite Diff. with SYM");
-	list = g_list_append(list,"7:Perturbation Theory");
-	list = g_list_append(list,"8:Pert. Theory with SYM");
-	list = g_list_append(list,"44:Transition State");
-	VASP_REG_COMBO(vasp_gui.ibrion,"-1:Nothing",vasp_ibrion_selected);
-	VASP_NEW_SEPARATOR();
-        VASP_NEW_LABEL("PSTRESS=");
-        VASP_ENTRY(vasp_gui.pstress,vasp_calc.pstress,"%.4lf",6);
-	VASP_NEW_LABEL("EDIFFG=");
-	VASP_ENTRY(vasp_gui.ediffg,vasp_calc.ediffg,"%.2lE",8);
+	VASP_COMBOBOX_TABLE(vasp_gui.ibrion,"IBRION=",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"-1:Nothing");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"0:Molecular Dynamics");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"1:Quasi-Newton");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"2:Conjugate Gradients");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"3:Damped");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"5:Finite Differences");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"6:Finite Diff. with SYM");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"7:Perturbation Theory");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"8:Pert. Theory with SYM");
+	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"44:Transition State");
+	VASP_ENTRY_TABLE(vasp_gui.nsw,vasp_calc.nsw,"%i","NSW=",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.ediffg,vasp_calc.ediffg,"%.2E","EDIFFG=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.potim,vasp_calc.potim,"%.4lf","POTIM=",3,4,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.pstress,vasp_calc.pstress,"%.4lf","PSTRESS=",4,5,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("ISIF=");
-	list = NULL;
-	list = g_list_append(list,"0:F_0_I_0_0");
-	list = g_list_append(list,"1:F_P_I_0_0");
-	list = g_list_append(list,"2:F_S_I_0_0");
-	list = g_list_append(list,"3:F_S_I_S_V");
-	list = g_list_append(list,"4:F_S_I_S_0");
-	list = g_list_append(list,"5:F_S_0_S_0");
-	list = g_list_append(list,"6:F_S_0_S_V");
-	list = g_list_append(list,"7:F_S_0_0_V");
-	VASP_REG_COMBO(vasp_gui.isif,"-1:Nothing",vasp_isif_selected);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("RELAX:");
-	vasp_gui.relax_ions=gui_direct_check("ions",&(vasp_gui.rions),isif_toggle,NULL,hbox);
-	vasp_gui.relax_shape=gui_direct_check("cell shape",&(vasp_gui.rshape),isif_toggle,NULL,hbox);
-	vasp_gui.relax_volume=gui_direct_check("cell volume",&(vasp_gui.rvolume),isif_toggle,NULL,hbox);
-/* 3rd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("POTIM=");
-	VASP_ENTRY(vasp_gui.potim,vasp_calc.potim,"%.4lf",6);
-	VASP_NEW_LABEL("NFREE=");
-	VASP_ENTRY(vasp_gui.nfree,vasp_calc.nfree,"%i",3);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("ISYM=");
-	VASP_ENTRY(vasp_gui.isym,vasp_calc.isym,"%i",3);
-	VASP_NEW_LABEL("SYM_PREC=");
-	VASP_ENTRY(vasp_gui.sym_prec,vasp_calc.sym_prec,"%.2lE",8);
+	VASP_COMBOBOX_TABLE(vasp_gui.isif,"ISIF=",0,1,1,2);
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"0:F_0_I_0_0");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"1:F_P_I_0_0");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"2:F_S_I_0_0");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"3:F_S_I_S_V");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"4:F_S_I_S_0");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"5:F_S_0_S_0");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"6:F_S_0_S_V");
+	VASP_COMBOBOX_ADD(vasp_gui.isif,"7:F_S_0_0_V");
+	VASP_CHECK_TABLE(vasp_gui.relax_ions,vasp_gui.rions,isif_toggle,"atom positions",1,2,1,2);
+	VASP_CHECK_TABLE(vasp_gui.relax_shape,vasp_gui.rshape,isif_toggle,"cell shape",2,3,1,2);
+	VASP_CHECK_TABLE(vasp_gui.relax_volume,vasp_gui.rvolume,isif_toggle,"cell volume",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.nfree,vasp_calc.nfree,"%i","NFREE=",4,5,1,2);
+/* initialize */
+	VASP_COMBOBOX_SETUP(vasp_gui.ibrion,0,vasp_ibrion_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.isif,0,vasp_isif_selected);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- MD */
         frame = gtk_frame_new("Molecular Dynamics");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("TEBEG=");
-	VASP_ENTRY(vasp_gui.tebeg,vasp_calc.tebeg,"%.1lf",6);
-	VASP_NEW_LABEL("TEEND=");
-	VASP_ENTRY(vasp_gui.teend,vasp_calc.teend,"%.1lf",6);
-	VASP_NEW_LABEL("SMASS=");
-	VASP_ENTRY(vasp_gui.smass,vasp_calc.smass,"%.1f",4);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("NBLOCK=");
-	VASP_ENTRY(vasp_gui.nblock,vasp_calc.nblock,"%i",3);
-	VASP_NEW_LABEL("KBLOCK=");
-	VASP_ENTRY(vasp_gui.kblock,vasp_calc.kblock,"%i",3);
+	//multicolumn label
+	label = gtk_label_new("SET IBRION=0 FOR MD");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
+	VASP_ENTRY_TABLE(vasp_gui.tebeg,vasp_calc.tebeg,"%.1lf","TEBEG=",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.teend,vasp_calc.teend,"%.1lf","TEEND=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.smass,vasp_calc.smass,"%.1lf","SMASS=",3,4,0,1);
+	/*empty: col4*/
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("NPACO=");
-	VASP_ENTRY(vasp_gui.npaco,vasp_calc.npaco,"%i",4);
-	VASP_NEW_LABEL("APACO=");
-	VASP_ENTRY(vasp_gui.apaco,vasp_calc.apaco,"%.4f",6);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("SET IBRION=0 FOR MD");
-	VASP_NEW_SEPARATOR();
-	/*setup sensitive widget*/	
+	/*occ: col0*/
+	VASP_ENTRY_TABLE(vasp_gui.nblock,vasp_calc.nblock,"%i","NBLOCK=",1,2,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kblock,vasp_calc.kblock,"%i","KBLOCK=",2,3,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.npaco,vasp_calc.npaco,"%i","NPACO=",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.apaco,vasp_calc.apaco,"%.4lf","APACO=",4,5,1,2);
+/* initialize sensitive widget*/	
 	if (vasp_calc.ibrion==0) {/*selecting MD enable molecular dynamics settings*/
 		gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
 		gtk_widget_set_sensitive(vasp_gui.teend,TRUE);
@@ -2248,8 +2127,6 @@ if(vasp_calc.idipol!=VID_0) {
                 gtk_widget_set_sensitive(vasp_gui.apaco,FALSE);
 	}
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- POSCAR */
 /*initialize some data*/
 if(!vasp_gui.have_xml){
@@ -2279,88 +2156,83 @@ if(!vasp_gui.have_xml){
 		if(data->fractional) vasp_calc.poscar_direct=TRUE;
 	}
 }
-        frame = gtk_frame_new("POSCAR");
+        frame = gtk_frame_new("POSCAR & SYMMTERY");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(7, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-	gui_direct_check("Selective Dynamics",&(vasp_calc.poscar_sd),toggle_poscar_sd,NULL,hbox);
-        list = NULL;
-        list = g_list_append(list,"All atom FIXED");
-        list = g_list_append(list,"All atom FREE");
-        list = g_list_append(list,"Manual selection");
-	VASP_REG_COMBO(vasp_gui.poscar_free,"All atom FREE",vasp_poscar_free_selected);	
-	VASP_NEW_SEPARATOR();
-	vasp_gui.poscar_direct=gui_direct_check("Direct Coord.",&(vasp_calc.poscar_direct),toggle_poscar_direct,NULL,hbox);
+	VASP_COMBOBOX_TABLE(vasp_gui.poscar_free,"DYN:",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FIXED");
+	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FREE");
+	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"Manual selection");
+	VASP_CHECK_TABLE(button,vasp_calc.poscar_sd,toggle_poscar_sd,"Sel. Dynamics",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.isym,vasp_calc.isym,"%i","ISYM=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.sym_prec,vasp_calc.sym_prec,"%.2lE","_PREC=",3,4,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_a0,vasp_calc.poscar_a0,"%.4lf","A0=",4,5,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("A0=");
-	VASP_ENTRY(vasp_gui.poscar_a0,vasp_calc.poscar_a0,"%.4lf",6);
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("UX=");
-	VASP_ENTRY(vasp_gui.poscar_ux,vasp_calc.poscar_ux,"%.4lf",6);
-	VASP_NEW_LABEL("UY=");
-	VASP_ENTRY(vasp_gui.poscar_uy,vasp_calc.poscar_uy,"%.4lf",6);
-	VASP_NEW_LABEL("UZ=");
-	VASP_ENTRY(vasp_gui.poscar_uz,vasp_calc.poscar_uz,"%.4lf",6);
-/* 2nd line */
-        VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-        VASP_NEW_LABEL("VX=");
-        VASP_ENTRY(vasp_gui.poscar_vx,vasp_calc.poscar_vx,"%.4lf",6);
-        VASP_NEW_LABEL("VY=");
-        VASP_ENTRY(vasp_gui.poscar_vy,vasp_calc.poscar_vy,"%.4lf",6);
-        VASP_NEW_LABEL("VZ=");
-        VASP_ENTRY(vasp_gui.poscar_vz,vasp_calc.poscar_vz,"%.4lf",6);
+	/*empty: col0 (TODO: SUPERCELL)*/
+	VASP_CHECK_TABLE(vasp_gui.poscar_direct,vasp_calc.poscar_direct,toggle_poscar_direct,"Direct Coord.",1,2,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_ux,vasp_calc.poscar_ux,"%.4lf","UX=",2,3,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_uy,vasp_calc.poscar_uy,"%.4lf","UY=",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_uz,vasp_calc.poscar_uz,"%.4lf","UZ=",4,5,1,2);
 /* 3rd line */
-        VASP_NEW_LINE();
-        VASP_NEW_SEPARATOR();
-        VASP_NEW_LABEL("WX=");
-        VASP_ENTRY(vasp_gui.poscar_wx,vasp_calc.poscar_wx,"%.4lf",6);
-        VASP_NEW_LABEL("WY=");
-        VASP_ENTRY(vasp_gui.poscar_wy,vasp_calc.poscar_wy,"%.4lf",6);
-        VASP_NEW_LABEL("WZ=");
-        VASP_ENTRY(vasp_gui.poscar_wz,vasp_calc.poscar_wz,"%.4lf",6);
+	/*empty: col0 (TODO: -X)*/
+	/*empty: col1 (TODO: +X)*/
+	VASP_ENTRY_TABLE(vasp_gui.poscar_vx,vasp_calc.poscar_vx,"%.4lf","VX=",2,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_vy,vasp_calc.poscar_vy,"%.4lf","VY=",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_vz,vasp_calc.poscar_vz,"%.4lf","VZ=",4,5,2,3);
 /* 4th line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("ATOM:");
-	/*this combo is special and should be explicitely defined*/
-	vasp_gui.poscar_atoms = gtk_combo_box_text_new_with_entry();/*gtkcombo replacement*/
-	gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.poscar_atoms))), FALSE);/*supposed to be simple?*/
-	idx=0;
-	for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
-		core=list2->data;
-		if(vasp_calc.poscar_free==VPF_FIXED)
-			gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%c%c)",
-                                        core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
-		else
-			gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%c%c)",
-					core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
-		idx++;
-	}
-vasp_calc.atoms_total=idx;
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),"ADD atom");
-        gtk_box_pack_start(GTK_BOX(hbox), vasp_gui.poscar_atoms, TRUE, TRUE, 0);
-	g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),"changed",GTK_SIGNAL_FUNC(vasp_poscar_atoms_selected),data);
+	/*empty: col0 (TODO: -Y)*/
+	/*empty: col1 (TODO: +Y)*/
+	VASP_ENTRY_TABLE(vasp_gui.poscar_wx,vasp_calc.poscar_wx,"%.4lf","WX=",2,3,3,4);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_wy,vasp_calc.poscar_wy,"%.4lf","WY=",3,4,3,4);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_wz,vasp_calc.poscar_wz,"%.4lf","WZ=",4,5,3,4);
 /* 5th line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("@");
-	VASP_ENTRY(vasp_gui.poscar_index,vasp_calc.poscar_index,"%i",4);
+	/*empty: col0 (TODO: -Z)*/
+	/*empty: col1 (TODO: +Z)*/
+	VASP_CHECK_TABLE(vasp_gui.poscar_tx,vasp_calc.poscar_tx,NULL,"TX",2,3,4,5);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.poscar_ty,vasp_calc.poscar_ty,NULL,"TY",3,4,4,5);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.poscar_tz,vasp_calc.poscar_tz,NULL,"TZ",4,5,4,5);/*not calling anything*/
+/* 6th line */
+        /*this combo is special and should be explicitely defined*/
+	hbox = gtk_hbox_new(FALSE, 0);
+	label = gtk_label_new("ATOMS:");
+	gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+        vasp_gui.poscar_atoms = gtk_combo_box_text_new_with_entry();/*gtkcombo replacement*/
+        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.poscar_atoms))), FALSE);/*supposed to be simple?*/
+        idx=0;
+        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+                core=list2->data;
+                if(vasp_calc.poscar_free==VPF_FIXED)
+gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%c%c)",
+        core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
+                else
+gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%c%c)",
+        core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
+                idx++;
+        }
+vasp_calc.atoms_total=idx;
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),"ADD atom");
+	gtk_box_pack_start(GTK_BOX(hbox),vasp_gui.poscar_atoms,TRUE,TRUE,0);
+        gtk_table_attach_defaults(GTK_TABLE(table),hbox,0,4,5,6);
+        g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),"changed",GTK_SIGNAL_FUNC(vasp_poscar_atoms_selected),data);
+	/*2 buttons*/
+	hbox = gtk_hbox_new(FALSE, 0);
+	VASP_NEW_SEPARATOR();
+        gui_stock_button(GTK_STOCK_APPLY,vasp_atom_modified,NULL,hbox);
+        gui_stock_button(GTK_STOCK_DELETE,vasp_atom_delete,NULL,hbox);
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,4,5,5,6);
+/* 7th line */
+	VASP_ENTRY_TABLE(vasp_gui.poscar_index,vasp_calc.poscar_index,"%i","INDEX:",0,1,6,7);
 	gtk_widget_set_sensitive(vasp_gui.poscar_index,FALSE);/*<- is changed only by selecting poscar_atoms*/
-	VASP_NEW_LABEL("SYMBOL:");
-	VASP_ENTRY(vasp_gui.poscar_symbol,vasp_calc.poscar_symbol,"%s",2);
-	VASP_NEW_LABEL("X=");
-	VASP_ENTRY(vasp_gui.poscar_x,vasp_calc.poscar_x,"%.8lf",10);
-	VASP_NEW_LABEL("Y=");
-	VASP_ENTRY(vasp_gui.poscar_y,vasp_calc.poscar_y,"%.8lf",10);
-	VASP_NEW_LABEL("Z=");
-	VASP_ENTRY(vasp_gui.poscar_z,vasp_calc.poscar_z,"%.8lf",10);
-	vasp_gui.poscar_tx=gui_direct_check("TX",&(vasp_calc.poscar_tx),NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.poscar_ty=gui_direct_check("TY",&(vasp_calc.poscar_ty),NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.poscar_tz=gui_direct_check("TZ",&(vasp_calc.poscar_tz),NULL,NULL,hbox);/*not calling anything*/
-/*TODO: move this if outta here*/
+	VASP_ENTRY_TABLE(vasp_gui.poscar_symbol,vasp_calc.poscar_symbol,"%s","SYMBOL:",1,2,6,7);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_x,vasp_calc.poscar_x,"%.6lf","X=",2,3,6,7);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_y,vasp_calc.poscar_y,"%.6lf","Y=",3,4,6,7);
+	VASP_ENTRY_TABLE(vasp_gui.poscar_z,vasp_calc.poscar_z,"%.6lf","Z=",4,5,6,7);
+/* initialize sensitive widget*/
+	VASP_COMBOBOX_SETUP(vasp_gui.poscar_free,1,vasp_poscar_free_selected);
 if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 	gtk_widget_set_sensitive(vasp_gui.poscar_tx,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.poscar_ty,FALSE);
@@ -2375,15 +2247,11 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 		vasp_calc.poscar_tx=TRUE;
 	}
 }
-	gui_stock_button(GTK_STOCK_APPLY, vasp_atom_modified, NULL, hbox);
-	gui_stock_button(GTK_STOCK_DELETE, vasp_atom_delete, NULL, hbox);
-	/* (re)initialize all */
+/* (re)initialize */
 	toggle_poscar_sd(NULL,NULL);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);/*sets "ADD atom" as active*/
 	vasp_poscar_free_selected(vasp_gui.poscar_free,NULL);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 
 /*-------------------*/
 /* page 4 -> KPOINTS */
@@ -2391,147 +2259,110 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
         page = gtk_vbox_new(FALSE, _SPACE);
         label = gtk_label_new("KPOINTS");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
-/* --- in INCAR */
-        frame = gtk_frame_new("in INCAR");
+/* --- from INCAR */
+        frame = gtk_frame_new("from INCAR");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(1, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("ISMEAR=");
-        VASP_ENTRY(vasp_gui.ismear_3,vasp_calc.ismear,"%i",3);/*<- should be a combo?*/
-	g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear_3)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
-	VASP_NEW_SEPARATOR();
-        vasp_gui.kgamma_3=gui_direct_check("KGAMMA",&(vasp_calc.kgamma),NULL,NULL,hbox);/*not calling anything*/
-        VASP_NEW_LABEL("KSPACING=");
-        VASP_ENTRY(vasp_gui.kspacing_3,vasp_calc.kspacing,"%.4lf",6);
-	g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing_3)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
+	VASP_ENTRY_TABLE(vasp_gui.ismear_3,vasp_calc.ismear,"%i","ISMEAR=",0,1,0,1);
+	VASP_CHECK_TABLE(vasp_gui.kgamma_3,vasp_calc.kgamma,NULL,"KGAMMA",1,2,0,1);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.kspacing_3,vasp_calc.kspacing,"%.4f","KSPACING=",2,3,0,1);
+	/*empty: col3*/
+	/*empty: col4*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- General */
         frame = gtk_frame_new("General");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-	VASP_NEW_LABEL("NKPTS=");
-	VASP_ENTRY(vasp_gui.kpoints_nkpts,vasp_calc.kpoints_nkpts,"%i",4);
-	/*using comboboxtext*/
-	vasp_gui.kpoints_mode=gtk_combo_box_text_new_with_entry();
-	gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.kpoints_mode))), FALSE);
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Manual Entry");
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Line Mode");
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Automatic (M&P)");
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Gamma (M&P)");
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Monkhorst-Pack classic");
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_mode),"Basis set definition");
-	gtk_box_pack_start(GTK_BOX(hbox), vasp_gui.kpoints_mode, FALSE, FALSE, 0);
-	/*end comboboxtext*/
-	vasp_gui.kpoints_cart=gui_direct_check("Cartesian",&(vasp_calc.kpoints_cart),NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.have_tetra=gui_direct_check("Tetrahedron",&(vasp_calc.kpoints_tetra),toogle_tetra,NULL,hbox);
+	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_mode,"GEN:",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Manual Entry");
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Line Mode");
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Automatic (M&P)");
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Gamma (M&P)");
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Monkhorst-Pack classic");
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Basis set definition");
+	VASP_CHECK_TABLE(vasp_gui.kpoints_cart,vasp_calc.kpoints_cart,NULL,"Cartesian",1,2,0,1);/*not calling anything*/
+	VASP_SPIN_TABLE(vasp_gui.kpoints_kx,vasp_calc.kpoints_kx,NULL,"KX",2,3,0,1);
+	VASP_SPIN_TABLE(vasp_gui.kpoints_ky,vasp_calc.kpoints_ky,NULL,"KY",3,4,0,1);
+	VASP_SPIN_TABLE(vasp_gui.kpoints_kz,vasp_calc.kpoints_kz,NULL,"KZ",4,5,0,1);
 /* 2nd line */
-        VASP_NEW_LINE();
-	vasp_gui.kpoints_kx=gui_direct_spin("KX",&(vasp_calc.kpoints_kx),1.0,100.0,1.0,NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.kpoints_ky=gui_direct_spin("KY",&(vasp_calc.kpoints_ky),1.0,100.0,1.0,NULL,NULL,hbox);/*not calling anything*/
-	vasp_gui.kpoints_kz=gui_direct_spin("KZ",&(vasp_calc.kpoints_kz),1.0,100.0,1.0,NULL,NULL,hbox);/*not calling anything*/
-	VASP_NEW_LABEL("SHIFT:");
-	VASP_NEW_LABEL("X=");
-	VASP_ENTRY(vasp_gui.kpoints_sx,vasp_calc.kpoints_sx,"%.4lf",6);
-	VASP_NEW_LABEL("Y=");
-	VASP_ENTRY(vasp_gui.kpoints_sy,vasp_calc.kpoints_sy,"%.4lf",6);
-	VASP_NEW_LABEL("Z=");
-	VASP_ENTRY(vasp_gui.kpoints_sz,vasp_calc.kpoints_sz,"%.4lf",6);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_nkpts,vasp_calc.kpoints_nkpts,"%i","NKPTS=",0,1,1,2);
+	VASP_CHECK_TABLE(vasp_gui.have_tetra,vasp_calc.kpoints_tetra,toogle_tetra,"Tetrahedron",1,2,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_sx,vasp_calc.kpoints_sx,"%.4lf","SX=",2,3,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_sy,vasp_calc.kpoints_sy,"%.4lf","SY=",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_sz,vasp_calc.kpoints_sz,"%.4lf","SZ=",4,5,1,2);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- Coordinate */
         vasp_gui.kpoints_coord = gtk_frame_new("Coordinate");
         gtk_box_pack_start(GTK_BOX(page),vasp_gui.kpoints_coord,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_coord), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_coord), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("KPOINT:");
-        /*this combo is special and should be explicitely defined*/
-        vasp_gui.kpoints_kpts = gtk_combo_box_text_new_with_entry();/*gtkcombo replacement*/
-        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.kpoints_kpts))), FALSE);/*supposed to be simple?*/
-	/* start with an empty list, containing only "ADD kpoint" */
-	gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.kpoints_kpts),"ADD kpoint");
-	gtk_box_pack_start(GTK_BOX(hbox), vasp_gui.kpoints_kpts, TRUE, TRUE, 0);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),0);
-	g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.kpoints_kpts),"changed",GTK_SIGNAL_FUNC(vasp_kpoints_kpts_selected),data);
-/* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("KPT_i=");
-	VASP_ENTRY(vasp_gui.kpoints_i,vasp_calc.kpoints_i,"%i",3);
-	VASP_NEW_LABEL("x=");
-	VASP_ENTRY(vasp_gui.kpoints_x,vasp_calc.kpoints_x,"%.8lf",10);
-	VASP_NEW_LABEL("y=");
-	VASP_ENTRY(vasp_gui.kpoints_y,vasp_calc.kpoints_y,"%.8lf",10);
-	VASP_NEW_LABEL("z=");
-	VASP_ENTRY(vasp_gui.kpoints_z,vasp_calc.kpoints_z,"%.8lf",10);
-	VASP_NEW_LABEL("w=");
-	VASP_ENTRY(vasp_gui.kpoints_w,vasp_calc.kpoints_w,"%.8lf",10);
-	VASP_NEW_SEPARATOR();
-        gui_stock_button(GTK_STOCK_APPLY, vasp_kpoint_modified, NULL, hbox);
-        gui_stock_button(GTK_STOCK_DELETE, vasp_kpoint_delete, NULL, hbox);
-/* --- end frame */
+	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
+        /*2 buttons*/
         hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
+	VASP_NEW_SEPARATOR();
+        gui_stock_button(GTK_STOCK_APPLY,vasp_kpoint_modified,NULL,hbox);
+        gui_stock_button(GTK_STOCK_DELETE,vasp_kpoint_delete,NULL,hbox);
+        gtk_table_attach_defaults(GTK_TABLE(table),hbox,4,5,0,1);
+/* 2nd line */
+        VASP_ENTRY_TABLE(vasp_gui.kpoints_i,vasp_calc.kpoints_i,"%i","INDEX:",0,1,1,2);
+        gtk_widget_set_sensitive(vasp_gui.kpoints_i,FALSE);/*<- is changed only by selecting kpoints_kpts*/
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_x,vasp_calc.kpoints_x,"%.4lf","X=",1,2,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_y,vasp_calc.kpoints_y,"%.4lf","Y=",2,3,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_z,vasp_calc.kpoints_z,"%.4lf","Z=",3,4,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.kpoints_w,vasp_calc.kpoints_w,"%.4lf","W=",4,5,1,2);
+/* --- end frame */
 /* --- Tetrahedron */
         vasp_gui.kpoints_tetra = gtk_frame_new("Tetrahedron");
         gtk_box_pack_start(GTK_BOX(page),vasp_gui.kpoints_tetra,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_tetra), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(3, 6,FALSE);
+        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_tetra), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("TOTAL=");
-	VASP_ENTRY(vasp_gui.tetra_total,vasp_calc.tetra_total,"%i",3);
-	VASP_NEW_LABEL("EXACT VOLUME=");
-	VASP_ENTRY(vasp_gui.tetra_volume,vasp_calc.tetra_volume,"%.8lf",10);
-	VASP_NEW_LABEL("(ABCD)");
-	VASP_NEW_SEPARATOR();
+	VASP_ENTRY_TABLE(vasp_gui.tetra_total,vasp_calc.tetra_total,"%i","TOTAL=",0,1,0,1);
+	label = gtk_label_new("EXACT VOLUME:");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_volume,vasp_calc.tetra_volume,"%.6lf","V=",2,3,0,1);
+	label = gtk_label_new("for (A,B,C,D) tetrahedron");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,3,6,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("Index=");
-	VASP_ENTRY(vasp_gui.tetra_i,vasp_calc.tetra_i,"%i",3);
-	VASP_NEW_LABEL("Degen. Weight=");
-	VASP_ENTRY(vasp_gui.tetra_w,vasp_calc.tetra_w,"%.4lf",6);
-	VASP_NEW_LABEL("Pt_A=");
-	VASP_ENTRY(vasp_gui.tetra_a,vasp_calc.tetra_a,"%i",3);
-	VASP_NEW_LABEL("Pt_B=");
-	VASP_ENTRY(vasp_gui.tetra_b,vasp_calc.tetra_b,"%i",3);
-	VASP_NEW_LABEL("Pt_C=");
-	VASP_ENTRY(vasp_gui.tetra_c,vasp_calc.tetra_c,"%i",3);
-	VASP_NEW_LABEL("Pt_D=");
-	VASP_ENTRY(vasp_gui.tetra_d,vasp_calc.tetra_d,"%i",3);
+	VASP_COMBOBOX_TABLE(vasp_gui.tetra,"TETRAHEDRON:",0,5,1,2);
+	VASP_COMBOBOX_ADD(vasp_gui.tetra,"ADD tetrahedron");
+	/*2 buttons*/
+	hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
-	gui_stock_button(GTK_STOCK_APPLY, vasp_tetra_modified, NULL, hbox);
-	gui_stock_button(GTK_STOCK_DELETE, vasp_tetra_delete, NULL, hbox);
+	gui_stock_button(GTK_STOCK_APPLY,vasp_tetra_modified,NULL,hbox);
+	gui_stock_button(GTK_STOCK_DELETE,vasp_tetra_delete,NULL,hbox);
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,5,6,1,2);
 /* 3rd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("TETRAHEDRON:");
-        /*this combo is special and should be explicitely defined*/
-        vasp_gui.tetra = gtk_combo_box_text_new_with_entry();/*gtkcombo replacement*/
-        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.tetra))), FALSE);/*supposed to be simple?*/
-        /* start with an empty list, containing only "ADD kpoint" */
-        gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.tetra),"ADD tetrahedron");
-        gtk_box_pack_start(GTK_BOX(hbox), vasp_gui.tetra, TRUE, TRUE, 0);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.tetra),0);
-        g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.tetra),"changed",GTK_SIGNAL_FUNC(vasp_tetra_selected),data);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_i,vasp_calc.tetra_i,"%i","INDEX:",0,1,2,3);
+	gtk_widget_set_sensitive(vasp_gui.tetra_i,FALSE);/*<- is changed only by selecting tetra*/
+	VASP_ENTRY_TABLE(vasp_gui.tetra_w,vasp_calc.tetra_w,"%.4lf","Degen. W=",1,2,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_a,vasp_calc.tetra_a,"%i","PtA:",2,3,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_b,vasp_calc.tetra_b,"%i","PtB:",3,4,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_c,vasp_calc.tetra_c,"%i","PtC:",4,5,2,3);
+	VASP_ENTRY_TABLE(vasp_gui.tetra_d,vasp_calc.tetra_d,"%i","PtD:",5,6,2,3);
 /* initialize */
-	g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.kpoints_mode),"changed",GTK_SIGNAL_FUNC(vasp_kpoints_mode_selected),data);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),2);
+        g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear_3)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
+        g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing_3)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
+	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_mode,2,vasp_kpoints_mode_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_kpts,0,vasp_kpoints_kpts_selected);
+	VASP_COMBOBOX_SETUP(vasp_gui.tetra,0,vasp_tetra_selected);
 	toogle_tetra();	
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
+/* TODO: import KPOINTS/IBZKPT file*/
 
 /*------------------*/
 /* page 5 -> POTCAR */
@@ -2542,68 +2373,62 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 /* --- general */
         frame = gtk_frame_new("General");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 1,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("SPECIES:");
-	VASP_TEXT_ENTRY(vasp_gui.species,vasp_calc.species_symbols,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.species,FALSE);
+	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_calc.species_symbols,"SPECIES:",0,1,0,1);
+	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("(each species will require a separate POTCAR information)");
-	VASP_NEW_SEPARATOR();
+	label = gtk_label_new("(each species will require a separate POTCAR information)");
+        gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
-/* --- POTCAR folder */
-        frame = gtk_frame_new("POTCAR Folder");
+/* --- get POTCAR information */
+        frame = gtk_frame_new("get POTCAR information");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(3, 4,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("SOURCE KPOINTS FOLDER:");
-        VASP_TEXT_ENTRY(vasp_gui.potcar_folder,vasp_calc.potcar_folder,TRUE);
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_folder),"");
-        button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-        gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-        g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_potcar_folder_dialog),NULL);
+	/* 2 lines radiobutton */
+	vbox = gtk_vbox_new(FALSE,0);
+	new_radio_group(0,vbox,FF);
+	vasp_gui.potcar_select_file = add_radio_button("Use POTCAR file",(gpointer)toggle_potcar_file,NULL);
+	vasp_gui.potcar_select_folder = add_radio_button("Use POTCAR path",(gpointer)toggle_potcar_folder,NULL);
+	gtk_table_attach_defaults(GTK_TABLE(table),vbox,0,1,0,2);
+	VASP_TEXT_TABLE(vasp_gui.potcar_file,vasp_calc.potcar_file,"FILE:",1,3,0,1);
+	VASP_BUTTON_TABLE(vasp_gui.potcar_file_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("DETECTED SPECIES:");
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("(This method is not supported yet)");
-	/*TODO: support the method*/
-	VASP_NEW_SEPARATOR();
+	VASP_TEXT_TABLE(vasp_gui.potcar_folder,vasp_calc.potcar_folder,"PATH:",1,3,1,2);
+	VASP_BUTTON_TABLE(vasp_gui.potcar_folder_button,GTK_STOCK_OPEN,load_potcar_folder_dialog,3,4,1,2);
+/* 3rd line */
+        VASP_COMBOBOX_TABLE(vasp_gui.species,"SPECIES:",0,2,2,3);
+        VASP_COMBOBOX_ADD(vasp_gui.species,"ADD SPECIES");
+	VASP_COMBOBOX_TABLE(vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
+	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,vasp_gui.species_flavor,3,4,2,3);
+/* initialize */
+	toggle_potcar_file(NULL,NULL);
+	gtk_widget_set_sensitive(vasp_gui.potcar_select_folder,FALSE);/*TODO: not ready yet!*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
-/* --- POTCAR file */
-        frame = gtk_frame_new("POTCAR File");
+/* --- POTCAR results */
+        frame = gtk_frame_new("POTCAR results");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 2,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("SOURCE POTCAR File:");
-        VASP_TEXT_ENTRY(vasp_gui.potcar_file,vasp_calc.potcar_file,TRUE);
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_file),"");
-        button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-        gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-        g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_potcar_file_dialog),NULL);
-/* 2nd line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("DETECTED SPECIES:");
-	VASP_TEXT_ENTRY(vasp_gui.potcar_species,vasp_calc.potcar_species,TRUE);
+	//multicolumn label
+        label = gtk_label_new("DETECTED");
+        gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
+	VASP_TEXT_TABLE(vasp_gui.potcar_species,vasp_calc.potcar_species,"SPECIES:",1,2,0,1);
 	gtk_widget_set_sensitive(vasp_gui.potcar_species,FALSE);
-/* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
+/* 2nd line */
+	/*occ: col0*/
+	VASP_TEXT_TABLE(vasp_gui.potcar_species_flavor,vasp_calc.potcar_species_flavor,"FLAVOR:",1,2,1,2);
+	gtk_widget_set_sensitive(vasp_gui.potcar_species_flavor,FALSE);
 
 /*----------------*/
 /* page 6 -> EXEC */
@@ -2614,72 +2439,64 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 /* --- general */
         frame = gtk_frame_new("General");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(3, 6,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_LABEL("VASP_EXEC:");
-	VASP_TEXT_ENTRY(vasp_gui.job_vasp_exe,vasp_calc.job_vasp_exe,TRUE);
-        button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-        gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-        g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_vasp_exe_dialog),NULL);
+	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
+	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_calc.job_vasp_exe,"FILE=",1,5,0,1);
+	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_vasp_exe_dialog,5,6,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("PATH:");
-	VASP_TEXT_ENTRY(vasp_gui.job_path,vasp_calc.job_path,TRUE);
-	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_path_dialog),NULL);
+	VASP_LABEL_TABLE("CALCUL PATH:",0,1,1,2);
+	VASP_TEXT_TABLE(vasp_gui.job_path,vasp_calc.job_path,"PATH=",1,5,1,2);
+	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_path_dialog,5,6,1,2);
 /* 3rd line */
-        VASP_NEW_LINE();
-	gui_direct_check("LWAVE",&(vasp_calc.lwave),NULL,NULL,hbox);
-	gui_direct_check("LCHARG",&(vasp_calc.lcharg),NULL,NULL,hbox);
-	gui_direct_check("LVTOT",&(vasp_calc.lvtot),NULL,NULL,hbox);
-	gui_direct_check("LVHAR",&(vasp_calc.lvhar),NULL,NULL,hbox);
-	gui_direct_check("LELF",&(vasp_calc.lelf),NULL,NULL,hbox);
+	VASP_LABEL_TABLE("OUTPUT:",0,1,2,3);
+	VASP_CHECK_TABLE(button,vasp_calc.lwave,NULL,"LWAVE",1,2,2,3);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lcharg,NULL,"LCHARG",2,3,2,3);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lvtot,NULL,"LVTOT",3,4,2,3);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lvhar,NULL,"LVHAR",4,5,2,3);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lelf,NULL,"LELF",5,6,2,3);/*not calling anything*/
 /* --- end frame */
-        hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_end(GTK_BOX(page),hbox,FALSE,FALSE,0);
 /* --- PARALLEL */
         frame = gtk_frame_new("Parallel Optimization");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+	table = gtk_table_new(2, 6,FALSE);
+	gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-	VASP_NEW_LABEL("MPIRUN:");
-	VASP_TEXT_ENTRY(vasp_gui.job_mpirun,vasp_calc.job_mpirun,TRUE);
-	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_mpirun_dialog),NULL);
+	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
+	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_calc.job_mpirun,"FILE=",1,5,0,1);
+	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_mpirun_dialog,5,6,0,1);
 /* 2nd line */
-	VASP_NEW_LINE();
-	vasp_gui.job_nproc=gui_direct_spin("NP=",&(vasp_calc.job_nproc),1.0,100.0,1.0,parallel_eq,NULL,hbox);
-	VASP_NEW_LABEL("NCORE=");
-	vasp_gui.ncore=gui_direct_spin("NCORE=",&(vasp_calc.ncore),1.0,1.0,1.0,parallel_eq,NULL,hbox);
-	VASP_NEW_LABEL("KPAR=");
-	vasp_gui.kpar=gui_direct_spin("KPAR=",&(vasp_calc.kpar),1.0,1.0,1.0,parallel_eq,NULL,hbox);
-	gui_direct_check("LPLANE",&(vasp_calc.lplane),NULL,NULL,hbox);
-	gui_direct_check("LSCALU",&(vasp_calc.lscalu),NULL,NULL,hbox);
-	gui_direct_check("LSCALAPACK",&(vasp_calc.lscalapack),NULL,NULL,hbox);
+	VASP_SPIN_TABLE(vasp_gui.job_nproc,vasp_calc.job_nproc,parallel_eq,"NP=",0,1,1,2);
+	VASP_SPIN_TABLE(vasp_gui.ncore,vasp_calc.ncore,parallel_eq,"NCORE=",1,2,1,2);
+	VASP_SPIN_TABLE(vasp_gui.kpar,vasp_calc.kpar,parallel_eq,"KPAR=",2,3,1,2);
+	VASP_CHECK_TABLE(button,vasp_calc.lplane,NULL,"LPLANE",3,4,1,2);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lscalu,NULL,"LSCALU",4,5,1,2);/*not calling anything*/
+	VASP_CHECK_TABLE(button,vasp_calc.lscalapack,NULL,"LSCALAPACK",5,6,1,2);/*not calling anything*/
+/* --- end frame */
 /* --- DISTANT */
         frame = gtk_frame_new("Distant calculation");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a vbox in the frame */
-        vbox = gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame), vbox);
+/* create a table in the frame*/
+        table = gtk_table_new(3, 3,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_NEW_LINE();
-        VASP_NEW_SEPARATOR();
-        spinner=gtk_spinner_new();
-        gtk_box_pack_start(GTK_BOX(hbox), spinner, FALSE, FALSE, 0);
-        VASP_NEW_LABEL("UNDER CONSTRUCTION");
-        VASP_NEW_SEPARATOR();
-        VASP_NEW_LINE();
-        VASP_NEW_SEPARATOR();
-
+        VASP_LABEL_TABLE("REMOTE HOSTS:",0,1,0,1);
+        label = gtk_label_new("UNDER CONSTRUCTION");
+        gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,0,1);
+/* 2nd line */
+	VASP_LABEL_TABLE("REMOTE PATH:",0,1,1,2);
+	label = gtk_label_new("UNDER CONSTRUCTION");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,1,2);
+/* 3rd line */
+	VASP_LABEL_TABLE("SUBMIT SCRIPT:",0,1,2,3);
+	label = gtk_label_new("UNDER CONSTRUCTION");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,2,3);
 
 /* --- Outside of notebook */
 	frame = gtk_frame_new(NULL);

@@ -71,6 +71,78 @@ if(gtk_entry_get_text_length(GTK_ENTRY(vasp_gui.value))>0){\
         gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(name)->entry),default_text);\
         g_signal_connect(GTK_OBJECT(GTK_COMBO(name)->entry), "changed",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
+/* DEFINES: table interface */
+#define VASP_TEXT_TABLE(name,value,caption,l,r,t,b) do{\
+        hbox = gtk_hbox_new(FALSE, 0);\
+        VASP_NEW_LABEL(caption);\
+	VASP_TEXT_ENTRY(name,value,TRUE);\
+        gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_ENTRY_TABLE(name,value,format,caption,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	VASP_NEW_LABEL(caption);\
+	VASP_NEW_SEPARATOR();\
+	VASP_ENTRY(name,value,format,8);\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_CHECK_TABLE(name,value,function,caption,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	name = gui_direct_check(caption,&(value),function,NULL,hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_COMBO_TABLE(name,default_text,function,caption,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	VASP_NEW_LABEL(caption);\
+	VASP_NEW_SEPARATOR();\
+	VASP_REG_COMBO(name,default_text,function);\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_SEPARATOR_TABLE(l,r,t,b) do{\
+        separator=gtk_hseparator_new();\
+	gtk_table_attach_defaults(GTK_TABLE(table),separator,l,r,t,b);\
+}while(0)
+#define VASP_COMBOBOX_TABLE(name,caption,l,r,t,b) do{\
+        hbox = gtk_hbox_new(FALSE, 0);\
+        label = gtk_label_new(caption);\
+        gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);\
+        name=gtk_combo_box_text_new_with_entry();\
+        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(name))),FALSE);\
+        gtk_box_pack_start(GTK_BOX(hbox),name,TRUE,TRUE,0);\
+        gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_COMBOBOX_ADD(combobox,text) do{\
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combobox),text);\
+}while(0)
+#define VASP_COMBOBOX_SETUP(combobox,default_value,function) do{\
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
+	g_signal_connect(GTK_COMBO_BOX_TEXT(combobox),"changed",GTK_SIGNAL_FUNC(function),data);\
+}while(0)
+/*default spin is always [1,100]*/
+#define VASP_SPIN_TABLE(name,value,function,caption,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	name=gui_direct_spin(caption,&(value),1.0,100.0,1.0,function,NULL,hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+#define VASP_BUTTON_TABLE(name,type,function,l,r,t,b) do{\
+        name=gtk_button_new_from_stock(type);\
+	gtk_table_attach_defaults(GTK_TABLE(table),name,l,r,t,b);\
+        g_signal_connect(GTK_OBJECT(name),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+#define VASP_2BUTTONS_TABLE(name_1,name_2,function_1,function_2,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	name_1 = gui_stock_button(GTK_STOCK_APPLY,function_1,NULL,hbox);\
+	name_2 = gui_stock_button(GTK_STOCK_DELETE,function_2,NULL,hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+/*left aligned labels*/
+#define VASP_LABEL_TABLE(caption,l,r,t,b) do{\
+	hbox = gtk_hbox_new(FALSE, 0);\
+	label = gtk_label_new(caption);\
+	gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);\
+	VASP_NEW_SEPARATOR();\
+	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
+}while(0)
+
 /*page numbers*/
 #define VASP_PAGE_SIMPLIFIED 0
 #define VASP_PAGE_CONVERGENCE 1
@@ -88,9 +160,11 @@ struct vasp_calc_gui{
 	GtkWidget *spinner;
 	GtkWidget *name;
 	GtkWidget *file_entry;
+	GtkWidget *prec;
 	GtkWidget *encut;
 	GtkWidget *enaug;
 	GtkWidget *ediff;
+	GtkWidget *algo;
 	GtkWidget *ialgo;
 	GtkWidget *nsim;
 	GtkWidget *vtime;
@@ -106,6 +180,7 @@ struct vasp_calc_gui{
 	GtkWidget *kgamma_3;/*intentional duplicates*/
 	GtkWidget *kspacing;
 	GtkWidget *kspacing_3;/*intentional duplicates*/
+	GtkWidget *lreal;
 	GtkWidget *ropt;
 	GtkWidget *lmaxmix;
 	GtkWidget *lmaxpaw;
@@ -116,6 +191,7 @@ struct vasp_calc_gui{
 	GtkWidget *lmaxtau;
 	GtkWidget *lnoncoll;
 	GtkWidget *saxis;
+	GtkWidget *gga;
 	GtkWidget *lsorbit;
 	GtkWidget *metagga;
 	GtkWidget *cmbj;
@@ -228,10 +304,18 @@ struct vasp_calc_gui{
 	GtkWidget *tetra_c;
 	GtkWidget *tetra_d;
 /* POTCAR */
+	GtkWidget *poscar_species;
 	GtkWidget *species;
-	GtkWidget *potcar_folder;
+	GtkWidget *species_flavor;
+	GtkWidget *species_button;
+	GtkWidget *potcar_select_file;
 	GtkWidget *potcar_file;
+	GtkWidget *potcar_file_button;
+	GtkWidget *potcar_select_folder;
+	GtkWidget *potcar_folder;
+	GtkWidget *potcar_folder_button;
 	GtkWidget *potcar_species;
+	GtkWidget *potcar_species_flavor;
 /* PERF */
 	GtkWidget *ncore;
 	GtkWidget *kpar;
@@ -549,7 +633,7 @@ typedef struct {
 	gchar *potcar_folder;
 	gchar *potcar_file;
 	gchar *potcar_species;
-
+	gchar *potcar_species_flavor;
 /*IV-advanced*/
 /*IV-1-DOS*/
 	gboolean lorbit;
