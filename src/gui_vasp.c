@@ -60,10 +60,8 @@ vasp_calc_struct vasp_calc;
 /* initialize gui values */
 /*************************/
 void gui_vasp_init(){
-	if(vasp_gui.result_model!=NULL) g_free(vasp_gui.result_model);
-	vasp_gui.result_model=g_malloc(sizeof(struct model_pak));
-	model_init(vasp_gui.result_model);
-	vasp_gui.have_result=FALSE;
+	vasp_calc.have_gui=TRUE;
+	vasp_calc.have_result=TRUE;
 	if(!vasp_gui.have_xml){
 		vasp_gui.rions=TRUE;
 		vasp_gui.rshape=FALSE;
@@ -1108,14 +1106,14 @@ void toggle_potcar_folder(GtkWidget *w, GtkWidget *box){
 void parallel_eq(GtkWidget *w, GtkWidget *box){
 	gchar *tamp;
 	/*parallel equilibration*/
-	gint np;//,ncore,kpar;
+	gint np,ncore,kpar;
 	/* mini sync */
 	VASP_REG_VAL(ncore,"%lf");
 	VASP_REG_VAL(kpar,"%lf");
 	VASP_REG_VAL(job_nproc,"%lf");
 	np=(gint)vasp_calc.job_nproc;
-//	ncore=(gint)vasp_calc.ncore;
-//	kpar=(gint)vasp_calc.kpar;
+	ncore=(gint)vasp_calc.ncore;
+	kpar=(gint)vasp_calc.kpar;
 	/*we have np CPU*/
 	if(np==1){
 		//NCORE=1 ; KPAR=1
@@ -1125,10 +1123,11 @@ void parallel_eq(GtkWidget *w, GtkWidget *box){
 		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,1.0);
 		return;
 	}
-	/*(re)set default barrier*/
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,(gdouble)np);
+	/* ncore should be [1,ncpu/kpar] */
+	if(ncore>((gint)np/kpar)) gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),(gdouble)((gint)np/kpar));
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,(gdouble)((gint)np/kpar));
+	/* kpar can be [1,ncpu] */
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,(gdouble)np);
-	/* TODO: SMART re-definition */
 }
 /***************************/
 /* sync poscar information */
@@ -1233,6 +1232,7 @@ void vasp_calc_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear_3),g_strdup_printf("%i",vasp_calc.ismear));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma_3),vasp_calc.kgamma);
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing_3),g_strdup_printf("%.4lf",vasp_calc.kspacing));
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),vasp_calc.kpoints_mode);
 		toogle_tetra();/*in case we need*/
 	} else if (page_num==VASP_PAGE_POTCAR){
 		vasp_poscar_sync();/*we need to know species_symbols*/
@@ -1455,7 +1455,7 @@ void vasp_calc_to_kpoints(FILE *output,vasp_calc_struct calc){
 		return;
         case VKP_AUTO:
 		fprintf(output,"Auto\n");
-		fprintf(output,"%i",(gint)vasp_calc.kpoints_kx);
+		fprintf(output,"%i\n",(gint)vasp_calc.kpoints_kx);
 		return;
         }
 	/*print all coordinates*/
@@ -1574,6 +1574,14 @@ void save_vasp_calc(){
 
 #endif
 }
+/*********************************/
+/* Cleanup calculation structure */
+/*********************************/
+void vasp_cleanup(){
+        /*nothing much to do but free all*/
+	if(!vasp_calc.have_result) return;/*we have ongoing calculation*/
+	vasprun_free(&vasp_calc);
+}
 /*****************************************/
 /* Execute or enqueue a vasp calculation */
 /*****************************************/
@@ -1588,7 +1596,7 @@ void run_vasp_exec(vasp_calc_struct *calc,struct task_pak *task){
  * 	distant server. See TODO */
 	fprintf(stderr,"VASP calculation can't be done in this environment.\n");return;
 #else 
-	/*1CPU*/
+	/*direct launch*/
 	if((*calc).job_nproc<2) cmd = g_strdup_printf("%s > vasp.log",(*calc).job_vasp_exe);
 	else cmd = g_strdup_printf("%s -np %i %s > vasp.log",(*calc).job_mpirun,(gint)(*calc).job_nproc,(*calc).job_vasp_exe);
 #endif
@@ -1598,36 +1606,39 @@ void run_vasp_exec(vasp_calc_struct *calc,struct task_pak *task){
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/
 	g_free(cmd);
+	(*calc).have_result=TRUE;
 }
-/********************************************************/
-/* hide spinner event (will load result on have_result) */
-/********************************************************/
-void vasp_spin_hide(){
-if(!vasp_gui.have_result) return;
-else {
-	gchar *filename=g_strdup_printf("%s/vasprun.xml",gtk_entry_get_text(GTK_ENTRY(vasp_gui.job_path)));
-
-/* FIXME: Why I can't see the resulting result model until I remove original one?*/
-
-	file_load(filename,vasp_gui.result_model);
-	model_prep(vasp_gui.result_model);
-	tree_model_add(vasp_gui.result_model);
-	tree_select_model(vasp_gui.result_model);
-	tree_select_active();
-	tree_model_refresh(vasp_gui.result_model);
-//	gui_model_select(vasp_gui.result_model);
-//	gui_active_refresh();
-}
-vasp_gui.have_result=FALSE;
-}
-/*****************************************************/
-/* cleanup task: trigger spinner (which load result) */
-/*****************************************************/
-void cleanup_vasp_exec(struct vasp_calc_gui *gui_vasp){
+/*****************************/
+/* cleanup task: load result */
+/*****************************/
+void cleanup_vasp_exec(vasp_calc_struct *calc){
 	/*VASP process has exit, try to load the result?*/
-	(*gui_vasp).have_result=TRUE;
-	gtk_spinner_stop(GTK_SPINNER((*gui_vasp).spinner));
-	gtk_widget_hide((*gui_vasp).spinner);
+	gchar *filename;
+	/*sync_ wait for result?*/
+	while(!(*calc).have_result) usleep(50*1000);/*sleep 50ms until job is done*/
+	if(vasp_calc.have_gui){/*gui still active*/
+		gtk_spinner_stop(GTK_SPINNER(vasp_gui.spinner));
+		gtk_widget_hide(vasp_gui.spinner);
+		gtk_widget_set_sensitive(vasp_gui.button_save,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.button_exec,TRUE);
+	}
+	/*init a model*/
+        if((*calc).result_model!=NULL) g_free((*calc).result_model);
+	(*calc).result_model=model_new();
+        model_init((*calc).result_model);
+	/*put result into it*/
+	filename=g_strdup_printf("%s/vasprun.xml",(*calc).job_path);
+	file_load(filename,(*calc).result_model);
+	/*display model: we don't make result model active in case several calculations are running*/
+	model_prep((*calc).result_model);
+	tree_model_add((*calc).result_model);
+	tree_model_refresh((*calc).result_model);
+	canvas_shuffle();
+	redraw_canvas(ALL);/*ALL: necessary?*/
+	vasp_calc.have_result=TRUE;
+	if(!vasp_calc.have_gui){/*gui was closed*/
+		vasp_cleanup();/*remove calculation structure*/
+	}
 }
 /******************************/
 /* Enqueue a vasp calculation */
@@ -1638,24 +1649,21 @@ void exec_vasp_calc(){
 	if(vasp_calc.potcar_file==NULL) return;/*not ready*/
 	save_vasp_calc();/*sync and save all file*/
 	/*launch vasp in a task?*/
+	vasp_calc.have_result=FALSE;
 	gtk_widget_show(vasp_gui.spinner);
+	gtk_widget_set_sensitive(vasp_gui.button_save,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.button_exec,FALSE);
 	gtk_spinner_start(GTK_SPINNER(vasp_gui.spinner));
-	task_new("VASP", &run_vasp_exec,&vasp_calc,&cleanup_vasp_exec,&vasp_gui,data);
-}
-/*********************************/
-/* Cleanup calculation structure */
-/*********************************/
-void vasp_cleanup(struct model_pak *model){
-
+	task_new("VASP", &run_vasp_exec,&vasp_calc,&cleanup_vasp_exec,&vasp_calc,data);
 }
 /********************************/
 /* Quit vasp calculation dialog */
 /********************************/
 void quit_vasp_calc(GtkWidget *w, gpointer data){
 	struct model_pak *model=data;
-	g_assert(model != NULL);
 	/* first cleanup everything */
-	vasp_cleanup(model);
+	vasp_cleanup();
+	vasp_calc.have_gui=FALSE;
 	/* Then bailout */
 	dialog_destroy(w,model);
 }
@@ -1689,7 +1697,7 @@ void gui_vasp_dialog(void){
 	}
 /* dialog setup */
 	title = g_strdup_printf("VASP: %s", data->basename);
-	dialog = dialog_request(CVASP, title, NULL, vasp_cleanup, data);
+	dialog = dialog_request(CVASP, title, NULL, vasp_cleanup,data);
 	g_free(title);
 	vasp_gui.window = dialog_window(dialog);
 /* --- Outside of notebook */
@@ -2360,7 +2368,7 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_mode,2,vasp_kpoints_mode_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_kpts,0,vasp_kpoints_kpts_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.tetra,0,vasp_tetra_selected);
-	toogle_tetra();	
+	toogle_tetra();
 /* --- end frame */
 /* TODO: import KPOINTS/IBZKPT file*/
 
@@ -2506,12 +2514,11 @@ if((vasp_calc.poscar_free==VPF_FIXED)||(vasp_calc.poscar_free==VPF_FREE)){
 /* Action buttons */
 	vasp_gui.spinner=gtk_spinner_new();
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vasp_gui.window)->action_area), vasp_gui.spinner, FALSE, FALSE, 0);
-	gui_stock_button(GTK_STOCK_SAVE, save_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
-	gui_stock_button(GTK_STOCK_EXECUTE, exec_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
+	vasp_gui.button_save=gui_stock_button(GTK_STOCK_SAVE, save_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
+	vasp_gui.button_exec=gui_stock_button(GTK_STOCK_EXECUTE, exec_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
 	gui_stock_button(GTK_STOCK_CLOSE, quit_vasp_calc, dialog, GTK_DIALOG(vasp_gui.window)->action_area);
 /* connect to signals */
         g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(vasp_calc_page_switch),NULL);
-	g_signal_connect(GTK_WIDGET(vasp_gui.spinner),"hide",GTK_SIGNAL_FUNC(vasp_spin_hide),NULL);	
 
 /* all done */
         gtk_widget_show_all(vasp_gui.window);

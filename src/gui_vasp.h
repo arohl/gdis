@@ -331,8 +331,10 @@ struct vasp_calc_gui{
 	GtkWidget *job_mpirun;
 	GtkWidget *job_path;
 	GtkWidget *job_nproc;
+/*buttons*/
+	GtkWidget *button_save;
+	GtkWidget *button_exec;
 /* RESULT */
-	struct model_pak *result_model;
 };
 /* calcul structure*/
 typedef enum {
@@ -674,7 +676,10 @@ typedef struct {
 	gchar *job_mpirun;
 	gchar *job_path;
 	gdouble job_nproc;
-
+/* RESULTS */
+	gboolean have_result;
+	gboolean have_gui;
+	struct model_pak *result_model;
 } vasp_calc_struct;
 
 
@@ -683,7 +688,7 @@ typedef struct {
 int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc);
 void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
-
+void vasprun_free(vasp_calc_struct *calc);
 
 
 

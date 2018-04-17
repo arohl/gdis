@@ -960,6 +960,36 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 	return 0;
 #undef CALC
 }
+/****************************/
+/* free vasp_calc structure */
+/****************************/
+void vasprun_free(vasp_calc_struct *calc){
+#define CALC (*calc)
+	if(calc==NULL) return;
+	if(CALC.name!=NULL) g_free(CALC.name);
+	if(CALC.fermwe!=NULL) g_free(CALC.fermwe);
+	if(CALC.fermdo!=NULL) g_free(CALC.fermdo);
+	if(CALC.ropt!=NULL) g_free(CALC.ropt);
+	if(CALC.magmom!=NULL) g_free(CALC.magmom);
+	if(CALC.saxis!=NULL) g_free(CALC.saxis);
+	if(CALC.cmbj!=NULL) g_free(CALC.cmbj);
+	if(CALC.ldaul!=NULL) g_free(CALC.ldaul);
+	if(CALC.ldauu!=NULL) g_free(CALC.ldauu);
+	if(CALC.ldauj!=NULL) g_free(CALC.ldauj);
+	if(CALC.dipol!=NULL) g_free(CALC.dipol);
+	if(CALC.species_symbols!=NULL) g_free(CALC.species_symbols);
+	if(CALC.species_numbers!=NULL) g_free(CALC.species_numbers);
+	if(CALC.potcar_folder!=NULL) g_free(CALC.potcar_folder);
+	if(CALC.potcar_file!=NULL) g_free(CALC.potcar_file);
+	if(CALC.potcar_species!=NULL) g_free(CALC.potcar_species);
+	if(CALC.potcar_species_flavor!=NULL) g_free(CALC.potcar_species_flavor);
+	if(CALC.rwigs!=NULL) g_free(CALC.rwigs);
+	if(CALC.job_vasp_exe!=NULL) g_free(CALC.job_vasp_exe);
+	if(CALC.job_mpirun!=NULL) g_free(CALC.job_mpirun);
+	if(CALC.job_path!=NULL) g_free(CALC.job_path);
+//result_model should not be freed ;)
+#undef CALC
+}
 /***********************************/
 /* convert vasp structure to INCAR */
 /***********************************/
