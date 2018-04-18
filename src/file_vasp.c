@@ -883,10 +883,23 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.epsilon=1.0;/*assuming dielectric constant for vacuum*/
 		CALC.dipol=NULL;
 		CALC.efield=0.0;
-/*10-grid*/
-		/*no default values for grid*/
-		CALC.auto_grid=TRUE;
+/*10-dos*/
+		CALC.lorbit=0;
+		CALC.nedos=301;
+		CALC.emin=0.0;/*ie not set*/
+		CALC.emax=0.0;/*ie not set*/
+		CALC.efermi=0.0;/*undocument*/
+		CALC.rwigs=NULL;
+/*11-linear response*/
+		CALC.loptics=FALSE;
+		CALC.lepsilon=FALSE;
+		CALC.lrpa=FALSE;
+		CALC.lnabla=FALSE;
+		CALC.cshift=0.1;
+		CALC.lcalceps=FALSE;/*use for hybride-DFT TODO (adv.)*/
 /*ionic*/
+/*0-grid*/
+		CALC.auto_grid=TRUE;/*no default values for grids integers*/
 /*1-general*/
 		CALC.nsw=0;
 		CALC.ibrion=-1;
@@ -1161,6 +1174,18 @@ void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc){
 		if(calc.dipol!=NULL) fprintf(output,"DIPOL=%s\n",calc.dipol);
 		if((calc.efield!=0.0)&&(calc.idipol!=VID_4)) fprintf(output,"EFIELD=%lf\n",calc.efield);
 	}
+	if(calc.lorbit!=0) fprintf(output,"LORBIT=%i\n",calc.lorbit);
+	if(calc.nedos!=301) fprintf(output,"NEDOS=%i\n",calc.nedos);
+	if(calc.emin!=0.) fprintf(output,"EMIN=%lf\n",calc.emin);
+	if(calc.emax!=0.) fprintf(output,"EMAX=%lf\n",calc.emax);
+	if(calc.efermi!=0.) fprintf(output,"EFERMI=%lf\n",calc.efermi);
+	if(calc.rwigs!=NULL) fprintf(output,"RWIGS=%s\n",calc.rwigs);
+	if(calc.loptics) fprintf(output,"LOPTICS=.TRUE.\n");
+	if(calc.lepsilon) fprintf(output,"LEPSILON=.TRUE.\n");
+	if(calc.lrpa) fprintf(output,"LRPA=.TRUE.\n");
+	if(calc.lnabla) fprintf(output,"LNABLA=.TRUE.\n");
+	if(calc.lcalceps) fprintf(output,"LCALCEPS=.TRUE.\n");
+	if(calc.cshift!=0.1) fprintf(output,"CSHIFT=%lf\n",calc.cshift);
 	if(!calc.auto_grid){
 		if(calc.ngx>0) fprintf(output,"NGX=%i\n",(gint)calc.ngx);
 		if(calc.ngy>0) fprintf(output,"NGY=%i\n",(gint)calc.ngy);
@@ -1188,7 +1213,7 @@ void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc){
 	if(calc.isym!=2) fprintf(output,"ISYM=%i\n",calc.isym);
 	if((calc.isym>0)&&(calc.sym_prec!=1e-5)) fprintf(output,"SYM_PREC=%lE\n",calc.sym_prec);
 	if(calc.ncore>1.) fprintf(output,"NCORE=%i\n",(gint)calc.ncore);
-	if(calc.kpar>1.) fprintf(output,"KPAR=%i\n",(gint)calc.ncore);
+	if(calc.kpar>1.) fprintf(output,"KPAR=%i\n",(gint)calc.kpar);
 	if(!calc.lplane) fprintf(output,"LPLANE=.FALSE.\n");
 	if(!calc.lscalu) fprintf(output,"LSCALU=.FALSE.\n");
 	if(!calc.lscalapack) fprintf(output,"LSCALAPACK=.FALSE.\n");

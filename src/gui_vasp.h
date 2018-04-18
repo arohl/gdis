@@ -147,16 +147,35 @@ if(gtk_entry_get_text_length(GTK_ENTRY(vasp_gui.value))>0){\
 #define VASP_PAGE_SIMPLIFIED 0
 #define VASP_PAGE_CONVERGENCE 1
 #define VASP_PAGE_ELECTRONIC 2
-#define VASP_PAGE_IONIC 3
-#define VASP_PAGE_KPOINTS 4
-#define VASP_PAGE_POTCAR 5
-#define VASP_PAGE_EXEC 6
+#define VASP_PAGE_ELEC2 3
+#define VASP_PAGE_IONIC 4
+#define VASP_PAGE_KPOINTS 5
+#define VASP_PAGE_POTCAR 6
+#define VASP_PAGE_EXEC 7
 
 /* gui structure */
 struct vasp_calc_gui{
 	/*just a recall*/
 	GtkWidget *window;
 	/*actual GUI*/
+/*simple interface*/
+	GtkWidget *simple_calcul;
+	GtkWidget *simple_system;
+	gboolean simple_rgeom;
+	GtkWidget *simple_dim;
+	gdouble dimension;
+	GtkWidget *simple_kgrid;
+	GtkWidget *simple_species;
+	GtkWidget *simple_potcar;
+	GtkWidget *simple_potcar_button;
+	GtkWidget *simple_np;
+	GtkWidget *simple_ncore;
+	GtkWidget *simple_kpar;
+	GtkWidget *simple_apply;
+	GtkWidget *simple_message;
+	GtkTextBuffer *simple_message_buff;
+/*full interface*/
+	gint cur_page;
 	GtkWidget *spinner;
 	GtkWidget *name;
 	GtkWidget *file_entry;
@@ -202,7 +221,6 @@ struct vasp_calc_gui{
 	GtkWidget *ldaul;
 	GtkWidget *ldauu;
 	GtkWidget *ldauj;
-/* ... */
 /*mixer*/
 	GtkWidget *nelm;
 	GtkWidget *nelmdl;
@@ -217,14 +235,29 @@ struct vasp_calc_gui{
 	GtkWidget *wc;
 	GtkWidget *inimix;
 	GtkWidget *mixpre;
-/* ... */
+/* dipol */
 	GtkWidget *idipol;
 	GtkWidget *ldipol;
 	GtkWidget *lmono;
 	GtkWidget *dipol;
 	GtkWidget *epsilon;
 	GtkWidget *efield;
-
+/* dos */
+	GtkWidget *lorbit;
+	GtkWidget *have_paw;
+	GtkWidget *nedos;
+	GtkWidget *emin;
+	GtkWidget *emax;
+	GtkWidget *efermi;
+	GtkWidget *rwigs;
+/* linear response */
+	GtkWidget *loptics;
+	GtkWidget *lepsilon;
+	GtkWidget *lrpa;
+	GtkWidget *lnabla;
+	GtkWidget *lcalceps;
+	GtkWidget *cshift;
+/* grid */
 	GtkWidget *ngx;
 	GtkWidget *ngy;
 	GtkWidget *ngz;
@@ -638,7 +671,8 @@ typedef struct {
 	gchar *potcar_species_flavor;
 /*IV-advanced*/
 /*IV-1-DOS*/
-	gboolean lorbit;
+	gint lorbit;
+	gboolean have_paw;
 	gchar *rwigs;
 	gint nedos;
 	gdouble emin;
@@ -650,11 +684,7 @@ typedef struct {
 	gboolean lepsilon;
 	gboolean lrpa;
 	gboolean lnabla;
-	gboolean lvel;
-	gint kinter;
 	gdouble cshift;
-	gdouble omegamax;
-	gdouble deg_thershold;
 /* (adv.) */
 /*V-1-performance*/
 	gint npar;
@@ -689,7 +719,8 @@ int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc);
 void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
 void vasprun_free(vasp_calc_struct *calc);
-
+/* from gui_vasp.c */
+void vasp_gui_refresh();
 
 
 

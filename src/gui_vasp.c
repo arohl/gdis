@@ -62,12 +62,17 @@ vasp_calc_struct vasp_calc;
 void gui_vasp_init(){
 	vasp_calc.have_gui=TRUE;
 	vasp_calc.have_result=TRUE;
+	vasp_gui.cur_page=VASP_PAGE_SIMPLIFIED;
 	if(!vasp_gui.have_xml){
 		vasp_gui.rions=TRUE;
 		vasp_gui.rshape=FALSE;
 		vasp_gui.rvolume=FALSE;
 		vasp_gui.poscar_dirty=TRUE;
+		vasp_gui.have_paw=FALSE;
 	}
+	/*default simplified interface*/
+	vasp_gui.simple_rgeom=FALSE;
+	vasp_gui.dimension=3.;
 }
 /*********************************************************/
 /* Load calculation setting from an included vasprun.xml */
@@ -89,6 +94,7 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
 	gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),g_strdup_printf("%s",filename));
 	vasprun_update(filename,&vasp_calc);/*<- update everything according to the new vasprun.xml*/
 	g_free (filename);
+	vasp_gui_refresh();/*refresh GUI with new vasp_calc*/
     }
   }
   gtk_widget_destroy (GTK_WIDGET(file_chooser));
@@ -156,18 +162,512 @@ file_chooser=gtk_file_chooser_dialog_new("Select working folder",GTK_WINDOW(vasp
   }
   gtk_widget_destroy (GTK_WIDGET(file_chooser));
 }
+/*********************************************/
+/* refresh the GUI with value from vasp_calc */
+/*********************************************/
+void vasp_gui_refresh(){
+/*do not refresh the simple interface, though*/
+        switch(vasp_calc.prec){
+        case VP_SINGLE:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),1);break;
+        case VP_ACCURATE:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),2);break;
+        case VP_HIGH:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),3);break;
+        case VP_MED:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),4);break;
+        case VP_LOW:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),5);break;
+        case VP_NORM:
+        default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),0);
+        }
+	//use_prec already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.encut),g_strdup_printf("%.2lf",vasp_calc.encut));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.enaug),g_strdup_printf("%.2lf",vasp_calc.enaug));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ediff),g_strdup_printf("%.2lE",vasp_calc.ediff));
+	switch(vasp_calc.algo){
+	case VA_IALGO:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),1);
+		switch(vasp_calc.ialgo){
+		case VIA_OE_FIXED:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),0);break;
+		case VIA_O_FIXED:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),1);break;
+		case VIA_SUBROT:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),2);break;
+		case VIA_STEEP:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),3);break;
+		case VIA_CG:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),4);break;
+		case VIA_PSTEEP:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),5);break;
+		case VIA_PCG:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),6);break;
+		case VIA_ESTEEP:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),8);break;
+		case VIA_RMMP:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),9);break;
+		case VIA_PRMM:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),10);break;
+		case VIA_VAR_DAMP:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),11);break;
+		case VIA_VAR_QUENCH:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),12);break;
+		case VIA_VAR_PCG:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),13);break;
+		case VIA_EXACT:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),14);break;
+		case VIA_KOSUGI:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),7);
+		}
+		break;
+	case VA_VERYFAST:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),2);break;
+	case VA_FAST:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),3);break;
+	case VA_CONJ:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),4);break;
+	case VA_ALL:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),5);break;
+	case VA_DAMPED:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),6);break;
+	case VA_SUBROT:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),7);break;
+	case VA_EIGEN:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),8);break;
+	case VA_NONE:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),9);break;
+	case VA_NOTHING:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),10);break;
+	case VA_EXACT:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),11);break;
+	case VA_DIAG:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),12);break;
+	case VA_NORM:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),0);break;
+	}
+	//ldiag already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsim),g_strdup_printf("%i",vasp_calc.nsim));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.vtime),g_strdup_printf("%.4lf",vasp_calc.vtime));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.iwavpr),g_strdup_printf("%i",vasp_calc.iwavpr));
+	//auto already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nbands),g_strdup_printf("%i",vasp_calc.nbands));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelect),g_strdup_printf("%.4lf",vasp_calc.nelect));
+	//iniwav already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.istart),g_strdup_printf("%i",vasp_calc.istart));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.icharg),g_strdup_printf("%i",vasp_calc.icharg));
+	/*mixer*/
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelm),g_strdup_printf("%i",vasp_calc.nelm));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelmdl),g_strdup_printf("%i",vasp_calc.nelmdl));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelmin),g_strdup_printf("%i",vasp_calc.nelmin));
+	if(!vasp_calc.auto_mixer){
+		switch(vasp_calc.imix){
+		case VM_0:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),0);break;
+		case VM_1:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),1);break;
+		case VM_2:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),2);break;
+		case VM_4:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),3);
+		}
+		switch(vasp_calc.inimix){
+		case VIM_0:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.inimix),0);break;
+		case VIM_1:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.inimix),1);
+		}
+		switch(vasp_calc.mixpre){
+		case VMP_0:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),0);break;
+		case VMP_2:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),2);break;
+		case VMP_1:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),1);
+		}
+        }
+	switch(vasp_calc.lreal){
+	case VLR_AUTO:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),0);break;
+	case VLR_ON:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),1);break;
+	case VLR_TRUE:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),2);break;
+	case VLR_FALSE:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),3);break;
+	}
+	if(vasp_calc.ropt!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ropt),g_strdup_printf("%s",vasp_calc.ropt));
+	//addgrid already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxmix),g_strdup_printf("%i",vasp_calc.lmaxmix));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxpaw),g_strdup_printf("%i",vasp_calc.lmaxpaw));
+	if(!vasp_calc.auto_grid){
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngx),g_strdup_printf("%i",vasp_calc.ngx));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngy),g_strdup_printf("%i",vasp_calc.ngy));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngz),g_strdup_printf("%i",vasp_calc.ngz));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngxf),g_strdup_printf("%i",vasp_calc.ngxf));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngyf),g_strdup_printf("%i",vasp_calc.ngyf));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngzf),g_strdup_printf("%i",vasp_calc.ngzf));
+	}
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear),g_strdup_printf("%i",vasp_calc.ismear));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.sigma),g_strdup_printf("%.4lf",vasp_calc.sigma));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma),vasp_calc.kgamma);
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing),g_strdup_printf("%.4lf",vasp_calc.kspacing));
+	if(vasp_calc.fermwe!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.fermwe),g_strdup_printf("%s",vasp_calc.fermwe));
+	if(vasp_calc.fermdo!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.fermdo),g_strdup_printf("%s",vasp_calc.fermdo));
+	//ispin already sync
+	//non_collinear already sync
+	//lsorbit already sync
+	//gga_compat already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nupdown),g_strdup_printf("%.1lf",vasp_calc.nupdown));
+	if(vasp_calc.magmom!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.magmom),g_strdup_printf("%s",vasp_calc.magmom));
+	if(vasp_calc.saxis!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.saxis),g_strdup_printf("%s",vasp_calc.saxis));
+	switch(vasp_calc.gga){
+	case VG_91:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),0);break;
+	case VG_RP:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),2);break;
+	case VG_AM:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),3);break;
+	case VG_PS:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),4);break;
+	case VG_PE:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),1);
+	}
+	//voskown already sync
+	switch (vasp_calc.mgga){
+	case VMG_TPSS:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),0);break;
+	case VMG_RTPSS:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),1);break;
+	case VMG_M06L:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),2);break;
+	case VMG_MBJ:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),3);
+	}
+	//lmetagga already sync
+	//lasph already sync
+	//lmixtau already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxtau),g_strdup_printf("%i",vasp_calc.lmaxtau));
+	if(vasp_calc.cmbj!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbj),g_strdup_printf("%s",vasp_calc.cmbj));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbja),g_strdup_printf("%.4lf",vasp_calc.cmbja));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbjb),g_strdup_printf("%.4lf",vasp_calc.cmbjb));
+	if(vasp_calc.ldau){
+		switch(vasp_calc.ldau_type){
+		case VU_1:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),0);break;
+		case VU_4:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),2);break;
+		case VU_2:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),1);
+		}
+		switch(vasp_calc.ldau_output){
+		case VUO_1:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),1);break;
+		case VUO_2:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),2);break;
+		case VUO_0:
+		default:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),0);
+		}
+		if(vasp_calc.ldaul!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldaul),g_strdup_printf("%s",vasp_calc.ldaul));
+		if(vasp_calc.ldauu!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldauu),g_strdup_printf("%s",vasp_calc.ldauu));
+		if(vasp_calc.ldauj!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldauj),g_strdup_printf("%s",vasp_calc.ldauj));
+	}
+	switch(vasp_calc.idipol){
+	case VID_1:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),1);break;
+	case VID_2:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),2);break;
+	case VID_3:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),3);break;
+	case VID_4:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),4);break;
+	case VID_0:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),0);
+	}
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.ldipol),vasp_calc.ldipol);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lmono),vasp_calc.lmono);
+	if(vasp_calc.dipol!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.dipol),g_strdup_printf("%s",vasp_calc.dipol));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.epsilon),g_strdup_printf("%.4lf",vasp_calc.epsilon));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.efield),g_strdup_printf("%.4lf",vasp_calc.efield));
+	switch(vasp_calc.lorbit){
+	case 1:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),1);break;
+	case 2:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),2);break;
+	case 5:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),3);break;
+	case 10:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),4);break;
+	case 11:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),5);break;
+	case 12:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),6);break;
+	case 0:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),0);
+	}
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nedos),g_strdup_printf("%i",vasp_calc.nedos));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.emin),g_strdup_printf("%.2lf",vasp_calc.emin));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.emax),g_strdup_printf("%.2lf",vasp_calc.emax));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.efermi),g_strdup_printf("%.2lf",vasp_calc.efermi));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_paw),vasp_calc.have_paw);
+	if(vasp_calc.rwigs!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.rwigs),g_strdup_printf("%s",vasp_calc.rwigs));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.loptics),vasp_calc.loptics);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lepsilon),vasp_calc.lepsilon);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lrpa),vasp_calc.lrpa);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lnabla),vasp_calc.lnabla);
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cshift),g_strdup_printf("%.2lf",vasp_calc.cshift));
+	switch(vasp_calc.ibrion){
+	case 0:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),1);break;
+	case 1:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),2);break;
+	case 2:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),3);break;
+	case 3:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),4);break;
+	case 5:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),5);break;
+	case 6:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),6);break;
+	case 7:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),7);break;
+	case 8:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),8);break;
+	case 44:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),9);break;
+	case -1:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),0);break;
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.isif),vasp_calc.isif);
+	//relax_ions already sync
+	//relax_shape already sync
+	//relax_volume already sync
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsw),g_strdup_printf("%i",vasp_calc.nsw));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ediffg),g_strdup_printf("%.2lE",vasp_calc.ediffg));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potim),g_strdup_printf("%.4lf",vasp_calc.potim));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.pstress),g_strdup_printf("%.4lf",vasp_calc.pstress));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nfree),g_strdup_printf("%i",vasp_calc.nfree));
+	if(vasp_calc.ibrion==0){
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.tebeg),g_strdup_printf("%.1lf",vasp_calc.tebeg));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.teend),g_strdup_printf("%.1lf",vasp_calc.teend));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.smass),g_strdup_printf("%.1lf",vasp_calc.smass));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nblock),g_strdup_printf("%i",vasp_calc.nblock));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kblock),g_strdup_printf("%i",vasp_calc.kblock));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.npaco),g_strdup_printf("%i",vasp_calc.npaco));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.apaco),g_strdup_printf("%.4lf",vasp_calc.apaco));
+	}
+	/*skip POSCAR*/
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear_3),g_strdup_printf("%i",vasp_calc.ismear));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma_3),vasp_calc.kgamma);
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing_3),g_strdup_printf("%.4lf",vasp_calc.kspacing));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_calc.kpoints_nkpts));
+	switch(vasp_calc.kpoints_mode){
+	case VKP_MAN:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),0);
+		/*we do not update the kpoint list (here)*/
+		break;
+	case VKP_LINE:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),1);
+		/*we do not update the kpoint list (here)*/
+		break;
+	case VKP_GAMMA:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),3);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_kx);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_ky);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_kz);
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sx),g_strdup_printf("%.4lf",vasp_calc.kpoints_sx));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sy),g_strdup_printf("%.4lf",vasp_calc.kpoints_sy));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sz),g_strdup_printf("%.4lf",vasp_calc.kpoints_sz));
+		break;
+	case VKP_MP:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),4);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_kx);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_ky);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_kz);
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sx),g_strdup_printf("%.4lf",vasp_calc.kpoints_sx));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sy),g_strdup_printf("%.4lf",vasp_calc.kpoints_sy));
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sz),g_strdup_printf("%.4lf",vasp_calc.kpoints_sz));
+		break;
+	case VKP_BASIS:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),5);
+		/*we do not update the basis definition list (here)*/
+		break;
+	case VKP_AUTO:
+	default:
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),2);break;
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_calc.kpoints_kx);
+	}
+	/*skip POTCAR*/
+	/*skip EXEC*/
+
+/*
+        gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear),g_strdup_printf("%i",vasp_calc.ismear));
+        gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),TRUE);
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0);
+*/
+
+}
+/************************************************************/
+/* Preload with default parameter from the simple interface */
+/************************************************************/
+void vasp_apply_simple(GtkButton *button, gpointer data){
+	/*simple interface*/
+#define _OUT(a) gtk_text_buffer_insert_at_cursor(vasp_gui.simple_message_buff,a,-1)
+	gint calcul=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_calcul));
+	gint system=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_system));
+	gint kgrid=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_kgrid));
+	gint dim=(gint)vasp_gui.dimension;
+	/*1st take care of the obvious*/
+	if((vasp_gui.simple_rgeom)&&(calcul<3)){
+		_OUT("FAIL: ROUGHT GEOMETRY: OPTIMIZE GEOMETRY FIRST!\n");
+		return;
+	}
+	if(dim==0){
+		_OUT("ATOM/MOLECULE in a box, setting only gamma point\n");
+		vasp_calc.kpoints_mode=VKP_GAMMA;
+		vasp_calc.kpoints_kx=1;
+		vasp_calc.kpoints_ky=1;
+		vasp_calc.kpoints_kz=1;
+	}else{
+		vasp_calc.kpoints_mode=VKP_AUTO;
+		vasp_calc.kpoints_kx=dim+dim*(1+2*(2*kgrid+1));/*not a serious formula*/
+	}
+	if(calcul<3){
+		vasp_calc.prec=VP_ACCURATE;
+		vasp_calc.algo=VA_NORM;
+		vasp_calc.ldiag=TRUE;
+	}
+	vasp_calc.use_prec=TRUE;
+	/*set LREAL*/
+	if(vasp_calc.atoms_total>16) vasp_calc.lreal=VLR_AUTO;
+	else vasp_calc.lreal=VLR_FALSE;
+	/*set smearing*/
+	if(system>0) {
+		vasp_calc.ismear=0;
+		vasp_calc.sigma=0.05;
+	} else {
+		vasp_calc.ismear=1;
+		vasp_calc.sigma=0.2;
+	}
+	switch(calcul){
+	case 0://Energy (single point)
+		/*use ismear=-5 if we have enough kpoints (ie more than 3)*/
+		if((kgrid>0)&&(dim>0)) vasp_calc.ismear=-5;
+		vasp_calc.nsw=1;/*or 0*/
+		break;
+	case 1://DOS/BANDS (single point)
+		if(dim==0) _OUT("PB: COARSE KGRID BUT BAND/DOS REQUIRED!\n");
+		if(vasp_calc.have_paw) vasp_calc.lorbit=12;
+		else vasp_calc.lorbit=2;
+		vasp_calc.nsw=1;/*or 0*/
+		vasp_calc.nedos=2001;
+		vasp_calc.emin=-10.;
+		vasp_calc.emax=10.;
+		break;
+	case 2://Lattice Dynamics (opt.)
+		vasp_calc.addgrid=TRUE;
+		/*according to vasp manual, Sec. 9.9*/
+		//PREC=Accurate already set
+		vasp_calc.lreal=VLR_FALSE;/*force LREAL=FALSE*/
+		//smearing default 
+		vasp_calc.ibrion=6;
+		_OUT("Default to finite Difference (IBRION=6).\nSET IBRION=8 for Linear Perturbation!\n");
+		break;
+	case 3://Geometry (opt.)
+		if(vasp_gui.simple_rgeom){
+			vasp_calc.prec=VP_NORM;
+			vasp_calc.use_prec=TRUE;
+			vasp_calc.algo=VA_FAST;
+			/*according to vasp manual, Sec. 6.2.4*/
+			vasp_calc.nelmin=5;
+			vasp_calc.ediff=1E-2;
+			vasp_calc.ediffg=-0.3;
+			vasp_calc.nsw=10;
+			vasp_calc.ibrion=2;
+		}else{
+			vasp_calc.prec=VP_ACCURATE;
+			vasp_calc.use_prec=TRUE;
+			vasp_calc.algo=VA_NORM;
+			vasp_calc.ldiag=TRUE;
+			vasp_calc.addgrid=TRUE;
+			/*according to manual, Sec. 6.2.5*/
+			vasp_calc.nelmin=8;
+			vasp_calc.ediff=1E-5;
+			vasp_calc.ediffg=-0.01;
+			vasp_calc.nsw=20;
+			vasp_calc.maxmix=80;
+			vasp_calc.ibrion=1;
+			vasp_calc.nfree=10;
+		}
+		break;
+	case 4://Molecular Dynamics (opt.)
+		if(vasp_gui.simple_rgeom) vasp_calc.prec=VP_LOW;
+		else vasp_calc.prec=VP_NORM;
+		vasp_calc.use_prec=TRUE;/*<- this is maybe too high for PREC=NORMAL*/
+		/*according to vasp manual, Sec. 9.7*/
+		vasp_calc.ediff=1E-5;
+		_OUT("Please check smearing manually!\nDefault: sigma=0.086 Fermi smearing.\n");
+		vasp_calc.ismear=-1;
+		vasp_calc.sigma=0.086;
+		/*choose smearing wisely*/
+		vasp_calc.algo=VA_VERYFAST;
+		vasp_calc.maxmix=40;
+		vasp_calc.isym=0;
+		vasp_calc.nelmin=4;
+		vasp_calc.ibrion=0;
+		vasp_calc.nsw=100;
+		vasp_calc.nwrite=0;/*TODO: for (adv.)*/
+		vasp_calc.lcharg=FALSE;
+		vasp_calc.lwave=FALSE;
+		_OUT("Please set TEBEG and TEEND manually!\nDefault: 1000 for both.\n");
+		vasp_calc.tebeg=1000;
+		vasp_calc.teend=1000;
+		vasp_calc.smass=3;
+		vasp_calc.nblock=50;
+		vasp_calc.potim=1.5;
+		break;
+	default:
+		_OUT("FAIL: UNKNOWN CALCUL SETTING!\n");
+		return;
+	}
+	vasp_gui_refresh();
+#undef _OUT
+}
 /******************/
 /* selecting PREC */
 /******************/
 void vasp_prec_selected(GtkWidget *w, struct model_pak *model){
-/*how much more simple it could be?*/
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"Normal") == 0) vasp_calc.prec=VP_NORM;
-else if (g_ascii_strcasecmp(label,"Single") == 0) vasp_calc.prec=VP_SINGLE;
-else if (g_ascii_strcasecmp(label,"Accurate") == 0)vasp_calc.prec=VP_ACCURATE;
-else if (g_ascii_strcasecmp(label,"High") == 0)vasp_calc.prec=VP_HIGH;
-else if (g_ascii_strcasecmp(label,"Medium") == 0)vasp_calc.prec=VP_MED;
-else if (g_ascii_strcasecmp(label,"Low") == 0) vasp_calc.prec=VP_LOW;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch (index){
+	case 1://Single
+		vasp_calc.prec=VP_SINGLE;break;
+	case 2://Accurate
+		vasp_calc.prec=VP_ACCURATE;break;
+	case 3://High
+		vasp_calc.prec=VP_HIGH;break;
+	case 4://Medium
+		vasp_calc.prec=VP_MED;break;
+	case 5://Low
+		vasp_calc.prec=VP_LOW;break;
+	case 0://Normal
+	default:
+		vasp_calc.prec=VP_NORM;
+	}
 }
 /*****************************************/
 /* Toggle use of automatic prec settings */
@@ -191,43 +691,78 @@ void prec_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting ALGO */
 /******************/
 void vasp_algo_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
-if (g_ascii_strcasecmp(label,"NORMAL") == 0) vasp_calc.algo=VA_NORM;
-else if (g_ascii_strcasecmp(label,"USE_IALGO") == 0) vasp_calc.algo=VA_IALGO;
-else if (g_ascii_strcasecmp(label,"VERYFAST") == 0) vasp_calc.algo=VA_VERYFAST;
-else if (g_ascii_strcasecmp(label,"FAST") == 0) vasp_calc.algo=VA_FAST;
-else if (g_ascii_strcasecmp(label,"CONJUGATE") == 0) vasp_calc.algo=VA_CONJ;
-else if (g_ascii_strcasecmp(label,"ALL") == 0) vasp_calc.algo=VA_ALL;
-else if (g_ascii_strcasecmp(label,"DAMPED") == 0) vasp_calc.algo=VA_DAMPED;
-else if (g_ascii_strcasecmp(label,"SUBROT") == 0) vasp_calc.algo=VA_SUBROT;
-else if (g_ascii_strcasecmp(label,"EIGENVAL") == 0) vasp_calc.algo=VA_EIGEN;
-else if (g_ascii_strcasecmp(label,"NONE") == 0) vasp_calc.algo=VA_NONE;
-else if (g_ascii_strcasecmp(label,"NOTHING") == 0) vasp_calc.algo=VA_NOTHING;
-else if (g_ascii_strcasecmp(label,"EXACT") == 0) vasp_calc.algo=VA_EXACT;
-else if (g_ascii_strcasecmp(label,"DIAG") == 0) vasp_calc.algo=VA_DIAG;
-if(vasp_calc.algo==VA_IALGO) gtk_widget_set_sensitive(vasp_gui.ialgo,TRUE);
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
+	switch(index){
+	case 1://USE_IALGO
+		vasp_calc.algo=VA_IALGO;
+		gtk_widget_set_sensitive(vasp_gui.ialgo,TRUE);
+		break;
+	case 2://VERYFAST
+		vasp_calc.algo=VA_VERYFAST;break;
+	case 3://FAST
+		vasp_calc.algo=VA_FAST;break;
+	case 4://CONJUGATE
+		vasp_calc.algo=VA_CONJ;break;
+	case 5://ALL
+		vasp_calc.algo=VA_ALL;break;
+	case 6://DAMPED
+		vasp_calc.algo=VA_DAMPED;break;
+	case 7://SUBROT
+		vasp_calc.algo=VA_SUBROT;break;
+	case 8://EIGENVAL
+		vasp_calc.algo=VA_EIGEN;break;
+	case 9://NONE
+		vasp_calc.algo=VA_NONE;break;
+	case 10://NOTHING
+		vasp_calc.algo=VA_NOTHING;break;
+	case 11://EXACT
+		vasp_calc.algo=VA_EXACT;break;
+	case 12://DIAG
+		vasp_calc.algo=VA_DIAG;break;
+	case 0://NORMAL
+	default:
+		vasp_calc.algo=VA_NORM;
+	}
 }
 /*******************/
 /* selecting IALGO */
 /*******************/
 void vasp_ialgo_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"2:FIXED ORB/1E") == 0) vasp_calc.ialgo=VIA_OE_FIXED;
-else if (g_ascii_strcasecmp(label,"3:FIXED ORB") == 0) vasp_calc.ialgo=VIA_O_FIXED;
-else if (g_ascii_strcasecmp(label,"4:SUBROT ONLY") == 0) vasp_calc.ialgo=VIA_SUBROT;
-else if (g_ascii_strcasecmp(label,"5:STEEPEST") == 0) vasp_calc.ialgo=VIA_STEEP;
-else if (g_ascii_strcasecmp(label,"6:CONJUGUATE GRADIENTS") == 0) vasp_calc.ialgo=VIA_CG;
-else if (g_ascii_strcasecmp(label,"7:PRECOND. STEEPEST") == 0) vasp_calc.ialgo=VIA_PSTEEP;
-else if (g_ascii_strcasecmp(label,"8:PRECOND. CG") == 0) vasp_calc.ialgo=VIA_PCG;
-else if (g_ascii_strcasecmp(label,"38:KOSUGI") == 0) vasp_calc.ialgo=VIA_KOSUGI;
-else if (g_ascii_strcasecmp(label,"44:RMM STEEPEST") == 0) vasp_calc.ialgo=VIA_ESTEEP;
-else if (g_ascii_strcasecmp(label,"46:RMM PRECOND.") == 0) vasp_calc.ialgo=VIA_RMMP;
-else if (g_ascii_strcasecmp(label,"48:PRECOND. RMM") == 0) vasp_calc.ialgo=VIA_PRMM;
-else if (g_ascii_strcasecmp(label,"53:VAR DAMPED MD") == 0) vasp_calc.ialgo=VIA_VAR_DAMP;
-else if (g_ascii_strcasecmp(label,"54:VAR DAMPED QUENCH MD") == 0) vasp_calc.ialgo=VIA_VAR_QUENCH;
-else if (g_ascii_strcasecmp(label,"58:VAR PRECOND. CG") == 0) vasp_calc.ialgo=VIA_VAR_PCG;
-else if (g_ascii_strcasecmp(label,"90:EXACT") == 0) vasp_calc.ialgo=VIA_EXACT;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://2:FIXED ORB/1E
+		vasp_calc.ialgo=VIA_OE_FIXED;break;
+	case 1://3:FIXED ORB
+		vasp_calc.ialgo=VIA_O_FIXED;break;
+	case 2://4:SUBROT ONLY
+		vasp_calc.ialgo=VIA_SUBROT;break;
+	case 3://5:STEEPEST
+		vasp_calc.ialgo=VIA_STEEP;break;
+	case 4://6:CONJUGUATE GRADIENTS
+		vasp_calc.ialgo=VIA_CG;break;
+	case 5://7:PRECOND. STEEPEST
+		vasp_calc.ialgo=VIA_PSTEEP;break;
+	case 6://8:PRECOND. CG
+		vasp_calc.ialgo=VIA_PCG;break;
+	case 8://44:RMM STEEPEST
+		vasp_calc.ialgo=VIA_ESTEEP;break;
+	case 9://46:RMM PRECOND.
+		vasp_calc.ialgo=VIA_RMMP;break;
+	case 10://48:PRECOND. RMM
+		vasp_calc.ialgo=VIA_PRMM;break;
+	case 11://53:VAR DAMPED MD
+		vasp_calc.ialgo=VIA_VAR_DAMP;break;
+	case 12://54:VAR DAMPED QUENCH MD
+		vasp_calc.ialgo=VIA_VAR_QUENCH;break;
+	case 13://58:VAR PRECOND. CG
+		vasp_calc.ialgo=VIA_VAR_PCG;break;
+	case 14://90:EXACT
+		vasp_calc.ialgo=VIA_EXACT;break;
+	case 7://38:KOSUGI
+	default:
+		vasp_calc.ialgo=VIA_KOSUGI;
+}
 }
 /***************/
 /* elec toggle */
@@ -258,11 +793,18 @@ void elec_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting LREAL */
 /*******************/
 void vasp_lreal_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"Auto") == 0) vasp_calc.lreal=VLR_AUTO;
-else if (g_ascii_strcasecmp(label,"On") == 0) vasp_calc.lreal=VLR_ON;
-else if (g_ascii_strcasecmp(label,"TRUE") == 0) vasp_calc.lreal=VLR_TRUE;
-else if (g_ascii_strcasecmp(label,"FALSE") == 0) vasp_calc.lreal=VLR_FALSE;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://Auto
+		vasp_calc.lreal=VLR_AUTO;break;
+	case 1://On
+		vasp_calc.lreal=VLR_ON;break;
+	case 2://TRUE
+		vasp_calc.lreal=VLR_TRUE;break;
+	case 3://FALSE
+	default:
+		vasp_calc.lreal=VLR_FALSE;
+	}
 }
 /***************/
 /* grid toggle */
@@ -332,27 +874,43 @@ void lsorbit_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting GGA */
 /*****************/
 void vasp_gga_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"91:PW91") == 0) vasp_calc.gga=VG_91;
-else if (g_ascii_strcasecmp(label,"PE:PBE") == 0) vasp_calc.gga=VG_PE;
-else if (g_ascii_strcasecmp(label,"RP:rPBE") == 0) vasp_calc.gga=VG_RP;
-else if (g_ascii_strcasecmp(label,"AM:AM05") == 0) vasp_calc.gga=VG_AM;
-else if (g_ascii_strcasecmp(label,"PS:PBEsol") == 0) vasp_calc.gga=VG_PS;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://91:PW91
+		vasp_calc.gga=VG_91;break;
+	case 2://RP:rPBE
+		vasp_calc.gga=VG_RP;break;
+	case 3://AM:AM05
+		vasp_calc.gga=VG_AM;break;
+	case 4://PS:PBEsol
+		vasp_calc.gga=VG_PS;break;
+	case 1://PE:PBE
+	default:
+		vasp_calc.gga=VG_PE;
+	}
 }
+/*********************/
+/* selecting METAGGA */
+/*********************/
 void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-gtk_widget_set_sensitive(vasp_gui.cmbj,FALSE);
-gtk_widget_set_sensitive(vasp_gui.cmbja,FALSE);
-gtk_widget_set_sensitive(vasp_gui.cmbjb,FALSE);
-if (g_ascii_strcasecmp(label,"TPSS") == 0) vasp_calc.mgga=VMG_TPSS;
-else if (g_ascii_strcasecmp(label,"rTPSS") == 0) vasp_calc.mgga=VMG_RTPSS;
-else if (g_ascii_strcasecmp(label,"M06L") == 0) vasp_calc.mgga=VMG_M06L;
-else if (g_ascii_strcasecmp(label,"MBJ") == 0) vasp_calc.mgga=VMG_MBJ;
-if(vasp_calc.mgga==VMG_MBJ){
-	gtk_widget_set_sensitive(vasp_gui.cmbj,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.cmbja,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.cmbjb,TRUE);
-}
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gtk_widget_set_sensitive(vasp_gui.cmbj,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.cmbja,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.cmbjb,FALSE);
+	switch(index){
+	case 0://TPSS
+		vasp_calc.mgga=VMG_TPSS;break;
+	case 1://rTPSS
+		vasp_calc.mgga=VMG_RTPSS;break;
+	case 2://M06L
+		vasp_calc.mgga=VMG_M06L;break;
+	case 3://MBJ
+	default:
+		vasp_calc.mgga=VMG_MBJ;
+		gtk_widget_set_sensitive(vasp_gui.cmbj,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.cmbja,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.cmbjb,TRUE);
+	}
 }
 /*******************/
 /* toggle LMETAGGA */
@@ -400,19 +958,31 @@ void ldau_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting L(S)DA+U type */
 /***************************/
 void vasp_ldau_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"1:LSDA+U Liechtenstein") == 0) vasp_calc.ldau_type=VU_1;
-else if (g_ascii_strcasecmp(label,"2:LSDA+U Dudarev") == 0) vasp_calc.ldau_type=VU_2;
-else if (g_ascii_strcasecmp(label,"4:LDA+U Liechtenstein") == 0) vasp_calc.ldau_type=VU_4;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://1:LSDA+U Liechtenstein
+		vasp_calc.ldau_type=VU_1;break;
+	case 2://2:LSDA+U Dudarev
+		vasp_calc.ldau_type=VU_4;break;
+	case 1://4:LDA+U Liechtenstein
+	default:
+		vasp_calc.ldau_type=VU_2;
+	}
 }
 /***************************************/
 /* selecting L(S)DA+U output verbosity */
 /***************************************/
 void vasp_ldau_print_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"0:Silent") == 0) vasp_calc.ldau_output=VUO_0;
-else if (g_ascii_strcasecmp(label,"1:Occupancy matrix") == 0) vasp_calc.ldau_output=VUO_1;
-else if (g_ascii_strcasecmp(label,"2:Full output") == 0) vasp_calc.ldau_output=VUO_2;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 1://1:Occupancy matrix
+		vasp_calc.ldau_output=VUO_1;break;
+	case 2://2:Full output
+		vasp_calc.ldau_output=VUO_2;break;
+	case 0://0:Silent
+	default:
+		vasp_calc.ldau_output=VUO_0;
+	}
 }
 /************************************/
 /* toggle manual selection of mixer */
@@ -458,146 +1028,192 @@ void mixer_toggle(GtkWidget *w, GtkWidget *box){
 /* selecting mixer */
 /*******************/
 void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-gtk_widget_set_sensitive(vasp_gui.wc,FALSE);
-gtk_widget_set_sensitive(vasp_gui.inimix,FALSE);
-gtk_widget_set_sensitive(vasp_gui.mixpre,FALSE);
-if (g_ascii_strcasecmp(label,"0:NO MIXING") == 0) vasp_calc.imix=VM_0;
-else if (g_ascii_strcasecmp(label,"1:KERKER") == 0) vasp_calc.imix=VM_1;
-else if (g_ascii_strcasecmp(label,"2:TCHEBYCHEV") == 0) vasp_calc.imix=VM_2;
-else if (g_ascii_strcasecmp(label,"4:BROYDEN") == 0) vasp_calc.imix=VM_4;
-if(vasp_calc.imix==VM_4) {
-	gtk_widget_set_sensitive(vasp_gui.wc,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.inimix,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.mixpre,TRUE);
-}
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gtk_widget_set_sensitive(vasp_gui.wc,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.inimix,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.mixpre,FALSE);
+	switch(index){
+	case 0://0:NO MIXING
+		vasp_calc.imix=VM_0;break;
+	case 1://1:KERKER
+		vasp_calc.imix=VM_1;break;
+	case 2://2:TCHEBYCHEV
+		vasp_calc.imix=VM_2;break;
+	case 3://4:BROYDEN
+	default:
+		vasp_calc.imix=VM_4;
+		gtk_widget_set_sensitive(vasp_gui.wc,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.inimix,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.mixpre,TRUE);
+	}
 }
 /***************************/
 /* selecting initial mixer */
 /***************************/
 void vasp_inimix_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"0:LINEAR") == 0) vasp_calc.inimix=VIM_0;
-else if (g_ascii_strcasecmp(label,"1:KERKER") == 0) vasp_calc.inimix=VIM_1;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://0:LINEAR
+		vasp_calc.inimix=VIM_0;break;
+	case 1://1:KERKER
+	default:
+		vasp_calc.inimix=VIM_1;
+	}
 }
 /************************/
 /* selecting pre-mixing */
 /************************/
 void vasp_mixpre_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"0:NONE") == 0) vasp_calc.mixpre=VMP_0;
-else if (g_ascii_strcasecmp(label,"1:F=20 INVERSE KERKER") == 0) vasp_calc.mixpre=VMP_1;
-else if (g_ascii_strcasecmp(label,"2:F=200 INVERSE KERKER") == 0) vasp_calc.mixpre=VMP_2;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 0://0:NONE
+		vasp_calc.mixpre=VMP_0;break;
+	case 2:
+		vasp_calc.mixpre=VMP_2;break;
+	case 1:
+	default:
+		vasp_calc.mixpre=VMP_1;
+	}
 }
 /********************/
 /* selecting idipol */
 /********************/
 void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-gtk_widget_set_sensitive(vasp_gui.ldipol,FALSE);
-gtk_widget_set_sensitive(vasp_gui.lmono,FALSE);
-gtk_widget_set_sensitive(vasp_gui.dipol,FALSE);
-gtk_widget_set_sensitive(vasp_gui.epsilon,FALSE);
-gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
-if (g_ascii_strcasecmp(label,"0:no calcul") == 0) vasp_calc.idipol=VID_0;
-else if (g_ascii_strcasecmp(label,"1:u axis") == 0) vasp_calc.idipol=VID_1;
-else if (g_ascii_strcasecmp(label,"2:v axis") == 0) vasp_calc.idipol=VID_2;
-else if (g_ascii_strcasecmp(label,"3:w axis") == 0) vasp_calc.idipol=VID_3;
-else if (g_ascii_strcasecmp(label,"4:all axis") == 0) vasp_calc.idipol=VID_4;
-/*setting other than 0 should trigger dipol*/
-if(vasp_calc.idipol!=VID_0) {
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
 	gtk_widget_set_sensitive(vasp_gui.ldipol,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.lmono,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.dipol,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.epsilon,TRUE);
-	if(vasp_calc.idipol!=VID_4) gtk_widget_set_sensitive(vasp_gui.efield,TRUE);
+	gtk_widget_set_sensitive(vasp_gui.efield,TRUE);
+	switch(index){
+	case 1://1:u axis
+		vasp_calc.idipol=VID_1;break;
+	case 2://2:v axis
+		vasp_calc.idipol=VID_2;break;
+	case 3://3:w axis
+		vasp_calc.idipol=VID_3;break;
+	case 4://4:all axis
+		vasp_calc.idipol=VID_4;
+		gtk_widget_set_sensitive(vasp_gui.efield,FALSE);/*not implemented*/
+		break;
+	case 0://0:no calcul
+	default:
+		vasp_calc.idipol=VID_0;
+		gtk_widget_set_sensitive(vasp_gui.ldipol,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.lmono,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.dipol,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.epsilon,FALSE);
+		gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
+	}
 }
+/********************/
+/* selecting lorbit */
+/********************/
+void vasp_lorbit_selected(GtkWidget *w, struct model_pak *model){
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	switch(index){
+	case 1://1:lm-PROCAR
+		vasp_calc.lorbit=1;break;
+	case 2://2:phase+lm-PROCAR
+		vasp_calc.lorbit=2;break;
+	case 3://5:PROOUT
+		vasp_calc.lorbit=5;break;
+	case 4://10:PROCAR
+		vasp_calc.lorbit=10;break;
+	case 5://11:lm-PROCAR
+		vasp_calc.lorbit=11;break;
+	case 6://12:phase+lm-PROCAR
+		vasp_calc.lorbit=12;break;
+	case 0://0:PROCAR
+	default:
+		vasp_calc.lorbit=0;
+	}
 }
 /********************/
 /* selecting ibrion */
 /********************/
 void vasp_ibrion_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-gtk_widget_set_sensitive(vasp_gui.tebeg,FALSE);
-gtk_widget_set_sensitive(vasp_gui.teend,FALSE);
-gtk_widget_set_sensitive(vasp_gui.smass,FALSE);
-gtk_widget_set_sensitive(vasp_gui.nblock,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kblock,FALSE);
-gtk_widget_set_sensitive(vasp_gui.npaco,FALSE);
-gtk_widget_set_sensitive(vasp_gui.apaco,FALSE);
-if (g_ascii_strcasecmp(label,"-1:Nothing") == 0) vasp_calc.ibrion=-1;
-else if (g_ascii_strcasecmp(label,"0:Molecular Dynamics") == 0) vasp_calc.ibrion=0;
-else if (g_ascii_strcasecmp(label,"1:Quasi-Newton") == 0) vasp_calc.ibrion=1;
-else if (g_ascii_strcasecmp(label,"2:Conjugate Gradients") == 0) vasp_calc.ibrion=2;
-else if (g_ascii_strcasecmp(label,"3:Damped") == 0) vasp_calc.ibrion=3;
-else if (g_ascii_strcasecmp(label,"5:Finite Differences") == 0) vasp_calc.ibrion=5;
-else if (g_ascii_strcasecmp(label,"6:Finite Diff. with SYM") == 0) vasp_calc.ibrion=6;
-else if (g_ascii_strcasecmp(label,"7:Perturbation Theory") == 0) vasp_calc.ibrion=7;
-else if (g_ascii_strcasecmp(label,"8:Pert. Theory with SYM") == 0) vasp_calc.ibrion=8;
-else if (g_ascii_strcasecmp(label,"44:Transition State") == 0) vasp_calc.ibrion=44;
-if (vasp_calc.ibrion==0) {/*selecting MD enable molecular dynamics settings*/
-gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
-gtk_widget_set_sensitive(vasp_gui.teend,TRUE);
-gtk_widget_set_sensitive(vasp_gui.smass,TRUE);
-gtk_widget_set_sensitive(vasp_gui.nblock,TRUE);
-gtk_widget_set_sensitive(vasp_gui.kblock,TRUE);
-gtk_widget_set_sensitive(vasp_gui.npaco,TRUE);
-gtk_widget_set_sensitive(vasp_gui.apaco,TRUE);
-}
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gtk_widget_set_sensitive(vasp_gui.tebeg,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.teend,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.smass,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.nblock,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kblock,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.npaco,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.apaco,FALSE);
+	switch(index){
+	case 1://0:Molecular Dynamics
+		vasp_calc.ibrion=0;
+		/*molecular dynamics part*/
+		gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.teend,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.smass,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.nblock,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.kblock,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.npaco,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.apaco,TRUE);
+		break;
+	case 2://1:Quasi-Newton
+		vasp_calc.ibrion=1;break;
+	case 3://2:Conjugate Gradients
+		vasp_calc.ibrion=2;break;
+	case 4://3:Damped
+		vasp_calc.ibrion=3;break;
+	case 5://5:Finite Differences
+		vasp_calc.ibrion=5;break;
+	case 6://6:Finite Diff. with SYM
+		vasp_calc.ibrion=6;break;
+	case 7://7:Perturbation Theory
+		vasp_calc.ibrion=7;break;
+	case 8://8:Pert. Theory with SYM
+		vasp_calc.ibrion=8;break;
+	case 9://44:Transition State
+		vasp_calc.ibrion=44;break;
+	case 0://-1:Nothing
+	default:
+		vasp_calc.ibrion=-1;
+	}
 }
 /******************/
 /* selecting ISIF */
 /******************/
 void vasp_isif_selected(GtkWidget *w, struct model_pak *model){
-/*is it even going to work?*/
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"0:F_0_I_0_0") == 0) vasp_calc.isif=0;
-else if (g_ascii_strcasecmp(label,"1:F_P_I_0_0") == 0) vasp_calc.isif=1;
-else if (g_ascii_strcasecmp(label,"2:F_S_I_0_0") == 0) vasp_calc.isif=2;
-else if (g_ascii_strcasecmp(label,"3:F_S_I_S_V") == 0) vasp_calc.isif=3;
-else if (g_ascii_strcasecmp(label,"4:F_S_I_S_0") == 0) vasp_calc.isif=4;
-else if (g_ascii_strcasecmp(label,"5:F_S_0_S_0") == 0) vasp_calc.isif=5;
-else if (g_ascii_strcasecmp(label,"6:F_S_0_S_V") == 0) vasp_calc.isif=6;
-else if (g_ascii_strcasecmp(label,"7:F_S_0_0_V") == 0) vasp_calc.isif=7;
-switch (vasp_calc.isif){
-	case 0:
-	case 1:
-	case 2:
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
-		break;
-	case 3:
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	vasp_calc.isif=index;
+	switch(index){
+	case 3://3:F_S_I_S_V
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
 		break;
-	case 4:
+	case 4://4:F_S_I_S_0
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
 		break;
-	case 5:
+	case 5://5:F_S_0_S_0
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
-		break;
-	case 6:
+		break;	
+	case 6://6:F_S_0_S_V
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
 		break;
-	case 7:
+	case 7://7:F_S_0_0_V
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
 		break;
+	case 0://0:F_0_I_0_0
+	case 1://1:F_P_I_0_0
+	case 2://2:F_S_I_0_0
 	default:
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),FALSE);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
-		vasp_calc.isif=2;/*this should never happen*/
-}
+	}
 }
 /****************/
 /* isif toggles */
@@ -642,56 +1258,45 @@ void toggle_poscar_sd(){
 /* selecting poscar_free */
 /*************************/
 void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
-	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*for the push-pull*/
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"All atom FIXED") == 0) vasp_calc.poscar_free=VPF_FIXED;
-else if (g_ascii_strcasecmp(label,"All atom FREE") == 0) vasp_calc.poscar_free=VPF_FREE;
-else if (g_ascii_strcasecmp(label,"Manual selection") == 0) vasp_calc.poscar_free=VPF_MAN;
-        /* set tags sensitivity */
-        gtk_widget_set_sensitive(vasp_gui.poscar_tx,(vasp_calc.poscar_free==VPF_MAN));
-        gtk_widget_set_sensitive(vasp_gui.poscar_ty,(vasp_calc.poscar_free==VPF_MAN));
-        gtk_widget_set_sensitive(vasp_gui.poscar_tz,(vasp_calc.poscar_free==VPF_MAN));
-	if(vasp_calc.poscar_free==VPF_FREE){/*set all tags to TRUE*/
-		gchar *text;
-		gdouble x,y,z;
-		gchar symbol[3];
-		gint idx=0;
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
-		
-		while(g_ascii_strcasecmp(text,"ADD atom")!=0){
-			/*modify each line tags*/
-			sscanf(text,"%lf %lf %lf %*c %*c %*c ! atom: %*i (%[^)])",&x,&y,&z,&(symbol[0]));
-                	gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,
-                        	g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%s)",
-                        	x,y,z,idx,symbol));
-                	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
-			idx++;
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-			text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
-		}
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gint ix=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*PUSH*/
+	gchar *text;
+	gdouble x,y,z;
+	gchar symbol[3];
+	gint idx=0;
+	gchar tag;
+        gtk_widget_set_sensitive(vasp_gui.poscar_tx,(index==2));
+        gtk_widget_set_sensitive(vasp_gui.poscar_ty,(index==2));
+        gtk_widget_set_sensitive(vasp_gui.poscar_tz,(index==2));
+	switch(index){
+	case 0://All atom FIXED
+		vasp_calc.poscar_free=VPF_FIXED;
+		tag='F';
+		break;
+	case 2://Manual selection
+		vasp_calc.poscar_free=VPF_MAN;
+		/*no need to modify atom list*/
+		return;
+	case 1://All atom FREE
+	default:
+		vasp_calc.poscar_free=VPF_FREE;
+		tag='T';
 	}
-	if(vasp_calc.poscar_free==VPF_FIXED){/*set all tags to FALSE*/
-		gchar *text;
-		gdouble x,y,z;
-		gchar symbol[3];
-		gint idx=0;
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
-		while(g_ascii_strcasecmp(text,"ADD atom")!=0){
-			/*modify each line tags*/
-			sscanf(text,"%lf %lf %lf %*c %*c %*c ! atom: %*i (%[^)])",&x,&y,&z,&(symbol[0]));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
+	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
+		/*modify each line tags*/
+		sscanf(text,"%lf %lf %lf %*c %*c %*c ! atom: %*i (%[^)])",&x,&y,&z,&(symbol[0]));
 			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,
-				g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%s)",
-				x,y,z,idx,symbol));
-			gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
-			idx++;
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-			text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
-		}
+			g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
+			x,y,z,tag,tag,tag,idx,symbol));
+		gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
+		idx++;
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
+		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
 	}
-	/*return to selected item*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index);
+	/*return to selected atom*/
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),ix);/*PULL*/
 }
 /************************/
 /* poscar_direct toggle */
@@ -808,50 +1413,71 @@ void vasp_atom_delete(){
 /* selecting kpoints_mode */
 /**************************/
 void vasp_kpoints_mode_selected(GtkWidget *w, struct model_pak *model){
-	const gchar *label = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
-if (g_ascii_strcasecmp(label,"Manual Entry") == 0) vasp_calc.kpoints_mode=VKP_MAN;
-else if (g_ascii_strcasecmp(label,"Line Mode") == 0) vasp_calc.kpoints_mode=VKP_LINE;
-else if (g_ascii_strcasecmp(label,"Automatic (M&P)") == 0) vasp_calc.kpoints_mode=VKP_AUTO;
-else if (g_ascii_strcasecmp(label,"Gamma (M&P)") == 0) vasp_calc.kpoints_mode=VKP_GAMMA;
-else if (g_ascii_strcasecmp(label,"Monkhorst-Pack classic") == 0) vasp_calc.kpoints_mode=VKP_MP;
-else if (g_ascii_strcasecmp(label,"Basis set definition") == 0) vasp_calc.kpoints_mode=VKP_BASIS;
-gtk_widget_set_sensitive(vasp_gui.kpoints_w,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_cart,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_tetra,FALSE);
-gtk_widget_set_sensitive(vasp_gui.have_tetra,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_coord,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_kx,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_ky,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_kz,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_sx,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_sy,FALSE);
-gtk_widget_set_sensitive(vasp_gui.kpoints_sz,FALSE);
-switch (vasp_calc.kpoints_mode){
-	case VKP_MAN:
-	gtk_widget_set_sensitive(vasp_gui.kpoints_w,TRUE);//only VKP_MAN require weights
-	if(vasp_calc.ismear==-5) gtk_widget_set_sensitive(vasp_gui.kpoints_tetra,TRUE);//only VKP_MAN require tetra
-	if(vasp_calc.ismear==-5) gtk_widget_set_sensitive(vasp_gui.have_tetra,TRUE);//and only if ISMEAR=-5
-	case VKP_LINE:
-	case VKP_BASIS:
-	gtk_widget_set_sensitive(vasp_gui.kpoints_coord,TRUE);//need coord
-	gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,TRUE);//need nkpts
-	gtk_widget_set_sensitive(vasp_gui.kpoints_cart,TRUE);//can be cart
-	break;
-	case VKP_GAMMA:
-	case VKP_MP:
-	gtk_widget_set_sensitive(vasp_gui.kpoints_ky,TRUE);//require ky
-	gtk_widget_set_sensitive(vasp_gui.kpoints_kz,TRUE);//require kz
-	gtk_widget_set_sensitive(vasp_gui.kpoints_sx,TRUE);//require sx
-	gtk_widget_set_sensitive(vasp_gui.kpoints_sy,TRUE);//require sy
-	gtk_widget_set_sensitive(vasp_gui.kpoints_sz,TRUE);//require sz
-	case VKP_AUTO:
-	gtk_widget_set_sensitive(vasp_gui.kpoints_kx,TRUE);//AUTO only require kx
-	vasp_calc.kpoints_nkpts=0;
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_calc.kpoints_nkpts));
-	gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,FALSE);//NKPTS is 0 and disable
-	break;
+	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
+	gtk_widget_set_sensitive(vasp_gui.kpoints_w,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_cart,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_tetra,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.have_tetra,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_coord,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_kx,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_ky,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_kz,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_sx,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_sy,FALSE);
+	gtk_widget_set_sensitive(vasp_gui.kpoints_sz,FALSE);
+	switch(index){
+	case 0://Manual Entry
+		vasp_calc.kpoints_mode=VKP_MAN;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_w,TRUE);
+		gtk_widget_set_sensitive(vasp_gui.kpoints_coord,TRUE);//need coord
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,TRUE);//need nkpts
+		gtk_widget_set_sensitive(vasp_gui.kpoints_cart,TRUE);//can be cart
+		if(vasp_calc.ismear==-5) gtk_widget_set_sensitive(vasp_gui.kpoints_tetra,TRUE);//only VKP_MAN require tetra
+		if(vasp_calc.ismear==-5) gtk_widget_set_sensitive(vasp_gui.have_tetra,TRUE);//and only if ISMEAR=-5
+		break;
+	case 1://Line Mode
+		vasp_calc.kpoints_mode=VKP_LINE;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_coord,TRUE);//need coord
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,TRUE);//need nkpts
+		gtk_widget_set_sensitive(vasp_gui.kpoints_cart,TRUE);//can be cart
+		break;
+	case 3://Gamma (M&P)
+		vasp_calc.kpoints_mode=VKP_GAMMA;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_kx,TRUE);//require kx
+		gtk_widget_set_sensitive(vasp_gui.kpoints_ky,TRUE);//require ky
+		gtk_widget_set_sensitive(vasp_gui.kpoints_kz,TRUE);//require kz
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sx,TRUE);//require sx
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sy,TRUE);//require sy
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sz,TRUE);//require sz
+		vasp_calc.kpoints_nkpts=0;
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_calc.kpoints_nkpts));
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,FALSE);//NKPTS is 0 and disable
+		break;
+	case 4://Monkhorst-Pack classic
+		vasp_calc.kpoints_mode=VKP_MP;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_kx,TRUE);//require kx
+		gtk_widget_set_sensitive(vasp_gui.kpoints_ky,TRUE);//require ky
+		gtk_widget_set_sensitive(vasp_gui.kpoints_kz,TRUE);//require kz
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sx,TRUE);//require sx
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sy,TRUE);//require sy
+		gtk_widget_set_sensitive(vasp_gui.kpoints_sz,TRUE);//require sz
+		vasp_calc.kpoints_nkpts=0;
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_calc.kpoints_nkpts));
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,FALSE);//NKPTS is 0 and disable
+		break;
+	case 5://Basis set definition
+		vasp_calc.kpoints_mode=VKP_BASIS;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_coord,TRUE);//need coord
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,TRUE);//need nkpts
+		gtk_widget_set_sensitive(vasp_gui.kpoints_cart,TRUE);//can be cart
+		break;
+	case 2://Automatic (M&P)
 	default:
-		fprintf(stderr,"NO KPOINTS GENERATION MODE SELECTED!");//should never happen
+		vasp_calc.kpoints_mode=VKP_AUTO;
+		gtk_widget_set_sensitive(vasp_gui.kpoints_kx,TRUE);//AUTO only require kx
+		vasp_calc.kpoints_nkpts=0;
+		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_calc.kpoints_nkpts));
+		gtk_widget_set_sensitive(vasp_gui.kpoints_nkpts,FALSE);//NKPTS is 0 and disable
 	}
 }
 /**********************/
@@ -1019,6 +1645,12 @@ void potcar_get_species(){
 	if(vasp_calc.potcar_species!=NULL) g_free(vasp_calc.potcar_species);
 	vasp_calc.potcar_species=g_strdup_printf(" ");
 	line = file_read_line(fp);
+	sscanf(line," %c%c%c%*s %*s",&(sym[0]),&(sym[1]),&(sym[2]));
+	if((sym[0]=='P')&&(sym[1]=='A')&&(sym[2]=='W')) {
+		vasp_calc.have_paw=TRUE;
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_paw),TRUE);
+	}
+	sym[2]='\0';
 	while(line){
 		if (strstr(line,"TITEL") != NULL) {
 			sscanf(line," TITEL = %*s %c%c%*s",&(sym[0]),&(sym[1]));
@@ -1030,7 +1662,8 @@ void potcar_get_species(){
 		line = file_read_line(fp);
 	}
 	fclose(fp);
-	/*update vasp_gui.potcar_species*/
+	/*update vasp_gui.simple_species and vasp_gui.potcar_species*/
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_species),g_strdup_printf("%s",vasp_calc.potcar_species));
 	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species),g_strdup_printf("%s",vasp_calc.potcar_species));
 }
 /************************************************************************/
@@ -1104,13 +1737,9 @@ void toggle_potcar_folder(GtkWidget *w, GtkWidget *box){
 /* tentative to equilibrate the NPAR,NCORE,KPAR with the number of CPUs */
 /************************************************************************/
 void parallel_eq(GtkWidget *w, GtkWidget *box){
-	gchar *tamp;
 	/*parallel equilibration*/
 	gint np,ncore,kpar;
-	/* mini sync */
-	VASP_REG_VAL(ncore,"%lf");
-	VASP_REG_VAL(kpar,"%lf");
-	VASP_REG_VAL(job_nproc,"%lf");
+	/* no need to sync */
 	np=(gint)vasp_calc.job_nproc;
 	ncore=(gint)vasp_calc.ncore;
 	kpar=(gint)vasp_calc.kpar;
@@ -1121,6 +1750,11 @@ void parallel_eq(GtkWidget *w, GtkWidget *box){
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0);
 		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,1.0);
 		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,1.0);
+		/*same for simplified interface*/
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0);
+		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0,1.0);
+		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0,1.0);
 		return;
 	}
 	/* ncore should be [1,ncpu/kpar] */
@@ -1128,6 +1762,10 @@ void parallel_eq(GtkWidget *w, GtkWidget *box){
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,(gdouble)((gint)np/kpar));
 	/* kpar can be [1,ncpu] */
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,(gdouble)np);
+	/*same for the simplified interface*/
+	if(ncore>((gint)np/kpar)) gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),(gdouble)((gint)np/kpar));
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0,(gdouble)((gint)np/kpar));
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0,(gdouble)np);
 }
 /***************************/
 /* sync poscar information */
@@ -1222,7 +1860,12 @@ void vasp_poscar_sync(){
 /************************/
 void vasp_calc_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpointer user_data){
         /* some (few) values need to be updated from a page to another*/
-	if(page_num==VASP_PAGE_ELECTRONIC){
+	vasp_gui.cur_page=page_num;/*TODO: for (adv.)*/
+	if(page_num==VASP_PAGE_SIMPLIFIED){
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_np),vasp_calc.job_nproc);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),vasp_calc.ncore);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),vasp_calc.kpar);
+	} else if(page_num==VASP_PAGE_ELECTRONIC){
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear),g_strdup_printf("%i",vasp_calc.ismear));
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma),vasp_calc.kgamma);
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing),g_strdup_printf("%.4lf",vasp_calc.kspacing));
@@ -1237,6 +1880,10 @@ void vasp_calc_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,
 	} else if (page_num==VASP_PAGE_POTCAR){
 		vasp_poscar_sync();/*we need to know species_symbols*/
 		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_species),g_strdup_printf("%s",vasp_calc.species_symbols));
+	} else if (page_num==VASP_PAGE_EXEC){
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.job_nproc),vasp_calc.job_nproc);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),vasp_calc.ncore);
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpar),vasp_calc.kpar);
 	}
 	/*to be continued...*/
 }
@@ -1317,6 +1964,17 @@ void vasp_gui_sync(){
 	VASP_REG_VAL(epsilon,"%lf");
 	VASP_REG_TEXT(dipol);
 	VASP_REG_VAL(efield,"%lf");
+	//lorbit already sync
+	VASP_REG_VAL(nedos,"%i");
+	VASP_REG_VAL(emin,"%lf");
+	VASP_REG_VAL(emax,"%lf");
+	VASP_REG_VAL(efermi,"%lf");
+	VASP_REG_TEXT(rwigs);
+	//loptics already sync
+	//lepsilon already sync
+	//lrpa already sync
+	//lnabla already sync
+	VASP_REG_VAL(cshift,"%lf");
 	//auto_grid already sync
 	VASP_REG_VAL(ngx,"%i");
 	VASP_REG_VAL(ngy,"%i");
@@ -1374,9 +2032,9 @@ void vasp_gui_sync(){
 	VASP_REG_VAL(tetra_volume,"%lf");
 	/*no need to sync individual tetrahedron entry*/
 	/*PERF*/
-	VASP_REG_VAL(ncore,"%lf");
-	VASP_REG_VAL(kpar,"%lf");
-	VASP_REG_VAL(job_nproc,"%lf");
+	//ncore already sync
+	//kpar already sync
+	//job_nproc already sync
 }
 /***************************************************/
 /* convert vasp structure to POSCAR (not gui_free) */
@@ -1662,11 +2320,14 @@ void exec_vasp_calc(){
 void quit_vasp_calc(GtkWidget *w, gpointer data){
 	struct model_pak *model=data;
 	/* first cleanup everything */
-	vasp_cleanup();
+//	vasp_cleanup();/*do not clean vasp_exec due to "smart" realloc...*/
 	vasp_calc.have_gui=FALSE;
 	/* Then bailout */
 	dialog_destroy(w,model);
 }
+/********************************/
+/* VASP calculation main dialog */
+/********************************/
 void gui_vasp_dialog(void){
 /*launch the main interface*/
 /*TODO: use distant connections*/
@@ -1737,30 +2398,87 @@ void gui_vasp_dialog(void){
         page = gtk_vbox_new(FALSE, _SPACE);
         label = gtk_label_new("SIMPLIFIED");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+/* --- general */
+        frame = gtk_frame_new("General");
+        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+/* create a table in the frame*/
+        table = gtk_table_new(4, 4, FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+/* 1st line */
+        VASP_COMBOBOX_TABLE(vasp_gui.simple_calcul,"CALCUL:",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Energy (single point)");
+	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"DOS/BANDS (single point)");
+	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Lattice Dynamics (opt.)");
+	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Geometry (opt.)");
+	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Molecular Dynamics (opt.)");
+	VASP_CHECK_TABLE(button,vasp_gui.simple_rgeom,NULL,"ROUGH GEOM.",2,3,0,1);/*not calling anything*/
+	VASP_SPIN_TABLE(vasp_gui.simple_dim,vasp_gui.dimension,NULL,"DIM:",3,4,0,1);/*not calling anything*/
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_dim),0.0,3.0);/*0D~3D*/
+/* 2nd line */
+        VASP_COMBOBOX_TABLE(vasp_gui.simple_system,"SYSTEM:",0,1,1,2);
+        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Metal");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Semi-conducting");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Insulator");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Unknown");
+        VASP_TEXT_TABLE(vasp_gui.simple_species,vasp_calc.potcar_species,"SPECIES:",1,4,1,2);
+        gtk_widget_set_sensitive(vasp_gui.simple_species,FALSE);
+/* 3rd line */
+        VASP_COMBOBOX_TABLE(vasp_gui.simple_kgrid,"KPT GRID:",0,1,2,3);
+        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"COARSE");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"MEDIUM");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"FINE");
+        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"ULTRA-FINE");
+	VASP_TEXT_TABLE(vasp_gui.simple_potcar,vasp_calc.potcar_file,"POTCAR:",1,3,2,3);
+	VASP_BUTTON_TABLE(vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,2,3);
+/* 4th line */
+	VASP_LABEL_TABLE("EXEC:",0,1,3,4);
+        VASP_SPIN_TABLE(vasp_gui.simple_np,vasp_calc.job_nproc,parallel_eq,"NP=",1,2,3,4);
+        VASP_SPIN_TABLE(vasp_gui.simple_ncore,vasp_calc.ncore,parallel_eq,"NCORE=",2,3,3,4);
+        VASP_SPIN_TABLE(vasp_gui.simple_kpar,vasp_calc.kpar,parallel_eq,"KPAR=",3,4,3,4);
+/* initialize */
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_calcul),0);/*not calling anything*/
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_system),0);/*not calling anything*/
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_kgrid),0);/*not calling anything*/
+/* --- end frame */
 /* --- DISCLAMER */
         frame = gtk_frame_new("DISCLAMER");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
 /* create a table in the frame*/
-        table = gtk_table_new(5, 3,FALSE);
+        table = gtk_table_new(4, 3,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
 //      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_LABEL_TABLE("CALCUL TYPE:",0,1,0,1);
-        label = gtk_label_new("UNDER CONSTRUCTION");
-        gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,0,1);
+	label = gtk_label_new("This simplified interface is aimed at pre-loading parameters with default values");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
 /* 2nd line */
-	VASP_LABEL_TABLE("SYSTEM TYPE:",0,1,1,2);
-	label = gtk_label_new("UNDER CONSTRUCTION");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,1,2);
-/* 3rd line */
-	label = gtk_label_new("This simplified interface is aimed at pre-loading parameters with guessed values");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,2,3);
-/* 4th line */
-	label = gtk_label_new("for a given calculation type. User should then check them extremely carefuly...");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,3,4);
-/* 5th line */
-	label = gtk_label_new("YOU have been WARNED! ;)        --OVHPA");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,4,5);
+	label = gtk_label_new("for a given calculation type. User should then check said defaults extremely carefuly...");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,1,2);
+/* 3th line */
+	label = gtk_label_new("GENERATE ==>");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,3,4);
+	VASP_BUTTON_TABLE(vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
+	label = gtk_label_new("<== (and check...)");
+	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,3,4);
+/* --- end frame */
+/* --- MESSAGE */
+        frame = gtk_frame_new("MESSAGE");
+        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+/*create a vbox in frame*/
+	vbox=gtk_vbox_new(TRUE, 0);
+        gtk_container_add(GTK_CONTAINER(frame),vbox);
+/* num frames */
+	vasp_gui.simple_message=gtk_text_view_new();
+	vasp_gui.simple_message_buff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(vasp_gui.simple_message));
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(vasp_gui.simple_message),FALSE);
+	gtk_widget_set_sensitive(vasp_gui.simple_message,FALSE);
+	button=gtk_scrolled_window_new(NULL, NULL);/*GTK-ABSURD*/
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(button),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(button),vasp_gui.simple_message);
+	gtk_container_set_border_width(GTK_CONTAINER(button),1);
+	gtk_box_pack_start(GTK_BOX(vbox),button,TRUE,TRUE,0);
+/* --- end frame */
+
+
 
 /*-----------------------*/
 /* page 1 -> CONVERGENCE */
@@ -1916,11 +2634,11 @@ void gui_vasp_dialog(void){
 	grid_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
 
-/*----------------------*/
-/* page 2 -> ELECTRONIC */
-/*----------------------*/
+/*-------------------*/
+/* page 2 -> ELECT-I */
+/*-------------------*/
         page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("ELECTRONIC");
+        label = gtk_label_new("ELECT-I");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
 /* --- smearing */
         frame = gtk_frame_new("Smearing");
@@ -2048,6 +2766,57 @@ if(vasp_calc.idipol!=VID_0) {
         gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
 }
 /* --- end frame */
+
+/*---------------------*/
+/* page 2b -> ELECT-II */
+/*---------------------*/
+        page = gtk_vbox_new(FALSE, _SPACE);
+        label = gtk_label_new("ELECT-II");
+        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+/* --- DOS */
+        frame = gtk_frame_new("Density of States");
+        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+/* create a table in the frame*/
+        table = gtk_table_new(2, 5, FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
+/* 1st line */
+	VASP_COMBOBOX_TABLE(vasp_gui.lorbit,"LORBIT=",0,1,0,1);
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"0:PROCAR");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"1:lm-PROCAR");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"2:phase+lm-PROCAR");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"5:PROOUT");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"10:PROCAR");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"11:lm-PROCAR");
+	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"12:phase+lm-PROCAR");
+	VASP_ENTRY_TABLE(vasp_gui.nedos,vasp_calc.nedos,"%i","NEDOS=",1,2,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.emin,vasp_calc.emin,"%.2lf","EMIN=",2,3,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.emax,vasp_calc.emax,"%.2lf","EMAX=",3,4,0,1);
+	VASP_ENTRY_TABLE(vasp_gui.efermi,vasp_calc.efermi,"%.2lf","EFERMI=",4,5,0,1);
+/* 2nd line */
+	VASP_LABEL_TABLE("(LORBIT>5) => Req. PAW",0,1,1,2);
+	VASP_CHECK_TABLE(vasp_gui.have_paw,vasp_calc.have_paw,NULL,"HAVE PAW",1,2,1,2);/*not calling anything*/
+	gtk_widget_set_sensitive(vasp_gui.have_paw,FALSE);/*just an indication*/
+	VASP_TEXT_TABLE(vasp_gui.rwigs,vasp_calc.rwigs,"RWIGS=",2,5,1,2);
+/* initialize */
+if(vasp_calc.have_paw) VASP_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
+else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+/* --- end frame */
+/* --- Linear Response */
+        frame = gtk_frame_new("Linear Response");
+        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+/* create a table in the frame*/
+        table = gtk_table_new(1, 5,FALSE);
+        gtk_container_add(GTK_CONTAINER(frame), table);
+/* 1st line */
+	VASP_CHECK_TABLE(vasp_gui.loptics,vasp_calc.loptics,NULL,"LOPTICS",0,1,0,1);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.lepsilon,vasp_calc.lepsilon,NULL,"LEPSILON",1,2,0,1);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.lrpa,vasp_calc.lrpa,NULL,"LRPA",2,3,0,1);/*not calling anything*/
+	VASP_CHECK_TABLE(vasp_gui.lnabla,vasp_calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
+	VASP_ENTRY_TABLE(vasp_gui.cshift,vasp_calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
+/* --- end frame */
+
+
 
 /*-----------------*/
 /* page 3 -> IONIC */
