@@ -326,7 +326,6 @@ g_assert(canvas!=NULL);
 	dx=(canvas->width-2.0*ox);
         freq_sel=((x-ox)/dx)*(graph->xmax-graph->xmin);
         freq_sel+=graph->xmin;
-fprintf(stdout,"#DBG: select (%i %i) %lf \n",x,y,freq_sel);
 for (list=graph->set_list ; list ; list=g_slist_next(list))
   {
         ptr = (gdouble *) list->data;
@@ -642,7 +641,6 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 if (i==graph->select){
 	xf=(ptr[i]-graph->xmin)/(graph->xmax-graph->xmin);
 	sx = ox+xf*dx;sy = y-1;flag = TRUE;
-	fprintf(stdout,"#DBG: sx=%i sy=%i \n",sx,sy);
 }
                 gl_vertex_window(x, y-1, canvas);/*go to*/
                 yf = ptr[i+1];/*aka intensity*/

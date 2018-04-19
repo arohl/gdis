@@ -276,6 +276,9 @@ GtkWidget *task_label;
 gint max_threads;
 GThreadPool *thread_pool;
 
+/* temporary vasp calculation tasks. Will remove when remote job execution is ready --OVHPA*/
+GSList *vasp_calc_list;
+
 /* CURRENT - task successor (remote job execution) */
 GSList *host_list;
 

@@ -37,7 +37,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zmatrix_pak.h"
 #include "model.h"
 #include "interface.h"
-#include "gui_vasp.h"
+#include "file_vasp.h"
 
 enum {VASP_DEFAULT, VASP_XML, VASP_TRIKS, VASP_NLOOPS};
 
