@@ -340,9 +340,9 @@ struct vasp_calc_gui{
 	GtkWidget *tetra_d;
 /* POTCAR */
 	GtkWidget *poscar_species;
-	GtkWidget *species;
 	GtkWidget *species_flavor;
 	GtkWidget *species_button;
+	gboolean have_potcar_folder;
 	GtkWidget *potcar_select_file;
 	GtkWidget *potcar_file;
 	GtkWidget *potcar_file_button;
@@ -376,4 +376,4 @@ struct vasp_calc_gui{
 /*methods of interest*/
 
 void vasp_gui_refresh();
-
+void vasp_poscar_sync();

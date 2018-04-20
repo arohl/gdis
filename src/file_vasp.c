@@ -781,12 +781,50 @@ else		fprintf(stdout,"#DBG XML2CALC: LNABLA=.FALSE.\n");
 /****************************************************/
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 #define CALC (*calc)
-	struct model_pak *data;
+	struct model_pak *data=sysenv.active_model;;
         /*Common setup for xml or regular models*/
+/*4-POSCAR*/
+        CALC.poscar_sd=TRUE;
+        CALC.poscar_direct=TRUE;
+        CALC.poscar_a0=1.0;
+        CALC.poscar_ux=data->latmat[0];
+        CALC.poscar_uy=data->latmat[3];
+        CALC.poscar_uz=data->latmat[6];
+        CALC.poscar_vx=data->latmat[1];
+        CALC.poscar_vy=data->latmat[4];
+        CALC.poscar_vz=data->latmat[7];
+        CALC.poscar_wx=data->latmat[2];
+        CALC.poscar_wy=data->latmat[5];
+        CALC.poscar_wz=data->latmat[8];
+        /* unexposed */
+        CALC.species_symbols=NULL;
+        CALC.species_numbers=NULL;
+        /* exposed */
+        CALC.poscar_x=0.;
+        CALC.poscar_y=0.;
+        CALC.poscar_z=0.;
+/*5-KPOINTS*/
+        CALC.kpoints_nkpts=0;
+/*...*/
+        CALC.tetra_a=1;
+        CALC.tetra_b=1;
+        CALC.tetra_c=1;
+        CALC.tetra_d=1;
+/*6-POTCAR*/
+        CALC.potcar_folder=NULL;
+        CALC.potcar_file=NULL;
+        CALC.potcar_species=NULL;
+        CALC.potcar_species_flavor=NULL;
+/*7-RUN*/
         CALC.job_vasp_exe=g_strdup_printf("%s",sysenv.vasp_path);
         CALC.job_mpirun=g_strdup_printf("%s",sysenv.mpirun_path);
         CALC.job_path=g_strdup_printf("%s",sysenv.cwd);
         CALC.job_nproc=1.;
+        CALC.ncore=1.;
+        CALC.kpar=1.;
+
+/*specific part starts here*/
+
 	if(filename){
 		/*load most values from provided file*/
 		/*TODO: add vaspxml reader*/
@@ -798,13 +836,19 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.auto_elec=TRUE;
 		CALC.auto_mixer=TRUE;
 		CALC.auto_grid=TRUE;
+
+		/*POTCAR is unrealated to vasprun.xml*/
+                CALC.potcar_folder=NULL;
+                CALC.potcar_file=NULL;
+                CALC.potcar_species=NULL;
+                CALC.potcar_species_flavor=NULL;
+
 		/*this might be caught in INCAR*/
 		CALC.algo=VA_IALGO;
 		CALC.ncore=1.;
 		CALC.kpar=1.;
+
 	}else{
-		data = sysenv.active_model;/*try to fillup using model*/
-		/* use what is known from current model */
 		/*use some default values*/
 /*name*/
 		CALC.name=NULL;
@@ -919,45 +963,7 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 /*3-symmetry*/
 		CALC.isym=2;/*let's take the PAW default*/
 		CALC.sym_prec=1e-5;
-/*4-POSCAR*/
-		CALC.poscar_sd=TRUE;
-		CALC.poscar_direct=TRUE;
-		CALC.poscar_a0=1.0;
-		CALC.poscar_ux=data->latmat[0];
-		CALC.poscar_uy=data->latmat[3];
-		CALC.poscar_uz=data->latmat[6];
-		CALC.poscar_vx=data->latmat[1];
-		CALC.poscar_vy=data->latmat[4];
-		CALC.poscar_vz=data->latmat[7];
-		CALC.poscar_wx=data->latmat[2];
-		CALC.poscar_wy=data->latmat[5];
-		CALC.poscar_wz=data->latmat[8];
-		/* unexposed */
-		CALC.species_symbols=NULL;
-		CALC.species_numbers=NULL;
-		/* exposed */
-		CALC.poscar_x=0.;
-		CALC.poscar_y=0.;
-		CALC.poscar_z=0.;
-/*5-KPOINTS*/
-		CALC.kpoints_nkpts=0;
-/*...*/
-		CALC.tetra_a=1;
-		CALC.tetra_b=1;
-		CALC.tetra_c=1;
-		CALC.tetra_d=1;
-/*6-POTCAR*/
-		CALC.potcar_folder=NULL;
-		CALC.potcar_file=NULL;
-		CALC.potcar_species=NULL;
-
-/*7-RUN*/
-		CALC.job_vasp_exe=g_strdup_printf("%s",sysenv.vasp_path);
-		CALC.job_mpirun=g_strdup_printf("%s",sysenv.mpirun_path);
-		CALC.job_path=g_strdup_printf("%s",sysenv.cwd);
-		CALC.job_nproc=1.;
-		CALC.ncore=1.;
-		CALC.kpar=1.;
+/* PERFS */
 		CALC.lplane=TRUE;
 		CALC.lscalu=TRUE;
 		CALC.lscalapack=TRUE;

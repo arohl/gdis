@@ -61,11 +61,12 @@ struct vasp_calc_gui vasp_gui;
 /*************************/
 void gui_vasp_init(){
 	vasp_gui.cur_page=VASP_PAGE_SIMPLIFIED;
+	vasp_gui.have_potcar_folder=FALSE;
+	vasp_gui.poscar_dirty=TRUE;
 	if(!vasp_gui.have_xml){
 		vasp_gui.rions=TRUE;
 		vasp_gui.rshape=FALSE;
 		vasp_gui.rvolume=FALSE;
-		vasp_gui.poscar_dirty=TRUE;
 		vasp_gui.have_paw=FALSE;
 	}
 	/*default simplified interface*/
@@ -1855,6 +1856,131 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
   }
   gtk_widget_destroy (GTK_WIDGET(file_chooser));
 }
+/*****************************************************/
+/* register a specific pseudopotential for a species */
+/*****************************************************/
+void apply_species_flavor(GtkButton *button, gpointer data){
+	gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.species_flavor));
+	gchar *symbol=g_strdup(text);
+	gchar *flavor=g_strdup(text);
+	gchar sym[3];
+	gint idx;
+	gchar *result=NULL;
+	sscanf(text,"%[^:]: %s",symbol,flavor);
+	text=g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor);
+	g_free(vasp_gui.calc.potcar_species_flavor);
+	sym[2]='\0';
+	if(g_ascii_islower(symbol[1])){/*2 letters*/
+		sscanf(symbol,"%c%c",&(sym[0]),&(sym[1]));
+		idx=0;
+		while((g_ascii_strncasecmp(&(text[idx]),sym,2)!=0)&&(text[idx]!='\0')) idx++;
+		if(text[idx]=='\0'){
+			fprintf(stderr,"ERROR in setting POTCAR flavor.\n");
+			return;/*this should never happen*/
+		}
+		if(idx!=0) {
+			text[idx]='\0';
+			result=g_strdup_printf("%s%s",text,flavor);
+		}else{
+			result=g_strdup_printf("%s",flavor);
+		}
+		idx++;
+		while((text[idx]!=' ')&&(text[idx]!='\0')) idx++;
+		if(text[idx]=='\0'){
+			vasp_gui.calc.potcar_species_flavor=g_strdup_printf("%s",result);
+		}else{
+			vasp_gui.calc.potcar_species_flavor=g_strdup_printf("%s%s",result,&(text[idx]));
+		}
+	}else{/*if symbol is only 1 letter long, we need to cheat a little*/
+		sscanf(symbol,"%c",&(sym[0]));sym[1]='\0';
+		idx=0;
+		while(text[idx]!='\0'){
+			if((text[idx]==sym[0])&&((text[idx+1]==' ')||(text[idx+1]=='_')||text[idx+1]=='\0')) break;
+			/*H is special*/
+			if((text[0]=='H')&&((text[1]=='\0')||(text[1]=='.')||(text[1]=='1')||(text[1]=='_'))) break;
+			idx++;
+		}
+		if(text[idx]=='\0'){
+			fprintf(stderr,"ERROR in setting POTCAR flavor.\n");
+			return;/*this should never happen*/
+		}
+		if(idx!=0) {
+			text[idx]='\0';
+			result=g_strdup_printf("%s%s",text,flavor);
+		}else{
+			result=g_strdup_printf("%s",flavor);
+		}
+		idx++;
+		while((text[idx]!=' ')&&(text[idx]!='\0')) idx++;
+		if(text[idx]=='\0'){
+			vasp_gui.calc.potcar_species_flavor=g_strdup_printf("%s",result);
+		}else{
+			vasp_gui.calc.potcar_species_flavor=g_strdup_printf("%s%s",result,&(text[idx]));
+		}
+	}
+	g_free(result);
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species_flavor),g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor));
+}
+/******************************************************/
+/* register a species and a flavor from POTCAR FOLDER */
+/******************************************************/
+#define DEBUG_POTCAR_FOLDER 0
+void potcar_folder_register(gchar *item){
+	gchar elem[3];
+	elem[0]=item[0];
+	if(g_ascii_islower (item[1])) elem[1]=item[1];
+	else elem[1]='\0';
+	elem[2]='\0';
+#if DEBUG_POTCAR_FOLDER
+	fprintf(stdout,"#DBG: REG_ %s as %s \n",item,elem);
+#endif
+	VASP_COMBOBOX_ADD(vasp_gui.species_flavor,g_strdup_printf("%s: %s",elem,item));
+}
+/**************************************/
+/* get information from POTCAR folder */
+/**************************************/
+void potcar_folder_get_info(){
+	/*using POTCAR files, given they are not stored in a ZCOMPRESS format*/
+	const gchar *path=gtk_entry_get_text(GTK_ENTRY(vasp_gui.potcar_folder));
+	GSList *folders=file_dir_list(path,FALSE);
+	gchar *item;
+	gchar sym[3];
+	vasp_poscar_sync();
+#if DEBUG_POTCAR_FOLDER
+	fprintf(stdout,"#DBG: looking for %s\n",vasp_gui.calc.species_symbols);
+#endif
+	/*wipe all entry in vasp_gui.species_flavor*/
+	gtk_list_store_clear(GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(vasp_gui.species_flavor))));
+	sym[2]='\0';
+	for ( ; folders ; folders=g_slist_next(folders)){
+		item=g_strdup_printf("%s",(char *)folders->data);
+		/*check if this item is of interest*/
+		if(g_ascii_islower (item[1])){
+			sym[0]=item[0];
+			sym[1]=item[1];
+			if(g_strrstr(vasp_gui.calc.species_symbols,sym)!=NULL){
+				/* we have a hit, check validity */
+				if((item[2]=='\0')||(item[2]=='_')) potcar_folder_register(item);
+			}
+		}else{
+			gint idx=0;
+			while(vasp_gui.calc.species_symbols[idx]!='\0'){
+				if(item[0]==vasp_gui.calc.species_symbols[idx]){/*one match*/
+					if((item[0]=='H')&&((item[1]=='.')||(item[1]=='1')))
+						potcar_folder_register(item);/*H is special*/
+					if((item[1]=='\0')||(item[1]=='_')) potcar_folder_register(item);
+				}
+				idx++;
+			}
+		}
+		g_free(item);
+	}
+	vasp_gui.calc.potcar_species=g_strdup(vasp_gui.calc.species_symbols);/*just copy is enough for now*/
+	vasp_gui.calc.potcar_species_flavor=g_strdup(vasp_gui.calc.species_symbols);/*same here*/
+        gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
+        gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species_flavor),g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor));
+}
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */
 /***************************************************************/
@@ -1867,7 +1993,10 @@ file_chooser=gtk_file_chooser_dialog_new("Select the POTCAR folder",GTK_WINDOW(v
     char *foldername = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(foldername) {
         gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_folder),g_strdup_printf("%s",foldername));
+	if(vasp_gui.calc.potcar_folder!=NULL) g_free(vasp_gui.calc.potcar_folder);
+	vasp_gui.calc.potcar_folder=g_strdup_printf("%s",foldername);
         g_free (foldername);
+	potcar_folder_get_info();
     }
   }
   gtk_widget_destroy (GTK_WIDGET(file_chooser));
@@ -1876,9 +2005,9 @@ file_chooser=gtk_file_chooser_dialog_new("Select the POTCAR folder",GTK_WINDOW(v
 /* Select POTCAR information by file */
 /*************************************/
 void toggle_potcar_file(GtkWidget *w, GtkWidget *box){
+	vasp_gui.have_potcar_folder=FALSE;
 	gtk_widget_set_sensitive(vasp_gui.potcar_folder,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.species,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.species_flavor,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.species_button,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.potcar_file,TRUE);
@@ -1888,11 +2017,11 @@ void toggle_potcar_file(GtkWidget *w, GtkWidget *box){
 /* Select POTCAR information by path */
 /*************************************/
 void toggle_potcar_folder(GtkWidget *w, GtkWidget *box){
+	vasp_gui.have_potcar_folder=TRUE;
 	gtk_widget_set_sensitive(vasp_gui.potcar_file,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.potcar_file_button,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.potcar_folder,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.species,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.species_flavor,TRUE);
 	gtk_widget_set_sensitive(vasp_gui.species_button,TRUE);
 }
@@ -2325,12 +2454,25 @@ void calc_to_kpoints(FILE *output,vasp_calc_struct calc){
 	/*return to previous postition*/
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.tetra),index);
 }
+/*************************************/
+/* append one POTCAR file to another */
+/*************************************/
+void append_potcar(FILE *src,FILE *dest){
+	gchar *line;
+	line = file_read_line(src);
+	while(line){
+		fprintf(dest,"%s",line);
+		g_free(line);
+		line = file_read_line(src);
+	}
+}
 /***********************************/
 /* copy or concatenation of POTCAR */
 /***********************************/
 void calc_to_potcar(FILE *output,vasp_calc_struct calc){
 	FILE *org_potcar;
 	gchar *line;
+if(!vasp_gui.have_potcar_folder){
 	/*saving of the POTCAR is for now a mere copy of provided POTCAR*/
 	org_potcar=fopen(calc.potcar_file,"r");
 	if(!org_potcar) {
@@ -2344,12 +2486,54 @@ void calc_to_potcar(FILE *output,vasp_calc_struct calc){
 		line = file_read_line(org_potcar);
 	}
 	fclose(org_potcar);
+}else{/*use potcar_folder interface*/
+	gboolean hasend;
+	gchar *text=g_strdup(vasp_gui.calc.potcar_species_flavor);
+	gchar *ptr;
+	gchar *filename;
+	gint idx;
+	if(vasp_gui.calc.potcar_folder==NULL) return;
+	if(vasp_gui.calc.potcar_species_flavor==NULL) return;
+	hasend=FALSE;
+	idx=0;
+	while((text[idx]==' ')) {/*skip trailing space*/
+		if(text[idx]=='\0') {
+			fprintf(stderr,"ERROR while reading POTCAR flavors!\n");
+			g_free(text);
+			return;
+		}
+		idx++;
+	}
+	ptr=&(text[idx]);
+	while(!hasend){
+		while((text[idx]!=' ')){
+			if(text[idx]=='\0') {
+				hasend=TRUE;
+				break;	
+			}
+			idx++;
+		}
+		text[idx]='\0';
+		idx++;
+		filename=g_strdup_printf("%s/%s/POTCAR",vasp_gui.calc.potcar_folder,ptr);
+		org_potcar=fopen(filename,"r");
+		if(!org_potcar) {
+			fprintf(stderr,"#ERR: can't open file %s for READ!\n",calc.potcar_file);
+			return;
+		}
+		append_potcar(org_potcar,output);
+		fclose(org_potcar);
+		ptr=&(text[idx]);
+	}
+	g_free(text);
+	vasp_gui.calc.potcar_file=g_strdup_printf("%s/POTCAR",vasp_gui.calc.job_path);
+}
 	/*that's all folks*/
 }
 /***************************/
 /* save current parameters */
 /***************************/
-void save_vasp_calc(){
+gint save_vasp_calc(){
 #define DEBUG_VASP_SAVE 0
 	FILE *save_fp;
 	gchar *filename;
@@ -2362,7 +2546,7 @@ void save_vasp_calc(){
 	save_fp=fopen(filename,"w");
 	if(!save_fp){
 		fprintf(stderr,"#ERR: can't open file INCAR for WRITE!\n");
-		return;
+		return -1;
 	}
 	vasp_calc_to_incar(save_fp,vasp_gui.calc);
 	fclose(save_fp);
@@ -2372,7 +2556,7 @@ void save_vasp_calc(){
 	save_fp=fopen(filename,"w");
 	if(!save_fp){
 		fprintf(stderr,"#ERR: can't open file POSCAR for WRITE!\n");
-		return;
+		return -1;
 	}
 	calc_to_poscar(save_fp,vasp_gui.calc);
 	fclose(save_fp);
@@ -2382,7 +2566,7 @@ void save_vasp_calc(){
 	save_fp=fopen(filename,"w");
 	if(!save_fp){
 		fprintf(stderr,"#ERR: can't open file KPOINTS for WRITE!\n");
-		return;
+		return -1;
 	}
 	calc_to_kpoints(save_fp,vasp_gui.calc);
 	fclose(save_fp);
@@ -2392,7 +2576,7 @@ void save_vasp_calc(){
 	save_fp=fopen(filename,"w");
 	if(!save_fp){
 		fprintf(stderr,"#ERR: can't open file KPOINTS for WRITE!\n");
-		return;
+		return -1;
 	}
 	calc_to_potcar(save_fp,vasp_gui.calc);
 	fclose(save_fp);
@@ -2404,6 +2588,7 @@ void save_vasp_calc(){
 	calc_to_kpoints(stdout,vasp_gui.calc);
 
 #endif
+	return 0;
 }
 /*********************************/
 /* Cleanup calculation structure */
@@ -2481,9 +2666,7 @@ void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 void exec_calc(){
 	vasp_exec_struct *vasp_exec;
 	/*this will sync then enqueue a VASP calculation*/
-	if(vasp_gui.calc.potcar_file==NULL) return;/*not ready*/
-	save_vasp_calc();/*sync and save all file*/
-
+	if(save_vasp_calc()) return;/*sync and save all file*/
 /*copy structure to the list*/
 	vasp_exec=g_malloc(sizeof(vasp_exec_struct));
 	vasp_exec->job_id=g_slist_length(sysenv.vasp_calc_list);
@@ -3168,13 +3351,18 @@ else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
         gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.poscar_atoms))), FALSE);/*supposed to be simple?*/
         idx=0;
         for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+		gchar sym[3];
                 core=list2->data;
+		sym[0]=core->atom_label[0];
+		if(g_ascii_islower(core->atom_label[1])) sym[1]=core->atom_label[1];
+		else sym[1]='\0';
+		sym[2]='\0';
                 if(vasp_gui.calc.poscar_free==VPF_FIXED)
-gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%c%c)",
-        core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
+gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%s)",
+        core->x[0],core->x[1],core->x[2],idx,sym));
                 else
-gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%c%c)",
-        core->x[0],core->x[1],core->x[2],idx,core->atom_label[0],core->atom_label[1]));
+gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%s)",
+        core->x[0],core->x[1],core->x[2],idx,sym));
                 idx++;
         }
 vasp_gui.calc.atoms_total=idx;
@@ -3340,7 +3528,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(2, 1,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
 	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
@@ -3354,7 +3541,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(3, 4,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	/* 2 lines radiobutton */
 	vbox = gtk_vbox_new(FALSE,0);
@@ -3368,13 +3554,10 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 	VASP_TEXT_TABLE(vasp_gui.potcar_folder,vasp_gui.calc.potcar_folder,"PATH:",1,3,1,2);
 	VASP_BUTTON_TABLE(vasp_gui.potcar_folder_button,GTK_STOCK_OPEN,load_potcar_folder_dialog,3,4,1,2);
 /* 3rd line */
-        VASP_COMBOBOX_TABLE(vasp_gui.species,"SPECIES:",0,2,2,3);
-        VASP_COMBOBOX_ADD(vasp_gui.species,"ADD SPECIES");
 	VASP_COMBOBOX_TABLE(vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
-	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,vasp_gui.species_flavor,3,4,2,3);
+	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,apply_species_flavor,3,4,2,3);
 /* initialize */
 	toggle_potcar_file(NULL,NULL);
-	gtk_widget_set_sensitive(vasp_gui.potcar_select_folder,FALSE);/*TODO: not ready yet!*/
 /* --- end frame */
 /* --- POTCAR results */
         frame = gtk_frame_new("POTCAR results");
@@ -3382,7 +3565,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(2, 2,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	//multicolumn label
         label = gtk_label_new("DETECTED");
@@ -3406,7 +3588,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(3, 6,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
@@ -3429,7 +3610,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
 	table = gtk_table_new(2, 6,FALSE);
 	gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
@@ -3448,7 +3628,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(3, 3,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
         VASP_LABEL_TABLE("REMOTE HOSTS:",0,1,0,1);
         label = gtk_label_new("UNDER CONSTRUCTION");
