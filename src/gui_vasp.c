@@ -528,6 +528,7 @@ void vasp_apply_simple(GtkButton *button, gpointer data){
 	gint system=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_system));
 	gint kgrid=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_kgrid));
 	gint dim=(gint)vasp_gui.dimension;
+	gtk_text_buffer_set_text(vasp_gui.simple_message_buff,"Simple interface started.\n",-1);
 	/*1st take care of the obvious*/
 	if((vasp_gui.simple_rgeom)&&(calcul<3)){
 		_OUT("FAIL: ROUGHT GEOMETRY: OPTIMIZE GEOMETRY FIRST!\n");
@@ -574,6 +575,41 @@ void vasp_apply_simple(GtkButton *button, gpointer data){
 		vasp_gui.calc.sigma=0.2;
 		_OUT("SET SIGMA=0.2\n");
 	}
+	/*set dipol correction*/
+	_OUT("Please manually SET all dipole related settings in ELECT-I!\n");
+	switch(dim){
+		case 0://atom in a box
+			vasp_gui.calc.idipol=VID_4;
+			_OUT("SET IDIPOL=4\n");
+			break;
+		case 1:
+			//linear system is characterized by a major axis
+			vasp_gui.calc.idipol=VID_3;
+			_OUT("SET IDIPOL=3\n");
+			_OUT("By convention, the major direction for a 1D material is the Z axis.\n");
+			_OUT("If this is not the case, RESET IDIPOL accordingly!\n");
+			break;
+		case 2:
+			//surface are characterized by a normal axis
+			vasp_gui.calc.idipol=VID_3;
+			_OUT("SET IDIPOL=3\n");
+			_OUT("By convention, the Z AXIS is normal to the surface of 2D material.\n");
+			_OUT("If this is not the case, RESET IDIPOL accordingly!\n");
+			break;
+		case 3:
+		default:
+			vasp_gui.calc.ldipol=FALSE;
+			_OUT("SET LDIPOL=.FALSE.\n");
+	}
+	/* spin? */
+	if((gint)(vasp_gui.calc.electron_total/2)-(gdouble)(vasp_gui.calc.electron_total/2.0)!=0.0){
+		vasp_gui.calc.ispin=TRUE;
+		_OUT("SET ISPIN=2\n");
+	}else{
+		vasp_gui.calc.ispin=FALSE;
+		_OUT("SET ISPIN=1\n");
+	}
+	/*set calculation specific*/
 	switch(calcul){
 	case 0://Energy (single point)
 		/*use ismear=-5 if we have enough kpoints (ie more than 3)*/
@@ -1356,7 +1392,7 @@ void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
 	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
 		/*modify each line tags*/
 		sscanf(text,"%lf %lf %lf %*c %*c %*c ! atom: %*i (%[^)])",&x,&y,&z,&(symbol[0]));
-			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,
+		gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,
 			g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
 			x,y,z,tag,tag,tag,idx,symbol));
 		gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
@@ -1371,7 +1407,64 @@ void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
 /* poscar_direct toggle */
 /************************/
 void toggle_poscar_direct(){
+	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*PUSH*/
+	gint idx=0;
+	gchar *text;
+	gchar *tamp;
+	gdouble x,y,z;
+	gdouble ux,uy,uz;
+	gdouble vx,vy,vz;
+	gdouble wx,wy,wz;
 	/* TODO: recalculate all positions on a single click */
+	/*mini sync*/
+        VASP_REG_VAL(poscar_a0,"%lf");
+        VASP_REG_VAL(poscar_ux,"%lf");
+        VASP_REG_VAL(poscar_uy,"%lf");
+        VASP_REG_VAL(poscar_uz,"%lf");
+        VASP_REG_VAL(poscar_vx,"%lf");
+        VASP_REG_VAL(poscar_vy,"%lf");
+        VASP_REG_VAL(poscar_vz,"%lf");
+        VASP_REG_VAL(poscar_wx,"%lf");
+        VASP_REG_VAL(poscar_wy,"%lf");
+        VASP_REG_VAL(poscar_wz,"%lf");
+	ux=vasp_gui.calc.poscar_ux*vasp_gui.calc.poscar_a0;
+	uy=vasp_gui.calc.poscar_uy*vasp_gui.calc.poscar_a0;
+	uz=vasp_gui.calc.poscar_uz*vasp_gui.calc.poscar_a0;
+	vx=vasp_gui.calc.poscar_vx*vasp_gui.calc.poscar_a0;
+	vy=vasp_gui.calc.poscar_vy*vasp_gui.calc.poscar_a0;
+	vz=vasp_gui.calc.poscar_vz*vasp_gui.calc.poscar_a0;
+	wx=vasp_gui.calc.poscar_wx*vasp_gui.calc.poscar_a0;
+	wy=vasp_gui.calc.poscar_wy*vasp_gui.calc.poscar_a0;
+	wz=vasp_gui.calc.poscar_wz*vasp_gui.calc.poscar_a0;
+	/**/
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
+	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+        while(g_ascii_strcasecmp(text,"ADD atom")!=0){
+                /*get each line*/
+		tamp=g_strdup(text);/*to get enough space*/
+		sscanf(text,"%lf %lf %lf %[^\n]",&x,&y,&z,tamp);
+		/*convert*/
+			if(vasp_gui.calc.poscar_direct){
+				/*was cartesian, now changed to direct*/
+				x=x/(ux+vx+wx);
+				y=y/(uy+vy+wy);
+				z=z/(uz+vz+wz);
+			} else {
+				/*was direct, now changed to cartesian*/
+				x=x*(ux+vx+wx);
+				y=y*(uy+vy+wy);
+				z=z*(uz+vz+wz);
+			}
+		/*rewrite data*/
+                gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,g_strdup_printf("%.8lf %.8lf %.8lf  %s",x,y,z,tamp));
+                gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
+		g_free(tamp);
+		idx++;
+		/*get new line*/
+		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
+		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index);/*PULL*/
 }
 /*************************/
 /* selecting poscar atom */
@@ -1884,18 +1977,23 @@ void vasp_poscar_sync(){
                 gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
                 text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
         }
-/* pass_3: SETUP unexposed properties */
-        idx=0;jdx=0;
+/* pass_3: SETUP unexposed properties (fix atom index)*/
+        idx=0;jdx=0;vasp_gui.calc.electron_total=0;
         vasp_gui.calc.species_total=1;
         gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
         text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
         sscanf(text,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
         tamp=g_strdup_printf("  %s",vasp_gui.calc.poscar_symbol);
         tamp2=g_strdup_printf(" ");
-        /*1st pass: get number of species*/
         while(g_ascii_strcasecmp(text,"ADD atom")!=0){
                 /*get each line*/
                 sscanf(text,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(symbol[0]));
+		text2=g_strdup(text);/*to get enough space*/
+		sscanf(text,"%[^!]%*s",text2);
+                gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,g_strdup_printf("%s! atom: %i (%s)",text2,idx,symbol));
+                gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
+		g_free(text2);
+		vasp_gui.calc.electron_total+=elem_symbol_test(symbol);
                 if(g_ascii_strcasecmp(vasp_gui.calc.poscar_symbol,symbol) != 0) {
                         /*new species*/
                         text=g_strdup_printf("%s %s",tamp,symbol);
@@ -2442,6 +2540,31 @@ void gui_vasp_dialog(void){
 		vasprun_update(data->filename,&vasp_gui.calc);/*initialize according to vasprun.xml*/
 	} else {
 		vasp_gui.have_xml=FALSE;/*initialize with default values*/
+	        /* FIXME: correctly recalculate lattice for non 3D-periodic!*/
+	        if(data->periodic<1) {
+	                /*not periodic: create a big cubic box*/
+	                data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
+	                data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+	                vasp_gui.calc.poscar_direct=FALSE;
+	        }else if(data->periodic<2){
+	                /* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
+	                data->latmat[1]=0.0;data->latmat[2]=0.0;
+	                data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+	                vasp_gui.calc.poscar_direct=FALSE;
+	        }else if(data->periodic<3){
+	                /* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
+	                /* This only make sense is surface was created by GDIS though..*/
+	                data->latmat[2]=0.0;
+	                data->latmat[5]=0.0;
+	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=(data->surface.depth)+15.;
+	                vasp_gui.calc.poscar_direct=FALSE;
+	        }else {
+	                /* 3D-periodic! So far so good */
+	                if(data->fractional) vasp_gui.calc.poscar_direct=TRUE;
+	        }
+		/*it may be a better idea to set lattice parameters in a separate function*/
 		gui_vasp_init();
 		vasprun_update(NULL,&vasp_gui.calc);
 	}
@@ -2460,7 +2583,7 @@ void gui_vasp_dialog(void){
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
 	label = gtk_label_new(g_strdup_printf("MODEL NAME"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	VASP_TEXT_ENTRY(vasp_gui.name,g_strdup_printf("v_%s",data->basename),TRUE);
+	VASP_TEXT_ENTRY(vasp_gui.name,g_strdup_printf("%s",data->basename),TRUE);
 /* --- CONNECTED XML */
 	hbox = gtk_hbox_new(FALSE, 0);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
@@ -2997,34 +3120,6 @@ else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
 	}
 /* --- end frame */
 /* --- POSCAR */
-/*initialize some data*/
-if(!vasp_gui.have_xml){
-	/* FIXME: correctly recalculate lattice for non 3D-periodic!
-	 * FIXME: initialize at the begining and not here.*/
-	if(data->periodic<1) {
-		/*not periodic: create a big cubic box*/
-		data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
-		data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-		data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-		vasp_gui.calc.poscar_direct=FALSE;
-	}else if(data->periodic<2){
-		/* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
-		data->latmat[1]=0.0;data->latmat[2]=0.0;
-		data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-		data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-		vasp_gui.calc.poscar_direct=FALSE;
-	}else if(data->periodic<3){
-		/* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
-		/* This only make sense is surface was created by GDIS though..*/
-		data->latmat[2]=0.0;
-		data->latmat[5]=0.0;
-		data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=(data->surface.depth)+15.;
-		vasp_gui.calc.poscar_direct=FALSE;
-	}else {
-		/* 3D-periodic! So far so good */
-		if(data->fractional) vasp_gui.calc.poscar_direct=TRUE;
-	}
-}
         frame = gtk_frame_new("POSCAR & SYMMTERY");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
 /* create a table in the frame*/

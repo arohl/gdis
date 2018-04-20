@@ -280,6 +280,7 @@ typedef struct {
 	gchar poscar_symbol[3];
 /*unexposed species and species number*/
 	gint atoms_total;
+	gint electron_total;
 	gint species_total;
 	gchar *species_symbols;
 	gchar *species_numbers;
