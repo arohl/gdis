@@ -150,6 +150,12 @@ gchar *viewer_path;
 gchar *gamess_exe;
 gchar *gamess_path;
 
+gchar *vasp_exe;
+gchar *vasp_path;
+
+gchar *mpirun_exe;
+gchar *mpirun_path;
+
 gchar *monty_exe;
 gchar *monty_path;
 
@@ -269,6 +275,9 @@ GSList *task_list;
 GtkWidget *task_label;
 gint max_threads;
 GThreadPool *thread_pool;
+
+/* temporary vasp calculation tasks. Will remove when remote job execution is ready --OVHPA*/
+GSList *vasp_calc_list;
 
 /* CURRENT - task successor (remote job execution) */
 GSList *host_list;

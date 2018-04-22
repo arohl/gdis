@@ -44,6 +44,4 @@ There are a few optional packages that enhance the GDIS experience.
 	- [GAMESS](http://www.msg.chem.iastate.edu/GAMESS/)
 	- [SIESTA](http://departments.icmab.es/leem/siesta/)
 	- [Monty](http://www.vsc.science.ru.nl/deij/monty.html)
-
-
-
+	- [VASP](http://www.vasp.at/)

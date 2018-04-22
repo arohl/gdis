@@ -1260,7 +1260,7 @@ printf("offset = %d\n", offset);
     return(2);
     }
 /* use supplied routine (if available) */
-  if (file->read_frame)
+  if (file->read_frame) /*_BUG_ will fail if get_file_info return NULL (OVHPA)*/
     flag = file->read_frame(fp, model);
   else
     gui_text_show(ERROR, "No animation read routine.\n");

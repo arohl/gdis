@@ -37,6 +37,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zmatrix_pak.h"
 #include "model.h"
 #include "interface.h"
+#include "file_vasp.h"
 
 enum {VASP_DEFAULT, VASP_XML, VASP_TRIKS, VASP_NLOOPS};
 
@@ -185,6 +186,1099 @@ int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 	g_free(line);
 	return (isok);
 }
+/**********************************************************/
+/* populate vasp_calc_struct with values from vasprun.xml */
+/**********************************************************/
+int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc){
+#define CALC (*calc)
+#define DEBUG_XML2CALC 0
+#define XC_REG_DOUBLE(field,value) do{\
+        if (find_in_string(field,line) != NULL) {\
+                sscanf(line," <i name=\"%*[^\"]\"> %[^<]</i>",tamp);\
+                value=g_ascii_strtod(tamp,NULL);\
+        }\
+}while(0)
+#define XC_REG_INT(field,value) do{\
+	if (find_in_string(field,line) != NULL) {\
+		sscanf(line," <i type=\"int\" name=\"%*[^\"]\"> %[^<]</i>",tamp);\
+		value=(gint)g_ascii_strtoll(tamp,NULL,10);\
+	}\
+}while(0)
+#define XC_REG_BOOL(field,value) do{\
+	if (find_in_string(field,line) != NULL) {\
+		sscanf(line," <i type=\"logical\" name=\"%*[^\"]\"> %s",tamp);\
+		value=(tamp[0]=='T');\
+	}\
+}while(0)
+#define XC_REG_TEXT(field,value) do{\
+	if (find_in_string(field,line) != NULL) {\
+		if(value!=NULL) g_free(value);\
+		sscanf(line," <v name=\"%*[^\"]\"> %[^<]</v>",tamp);\
+		value=g_strdup_printf("%s",tamp);\
+	}\
+}while(0)
+
+	gchar *line;
+	gchar tamp[512];/*seems large but some double arrays can become quite huge (magmom)*/
+	if(vf==NULL) return -1;
+	if(calc==NULL) return -1;
+	/* first rewind*/
+	rewind(vf);
+	if(fetch_in_file(vf,"parameters")==0) return -1;
+	/* we are now in parameters: general*/
+	line = file_read_line(vf);
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of general*/
+		if (find_in_string("SYSTEM",line) != NULL){
+			/*register SYSTEM*/
+			if(CALC.name!=NULL) g_free(CALC.name);
+			sscanf(line," <i type=\"string\" name=\"SYSTEM\"> %[^<]</i>",tamp);
+			CALC.name=g_strdup_printf("%s",tamp);
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: SYSTEM=%s\n",CALC.name);
+#endif
+		}
+		//Skipped: LCOMPAT
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	if(line==NULL) return -1;
+	line = file_read_line(vf);/*electronic*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic*/
+		if (find_in_string("PREC",line) != NULL) {
+			/*register PREC*/
+			sscanf(line," <i type=\"string\" name=\"PREC\">%s",tamp);
+			tamp[0]=g_ascii_tolower(tamp[0]);
+			switch (tamp[0]){
+			case 's':
+				CALC.prec=VP_SINGLE;break;
+			case 'a':
+				CALC.prec=VP_ACCURATE;break;
+			case 'h':
+				CALC.prec=VP_HIGH;break;
+			case 'm':
+				CALC.prec=VP_MED;break;
+			case 'l':
+				CALC.prec=VP_LOW;break;
+			case 'n':
+			default:
+				CALC.prec=VP_NORM;
+			}
+#if DEBUG_XML2CALC
+        fprintf(stdout,"#DBG XML2CALC: PREC=%c\n",tamp[0]);
+#endif
+		}
+		XC_REG_DOUBLE("ENMAX",CALC.encut);
+		XC_REG_DOUBLE("ENAUG",CALC.enaug);
+		XC_REG_DOUBLE("EDIFF",CALC.ediff);
+		XC_REG_DOUBLE("NELECT",CALC.nelect);
+		//Skipped: EREF (unknown)
+		XC_REG_DOUBLE("SIGMA",CALC.sigma);
+		XC_REG_DOUBLE("KSPACING",CALC.kspacing);
+		XC_REG_INT("IALGO",CALC.ialgo);
+		XC_REG_INT("IWAVPR",CALC.iwavpr);
+		XC_REG_INT("NBANDS",CALC.nbands);
+		//Skipped: TURBO (unknown)
+		//Skipped: IRESTART (unknown)
+		//Skipped: NREBOOT (unknown)
+		//Skipped: NMIN (unknown)
+		XC_REG_INT("ISMEAR",CALC.ismear);
+		XC_REG_BOOL("KGAMMA",CALC.kgamma);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: ENCUT=%lf\n",CALC.encut);
+	fprintf(stdout,"#DBG XML2CALC: ENAUG=%lf\n",CALC.enaug);
+	fprintf(stdout,"#DBG XML2CALC: EDIFF=%lE\n",CALC.ediff);
+	fprintf(stdout,"#DBG XML2CALC: IALGO=%i\n",CALC.ialgo);
+	fprintf(stdout,"#DBG XML2CALC: IWAVPR=%i\n",CALC.iwavpr);
+	fprintf(stdout,"#DBG XML2CALC: NBANDS=%i\n",CALC.nbands);
+	fprintf(stdout,"#DBG XML2CALC: NELECT=%lf\n",CALC.nelect);
+	fprintf(stdout,"#DBG XML2CALC: ISMEAR=%i\n",CALC.ismear);
+	fprintf(stdout,"#DBG XML2CALC: SIGMA=%lf\n",CALC.sigma);
+	fprintf(stdout,"#DBG XML2CALC: KSPACING=%lf\n",CALC.kspacing);
+if(CALC.kgamma) fprintf(stdout,"#DBG XML2CALC: KGAMMA=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: SIGMA=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*electronic projector*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic projector*/
+		//LREAL: specia
+		if (find_in_string("LREAL",line) != NULL) {/*LREAL is still a boolean in vasprun.xml*/
+			sscanf(line," <i type=\"logical\" name=\"LREAL\"> %s",tamp);
+			if(tamp[0]=='T') CALC.lreal=VLR_TRUE;
+			else CALC.lreal=VLR_FALSE;
+		}
+		XC_REG_TEXT("ROPT",CALC.ropt);
+		XC_REG_INT("LMAXPAW",CALC.lmaxpaw);
+		XC_REG_INT("LMAXMIX",CALC.lmaxmix);
+		//Skipped: NLSPLINE (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.lreal==VLR_TRUE)	fprintf(stdout,"#DBG XML2CALC: LREAL=.TRUE.\n");
+else				fprintf(stdout,"#DBG XML2CALC: LREAL=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: ROPT=%s\n",CALC.ropt);
+	fprintf(stdout,"#DBG XML2CALC: LMAXPAW=%i\n",CALC.lmaxpaw);
+	fprintf(stdout,"#DBG XML2CALC: LMAXMIX=%i\n",CALC.lmaxmix);
+#endif
+	line = file_read_line(vf);/*electronic startup*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic startup*/
+		XC_REG_INT("ISTART",CALC.istart);
+		XC_REG_INT("ICHARG",CALC.icharg);
+		//INIWAV:special
+		if (find_in_string("INIWAV",line) != NULL) {
+			sscanf(line," <i type=\"int\" name=\"INIWAV\"> %[^<]</i>",tamp);
+			CALC.iniwav=(g_ascii_digit_value(tamp[0])==1);
+		}
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: ISTART=%i\n",CALC.istart);
+	fprintf(stdout,"#DBG XML2CALC: ICHARG=%i\n",CALC.icharg);
+if(CALC.iniwav) fprintf(stdout,"#DBG XML2CALC: INIWAV=1\n");
+else 		fprintf(stdout,"#DBG XML2CALC: INIWAV=0\n");
+#endif
+	line = file_read_line(vf);/*electronic spin*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic spin*/
+		//ISPIN: special 
+		if (find_in_string("ISPIN",line) != NULL) {
+			sscanf(line," <i type=\"int\" name=\"ISPIN\"> %[^<]</i>",tamp);
+			CALC.ispin=(g_ascii_digit_value(tamp[0])==2);
+		}
+		XC_REG_BOOL("LNONCOLLINEAR",CALC.non_collinear);
+		XC_REG_TEXT("MAGMOM",CALC.magmom);
+		XC_REG_DOUBLE("NUPDOWN",CALC.nupdown);
+		XC_REG_BOOL("LSORBIT",CALC.lsorbit);
+		XC_REG_TEXT("SAXIS",CALC.saxis);
+		//Skipped: LSPIRAL (unknown)
+		//Skipped: QSPIRAL (unknown)
+		//Skipped: LZEROZ (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.ispin)		fprintf(stdout,"#DBG XML2CALC: ISPIN=2\n");
+else 			fprintf(stdout,"#DBG XML2CALC: ISPIN=1\n");
+if(CALC.non_collinear) 	fprintf(stdout,"#DBG XML2CALC: LNONCOLLINEAR=.TRUE.\n");
+else 			fprintf(stdout,"#DBG XML2CALC: LNONCOLLINEAR=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: MAGMOM=%s\n",CALC.magmom);
+	fprintf(stdout,"#DBG XML2CALC: NUPDOWN=%i\n",CALC.nupdown);
+if(CALC.lsorbit)	fprintf(stdout,"#DBG XML2CALC: LSORBIT=.TRUE.\n");
+else			fprintf(stdout,"#DBG XML2CALC: LSORBIT=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: SAXIS=%s\n",CALC.saxis);
+#endif
+	line = file_read_line(vf);/*electronic exchange-correlation*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic exchange-correlation*/
+		XC_REG_BOOL("LASPH",CALC.lasph);
+		XC_REG_BOOL("LMETAGGA",CALC.lmetagga);/*FIXME: when LMETAGGA=TRUE METAGGA and tags are give in INCAR ONLY*/
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.lasph)		fprintf(stdout,"#DBG XML2CALC: LASPH=.TRUE.\n");
+else			fprintf(stdout,"#DBG XML2CALC: LASPH=.FALSE.\n");
+if(CALC.lmetagga)	fprintf(stdout,"#DBG XML2CALC: LMETAGGA=.TRUE.\n");
+else			fprintf(stdout,"#DBG XML2CALC: LMETAGGA=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*electronic convergence*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic convergence*/
+		XC_REG_INT("NELM",CALC.nelm);
+		XC_REG_INT("NELMDL",CALC.nelmdl);
+		XC_REG_INT("NELMIN",CALC.nelmin);
+		//Skipped: ENINI (unknown)
+		XC_REG_BOOL("LDIAG",CALC.ldiag);
+		//Skipped: SUBROT (adv.)
+		//Skipped: WEIMIN (adv.)
+		//Skipped: EBREAK (adv.)
+		//Skipped: DEPER (adv.)
+		//Skipped: NRMM (unknown)
+		//TIME: special (because it is called vtime in vasp_calc_struct)
+		if (find_in_string("TIME",line) != NULL) {
+			sscanf(line," <i name=\"%*[^\"]\"> %[^<]</i>",tamp);
+			CALC.vtime=g_ascii_strtod(tamp,NULL);
+		}
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: NELM=%i\n",CALC.nelm);
+	fprintf(stdout,"#DBG XML2CALC: NELMDL=%i\n",CALC.nelmdl);
+	fprintf(stdout,"#DBG XML2CALC: NELMIN=%i\n",CALC.nelmin);
+if(CALC.ldiag) 	fprintf(stdout,"#DBG XML2CALC: LDIAG=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LDIAG=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: TIME=%lf\n",CALC.vtime);
+#endif
+	line = file_read_line(vf);/*because there is 2 end </separator>*/
+	g_free(line);
+	line = file_read_line(vf);/*electronic mixer*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic mixer*/
+		XC_REG_DOUBLE("AMIX",CALC.amix);
+		XC_REG_DOUBLE("BMIX",CALC.bmix);
+		XC_REG_DOUBLE("AMIN",CALC.amin);
+		XC_REG_DOUBLE("AMIX_MAG",CALC.amix_mag);
+		XC_REG_DOUBLE("BMIX_MAG",CALC.bmix_mag);
+		XC_REG_INT("IMIX",CALC.imix);
+		//Skipped: MIXFIRST (unknown)
+		XC_REG_INT("MAXMIX",CALC.maxmix);
+		XC_REG_DOUBLE("WC",CALC.wc);
+		XC_REG_INT("INIMIX",CALC.inimix);
+		XC_REG_INT("MIXPRE",CALC.mixpre);
+		//Skipped: MREMOVE (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: AMIX=%lf\n",CALC.amix);
+	fprintf(stdout,"#DBG XML2CALC: BMIX=%lf\n",CALC.bmix);
+	fprintf(stdout,"#DBG XML2CALC: AMIN=%lf\n",CALC.amin);
+	fprintf(stdout,"#DBG XML2CALC: AMIX_MAG=%lf\n",CALC.amix_mag);
+	fprintf(stdout,"#DBG XML2CALC: BMIX_MAG=%lf\n",CALC.bmix_mag);
+	fprintf(stdout,"#DBG XML2CALC: IMIX=%i\n",CALC.imix);
+	fprintf(stdout,"#DBG XML2CALC: MAXMIX=%i\n",CALC.maxmix);
+	fprintf(stdout,"#DBG XML2CALC: WC=%lf\n",CALC.wc);
+	fprintf(stdout,"#DBG XML2CALC: INIMIX=%i\n",CALC.inimix);
+	fprintf(stdout,"#DBG XML2CALC: MIXPRE=%i\n",CALC.mixpre);
+#endif
+	line = file_read_line(vf);/*because there is 2 end </separator>*/
+	g_free(line);
+	line = file_read_line(vf);/*electronic dipolcorrection*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic dipolcorrection*/
+		XC_REG_BOOL("LDIPOL",CALC.ldipol);
+		XC_REG_BOOL("LMONO",CALC.lmono);
+		XC_REG_INT("IDIPOL",CALC.idipol);
+		XC_REG_DOUBLE("EPSILON",CALC.epsilon);
+		XC_REG_TEXT("DIPOL",CALC.dipol);
+		XC_REG_DOUBLE("EFIELD",CALC.efield);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.ldipol) fprintf(stdout,"#DBG XML2CALC: LDIPOL=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: LDIPOL=.FALSE.\n");
+if(CALC.lmono) 	fprintf(stdout,"#DBG XML2CALC: LMONO=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: LMONO=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: IDIPOL=%i\n",CALC.idipol);
+	fprintf(stdout,"#DBG XML2CALC: EPSILON=%lf\n",CALC.epsilon);
+	fprintf(stdout,"#DBG XML2CALC: DIPOL=%s\n",CALC.dipol);
+	fprintf(stdout,"#DBG XML2CALC: EFIELD=%lf\n",CALC.efield);
+#endif
+	line = file_read_line(vf);/*because there is 2 end </separator>*/
+	g_free(line);
+	line = file_read_line(vf);/*grids*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of grids*/
+		XC_REG_INT("NGX\"",CALC.ngx);
+		XC_REG_INT("NGY\"",CALC.ngy);
+		XC_REG_INT("NGZ\"",CALC.ngz);
+		XC_REG_INT("NGXF",CALC.ngxf);
+		XC_REG_INT("NGYF",CALC.ngyf);
+		XC_REG_INT("NGZF",CALC.ngzf);
+		XC_REG_BOOL("ADDGRID",CALC.addgrid);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: NGX=%i\n",CALC.ngx);
+	fprintf(stdout,"#DBG XML2CALC: NGY=%i\n",CALC.ngy);
+	fprintf(stdout,"#DBG XML2CALC: NGZ=%i\n",CALC.ngz);
+	fprintf(stdout,"#DBG XML2CALC: NGXF=%i\n",CALC.ngxf);
+	fprintf(stdout,"#DBG XML2CALC: NGYF=%i\n",CALC.ngyf);
+	fprintf(stdout,"#DBG XML2CALC: NGZF=%i\n",CALC.ngzf);
+if(CALC.addgrid) 	fprintf(stdout,"#DBG XML2CALC: ADDGRID=.TRUE.\n");
+else 			fprintf(stdout,"#DBG XML2CALC: ADDGRID=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*ionic*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of ionic*/
+		XC_REG_INT("NSW",CALC.nsw);
+		XC_REG_INT("IBRION\"",CALC.ibrion);
+		XC_REG_INT("ISIF",CALC.isif);
+		XC_REG_DOUBLE("PSTRESS",CALC.pstress);
+		XC_REG_DOUBLE("EDIFFG",CALC.ediffg);
+		XC_REG_INT("NFREE",CALC.nfree);
+		XC_REG_DOUBLE("POTIM",CALC.potim);
+		XC_REG_DOUBLE("SMASS",CALC.smass);
+		//Skipped: SCALEE (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: NSW=%i\n",CALC.nsw);
+	fprintf(stdout,"#DBG XML2CALC: IBRION=%i\n",CALC.ibrion);
+	fprintf(stdout,"#DBG XML2CALC: ISIF=%i\n",CALC.isif);
+	fprintf(stdout,"#DBG XML2CALC: PSTRESS=%lf\n",CALC.pstress);
+	fprintf(stdout,"#DBG XML2CALC: EDIFFG=%lE\n",CALC.ediffg);
+	fprintf(stdout,"#DBG XML2CALC: NFREE=%i\n",CALC.nfree);
+	fprintf(stdout,"#DBG XML2CALC: POTIM=%lf\n",CALC.potim);
+	fprintf(stdout,"#DBG XML2CALC: SMASS=%lf\n",CALC.smass);
+#endif
+	line = file_read_line(vf);/*ionic md*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of ionic md*/
+		XC_REG_DOUBLE("TEBEG",CALC.tebeg);
+		XC_REG_DOUBLE("TEEND",CALC.teend);
+		XC_REG_INT("NBLOCK",CALC.nblock);
+		XC_REG_INT("KBLOCK",CALC.kblock);
+		XC_REG_INT("NPACO",CALC.npaco);
+		XC_REG_DOUBLE("APACO",CALC.apaco);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: TEBEG=%lf\n",CALC.tebeg);
+	fprintf(stdout,"#DBG XML2CALC: TEEND=%lf\n",CALC.teend);
+	fprintf(stdout,"#DBG XML2CALC: NBLOCK=%i\n",CALC.nblock);
+	fprintf(stdout,"#DBG XML2CALC: KBLOCK=%i\n",CALC.kblock);
+	fprintf(stdout,"#DBG XML2CALC: NPACO=%i\n",CALC.npaco);
+	fprintf(stdout,"#DBG XML2CALC: APACO=%lf\n",CALC.apaco);
+#endif
+	line = file_read_line(vf);/*symmetry*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of symmetry*/
+		XC_REG_INT("ISYM",CALC.isym);
+		XC_REG_DOUBLE("SYMPREC",CALC.sym_prec);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: ISYM=%i\n",CALC.isym);
+	fprintf(stdout,"#DBG XML2CALC: SYMPREC=%lE\n",CALC.sym_prec);
+#endif
+	line = file_read_line(vf);/*dos*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of dos*/
+		XC_REG_BOOL("LORBIT",CALC.lorbit);
+		XC_REG_TEXT("RWIGS",CALC.rwigs);
+		XC_REG_INT("NEDOS",CALC.nedos);
+		XC_REG_DOUBLE("EMIN",CALC.emin);
+		XC_REG_DOUBLE("EMAX",CALC.emax);
+		XC_REG_DOUBLE("EFERMI",CALC.efermi);//actually (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.lorbit) fprintf(stdout,"#DBG XML2CALC: LORBIT=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: LORBIT=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: RWIGS=%s\n",CALC.rwigs);
+	fprintf(stdout,"#DBG XML2CALC: NEDOS=%lf\n",CALC.nedos);
+	fprintf(stdout,"#DBG XML2CALC: EMIN=%lf\n",CALC.emin);
+	fprintf(stdout,"#DBG XML2CALC: EMAX=%lf\n",CALC.emax);
+	fprintf(stdout,"#DBG XML2CALC: EFERMI=%lf\n",CALC.efermi);
+#endif
+	line = file_read_line(vf);/*writing*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of writing*/
+		XC_REG_INT("NWRITE",CALC.nwrite);
+		XC_REG_BOOL("LWAVE",CALC.lwave);
+		XC_REG_BOOL("LCHARG",CALC.lcharg);
+		//Skipped: LPARD (adv.)
+		XC_REG_BOOL("LVTOT",CALC.lvtot);
+		XC_REG_BOOL("LVHAR",CALC.lvhar);
+		XC_REG_BOOL("LELF",CALC.lelf);
+		XC_REG_BOOL("LOPTICS",CALC.loptics);/*why here?*/
+		//Skipped: STM (adv.)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: NWRITE=%i\n",CALC.nwrite);
+if(CALC.lwave) 	fprintf(stdout,"#DBG XML2CALC: LWAVE=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: LWAVE=.FALSE.\n");
+if(CALC.lcharg)	fprintf(stdout,"#DBG XML2CALC: LCHARG=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LCHARG=.FALSE.\n");
+if(CALC.lvtot) 	fprintf(stdout,"#DBG XML2CALC: LVTOT=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LVTOT=.FALSE.\n");
+if(CALC.lvhar) 	fprintf(stdout,"#DBG XML2CALC: LVHAR=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LVHAR=.FALSE.\n");
+if(CALC.lelf) 	fprintf(stdout,"#DBG XML2CALC: LELF=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LELF=.FALSE.\n");
+if(CALC.loptics)
+		fprintf(stdout,"#DBG XML2CALC: LOPTICS=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LOPTICS=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*performance*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of performance*/
+		XC_REG_INT("NPAR",CALC.npar);
+		XC_REG_INT("NSIM",CALC.nsim);
+		//Skipped: NBLK (adv.)
+		XC_REG_BOOL("LPLANE",CALC.lplane);
+		XC_REG_BOOL("LSCALAPACK",CALC.lscalapack);
+		//Skipped: LSCAAWARE (unknown)
+		XC_REG_BOOL("LSCALU",CALC.lscalu);
+		//Skipped: LASYNC (unknown)
+		//Skipped: LORBITALREAL (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	
+#if DEBUG_XML2CALC
+	fprintf(stdout,"#DBG XML2CALC: NPAR=%i\n",CALC.npar);
+	fprintf(stdout,"#DBG XML2CALC: NSIM=%i\n",CALC.nsim);
+if(CALC.lplane)	fprintf(stdout,"#DBG XML2CALC: LPLANE=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LPLANE=.FALSE.\n");
+if(CALC.lscalapack)
+		fprintf(stdout,"#DBG XML2CALC: LSCALAPACK=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LSCALAPACK=.FALSE.\n");
+if(CALC.lscalu)	fprintf(stdout,"#DBG XML2CALC: LSCALU=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LSCALU=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*miscellaneous*/
+	while(line){/*skip the section*/
+		if (find_in_string("</separator>",line) != NULL) break;/*end of miscellaneous*/
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	line = file_read_line(vf);/*UNNAMED section (ie. we are reading GGA_COMPAT already)*/
+	while(line){
+		if (find_in_string("<separator",line) != NULL) break;
+			/*end of UNNAMED section: the section does not have ending separator*/
+		XC_REG_BOOL("GGA_COMPAT",CALC.gga_compat);
+		//Skipped: LBERRY (adv.)
+		//Skipped: ICORELEVEL (adv.)
+		XC_REG_BOOL("LDAU",CALC.ldau);
+		//Skipped: I_CONSTRAINED_M (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.gga_compat)
+		fprintf(stdout,"#DBG XML2CALC: GGA_COMPAT=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: GGA_COMPAT=.FALSE.\n");
+if(CALC.ldau)	fprintf(stdout,"#DBG XML2CALC: LDAU=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LDAU=.FALSE.\n");
+#endif
+	/*jump directly to next section: electronic exchange-correlation*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of electronic exchange-correlation*/
+		//GGA: special
+                if (find_in_string("GGA\"",line) != NULL) {
+                        /*register PREC*/
+                        sscanf(line," <i type=\"string\" name=\"GGA\">%s",tamp);
+                        tamp[0]=g_ascii_tolower(tamp[0]);
+			tamp[1]=g_ascii_tolower(tamp[1]);
+                        switch (tamp[0]){
+                        case '9':
+                                CALC.gga=VG_91;break;
+                        case 'R':
+                                CALC.gga=VG_RP;break;
+                        case 'A':
+                                CALC.gga=VG_AM;break;
+                        case 'P':
+                        default:
+				CALC.gga=VG_PE;
+				if(tamp[1]=='s') CALC.gga=VG_PS;
+                        }
+#if DEBUG_XML2CALC
+        fprintf(stdout,"#DBG XML2CALC: GGA=%c%c\n",tamp[0],tamp[1]);
+#endif
+                }
+		XC_REG_BOOL("VOSKOWN",CALC.voskown);
+		//Everything else is skipped and reserved for (adv.)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+
+	}	
+#if DEBUG_XML2CALC
+if(CALC.voskown)
+		fprintf(stdout,"#DBG XML2CALC: VOSKOWN=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: VOSKOWN=.FALSE.\n");
+#endif
+	line = file_read_line(vf);/*vdW DFT*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of vdW DFT*/
+		XC_REG_BOOL("LUSE_VDW",CALC.use_vdw);
+		XC_REG_DOUBLE("Zab_VDW",CALC.zab_vdw);
+		XC_REG_DOUBLE("PARAM1",CALC.param1_vdw);
+		XC_REG_DOUBLE("PARAM2",CALC.param2_vdw);
+		XC_REG_DOUBLE("PARAM3",CALC.param3_vdw);
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.use_vdw)
+		fprintf(stdout,"#DBG XML2CALC: LUSE_VDW=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LUSE_VDW=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: Zab_VDW=%lf\n",CALC.zab_vdw);
+	fprintf(stdout,"#DBG XML2CALC: PARAM1=%lf\n",CALC.param1_vdw);
+	fprintf(stdout,"#DBG XML2CALC: PARAM2=%lf\n",CALC.param2_vdw);
+	fprintf(stdout,"#DBG XML2CALC: PARAM3=%lf\n",CALC.param3_vdw);
+#endif
+	line = file_read_line(vf);/*model GW*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of model GW*/
+		//Everything is skipped and reserved for (adv.)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	line = file_read_line(vf);/*linear response parameters*/
+	while(line){
+		if (find_in_string("</separator>",line) != NULL) break;/*end of linear response parameters*/
+		XC_REG_BOOL("LEPSILON",CALC.lepsilon);
+		XC_REG_BOOL("LRPA",CALC.lrpa);
+		XC_REG_BOOL("LNABLA",CALC.lnabla);
+		//Skipped: LVEL (unknown)
+		//Skipped: KINTER (unknown)
+		XC_REG_DOUBLE("CSHIFT",CALC.cshift);
+		//Skipped: OMEGAMAX (unknown)
+		//Skipped: DEG_THRESHOLD (unknown)
+		/*read next line*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+#if DEBUG_XML2CALC
+if(CALC.lepsilon)
+		fprintf(stdout,"#DBG XML2CALC: LEPSILON=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LEPSILON=.FALSE.\n");
+if(CALC.lrpa)	fprintf(stdout,"#DBG XML2CALC: LRPA=.TRUE.\n");
+else 		fprintf(stdout,"#DBG XML2CALC: LRPA=.FALSE.\n");
+if(CALC.lnabla)	fprintf(stdout,"#DBG XML2CALC: LNABLA=.TRUE.\n");
+else		fprintf(stdout,"#DBG XML2CALC: LNABLA=.FALSE.\n");
+	fprintf(stdout,"#DBG XML2CALC: CSHIFT=%lf\n",CALC.cshift);
+#endif
+
+	//Everything else is skipped and reserved for (adv.)
+
+	/* TODO (adv.)*/
+
+	return 0;
+#undef CALC
+}
+/****************************************************/
+/* setup vasp_calc_struct (using file if available) */
+/****************************************************/
+gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
+#define CALC (*calc)
+	struct model_pak *data=sysenv.active_model;
+        GSList *list2;
+        struct core_pak *core;
+        gdouble depth;
+        /*Common setup for xml or regular models*/
+/*4-POSCAR*/
+        /* unexposed */
+        CALC.species_symbols=NULL;
+        CALC.species_numbers=NULL;
+        /* exposed */
+        CALC.poscar_x=0.;
+        CALC.poscar_y=0.;
+        CALC.poscar_z=0.;
+/*5-KPOINTS*/
+        CALC.kpoints_nkpts=0;
+/*...*/
+        CALC.tetra_a=1;
+        CALC.tetra_b=1;
+        CALC.tetra_c=1;
+        CALC.tetra_d=1;
+/*6-POTCAR*/
+        CALC.potcar_folder=NULL;
+        CALC.potcar_file=NULL;
+        CALC.potcar_species=NULL;
+        CALC.potcar_species_flavor=NULL;
+/*7-RUN*/
+        CALC.job_vasp_exe=g_strdup_printf("%s",sysenv.vasp_path);
+        CALC.job_mpirun=g_strdup_printf("%s",sysenv.mpirun_path);
+        CALC.job_path=g_strdup_printf("%s",sysenv.cwd);
+        CALC.job_nproc=1.;
+        CALC.ncore=1.;
+        CALC.kpar=1.;
+
+/*specific part starts here*/
+
+	if(filename){
+
+		/*load most values from provided file*/
+		/*TODO: add vaspxml reader*/
+		FILE *fp=fopen(filename,"r");
+		if(!fp) vasprun_update(NULL,calc);
+		if(vasp_xml_load_calc(fp,calc)!=0) vasprun_update(NULL,calc);
+		fclose(fp);
+		CALC.use_prec=TRUE;
+		CALC.auto_elec=TRUE;
+		CALC.auto_mixer=TRUE;
+		CALC.auto_grid=TRUE;
+
+		/*POTCAR is unrealated to vasprun.xml*/
+                CALC.potcar_folder=NULL;
+                CALC.potcar_file=NULL;
+                CALC.potcar_species=NULL;
+                CALC.potcar_species_flavor=NULL;
+
+		/*this might be caught in INCAR*/
+		CALC.algo=VA_IALGO;
+		CALC.ncore=1.;
+		CALC.kpar=1.;
+		/* update lattice values */
+	        CALC.poscar_sd=TRUE;
+	        CALC.poscar_a0=1.0;
+	        CALC.poscar_ux=data->latmat[0];
+	        CALC.poscar_uy=data->latmat[3];
+	        CALC.poscar_uz=data->latmat[6];
+	        CALC.poscar_vx=data->latmat[1];
+	        CALC.poscar_vy=data->latmat[4];
+		CALC.poscar_vz=data->latmat[7];
+        	CALC.poscar_wx=data->latmat[2];
+        	CALC.poscar_wy=data->latmat[5];
+        	CALC.poscar_wz=data->latmat[8];
+	}else{
+		/*use some default values*/
+/*name*/
+		CALC.name=NULL;
+/*1-general*/
+		CALC.prec=VP_NORM;
+		CALC.use_prec=TRUE;
+		CALC.encut=0.0;/*ie not set*/
+		CALC.enaug=0.0;/*ie not set*/
+		CALC.ediff=1e-4;
+		CALC.algo=VA_NORM;
+		CALC.ialgo=VIA_KOSUGI;
+		CALC.ldiag=TRUE;
+		CALC.auto_elec=TRUE;
+		CALC.nbands=0;/*ie not set*/
+		CALC.nelect=0.0;/*ie not set*/
+		CALC.iwavpr=10;
+		CALC.nsim=4;
+		CALC.vtime=0.4;
+/*2-smearing*/
+		CALC.ismear=1;
+		CALC.sigma=0.2;
+		CALC.fermwe=NULL;
+		CALC.fermdo=NULL;
+		CALC.kspacing=0.5;
+		CALC.kgamma=TRUE;
+/*3-projector*/
+	        CALC.lreal=VLR_FALSE;
+	        CALC.ropt=NULL;
+	        CALC.addgrid=FALSE;
+	        CALC.lmaxmix=2;
+	        CALC.lmaxpaw=-100;/*ie don't show*/
+/*4-startup*/
+		CALC.istart=-1;/*ie not set*/
+		CALC.icharg=-1;/*ie not set*/
+		CALC.iniwav=TRUE;
+/*5-spin*/
+		CALC.ispin=FALSE;
+		CALC.non_collinear=FALSE;
+		CALC.magmom=NULL;
+		CALC.nupdown=-1.0;/*ie not set*/
+		CALC.lsorbit=FALSE;
+		CALC.saxis=NULL;
+		CALC.gga_compat=TRUE;
+/*6-xc*/
+		CALC.gga=VG_PE;
+		CALC.voskown=FALSE;
+		CALC.lasph=FALSE;
+		CALC.lmaxtau=0;
+		CALC.lmixtau=FALSE;
+		CALC.lmetagga=FALSE;
+		CALC.mgga=VMG_MBJ;/*default is none actually*/
+		CALC.cmbj=NULL;
+		CALC.cmbja=-0.012;
+		CALC.cmbjb=1.023;
+		/*vdw part*/
+/*7-convergence*/
+		CALC.nelm=60;
+		CALC.nelmdl=-12;
+		CALC.nelmin=2;
+/*8-mixer*/
+		CALC.auto_mixer=TRUE;
+		CALC.imix=VM_4;
+		CALC.amix=0.4;
+		CALC.bmix=1.0;
+		CALC.amin=0.1;
+		CALC.amix_mag=1.6;
+		CALC.bmix_mag=1.0;
+		CALC.maxmix=-45;
+		CALC.wc=1000.;
+		CALC.inimix=VIM_1;
+		CALC.mixpre=VMP_1;
+/*9-dipole*/
+		CALC.idipol=VID_0;
+		CALC.ldipol=FALSE;
+		CALC.lmono=FALSE;
+		CALC.epsilon=1.0;/*assuming dielectric constant for vacuum*/
+		CALC.dipol=NULL;
+		CALC.efield=0.0;
+/*10-dos*/
+		CALC.lorbit=0;
+		CALC.nedos=301;
+		CALC.emin=0.0;/*ie not set*/
+		CALC.emax=0.0;/*ie not set*/
+		CALC.efermi=0.0;/*undocument*/
+		CALC.rwigs=NULL;
+/*11-linear response*/
+		CALC.loptics=FALSE;
+		CALC.lepsilon=FALSE;
+		CALC.lrpa=FALSE;
+		CALC.lnabla=FALSE;
+		CALC.cshift=0.1;
+		CALC.lcalceps=FALSE;/*use for hybride-DFT TODO (adv.)*/
+/*ionic*/
+/*0-grid*/
+		CALC.auto_grid=TRUE;/*no default values for grids integers*/
+/*1-general*/
+		CALC.nsw=0;
+		CALC.ibrion=-1;
+		CALC.isif=2;
+		CALC.pstress=0.0;
+		CALC.ediffg=CALC.ediff*10.0;
+		CALC.potim=0.5;
+		CALC.nfree=2;/*actually there is no default*/
+/*2-md*/
+		CALC.smass=-3.0;
+		CALC.npaco=256;
+		CALC.apaco=16.;/*an integer in Ang?*/
+		CALC.tebeg=0.0;
+		CALC.teend=CALC.tebeg;
+		CALC.nblock=1;
+		CALC.kblock=CALC.nsw;
+/*3-symmetry*/
+		CALC.isym=2;/*let's take the PAW default*/
+		CALC.sym_prec=1e-5;
+/* PERFS */
+		CALC.lplane=TRUE;
+		CALC.lscalu=TRUE;
+		CALC.lscalapack=TRUE;
+		/*output*/
+		CALC.nwrite=2;
+		CALC.lwave=TRUE;
+		CALC.lcharg=TRUE;
+		CALC.lvtot=FALSE;
+		CALC.lvhar=FALSE;
+		CALC.lelf=FALSE;
+/*set POSCAR lattice using model*/
+                if(data->fractional) CALC.poscar_direct=TRUE;
+                else CALC.poscar_direct=FALSE;
+                if(data->periodic<1) {
+                        /*not periodic: create a big cubic box*/
+                        data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
+                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+                }else if(data->periodic<2){/*TODO: find an example*/
+                        /* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
+                        data->latmat[1]=0.0;data->latmat[2]=0.0;
+                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+                }else if(data->periodic<3){
+                        /* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
+                        /*1st pass: calculate depth*/
+                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+                                core=list2->data;
+                                if(depth<(ABS(core->x[2]))) depth=ABS(core->x[2]);
+                        }
+                        /*2nd pass: prepare z data*/
+                        depth+=10.;/*add reasonable vacuum inter-slab*/
+                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+                                core=list2->data;
+                                core->x[2]=core->x[2]/depth;
+                        }
+                        /* This only make sense is surface was created by GDIS though..*/
+                        data->latmat[2]=0.0;
+                        data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=depth;
+                }else {
+                        /* 3D-periodic! So far so good */
+                }
+		/* update lattice values */
+	        CALC.poscar_sd=TRUE;
+	        CALC.poscar_a0=1.0;
+	        CALC.poscar_ux=data->latmat[0];
+	        CALC.poscar_uy=data->latmat[3];
+	        CALC.poscar_uz=data->latmat[6];
+	        CALC.poscar_vx=data->latmat[1];
+	        CALC.poscar_vy=data->latmat[4];
+	        CALC.poscar_vz=data->latmat[7];
+	        CALC.poscar_wx=data->latmat[2];
+	        CALC.poscar_wy=data->latmat[5];
+	        CALC.poscar_wz=data->latmat[8];
+	}
+	return 0;
+#undef CALC
+}
+/****************************/
+/* free vasp_calc structure */
+/****************************/
+void vasprun_free(vasp_calc_struct *calc){
+#define CALC (*calc)
+	if(calc==NULL) return;
+	if(CALC.name!=NULL) g_free(CALC.name);
+	if(CALC.fermwe!=NULL) g_free(CALC.fermwe);
+	if(CALC.fermdo!=NULL) g_free(CALC.fermdo);
+	if(CALC.ropt!=NULL) g_free(CALC.ropt);
+	if(CALC.magmom!=NULL) g_free(CALC.magmom);
+	if(CALC.saxis!=NULL) g_free(CALC.saxis);
+	if(CALC.cmbj!=NULL) g_free(CALC.cmbj);
+	if(CALC.ldaul!=NULL) g_free(CALC.ldaul);
+	if(CALC.ldauu!=NULL) g_free(CALC.ldauu);
+	if(CALC.ldauj!=NULL) g_free(CALC.ldauj);
+	if(CALC.dipol!=NULL) g_free(CALC.dipol);
+	if(CALC.species_symbols!=NULL) g_free(CALC.species_symbols);
+	if(CALC.species_numbers!=NULL) g_free(CALC.species_numbers);
+	if(CALC.potcar_folder!=NULL) g_free(CALC.potcar_folder);
+	if(CALC.potcar_file!=NULL) g_free(CALC.potcar_file);
+	if(CALC.potcar_species!=NULL) g_free(CALC.potcar_species);
+	if(CALC.potcar_species_flavor!=NULL) g_free(CALC.potcar_species_flavor);
+	if(CALC.rwigs!=NULL) g_free(CALC.rwigs);
+	if(CALC.job_vasp_exe!=NULL) g_free(CALC.job_vasp_exe);
+	if(CALC.job_mpirun!=NULL) g_free(CALC.job_mpirun);
+	if(CALC.job_path!=NULL) g_free(CALC.job_path);
+//result_model should not be freed ;)
+#undef CALC
+}
+/***********************************/
+/* convert vasp structure to INCAR */
+/***********************************/
+void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc){
+/*skipping default parts*/
+	fprintf(output,"!INCAR GENERATED BY GDIS %4.2f.%d (C) %d\n",VERSION,PATCH,YEAR);
+	if(calc.name!=NULL) fprintf(output,"SYSTEM=%s\n",calc.name);
+	fprintf(output,"PREC=");
+	switch (calc.prec){
+		case VP_SINGLE:
+			fprintf(output,"SINGLE\n");break;
+		case VP_ACCURATE:
+			fprintf(output,"ACCURATE\n");break;
+		case VP_HIGH:
+			fprintf(output,"HIGH\n");break;
+		case VP_MED:
+			fprintf(output,"MEDIUM\n");break;
+		case VP_LOW:
+			fprintf(output,"LOW\n");break;
+		case VP_NORM:
+		default:
+			fprintf(output,"NORMAL\n");
+	}
+	if(calc.use_prec) fprintf(output,"!USING PREC SETTINGS FOR ENCUT and ENAUG\n");
+	else{
+		if(calc.encut!=0.0) fprintf(output,"ENCUT=%lf\n",calc.encut);
+		if(calc.enaug!=0.0) fprintf(output,"ENAUG=%lf\n",calc.enaug);
+	}
+	if(calc.ediff!=1E-4) fprintf(output,"EDIFF=%lE\n",calc.ediff);
+	if(calc.algo!=VA_IALGO){
+		fprintf(output,"ALGO=");
+		switch (calc.algo){
+		case VA_NORM:
+			fprintf(output,"NORMAL\n");break;
+		case VA_VERYFAST:
+			fprintf(output,"VERYFAST\n");break;
+		case VA_FAST:
+			fprintf(output,"FAST\n");break;
+		case VA_CONJ:
+			fprintf(output,"CONJ\n");break;
+		case VA_ALL:
+			fprintf(output,"ALL\n");break;
+		case VA_DAMPED:
+			fprintf(output,"DAMPED\n");break;
+		case VA_SUBROT:
+			fprintf(output,"SUBROT\n");break;
+		case VA_EIGEN:
+			fprintf(output,"EIGENVAL\n");break;
+		case VA_NONE:
+			fprintf(output,"NONE\n");break;
+		case VA_NOTHING:
+			fprintf(output,"NOTHING\n");break;
+		case VA_EXACT:
+			fprintf(output,"EXACT\n");break;
+		case VA_DIAG:
+			fprintf(output,"DIAG\n");break;
+		case VA_IALGO:
+		default:
+			/*should never happen*/
+			fprintf(output,"NORMAL\n");
+		}
+	} else fprintf(output,"IALGO=%i\n",(gint)calc.ialgo);
+	if(!(calc.ldiag)) fprintf(output,"LDIAG=.FALSE.\n");
+	if(!(calc.auto_elec)){
+		if(calc.nbands!=0) fprintf(output,"NBANDS=%i\n",calc.nbands);
+		if(calc.nelect!=0.0) fprintf(output,"NELECT=%lf\n",calc.nelect);
+		if(calc.iwavpr!=10) fprintf(output,"IWAVPR=%i\n",calc.iwavpr);
+		if(calc.nsim!=4) fprintf(output,"NSIM=%i\n",calc.nsim);
+		if(calc.vtime!=0.4) fprintf(output,"VTIME=%lf\n",calc.vtime);
+	}
+	if(calc.ismear!=1) fprintf(output,"ISMEAR=%i\n",calc.ismear);
+	if(calc.sigma!=0.2) fprintf(output,"SIGMA=%lf\n",calc.sigma);
+	if(calc.fermwe!=NULL) fprintf(output,"FERMWE=%s\n",calc.fermwe);
+	if(calc.fermdo!=NULL) fprintf(output,"FERMDO=%s\n",calc.fermdo);
+	if(calc.kspacing!=0.5) fprintf(output,"KSPACING=%lf\n",calc.kspacing);
+	if(!calc.kgamma) fprintf(output,"KGAMMA=.FALSE.\n");
+	/*always write LREAL tag*/
+	fprintf(output,"LREAL=");
+	switch (calc.lreal){
+	case VLR_AUTO:
+		fprintf(output,"AUTO\n");break;
+	case VLR_ON:
+		fprintf(output,"ON\n");break;
+	case VLR_TRUE:
+		fprintf(output,".TRUE.\n");break;
+	case VLR_FALSE:
+	default:
+		fprintf(output,".FALSE.\n");
+	}
+	if(calc.ropt!=NULL) fprintf(output,"ROPT=%s\n",calc.ropt);
+	if(calc.addgrid) fprintf(output,"ADDGRID=.TRUE.\n");
+	if(calc.lmaxmix!=2) fprintf(output,"LMAXMIX=%i\n",calc.lmaxmix);
+	if(calc.lmaxpaw!=-100) fprintf(output,"LMAXPAW=%i\n",calc.lmaxpaw);
+        if(calc.istart!=-1) fprintf(output,"ISTART=%i\n",calc.istart);
+        if(calc.icharg!=-1) fprintf(output,"ICHARG=%i\n",calc.icharg);
+        if(!calc.iniwav) fprintf(output,"INIWAV=0\n");
+	if(calc.ispin) fprintf(output,"ISPIN=2\n");
+	if(calc.non_collinear) fprintf(output,"LNONCOLLINEAR=.TRUE.\n");
+	if(calc.magmom!=NULL) fprintf(output,"MAGMOM=%s\n",calc.magmom);
+	if(calc.nupdown!=-1) fprintf(output,"NUPDOWN=%lf\n",calc.nupdown);
+	if(calc.lsorbit) fprintf(output,"LSORBIT=.TRUE.\n");
+	if(calc.saxis!=NULL) fprintf(output,"MAGMOM=%s\n",calc.saxis);
+	if(!calc.gga_compat) fprintf(output,"GGA_COMPAT=.FALSE.\n");
+	/*always write GGA tag*/
+	fprintf(output,"GGA=");
+	switch (calc.gga){
+	case VG_91:
+		fprintf(output,"91\n");break;
+	case VG_RP:
+		fprintf(output,"RP\n");break;
+	case VG_AM:
+		fprintf(output,"AM\n");break;
+	case VG_PS:
+		fprintf(output,"PS\n");break;
+	case VG_PE:
+	default:
+		fprintf(output,"PE\n");
+	}
+	if(calc.voskown) fprintf(output,"VOSKOWN=1\n");
+	if(calc.lasph) fprintf(output,"LASPH=.TRUE.\n");
+	if(calc.lmaxtau!=0) fprintf(output,"LMAXTAU=%i\n",calc.lmaxtau);
+	if(calc.lmixtau) fprintf(output,"LMIXTAU=.TRUE.\n");
+	if(calc.lmetagga){
+		fprintf(output,"METAGGA=");
+		switch (calc.mgga){
+		case VMG_TPSS:
+			fprintf(output,"TPSS\n");break;
+		case VMG_RTPSS:
+			fprintf(output,"RTPSS\n");break;
+		case VMG_M06L:
+			fprintf(output,"M06L\n");break;
+		case VMG_MBJ:
+		default:
+			fprintf(output,"MBJ\n");
+		}
+		if(calc.mgga==VMG_MBJ){/*print parameters as well*/
+			if(calc.cmbj!=NULL) fprintf(output,"CMBJ=%s\n",calc.cmbj);
+			if(calc.cmbja!=-0.012) fprintf(output,"CMBJA=%lf\n",calc.cmbja);
+			if(calc.cmbjb!=1.023) fprintf(output,"CMBJB=%lf\n",calc.cmbjb);
+		}
+	}
+	if(calc.ldau){
+		fprintf(output,"LDAU=.TRUE.\n");
+		fprintf(output,"LDAUTYPE=%i\n",(gint)calc.ldau_type);/*always write*/
+		fprintf(output,"LDAUPRINT=%i\n",(gint)calc.ldau_output);/*always write*/
+		if(calc.ldaul!=NULL) fprintf(output,"LDAUL=%s\n",calc.ldaul);
+		if(calc.ldauu!=NULL) fprintf(output,"LDAUU=%s\n",calc.ldauu);
+		if(calc.ldauj!=NULL) fprintf(output,"LDAUJ=%s\n",calc.ldauj);
+	}
+	if(calc.nelm!=60) fprintf(output,"NELM=%i\n",calc.nelm);
+	if(calc.nelmdl!=-12) fprintf(output,"NELMDL=%i\n",calc.nelmdl);
+	if(calc.nelmin!=2) fprintf(output,"NELMIN=%i\n",calc.nelmin);
+	if(!calc.auto_mixer){
+		fprintf(output,"IMIX=%i\n",(gint)calc.imix);/*always write*/
+		if(calc.amix!=0.4) fprintf(output,"AMIX=%lf\n",calc.amix);
+		if(calc.bmix!=1.0) fprintf(output,"BMIX=%lf\n",calc.bmix);
+		if(calc.amin!=0.1) fprintf(output,"AMIN=%lf\n",calc.amin);
+		if(calc.amix_mag!=1.6) fprintf(output,"AMIX_MAG=%lf\n",calc.amix_mag);
+		if(calc.bmix_mag!=1.0) fprintf(output,"BMIX_MAG=%lf\n",calc.bmix_mag);
+		if(calc.maxmix!=-45) fprintf(output,"MAXMIX=%i\n",calc.maxmix);
+		if(calc.wc!=1000.0) fprintf(output,"WC=%lf\n",calc.wc);
+		if(calc.inimix!=VIM_1) fprintf(output,"INIMIX=%i\n",(gint)calc.inimix);
+		if(calc.mixpre!=VMP_1) fprintf(output,"MIXPRE=%i\n",(gint)calc.mixpre);
+	}
+	if(calc.idipol!=VID_0){
+		if(calc.ldipol) fprintf(output,"LDIPOL=.TRUE.\n");
+		if(calc.lmono) fprintf(output,"LMONO=.TRUE.\n");
+		if(calc.epsilon!=1.0) fprintf(output,"EPSILON=%lf\n",calc.epsilon);
+		if(calc.dipol!=NULL) fprintf(output,"DIPOL=%s\n",calc.dipol);
+		if((calc.efield!=0.0)&&(calc.idipol!=VID_4)) fprintf(output,"EFIELD=%lf\n",calc.efield);
+	}
+	if(calc.lorbit!=0) fprintf(output,"LORBIT=%i\n",calc.lorbit);
+	if(calc.nedos!=301) fprintf(output,"NEDOS=%i\n",calc.nedos);
+	if(calc.emin!=0.) fprintf(output,"EMIN=%lf\n",calc.emin);
+	if(calc.emax!=0.) fprintf(output,"EMAX=%lf\n",calc.emax);
+	if(calc.efermi!=0.) fprintf(output,"EFERMI=%lf\n",calc.efermi);
+	if(calc.rwigs!=NULL) fprintf(output,"RWIGS=%s\n",calc.rwigs);
+	if(calc.loptics) fprintf(output,"LOPTICS=.TRUE.\n");
+	if(calc.lepsilon) fprintf(output,"LEPSILON=.TRUE.\n");
+	if(calc.lrpa) fprintf(output,"LRPA=.TRUE.\n");
+	if(calc.lnabla) fprintf(output,"LNABLA=.TRUE.\n");
+	if(calc.lcalceps) fprintf(output,"LCALCEPS=.TRUE.\n");
+	if(calc.cshift!=0.1) fprintf(output,"CSHIFT=%lf\n",calc.cshift);
+	if(!calc.auto_grid){
+		if(calc.ngx>0) fprintf(output,"NGX=%i\n",(gint)calc.ngx);
+		if(calc.ngy>0) fprintf(output,"NGY=%i\n",(gint)calc.ngy);
+		if(calc.ngz>0) fprintf(output,"NGZ=%i\n",(gint)calc.ngz);
+		if(calc.ngxf>0) fprintf(output,"NGXF=%i\n",(gint)calc.ngxf);
+		if(calc.ngyf>0) fprintf(output,"NGYF=%i\n",(gint)calc.ngyf);
+		if(calc.ngzf>0) fprintf(output,"NGZF=%i\n",(gint)calc.ngzf);
+	}
+	if(calc.nsw!=0) fprintf(output,"NSW=%i\n",calc.nsw);
+	if(calc.ibrion!=-1) fprintf(output,"IBRION=%i\n",calc.ibrion);
+	if(calc.isif!=2) fprintf(output,"ISIF=%i\n",calc.isif);
+	if(calc.pstress!=0.0) fprintf(output,"PSTRESS=%lf\n",calc.pstress);
+	if(calc.ediffg!=(calc.ediff*10.0)) fprintf(output,"EDIFFG=%lE\n",calc.ediffg);
+	if(calc.potim!=0.5) fprintf(output,"POTIM=%lf\n",calc.potim);
+	if(calc.nfree!=2) fprintf(output,"NFREE=%i\n",calc.nfree);
+	if(calc.ibrion==0){
+		if(calc.smass!=-3.0) fprintf(output,"SMASS=%lf\n",calc.smass);
+		if(calc.npaco!=256) fprintf(output,"NPACO=%i\n",calc.npaco);
+		if(calc.apaco!=16.) fprintf(output,"APACO=%lf\n",calc.apaco);
+		if(calc.tebeg!=0.0) fprintf(output,"TEBEG=%lf\n",calc.tebeg);
+		if(calc.teend!=calc.tebeg) fprintf(output,"TEEND=%lf\n",calc.teend);
+		if(calc.nblock!=1) fprintf(output,"NBLOCK=%i\n",calc.nblock);
+		if(calc.kblock!=calc.nsw) fprintf(output,"KBLOCK=%i\n",calc.kblock);
+	}
+	if(calc.isym!=2) fprintf(output,"ISYM=%i\n",calc.isym);
+	if((calc.isym>0)&&(calc.sym_prec!=1e-5)) fprintf(output,"SYM_PREC=%lE\n",calc.sym_prec);
+	if(calc.ncore>1.) fprintf(output,"NCORE=%i\n",(gint)calc.ncore);
+	if(calc.kpar>1.) fprintf(output,"KPAR=%i\n",(gint)calc.kpar);
+	if(!calc.lplane) fprintf(output,"LPLANE=.FALSE.\n");
+	if(!calc.lscalu) fprintf(output,"LSCALU=.FALSE.\n");
+	if(!calc.lscalapack) fprintf(output,"LSCALAPACK=.FALSE.\n");
+	if(!calc.lwave) fprintf(output,"LWAVE=.FALSE.\n");
+	if(!calc.lcharg) fprintf(output,"LCHARG=.FALSE.\n");
+	if(calc.lvtot) fprintf(output,"LVTOT=.TRUE.\n");
+	if(calc.lvhar) fprintf(output,"LVHAR=.TRUE.\n");
+	if(calc.lelf) fprintf(output,"LELF=.TRUE.\n");
+
+	/*TODO (adv.)*/
+	
+}
+
 
 int vasp_xml_read_atominfo(FILE *vf, struct model_pak *model){
 /* read current information about atoms */
@@ -589,7 +1683,9 @@ vfpos=ftell(vf);/*flag*/
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	vasp_xml_read_frequency(vf,model);/* Read Frequency */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-	vasp_xml_read_dos(vf,model);/* Read DOS */
+	if(vasp_xml_read_dos(vf,model)){;/* Read DOS */
+		model->ndos=0;/*didn't work*/
+	}
 	vasp_xml_read_bands(vf,model);/* Read bands */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){

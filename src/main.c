@@ -339,6 +339,10 @@ if (sysenv.gulp_path)
   fprintf(fp,"gulp_path %s\n", sysenv.gulp_path);
 if (sysenv.gamess_path)
   fprintf(fp,"gamess_path %s\n", sysenv.gamess_path);
+if (sysenv.vasp_path)
+  fprintf(fp,"vasp_path %s\n", sysenv.vasp_path);
+if (sysenv.mpirun_path)
+  fprintf(fp,"mpirun_path %s\n", sysenv.mpirun_path);
 if (sysenv.povray_path)
   fprintf(fp,"povray_path %s\n", sysenv.povray_path);
 if (sysenv.viewer_path)
@@ -349,6 +353,8 @@ fprintf(fp,"babel_exe %s\n", sysenv.babel_exe);
 fprintf(fp,"convert_exe %s\n", sysenv.convert_exe);
 fprintf(fp,"gulp_exe %s\n", sysenv.gulp_exe);
 fprintf(fp,"gamess_exe %s\n", sysenv.gamess_exe);
+fprintf(fp,"vasp_exe %s\n", sysenv.vasp_exe);
+fprintf(fp,"mpirun_exe %s\n", sysenv.mpirun_exe);
 fprintf(fp,"povray_exe %s\n", sysenv.povray_exe);
 fprintf(fp,"viewer_exe %s\n", sysenv.viewer_exe);
 
@@ -373,6 +379,7 @@ struct light_pak *light;
 FILE *fp;
 
 /* top level structure initialization */
+sysenv.vasp_calc_list = NULL;/*to be removed soon*/
 sysenv.max_threads = 1;
 sysenv.task_list = NULL;
 sysenv.host_list = NULL;
@@ -574,6 +581,8 @@ sysenv.convert_exe = g_strdup("convert");
 sysenv.viewer_exe = g_strdup("display");
 sysenv.gulp_exe = g_strdup("gulp");
 sysenv.gamess_exe = g_strdup("run_gms_for_gdis");
+sysenv.vasp_exe = g_strdup("vasp");
+sysenv.mpirun_exe = g_strdup("mpirun");
 #endif
 
 
@@ -609,6 +618,8 @@ sysenv.babel_path = NULL;
 sysenv.convert_path = NULL;
 sysenv.gulp_path = NULL;
 sysenv.gamess_path = NULL;
+sysenv.vasp_path = NULL;
+sysenv.mpirun_path = NULL;
 sysenv.povray_path = NULL;
 sysenv.viewer_path = NULL;
 if (read_gdisrc())
@@ -629,6 +640,10 @@ if (!sysenv.convert_path)
   sysenv.convert_path = g_find_program_in_path(sysenv.convert_exe);
 if (!sysenv.gulp_path)
   sysenv.gulp_path = g_find_program_in_path(sysenv.gulp_exe);
+if (!sysenv.vasp_path)
+  sysenv.vasp_path = g_find_program_in_path(sysenv.vasp_exe);
+if (!sysenv.mpirun_path)
+  sysenv.mpirun_path = g_find_program_in_path(sysenv.mpirun_exe);
 if (!sysenv.povray_path)
   sysenv.povray_path = g_find_program_in_path(sysenv.povray_exe);
 

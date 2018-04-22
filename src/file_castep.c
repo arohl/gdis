@@ -500,6 +500,7 @@ gint read_castep_out(gchar *filename, struct model_pak *model)
 {
 gint frame;
 gchar **buff, line[LINELEN], *text;
+gboolean band_structure;
 FILE *fp;
 
 if (g_strrstr(filename, ".cell") != NULL)
@@ -513,7 +514,9 @@ if (!fp)
 model->construct_pbc = TRUE;
 model->periodic = 3;
 model->fractional = TRUE;
-  
+
+band_structure=FALSE;/*switch for bandstructure reading*/
+
 frame=0;
 while (!fgetline(fp, line))
   {
@@ -541,7 +544,10 @@ while (!fgetline(fp, line))
       property_add_ranked(2, "Calculation", "Optimisation", model);
     else if (g_ascii_strncasecmp(*(buff+1), "single point energy", 19) == 0)
       property_add_ranked(2, "Calculation", "Single Point", model);
-    else
+    else if (g_ascii_strncasecmp(*(buff+1), "band structure", 14) == 0){
+      property_add_ranked(2, "Calculation", "Band Structure", model);
+      band_structure=TRUE;
+    }else
       property_add_ranked(2, "Calculation", *(buff+1), model);
     g_strfreev(buff);
     }
@@ -584,7 +590,94 @@ while (!fgetline(fp, line))
     }
   }
 
+fclose(fp);/*for some reason it seems that castep files are not closed after read?*/
+
+if(band_structure) {/*try to read band structure information, if any.*/
+	gint ispin=0;
+	gint ik=0;
+	gint ib=0;
+	gdouble xi,yi,zi;
+	gdouble *x,*y,*z;
+	gdouble ev,evmin,evmax;
+	gdouble dist=0.;
+	gchar *ptr=NULL;
+	gchar *band_filename=g_strdup (filename);
+	ptr=g_strrstr (band_filename,".castep");
+	if(ptr==NULL) goto castep_done;
+	sprintf(ptr,".bands");
+	fp = fopen(band_filename, "rt");
+	if(!fp) goto castep_done;
+	/*get number of kpoints*/
+	if(fgetline(fp, line)) goto castep_done;
+	sscanf(line,"Number of k-points %d",&(model->nkpoints));
+	if(fgetline(fp, line)) goto castep_done;
+	sscanf(line,"Number of spin components %d",&ispin);
+	if(ispin>1) model->spin_polarized=TRUE;
+	if(fgetline(fp, line)) goto castep_done;
+	/*skip number of electrons*/
+	if(fgetline(fp, line)) goto castep_done;
+	sscanf(line,"Number of eigenvalues %d",&(model->nbands));
+	if(fgetline(fp, line)) goto castep_done;
+	sscanf(line,"Fermi energy (%*[^)]) %lf",&(model->efermi));
+	while (!fgetline(fp, line)) if (g_strrstr(line, "K-point") != NULL) break;
+	if(!line) goto castep_done;
+	model->kpts_d=g_malloc((model->nkpoints)*sizeof(gdouble));
+	x=g_malloc((model->nkpoints)*sizeof(gdouble));
+	y=g_malloc((model->nkpoints)*sizeof(gdouble));
+	z=g_malloc((model->nkpoints)*sizeof(gdouble));
+	model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
+	if(model->spin_polarized) model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
+	evmin=0.;evmax=0.;
+	while(line){
+		sscanf(line,"K-point  %i %lf %lf %lf %*f",&ik,&xi,&yi,&zi);
+		ik--;
+		/*kpts are *not* in order*/
+		x[ik]=xi;
+		y[ik]=yi;
+		z[ik]=zi;
+		/*read component 1*/
+		if(fgetline(fp, line)) break;
+		/* line should contain "Spin component 1", skipping */
+		ib=0;
+		while(ib<model->nbands) {
+			if(fgetline(fp, line)) break;
+			sscanf(line," %lf",&(ev));
+			if(ev<evmin) evmin=ev;
+			if(ev>evmax) evmax=ev;
+			model->band_up[ik*(model->nbands)+ib]=ev;
+			ib++;
+		}
+		if(fgetline(fp, line)) break;
+		if(model->spin_polarized){/*read component 2*/
+			/* line should contain "Spin component 2", skipping */
+			ib=0;
+			while(ib<model->nbands) {
+				if(fgetline(fp, line)) break;
+				sscanf(line," %lf",&(ev));
+				if(ev<evmin) evmin=ev;
+				if(ev>evmax) evmax=ev;
+				model->band_down[ik*(model->nbands)+ib]=ev;
+				ib++;
+			}
+		}
+	}
+	xi=x[0];yi=y[0];zi=z[0];dist=0.;
+	for(ik=0;ik<model->nkpoints;ik++){
+		/*calculate distances*/
+		dist+=sqrt((x[ik]-xi)*(x[ik]-xi)+(y[ik]-yi)*(y[ik]-yi)+(z[ik]-zi)*(z[ik]-zi));
+		model->kpts_d[ik]=dist;
+		xi=x[ik];yi=y[ik];zi=z[ik];
+	}
+	g_free(x);
+	g_free(y);
+	g_free(z);
+	fclose(fp);
+	g_free(band_filename);
+/* BAND reading is done, DOS will be calculated somewhere else */
+  }
 /* done */
+
+castep_done:
 strcpy(model->filename, filename);
 g_free(model->basename);
 model->basename = parse_strip(filename);
