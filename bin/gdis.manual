@@ -191,6 +191,9 @@ When a GULP input file is loaded, GDIS processes many of the keywords, option, a
 
 GAMESS is a computational code that permits \i ab-initio, semi-empirical, and density functional calculations to be performed. As before, it is often best to work from a GAMESS input file when performing calculations. However, The Tools->Computational->GAMESS dialog provides enough configuration options to permit single point or optimization runs with the desired accuracy level / basis set to be readily performed.
 
+\h VASP
+
+VASP (Vienna Ab initio Simulation Package) is a 3D-periodic, plane wave basis set based, computational software. The VASP interface in GDIS allows a user to set-up a VASP calculation from any model based on an extensive set of keywords. If the starting model is a VASP calculation, its keyword will be pre-loaded but it is also possible to load keywords from any other calculation output.
 
 %topic 5. Analysis
 
@@ -231,12 +234,13 @@ Each loaded file can contain one or more chemical structures, or models. These c
 \f Rietica                 (.inp)                  -
 \f SIESTA input            (.fdf)                 (.fdf)
 \f SIESTA output           (.out)                  -
+\f VASP xml output         (.xml)                  -
 \f XTL                     (.xtl)                 (.xtl)
 \f XYZ                     (.xyz)(.ani)           (.xyz)
 
 \h Animation File Types
 
-Some of the above file types can also contain animations. If a GULP input or restart file with an associated ascii trajectory file is loaded the animation sequence will automatically be constructed. Biosym .arc files may also contain multiple frames that will be used to build an animation. Also, output files from GULP and SIESTA minimizations will be converted to an animation sequence with each step corresponding to a single frame. Multi-frame xyz files (.ani extension) are also supported. Finally, it is possible to store recordings that have been created within GDIS by saving as XML. Naturally, multi-frame XML file reading is also supported.
+Some of the above file types can also contain animations. If a GULP input or restart file with an associated ascii trajectory file is loaded the animation sequence will automatically be constructed. Biosym .arc files may also contain multiple frames that will be used to build an animation. Also, output files from GULP, SIESTA and VASP minimizations will be converted to an animation sequence with each step corresponding to a single frame. Multi-frame xyz files (.ani extension) are also supported. Finally, it is possible to store recordings that have been created within GDIS by saving as XML. Naturally, multi-frame XML file reading is also supported.
 
 \h Importing/Exporting Data
 

@@ -1966,9 +1966,11 @@ void potcar_folder_get_info(){
 			gint idx=0;
 			while(vasp_gui.calc.species_symbols[idx]!='\0'){
 				if(item[0]==vasp_gui.calc.species_symbols[idx]){/*one match*/
-					if((item[0]=='H')&&((item[1]=='.')||(item[1]=='1')))
-						potcar_folder_register(item);/*H is special*/
-					if((item[1]=='\0')||(item[1]=='_')) potcar_folder_register(item);
+					if(!g_ascii_islower (vasp_gui.calc.species_symbols[idx+1])){/*is not 2 letter wide*/
+						if((item[0]=='H')&&((item[1]=='.')||(item[1]=='1')))
+							potcar_folder_register(item);/*H is special*/
+						if((item[1]=='\0')||(item[1]=='_')) potcar_folder_register(item);
+					}
 				}
 				idx++;
 			}
