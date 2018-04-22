@@ -36,7 +36,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "model.h"
 #include "interface.h"
 
-gint set_true_false();
+gint set_true_false(gchar *, gboolean *);
 gint set_energy_units();
 gint set_temperature_units();
 gint set_length_units();
