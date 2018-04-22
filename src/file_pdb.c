@@ -272,6 +272,8 @@ gchar *fort_read_string(char *line, gint start_col, gint end_col)
 /*************************************************/
 gchar fort_read_char(char *line, gint start_col)
 {
+  gchar *field;
+  
   g_return_val_if_fail(start_col > 0, "");
   return(line[start_col-1]);
 }

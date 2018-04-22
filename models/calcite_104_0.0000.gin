@@ -1,5 +1,4 @@
-opti conv mole
-switch rfo gnorm 0.01
+single conv mole
 
 name calcite_104_0.0000
 
