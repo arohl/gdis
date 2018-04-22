@@ -220,7 +220,6 @@ int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc){
 
 	gchar *line;
 	gchar tamp[512];/*seems large but some double arrays can become quite huge (magmom)*/
-	long int vf_pos;
 	if(vf==NULL) return -1;
 	if(calc==NULL) return -1;
 	/* first rewind*/
@@ -781,21 +780,12 @@ else		fprintf(stdout,"#DBG XML2CALC: LNABLA=.FALSE.\n");
 /****************************************************/
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 #define CALC (*calc)
-	struct model_pak *data=sysenv.active_model;;
+	struct model_pak *data=sysenv.active_model;
+        GSList *list2;
+        struct core_pak *core;
+        gdouble depth;
         /*Common setup for xml or regular models*/
 /*4-POSCAR*/
-        CALC.poscar_sd=TRUE;
-        CALC.poscar_direct=TRUE;
-        CALC.poscar_a0=1.0;
-        CALC.poscar_ux=data->latmat[0];
-        CALC.poscar_uy=data->latmat[3];
-        CALC.poscar_uz=data->latmat[6];
-        CALC.poscar_vx=data->latmat[1];
-        CALC.poscar_vy=data->latmat[4];
-        CALC.poscar_vz=data->latmat[7];
-        CALC.poscar_wx=data->latmat[2];
-        CALC.poscar_wy=data->latmat[5];
-        CALC.poscar_wz=data->latmat[8];
         /* unexposed */
         CALC.species_symbols=NULL;
         CALC.species_numbers=NULL;
@@ -826,6 +816,7 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 /*specific part starts here*/
 
 	if(filename){
+
 		/*load most values from provided file*/
 		/*TODO: add vaspxml reader*/
 		FILE *fp=fopen(filename,"r");
@@ -847,7 +838,18 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.algo=VA_IALGO;
 		CALC.ncore=1.;
 		CALC.kpar=1.;
-
+		/* update lattice values */
+	        CALC.poscar_sd=TRUE;
+	        CALC.poscar_a0=1.0;
+	        CALC.poscar_ux=data->latmat[0];
+	        CALC.poscar_uy=data->latmat[3];
+	        CALC.poscar_uz=data->latmat[6];
+	        CALC.poscar_vx=data->latmat[1];
+	        CALC.poscar_vy=data->latmat[4];
+		CALC.poscar_vz=data->latmat[7];
+        	CALC.poscar_wx=data->latmat[2];
+        	CALC.poscar_wy=data->latmat[5];
+        	CALC.poscar_wz=data->latmat[8];
 	}else{
 		/*use some default values*/
 /*name*/
@@ -974,7 +976,51 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.lvtot=FALSE;
 		CALC.lvhar=FALSE;
 		CALC.lelf=FALSE;
-/**/
+/*set POSCAR lattice using model*/
+                if(data->fractional) CALC.poscar_direct=TRUE;
+                else CALC.poscar_direct=FALSE;
+                if(data->periodic<1) {
+                        /*not periodic: create a big cubic box*/
+                        data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
+                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+                }else if(data->periodic<2){/*TODO: find an example*/
+                        /* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
+                        data->latmat[1]=0.0;data->latmat[2]=0.0;
+                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
+                }else if(data->periodic<3){
+                        /* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
+                        /*1st pass: calculate depth*/
+                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+                                core=list2->data;
+                                if(depth<(ABS(core->x[2]))) depth=ABS(core->x[2]);
+                        }
+                        /*2nd pass: prepare z data*/
+                        depth+=10.;/*add reasonable vacuum inter-slab*/
+                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+                                core=list2->data;
+                                core->x[2]=core->x[2]/depth;
+                        }
+                        /* This only make sense is surface was created by GDIS though..*/
+                        data->latmat[2]=0.0;
+                        data->latmat[5]=0.0;
+                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=depth;
+                }else {
+                        /* 3D-periodic! So far so good */
+                }
+		/* update lattice values */
+	        CALC.poscar_sd=TRUE;
+	        CALC.poscar_a0=1.0;
+	        CALC.poscar_ux=data->latmat[0];
+	        CALC.poscar_uy=data->latmat[3];
+	        CALC.poscar_uz=data->latmat[6];
+	        CALC.poscar_vx=data->latmat[1];
+	        CALC.poscar_vy=data->latmat[4];
+	        CALC.poscar_vz=data->latmat[7];
+	        CALC.poscar_wx=data->latmat[2];
+	        CALC.poscar_wy=data->latmat[5];
+	        CALC.poscar_wz=data->latmat[8];
 	}
 	return 0;
 #undef CALC

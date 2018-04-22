@@ -2710,7 +2710,6 @@ void gui_vasp_dialog(void){
 	struct model_pak *data;
 	struct core_pak *core;
 	gint idx;
-
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
@@ -2723,33 +2722,8 @@ void gui_vasp_dialog(void){
 		vasprun_update(data->filename,&vasp_gui.calc);/*initialize according to vasprun.xml*/
 	} else {
 		vasp_gui.have_xml=FALSE;/*initialize with default values*/
-	        /* FIXME: correctly recalculate lattice for non 3D-periodic!*/
-	        if(data->periodic<1) {
-	                /*not periodic: create a big cubic box*/
-	                data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
-	                data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-	                vasp_gui.calc.poscar_direct=FALSE;
-	        }else if(data->periodic<2){
-	                /* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
-	                data->latmat[1]=0.0;data->latmat[2]=0.0;
-	                data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-	                vasp_gui.calc.poscar_direct=FALSE;
-	        }else if(data->periodic<3){
-	                /* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
-	                /* This only make sense is surface was created by GDIS though..*/
-	                data->latmat[2]=0.0;
-	                data->latmat[5]=0.0;
-	                data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=(data->surface.depth)+15.;
-	                vasp_gui.calc.poscar_direct=FALSE;
-	        }else {
-	                /* 3D-periodic! So far so good */
-	                if(data->fractional) vasp_gui.calc.poscar_direct=TRUE;
-	        }
-		/*it may be a better idea to set lattice parameters in a separate function*/
 		gui_vasp_init();
-		vasprun_update(NULL,&vasp_gui.calc);
+		vasprun_update(NULL,&vasp_gui.calc);/*initialize with default values*/
 	}
 /* dialog setup */
 	title = g_strdup_printf("VASP: %s", data->basename);
@@ -2787,11 +2761,11 @@ void gui_vasp_dialog(void){
 	gtk_container_add(GTK_CONTAINER(frame), notebook);
 	gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
 
-/*----------------------*/
-/* page 0 -> SIMPLIFIED */
-/*----------------------*/
+/*------------------*/
+/* page 0 -> PRESET */
+/*------------------*/
         page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("SIMPLIFIED");
+        label = gtk_label_new("PRESET");
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
 /* --- general */
         frame = gtk_frame_new("General");
@@ -3625,21 +3599,28 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* --- DISTANT */
         frame = gtk_frame_new("Distant calculation");
         gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/* create a table in the frame*/
-        table = gtk_table_new(3, 3,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+/*create a vbox in frame*/
+        vbox=gtk_vbox_new(TRUE, 0);
+        gtk_container_add(GTK_CONTAINER(frame),vbox);
 /* 1st line */
-        VASP_LABEL_TABLE("REMOTE HOSTS:",0,1,0,1);
-        label = gtk_label_new("UNDER CONSTRUCTION");
-        gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,0,1);
+	VASP_NEW_LINE();
 /* 2nd line */
-	VASP_LABEL_TABLE("REMOTE PATH:",0,1,1,2);
-	label = gtk_label_new("UNDER CONSTRUCTION");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,1,2);
+	VASP_NEW_LINE();
+	VASP_NEW_LABEL("Remote execution of VASP is currently UNDER CONSTRUCTION.");
 /* 3rd line */
-	VASP_LABEL_TABLE("SUBMIT SCRIPT:",0,1,2,3);
-	label = gtk_label_new("UNDER CONSTRUCTION");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,3,2,3);
+	VASP_NEW_LINE();
+//	VASP_NEW_SEPARATOR();
+	VASP_NEW_LABEL("For now, please save files and manually transfer them to the distant server, then submit and retreive files as usual.");
+/* 4th line */
+	VASP_NEW_LINE();
+	VASP_NEW_LABEL("The future GDIS job interface will hopefully automate the whole process...");
+/* 5th line */
+	VASP_NEW_LINE();
+	VASP_NEW_LABEL("...and will be made available in the VASP calculation interface at that time.");
+	VASP_NEW_SEPARATOR();
+	VASP_NEW_LABEL("--OVHPA");
+/* 6th line */
+	VASP_NEW_LINE();
 
 /* --- Outside of notebook */
 	frame = gtk_frame_new(NULL);
