@@ -1148,10 +1148,11 @@ printf("\n");
 /***********************/
 gint gulp_is_keyword(gchar *text)
 {
-gint i, n;
+gint i;
+size_t n;
 
 if (!text)
-  return(-1);
+return(-1);
 
 i=0;
 while (gulp_keyword[i].label)
@@ -1169,7 +1170,8 @@ return(-1);
 /***********************/
 gint gulp_is_option(gchar *text)
 {
-gint i, n;
+gint i;
+size_t n;
 
 if (!text)
   return(-1);
@@ -1687,7 +1689,7 @@ printf("code: %d, context: %d\n", code, context);
           case 4:
             if (g_ascii_strncasecmp(*(buff+1),"mov",3) == 0)
               {
-              if (model->gulp.mov_file);
+              if (model->gulp.mov_file)
                 g_free(model->gulp.mov_file);
               model->gulp.mov_file = g_strdup(*(buff+3));
               }

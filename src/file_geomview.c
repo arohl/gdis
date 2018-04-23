@@ -54,6 +54,7 @@ gint colour_flag, normal_flag, texture_flag;
 gchar **buff, *text;
 gdouble norm[3];
 gpointer scan;
+size_t n_char;
 struct spatial_pak *spatial;
 struct vec_pak **vec, *vec1;
 
@@ -73,28 +74,28 @@ if (num_tokens)
   {
   text = *buff;
 
-n = strlen(text);
-for (i=0 ; i<n ; i++)
-  {
-  switch (text[i])
+  n_char = strlen(text);
+  for (i=0 ; i<n_char ; i++)
     {
-    case 'n':
-      scan_get_line(scan); 
-      break;
+    switch (text[i])
+      {
+      case 'n':
+        scan_get_line(scan);
+        break;
 
-    case 'C':
-      colour_flag = TRUE;
-      break;
+      case 'C':
+        colour_flag = TRUE;
+        break;
 
-    case 'N':
-      normal_flag = TRUE;
-      break;
+      case 'N':
+        normal_flag = TRUE;
+        break;
 
-    case 'T':
-      texture_flag = TRUE;
-      break;
+      case 'T':
+        texture_flag = TRUE;
+        break;
+      }
     }
-  }
   }
 else
   return(3);
@@ -191,52 +192,48 @@ while (!scan_complete(scan))
     n = str_to_float(*buff);
     g_assert(num_tokens > n);
 
-/* only create spatial for 3 or more vertices */
-/* TODO - some files have lines with only 2 vertices - create line */
-if (n > 2)
-  {
-
-/* TODO - only create one spatial - add vertices to this */
-/* TODO - if no normals - use method that makes OpenGL calculate */
-    spatial = spatial_new(NULL, SPATIAL_GENERIC, 0, TRUE, model);
-
-/* check vertices have the correct ordering */
-/* might not be necessary - geomview might already do this */
-    a = str_to_float(*(buff+1));
-    b = str_to_float(*(buff+2));
-    c = str_to_float(*(buff+3));
-/* TODO - convert to cartesian (general case) */
-    calc_norm(norm, vec[a]->x, vec[b]->x, vec[c]->x);
-    normalize(norm, 3);
-
-/* fill out the vertices */
-    for (i=0 ; i<n ; i++)
+    /* only create spatial for 3 or more vertices */
+    /* TODO - some files have lines with only 2 vertices - create line */
+    if (n > 2)
       {
-      v = str_to_float(*(buff+i+1)); 
+      /* TODO - only create one spatial - add vertices to this */
+      /* TODO - if no normals - use method that makes OpenGL calculate */
+      spatial = spatial_new(NULL, SPATIAL_GENERIC, 0, TRUE, model);
 
-      g_assert(v >= 0);
-      g_assert(v < v_limit);
+      /* check vertices have the correct ordering */
+      /* might not be necessary - geomview might already do this */
+      a = str_to_float(*(buff+1));
+      b = str_to_float(*(buff+2));
+      c = str_to_float(*(buff+3));
+      /* TODO - convert to cartesian (general case) */
+      calc_norm(norm, vec[a]->x, vec[b]->x, vec[c]->x);
+      normalize(norm, 3);
 
-/* copy vector, as normals may change depending on current polygon */
-      vec1 = g_malloc(sizeof(struct vec_pak));
-      ARR3SET(vec1->x, vec[v]->x);
-      if (normal_flag)
+      /* fill out the vertices */
+      for (i=0 ; i<n ; i++)
         {
-        ARR3SET(vec1->n, vec[v]->n);
-        }
-      else
-        {
-        ARR3SET(vec1->n, norm);
-        }
-      ARR3SET(vec1->colour, vec[v]->colour);
+        v = str_to_float(*(buff+i+1));
 
-      spatial->list = g_slist_prepend(spatial->list, vec1);
+        g_assert(v >= 0);
+        g_assert(v < v_limit);
+
+        /* copy vector, as normals may change depending on current polygon */
+        vec1 = g_malloc(sizeof(struct vec_pak));
+        ARR3SET(vec1->x, vec[v]->x);
+        if (normal_flag)
+          {
+          ARR3SET(vec1->n, vec[v]->n);
+          }
+        else
+          {
+          ARR3SET(vec1->n, norm);
+          }
+        ARR3SET(vec1->colour, vec[v]->colour);
+
+        spatial->list = g_slist_prepend(spatial->list, vec1);
+        }
+      spatial->list = g_slist_reverse(spatial->list);
       }
-
-    spatial->list = g_slist_reverse(spatial->list);
-  }
-
-
     }
 
   g_strfreev(buff);
