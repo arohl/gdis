@@ -10,6 +10,11 @@
 		030D31B9085FECE20071F986 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 030D31B0085FECE20071F986 /* Accelerate.framework */; };
 		030D31D0085FED020071F986 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 030D31BC085FED020071F986 /* GLUT.framework */; };
 		030D31E4085FED240071F986 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 030D31D3085FED240071F986 /* OpenGL.framework */; };
+		49178CB7208D916700CF0B32 /* gui_vasp.c in Sources */ = {isa = PBXBuildFile; fileRef = 49178CB6208D916600CF0B32 /* gui_vasp.c */; };
+		49178CBA208D91CA00CF0B32 /* file_vasp.h in Headers */ = {isa = PBXBuildFile; fileRef = 49178CB8208D91C900CF0B32 /* file_vasp.h */; };
+		49178CBB208D91CA00CF0B32 /* gui_vasp.h in Headers */ = {isa = PBXBuildFile; fileRef = 49178CB9208D91C900CF0B32 /* gui_vasp.h */; };
+		49178CBF208D929500CF0B32 /* gui_plots.c in Sources */ = {isa = PBXBuildFile; fileRef = 49178CBE208D929500CF0B32 /* gui_plots.c */; };
+		49178CC1208D92D700CF0B32 /* plots.c in Sources */ = {isa = PBXBuildFile; fileRef = 49178CC0208D92D700CF0B32 /* plots.c */; };
 		4927B95B1A0507E7001BF241 /* libglib-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B95A1A0507E7001BF241 /* libglib-2.0.0.dylib */; };
 		4927B95D1A05084C001BF241 /* libgmodule-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B95C1A05084C001BF241 /* libgmodule-2.0.0.dylib */; };
 		4927B95F1A0508CA001BF241 /* libgobject-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4927B95E1A0508CA001BF241 /* libgobject-2.0.0.dylib */; };
@@ -260,6 +265,11 @@
 		030D31B0085FECE20071F986 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
 		030D31BC085FED020071F986 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
 		030D31D3085FED240071F986 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
+		49178CB6208D916600CF0B32 /* gui_vasp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_vasp.c; sourceTree = "<group>"; };
+		49178CB8208D91C900CF0B32 /* file_vasp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = file_vasp.h; sourceTree = "<group>"; };
+		49178CB9208D91C900CF0B32 /* gui_vasp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_vasp.h; sourceTree = "<group>"; };
+		49178CBE208D929500CF0B32 /* gui_plots.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_plots.c; sourceTree = "<group>"; };
+		49178CC0208D92D700CF0B32 /* plots.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = plots.c; sourceTree = "<group>"; };
 		4927B95A1A0507E7001BF241 /* libglib-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libglib-2.0.0.dylib"; path = "../../../../../opt/local/lib/libglib-2.0.0.dylib"; sourceTree = "<group>"; };
 		4927B95C1A05084C001BF241 /* libgmodule-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libgmodule-2.0.0.dylib"; path = "/opt/local/lib/libgmodule-2.0.0.dylib"; sourceTree = "<absolute>"; };
 		4927B95E1A0508CA001BF241 /* libgobject-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libgobject-2.0.0.dylib"; path = "../../../../../opt/local/lib/libgobject-2.0.0.dylib"; sourceTree = "<group>"; };
@@ -743,6 +753,7 @@
 				49884EFB1A07BC9B00B54AD9 /* gui_measure.c */,
 				49884EFC1A07BC9B00B54AD9 /* gui_molsurf.c */,
 				49884EFD1A07BC9B00B54AD9 /* gui_monty.c */,
+				49178CBE208D929500CF0B32 /* gui_plots.c */,
 				49884EFE1A07BC9B00B54AD9 /* gui_render.c */,
 				49884EFF1A07BC9B00B54AD9 /* gui_setup.c */,
 				49884F001A07BC9B00B54AD9 /* gui_shorts.c */,
@@ -752,6 +763,7 @@
 				49884F041A07BC9B00B54AD9 /* gui_symmetry.c */,
 				49884F051A07BC9B00B54AD9 /* gui_task.c */,
 				49884F061A07BC9B00B54AD9 /* gui_tree.c */,
+				49178CB6208D916600CF0B32 /* gui_vasp.c */,
 				49884F071A07BC9B00B54AD9 /* gui_zmatrix.c */,
 				49884F081A07BC9B00B54AD9 /* hirshfeld.c */,
 				49884F091A07BC9B00B54AD9 /* host.c */,
@@ -770,6 +782,7 @@
 				49884F171A07BC9B00B54AD9 /* numeric.c */,
 				49884F181A07BC9B00B54AD9 /* parse.c */,
 				49884F191A07BC9B00B54AD9 /* phonon.c */,
+				49178CC0208D92D700CF0B32 /* plots.c */,
 				49884F1A1A07BC9B00B54AD9 /* project.c */,
 				49884F1B1A07BC9B00B54AD9 /* quaternion.c */,
 				49884F1C1A07BC9B00B54AD9 /* render.c */,
@@ -1022,6 +1035,7 @@
 				49884E2F1A07BC6600B54AD9 /* ff_pak.h */,
 				49884E301A07BC6600B54AD9 /* ff.h */,
 				49884E311A07BC6600B54AD9 /* file.h */,
+				49178CB8208D91C900CF0B32 /* file_vasp.h */,
 				49884E321A07BC6600B54AD9 /* gamess.h */,
 				49884E331A07BC6600B54AD9 /* gdis.h */,
 				49884E341A07BC6600B54AD9 /* geometry.h */,
@@ -1033,6 +1047,7 @@
 				49884E3C1A07BC6600B54AD9 /* gui_image.h */,
 				49884E3D1A07BC6600B54AD9 /* gui_shorts.h */,
 				49884E3E1A07BC6600B54AD9 /* gui_siesta.h */,
+				49178CB9208D91C900CF0B32 /* gui_vasp.h */,
 				49884E3F1A07BC6600B54AD9 /* gulp_keyword.h */,
 				49884E401A07BC6600B54AD9 /* hirshfeld_data.h */,
 				49884E411A07BC6600B54AD9 /* hirshfeld.h */,
@@ -1105,6 +1120,7 @@
 				49884E751A07BC6600B54AD9 /* edit.h in Headers */,
 				49884EA51A07BC6600B54AD9 /* select.h in Headers */,
 				49884EB51A07BC6600B54AD9 /* zone.h in Headers */,
+				49178CBB208D91CA00CF0B32 /* gui_vasp.h in Headers */,
 				49884E951A07BC6600B54AD9 /* mesch_pak.h in Headers */,
 				49884E8B1A07BC6600B54AD9 /* interface.h in Headers */,
 				49884EB41A07BC6600B54AD9 /* zmatrix.h in Headers */,
@@ -1154,6 +1170,7 @@
 				49884EAB1A07BC6600B54AD9 /* surface.h in Headers */,
 				49884EA91A07BC6600B54AD9 /* space.h in Headers */,
 				49884E6E1A07BC6600B54AD9 /* analysis.h in Headers */,
+				49178CBA208D91CA00CF0B32 /* file_vasp.h in Headers */,
 				49884EA31A07BC6600B54AD9 /* scan.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1188,7 +1205,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 0930;
 			};
 			buildConfigurationList = 031A1EA70855448700FAD56D /* Build configuration list for PBXProject "gdis" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -1273,9 +1290,11 @@
 				49884F751A07BC9B00B54AD9 /* gui_render.c in Sources */,
 				49884F5E1A07BC9B00B54AD9 /* gl_stereo.c in Sources */,
 				49884F301A07BC9B00B54AD9 /* command.c in Sources */,
+				49178CC1208D92D700CF0B32 /* plots.c in Sources */,
 				49884F321A07BC9B00B54AD9 /* contents.c in Sources */,
 				49884F8A1A07BC9B00B54AD9 /* mesch.c in Sources */,
 				49884F921A07BC9B00B54AD9 /* quaternion.c in Sources */,
+				49178CB7208D916700CF0B32 /* gui_vasp.c in Sources */,
 				49884F481A07BC9B00B54AD9 /* file_dmol.c in Sources */,
 				49884F661A07BC9B00B54AD9 /* gui_dialog.c in Sources */,
 				4993D3DC2044155D0025E74F /* file_vasp.c in Sources */,
@@ -1290,6 +1309,7 @@
 				49884F851A07BC9B00B54AD9 /* main.c in Sources */,
 				49884F521A07BC9B00B54AD9 /* file_nwchem.c in Sources */,
 				49884F7A1A07BC9B00B54AD9 /* gui_surface.c in Sources */,
+				49178CBF208D929500CF0B32 /* gui_plots.c in Sources */,
 				49884F4E1A07BC9B00B54AD9 /* file_gromacs.c in Sources */,
 				49884F591A07BC9B00B54AD9 /* file.c in Sources */,
 				49884F981A07BC9B00B54AD9 /* sgio.c in Sources */,
@@ -1346,6 +1366,7 @@
 		031A1EA30855448700FAD56D /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = NO;
 				DEBUGGING_SYMBOLS = YES;
@@ -1399,6 +1420,7 @@
 		031A1EA50855448700FAD56D /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_AUTO_VECTORIZATION = YES;
@@ -1449,6 +1471,7 @@
 		031A1EA60855448700FAD56D /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
 				GCC_AUTO_VECTORIZATION = NO;
@@ -1498,11 +1521,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -1542,11 +1567,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
@@ -1589,11 +1616,13 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
