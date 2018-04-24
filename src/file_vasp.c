@@ -803,59 +803,67 @@ if(data->id==QE_OUT){
         read_raw_frame(fp,data->cur_frame,data);
         fclose(fp);
 }
+	CALC.poscar_a0=1.0;
 	if(data->fractional) CALC.poscar_direct=TRUE;
 	else CALC.poscar_direct=FALSE;
 	if(data->periodic<1) {/*not periodic: create a big cubic box*/
-		gint xmax=0,ymax=0,zmax=0;
+		gdouble xmax=0,ymax=0,zmax=0;
+		gdouble xmin=0,ymin=0,zmin=0;
 		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 			core=list2->data;
-			if(xmax<(ABS(core->x[0]))) xmax=ABS(core->x[0]);
-			if(ymax<(ABS(core->x[1]))) ymax=ABS(core->x[1]);
-			if(zmax<(ABS(core->x[2]))) zmax=ABS(core->x[2]);
+			if(xmax<(core->x[0])) xmax=core->x[0];
+			if(ymax<(core->x[1])) ymax=core->x[1];
+			if(zmax<(core->x[2])) zmax=core->x[2];
+			if(xmin>(core->x[0])) xmin=core->x[0];
+			if(ymin>(core->x[1])) ymin=core->x[1];
+			if(zmin>(core->x[2])) zmin=core->x[2];
 		}
-		CALC.poscar_ux=10.+xmax;
+		CALC.poscar_ux=10.+(xmax-xmin);
 		CALC.poscar_uy=0.;
 		CALC.poscar_uz=0.;
 		CALC.poscar_vx=0.;
-		CALC.poscar_vy=10.+ymax;
+		CALC.poscar_vy=10.+(ymax-ymin);
 		CALC.poscar_vz=0.;
 		CALC.poscar_wx=0.;
 		CALC.poscar_wy=0.;
-		CALC.poscar_wz=10.+zmax;
+		CALC.poscar_wz=10.+(zmax-zmin);
 		CALC.poscar_direct=FALSE;/*always for 0D*/
 	} else if(data->periodic<2){/* 1D-periodic: add 10. unit interspace */
-		gint xmax=0,ymax=0;
+		gdouble xmax=0,ymax=0;
+		gdouble xmin=0,ymin=0;
 		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 			core=list2->data;
-			if(xmax<(ABS(core->x[0]))) xmax=ABS(core->x[0]);
-			if(ymax<(ABS(core->x[1]))) ymax=ABS(core->x[1]);
+			if(xmax<(core->x[0])) xmax=core->x[0];
+			if(ymax<(core->x[1])) ymax=core->x[1];
+			if(xmin>(core->x[0])) xmin=core->x[0];
+			if(ymin>(core->x[1])) ymin=core->x[1];
+
 		}
-		xmax+=10.;
-		ymax+=10.;
 		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 			core=list2->data;/*TODO: confirm 1D behavior (find example)*/
-			core->x[0]=core->x[0]/xmax;
-			core->x[1]=core->x[1]/ymax;
+			core->x[0]=core->x[0]/(10.+(xmax-xmin));
+			core->x[1]=core->x[1]/(10.+(ymax-ymin));
 		}
-		CALC.poscar_ux=10.+xmax;
+		CALC.poscar_ux=10.+(xmax-xmin);
 		CALC.poscar_uy=0.;
 		CALC.poscar_uz=0.;
 		CALC.poscar_vx=0.;
-		CALC.poscar_vy=10.+ymax;
+		CALC.poscar_vy=10.+(ymax-ymin);
 		CALC.poscar_vz=0.;
 		CALC.poscar_wx=0.;
 		CALC.poscar_wy=0.;
 		CALC.poscar_wz=data->latmat[0];
 	} else if(data->periodic<3){/* 2D-periodic: add a 10. unit vacuum layer */
-		gint zmax=0;
+		gdouble zmax=0.;
+		gdouble zmin=0.;
 		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 			core=list2->data;
-			if(zmax<(ABS(core->x[2]))) zmax=ABS(core->x[2]);
+			if(zmax<(core->x[2])) zmax=core->x[2];
+			if(zmin>(core->x[2])) zmin=core->x[2];
 		}
-		zmax+=10.;
 		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 			core=list2->data;
-			core->x[2]=core->x[2]/zmax;
+			core->x[2]=core->x[2]/(10.+(zmax-zmin));
 		}
 		CALC.poscar_ux=data->latmat[0];
 		CALC.poscar_uy=data->latmat[3];
@@ -865,9 +873,8 @@ if(data->id==QE_OUT){
 		CALC.poscar_vz=data->latmat[7];
 		CALC.poscar_wx=0.;
 		CALC.poscar_wy=0.;
-		CALC.poscar_wz=zmax;
+		CALC.poscar_wz=10.+(zmax-zmin);
 	} else {/* 3D-periodic: Nothing much to do */
-		CALC.poscar_a0=1.0;
 		CALC.poscar_ux=data->latmat[0];
 		CALC.poscar_uy=data->latmat[3];
 		CALC.poscar_uz=data->latmat[6];
