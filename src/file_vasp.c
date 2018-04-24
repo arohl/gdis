@@ -793,6 +793,16 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
         CALC.poscar_y=0.;
         CALC.poscar_z=0.;
 	/* from model */
+/* This fix a BUG specific to QEOUT, where the last position can have fractional=FALSE, while coordinate is fractional*/
+if(data->id==QE_OUT){
+	FILE *fp=fopen(data->filename, "r");
+        if (!fp){
+                gui_text_show(ERROR,g_strdup_printf("I/O ERROR: can't open .qeout file!\n"));
+                return -1;
+        }
+        read_raw_frame(fp,data->cur_frame,data);
+        fclose(fp);
+}
 	if(data->fractional) CALC.poscar_direct=TRUE;
 	else CALC.poscar_direct=FALSE;
 	if(data->periodic<1) {/*not periodic: create a big cubic box*/
