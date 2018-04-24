@@ -21,7 +21,6 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* simple VASP launcher */
-#define BREAKPOINT __asm__("int $3")
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2667,7 +2666,6 @@ void exec_calc(){
 	vasp_exec->job_nproc=vasp_gui.calc.job_nproc;
 	/*prepend to calc list*/
 	sysenv.vasp_calc_list = g_slist_prepend (sysenv.vasp_calc_list,vasp_exec);
-	vasp_gui.link_job_id=g_slist_index(sysenv.vasp_calc_list,vasp_exec);
 	/*launch vasp in a task*/
 	gtk_widget_set_sensitive(vasp_gui.button_save,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.button_exec,FALSE);
@@ -2703,8 +2701,6 @@ void gui_vasp_dialog(void){
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
-	/*TODO Only one active at a time*/
-	vasp_gui.link_job_id=-1;
 /* do we have a vasprun.xml model?  */
 	if (data->id == VASP) {
 		vasp_gui.have_xml=TRUE;

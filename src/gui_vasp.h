@@ -368,8 +368,6 @@ struct vasp_calc_gui{
 /*buttons*/
 	GtkWidget *button_save;
 	GtkWidget *button_exec;
-/* RESULT */
-	gint link_job_id;
 };
 
 /*methods of interest*/
