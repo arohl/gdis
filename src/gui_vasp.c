@@ -2596,12 +2596,6 @@ gint save_vasp_calc(){
 /* Cleanup calculation structure */
 /*********************************/
 void vasp_cleanup(){
-        /*take case of calculation, if any*/
-        if(vasp_gui.link_job_id>-1){
-                vasp_exec_struct *vasp_exec=g_slist_nth_data(sysenv.vasp_calc_list,vasp_gui.link_job_id);
-                /*we have a linked job -> tell him that it no longer have a gui ;)*/
-                (*vasp_exec).have_gui=FALSE;
-        }
 	/*we don't have to free anything.. everything will be gone after the dialog is closed*/
 }
 /*****************************************/
@@ -2639,13 +2633,6 @@ void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 	gchar *filename;
 	/*sync_ wait for result?*/
 	while(!(*vasp_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
-	if((*vasp_exec).have_gui){/*GUI is still active => vasp_gui IS the GUI*/
-		gtk_spinner_stop(GTK_SPINNER(vasp_gui.spinner));
-		gtk_widget_hide(vasp_gui.spinner);
-		gtk_widget_set_sensitive(vasp_gui.button_save,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.button_exec,TRUE);
-		vasp_gui.link_job_id=-1;/*do not forget*/
-	}
 	/*init a model*/
 	result_model=model_new();
         model_init(result_model);
@@ -2682,11 +2669,12 @@ void exec_calc(){
 	sysenv.vasp_calc_list = g_slist_prepend (sysenv.vasp_calc_list,vasp_exec);
 	vasp_gui.link_job_id=g_slist_index(sysenv.vasp_calc_list,vasp_exec);
 	/*launch vasp in a task*/
-	gtk_widget_show(vasp_gui.spinner);/*this one is a hard one ;)*/
 	gtk_widget_set_sensitive(vasp_gui.button_save,FALSE);
 	gtk_widget_set_sensitive(vasp_gui.button_exec,FALSE);
-	gtk_spinner_start(GTK_SPINNER(vasp_gui.spinner));
 	task_new("VASP", &run_vasp_exec,vasp_exec,&cleanup_vasp_exec,vasp_exec,sysenv.active_model);
+	/*when task is launched, close dialog*/
+	vasp_cleanup();
+	gtk_widget_destroy(vasp_gui.window);
 }
 /********************************/
 /* Quit vasp calculation dialog */
@@ -3630,8 +3618,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 	vbox = gtk_vbox_new(FALSE, _SPACE);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
 /* Action buttons */
-	vasp_gui.spinner=gtk_spinner_new();
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vasp_gui.window)->action_area), vasp_gui.spinner, FALSE, FALSE, 0);
 	vasp_gui.button_save=gui_stock_button(GTK_STOCK_SAVE, save_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
 	vasp_gui.button_exec=gui_stock_button(GTK_STOCK_EXECUTE, exec_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
 	gui_stock_button(GTK_STOCK_CLOSE, quit_vasp_gui, dialog, GTK_DIALOG(vasp_gui.window)->action_area);
@@ -3641,7 +3627,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* all done */
 	vasp_gui_refresh();/*refresh once more*/
         gtk_widget_show_all(vasp_gui.window);
-	gtk_widget_hide(vasp_gui.spinner);
         sysenv.refresh_dialog=TRUE;
 }
 
