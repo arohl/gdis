@@ -529,7 +529,7 @@ if (i == graph->select)
       {
       gint xoff;
 
-      xoff = strlen(graph->select_label);
+      xoff = (gint) strlen(graph->select_label);
       xoff *= gl_fontsize;
       xoff /= 4;
       gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);

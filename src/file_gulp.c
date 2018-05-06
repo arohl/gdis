@@ -2488,7 +2488,7 @@ printf("code: %d, context: %d\n", code, context);
             if (num_tokens)
               {
               tmp = NULL;
-              for (i=strlen(*buff) ; i-- ; )
+              for (i=(gint) strlen(*buff) ; i-- ; )
                 {
                 if (g_ascii_isalpha((*buff)[i]))
                   {
@@ -2912,7 +2912,7 @@ while(!fgetline(fp,line))
     {
     if (!data->grafted)
       {
-      for (i=strlen(line) ; i-- ; )
+      for (i=(gint) strlen(line) ; i-- ; )
         {
         if (line[i] == ':')
           {

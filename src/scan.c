@@ -44,8 +44,8 @@ FILE *fp;
 gboolean background;
 gboolean eof;
 
-guint bytes_read;
-guint bytes_total;
+off_t bytes_read;
+off_t bytes_total;
 
 /* stored lines */
 gint buffer_line;

@@ -56,7 +56,7 @@ extern struct elem_pak elements[];
 /***********************/
 gchar *parse_strip_extension(const gchar *name)
 {
-gint i;
+size_t i;
 gchar *base, *temp;
 
 temp = g_strdup(name);
