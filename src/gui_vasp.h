@@ -178,7 +178,6 @@ struct vasp_calc_gui{
 	GtkTextBuffer *simple_message_buff;
 /*full interface*/
 	gint cur_page;
-	GtkWidget *spinner;
 	GtkWidget *name;
 	GtkWidget *file_entry;
 	GtkWidget *prec;
@@ -369,8 +368,6 @@ struct vasp_calc_gui{
 /*buttons*/
 	GtkWidget *button_save;
 	GtkWidget *button_exec;
-/* RESULT */
-	gint link_job_id;
 };
 
 /*methods of interest*/

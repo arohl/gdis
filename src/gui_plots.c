@@ -523,10 +523,10 @@ void exec_plot(){
         data->locked=TRUE;/*useful with task?*/
 	if(plot->data_changed){
 	        plot->model=data;
-		task_new("PLOT-INIT",&plot_load_data,plot,&plot_prepare_data,plot,data);
+		task_system_new("PLOT-INIT",&plot_load_data,plot,&plot_prepare_data,plot,data);
 	}
 /* draw the graph in task */
-	task_new("PLOT-DRAW",&plot_draw_graph,plot,&plot_show_graph,plot,data);
+	task_system_new("PLOT-DRAW",&plot_draw_graph,plot,&plot_show_graph,plot,data);
         data->locked=FALSE;
 /*finalize drawing graph*/
 /* There is a _BUG_ in QE redisplay that makes the atom distances shrink for each
@@ -583,7 +583,7 @@ void gui_plots_dialog(void){
 	sysenv.refresh_dialog=FALSE;
 	plot->model=data;	
 /*2- do some work*/
-	task_new("PLOT-INIT",&plot_load_data,plot,&plot_prepare_data,plot,data);
+	task_system_new("PLOT-INIT",&plot_load_data,plot,&plot_prepare_data,plot,data);
 /*3- unlock model*/
 //	data->locked=FALSE;
 //	model_content_refresh(data);

@@ -179,6 +179,56 @@ g_thread_pool_push(sysenv.thread_pool, task, NULL);
 }
 
 /**************************************/
+/* submit a system task:              */
+/* tentative to get some tasks hidden */
+/* and executed immediately.. (OVHPA) */
+/**************************************/
+void task_system_new(const gchar *label,
+              gpointer func1, gpointer arg1,
+              gpointer func2, gpointer arg2,
+              gpointer model)
+{
+struct task_pak *task;
+
+/* duplicate the task data */ 
+task = g_malloc(sizeof(struct task_pak));
+sysenv.task_list = g_slist_prepend(sysenv.task_list, task);
+task->pid = -1;
+task->status = QUEUED;
+task->time = NULL;
+task->message = NULL;
+task->pcpu = 0.0;
+task->pmem = 0.0;
+task->progress = 0.0;
+task->locked_model = model;
+
+task->status_file = NULL;
+task->status_fp = NULL;
+task->status_index = -1;
+task->status_text = g_string_new(NULL);
+
+task->label = g_strdup_printf("SYS: %s",label);
+task->primary = func1;
+task->cleanup = func2;
+task->ptr1 = arg1;
+task->ptr2 = arg2;
+
+/* queue the task */
+g_thread_pool_push(sysenv.thread_pool, task, NULL);
+	/*push it to front*/
+	if(g_thread_pool_move_to_front(sysenv.thread_pool,task)){
+		/*task is selected and front*/
+		if(task->status==QUEUED){
+			/*temporarily increase the pool size to immediately get the system task to start*/
+			gint max=g_thread_pool_get_max_threads(sysenv.thread_pool);
+			g_thread_pool_set_max_threads(sysenv.thread_pool,max+1,NULL);
+			while(task->status==QUEUED) usleep(50*1000);/*sleep 50ms until sys task is started*/
+			g_thread_pool_set_max_threads(sysenv.thread_pool,max,NULL);/*go back to former thread pool size*/
+		}
+	}
+}
+
+/**************************************/
 /* platform independant task spawning */
 /**************************************/
 #define DEBUG_TASK_SYNC 0
