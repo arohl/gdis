@@ -783,7 +783,6 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 	struct model_pak *data=sysenv.active_model;
         GSList *list2;
         struct core_pak *core;
-        gdouble depth;
         /*Common setup for xml or regular models*/
 /*4-POSCAR*/
         /* unexposed */
@@ -793,6 +792,100 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
         CALC.poscar_x=0.;
         CALC.poscar_y=0.;
         CALC.poscar_z=0.;
+	/* from model */
+/* This fix a BUG specific to QEOUT, where the last position can have fractional=FALSE, while coordinate is fractional*/
+if(data->id==QE_OUT){
+	FILE *fp=fopen(data->filename, "r");
+        if (!fp){
+                gui_text_show(ERROR,g_strdup_printf("I/O ERROR: can't open .qeout file!\n"));
+                return -1;
+        }
+        read_raw_frame(fp,data->cur_frame,data);
+        fclose(fp);
+}
+	CALC.poscar_a0=1.0;
+	if(data->fractional) CALC.poscar_direct=TRUE;
+	else CALC.poscar_direct=FALSE;
+	if(data->periodic<1) {/*not periodic: create a big cubic box*/
+		gdouble xmax=0,ymax=0,zmax=0;
+		gdouble xmin=0,ymin=0,zmin=0;
+		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+			core=list2->data;
+			if(xmax<(core->x[0])) xmax=core->x[0];
+			if(ymax<(core->x[1])) ymax=core->x[1];
+			if(zmax<(core->x[2])) zmax=core->x[2];
+			if(xmin>(core->x[0])) xmin=core->x[0];
+			if(ymin>(core->x[1])) ymin=core->x[1];
+			if(zmin>(core->x[2])) zmin=core->x[2];
+		}
+		CALC.poscar_ux=10.+(xmax-xmin);
+		CALC.poscar_uy=0.;
+		CALC.poscar_uz=0.;
+		CALC.poscar_vx=0.;
+		CALC.poscar_vy=10.+(ymax-ymin);
+		CALC.poscar_vz=0.;
+		CALC.poscar_wx=0.;
+		CALC.poscar_wy=0.;
+		CALC.poscar_wz=10.+(zmax-zmin);
+		CALC.poscar_direct=FALSE;/*always for 0D*/
+	} else if(data->periodic<2){/* 1D-periodic: add 10. unit interspace */
+		gdouble xmax=0,ymax=0;
+		gdouble xmin=0,ymin=0;
+		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+			core=list2->data;
+			if(xmax<(core->x[0])) xmax=core->x[0];
+			if(ymax<(core->x[1])) ymax=core->x[1];
+			if(xmin>(core->x[0])) xmin=core->x[0];
+			if(ymin>(core->x[1])) ymin=core->x[1];
+
+		}
+		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+			core=list2->data;/*TODO: confirm 1D behavior (find example)*/
+			core->x[0]=core->x[0]/(10.+(xmax-xmin));
+			core->x[1]=core->x[1]/(10.+(ymax-ymin));
+		}
+		CALC.poscar_ux=10.+(xmax-xmin);
+		CALC.poscar_uy=0.;
+		CALC.poscar_uz=0.;
+		CALC.poscar_vx=0.;
+		CALC.poscar_vy=10.+(ymax-ymin);
+		CALC.poscar_vz=0.;
+		CALC.poscar_wx=0.;
+		CALC.poscar_wy=0.;
+		CALC.poscar_wz=data->latmat[0];
+	} else if(data->periodic<3){/* 2D-periodic: add a 10. unit vacuum layer */
+		gdouble zmax=0.;
+		gdouble zmin=0.;
+		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+			core=list2->data;
+			if(zmax<(core->x[2])) zmax=core->x[2];
+			if(zmin>(core->x[2])) zmin=core->x[2];
+		}
+		for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+			core=list2->data;
+			core->x[2]=core->x[2]/(10.+(zmax-zmin));
+		}
+		CALC.poscar_ux=data->latmat[0];
+		CALC.poscar_uy=data->latmat[3];
+		CALC.poscar_uz=data->latmat[6];
+		CALC.poscar_vx=data->latmat[1];
+		CALC.poscar_vy=data->latmat[4];
+		CALC.poscar_vz=data->latmat[7];
+		CALC.poscar_wx=0.;
+		CALC.poscar_wy=0.;
+		CALC.poscar_wz=10.+(zmax-zmin);
+	} else {/* 3D-periodic: Nothing much to do */
+		CALC.poscar_ux=data->latmat[0];
+		CALC.poscar_uy=data->latmat[3];
+		CALC.poscar_uz=data->latmat[6];
+		CALC.poscar_vx=data->latmat[1];
+		CALC.poscar_vy=data->latmat[4];
+		CALC.poscar_vz=data->latmat[7];
+		CALC.poscar_wx=data->latmat[2];
+		CALC.poscar_wy=data->latmat[5];
+		CALC.poscar_wz=data->latmat[8];
+	}
+	CALC.poscar_sd=TRUE;
 /*5-KPOINTS*/
         CALC.kpoints_nkpts=0;
 /*...*/
@@ -838,18 +931,6 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.algo=VA_IALGO;
 		CALC.ncore=1.;
 		CALC.kpar=1.;
-		/* update lattice values */
-	        CALC.poscar_sd=TRUE;
-	        CALC.poscar_a0=1.0;
-	        CALC.poscar_ux=data->latmat[0];
-	        CALC.poscar_uy=data->latmat[3];
-	        CALC.poscar_uz=data->latmat[6];
-	        CALC.poscar_vx=data->latmat[1];
-	        CALC.poscar_vy=data->latmat[4];
-		CALC.poscar_vz=data->latmat[7];
-        	CALC.poscar_wx=data->latmat[2];
-        	CALC.poscar_wy=data->latmat[5];
-        	CALC.poscar_wz=data->latmat[8];
 	}else{
 		/*use some default values*/
 /*name*/
@@ -976,51 +1057,6 @@ gint vasprun_update(gchar *filename,vasp_calc_struct *calc){
 		CALC.lvtot=FALSE;
 		CALC.lvhar=FALSE;
 		CALC.lelf=FALSE;
-/*set POSCAR lattice using model*/
-                if(data->fractional) CALC.poscar_direct=TRUE;
-                else CALC.poscar_direct=FALSE;
-                if(data->periodic<1) {
-                        /*not periodic: create a big cubic box*/
-                        data->latmat[0]=15.;data->latmat[1]=0.0;data->latmat[2]=0.0;
-                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-                }else if(data->periodic<2){/*TODO: find an example*/
-                        /* 1D-periodic? only lattice element 0 is defined: add huge y,z dimensions*/
-                        data->latmat[1]=0.0;data->latmat[2]=0.0;
-                        data->latmat[3]=0.0;data->latmat[4]=15.;data->latmat[5]=0.0;
-                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=15.;
-                }else if(data->periodic<3){
-                        /* 2D-periodic? only lattice element 0,3 and 1,4 are defined: add a huge z dimension*/
-                        /*1st pass: calculate depth*/
-                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
-                                core=list2->data;
-                                if(depth<(ABS(core->x[2]))) depth=ABS(core->x[2]);
-                        }
-                        /*2nd pass: prepare z data*/
-                        depth+=10.;/*add reasonable vacuum inter-slab*/
-                        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
-                                core=list2->data;
-                                core->x[2]=core->x[2]/depth;
-                        }
-                        /* This only make sense is surface was created by GDIS though..*/
-                        data->latmat[2]=0.0;
-                        data->latmat[5]=0.0;
-                        data->latmat[6]=0.0;data->latmat[7]=0.0;data->latmat[8]=depth;
-                }else {
-                        /* 3D-periodic! So far so good */
-                }
-		/* update lattice values */
-	        CALC.poscar_sd=TRUE;
-	        CALC.poscar_a0=1.0;
-	        CALC.poscar_ux=data->latmat[0];
-	        CALC.poscar_uy=data->latmat[3];
-	        CALC.poscar_uz=data->latmat[6];
-	        CALC.poscar_vx=data->latmat[1];
-	        CALC.poscar_vy=data->latmat[4];
-	        CALC.poscar_vz=data->latmat[7];
-	        CALC.poscar_wx=data->latmat[2];
-	        CALC.poscar_wy=data->latmat[5];
-	        CALC.poscar_wz=data->latmat[8];
 	}
 	return 0;
 #undef CALC
