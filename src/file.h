@@ -118,6 +118,7 @@ gint read_arc(gchar *, struct model_pak *);
 gint read_cif(gchar *, struct model_pak *);
 gint read_fdf(gchar *, struct model_pak *);
 gint read_xml_vasp(gchar *, struct model_pak *);
+gint read_output_uspex(gchar *filename, struct model_pak *model);
 gint read_gulp(gchar *, struct model_pak *);
 gint read_gulp_output(gchar *, struct model_pak *);
 gint read_gmf(gchar *, struct model_pak *);
@@ -162,6 +163,7 @@ gint read_trj_frame(FILE *, struct model_pak *, gint);
 gint read_arc_frame(FILE *, struct model_pak *);
 gint read_sout_frame(FILE *, struct model_pak *);
 gint read_xml_vasp_frame(FILE *, struct model_pak *);
+gint read_frame_uspex(FILE *vf, struct model_pak *model);
 gint read_gms_out_frame(FILE *, struct model_pak *);
 gint read_about_frame(FILE *, struct model_pak *);
 gint read_nwout_frame(FILE *, struct model_pak *);
@@ -187,6 +189,9 @@ void gdis_blurb(FILE *);
 void capitals(gchar *, gchar *);
 gchar **get_tokenized_line(FILE *, gint *);
 gint get_keyword_code(const gchar *);
+
+#define find_in_string(a,b) strstr(b,a)
+long int fetch_in_file(FILE *vf,const gchar *target);
 
 gint read_frame(FILE *, gint, struct model_pak *);
 gint read_raw_frame(FILE *, gint, struct model_pak *);

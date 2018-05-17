@@ -873,19 +873,6 @@ gdouble electrostatic_pot_on_mesh;
 gchar * modelfilename;
 };
 
-/*********** */
-/* VASP pack */
-/*************/
-struct vasp_pak
-{
-gint num_atoms;
-gint num_species;
-gint num_iter;
-gdouble energy;
-GSList *species_list; /*atom def does not change*/
-};
-
-
 /***************/
 /* Monty2 data */
 /***************/
@@ -1127,6 +1114,7 @@ gint num_asym;
 gint num_shells;
 gint num_ghosts;
 gint num_geom;
+gint num_species;
 
 /* main lists */
 GSList *cores;
@@ -1244,7 +1232,6 @@ GString *error_file_read;
 struct gulp_pak gulp;
 struct gamess_pak gamess;
 struct siesta_pak siesta;
-struct vasp_pak vasp;
 struct abinit_pak abinit;
 struct nwchem_pak nwchem;
 struct castep_pak castep;
@@ -1262,8 +1249,6 @@ gint plots;
  * other that property_list / property_table 
  * So one can directly access an array/value 
  * for frequency, raman, dos, band, etc.. */
-
-/*TODO: pack all that into a "structure_pak"?*/
 
 /* density of states (DOS) */
 gboolean spin_polarized;
@@ -1286,7 +1271,8 @@ gint nfreq;
 gdouble *freq;
 gdouble *freq_intens;
 
-
+/* uspex */
+gpointer uspex;
 
 /* element data */
 /*
