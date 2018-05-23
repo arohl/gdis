@@ -386,18 +386,31 @@ if(_UC.method==US_CM_USPEX){
         fclose(vf);
 
 /* --- Prepare the summary graph */
-	_UC.graph=graph_new("USPEX", model);
+	/*no need to load BESTIndividuals since we already know everything from Individuals*/
+	_UC.graph=graph_new("ALL", model);
+	_UC.graph_best=graph_new("BEST", model);
 	if(_UC.num_struct>_UC.num_gen){
 		gdouble *e;
 		gint skip=0;
 		gint gen=1;
 		gint num;
+		gdouble min_E;
+		gdouble max_E;
+		_UC.num_best=_UC.num_gen;
+		_UC.best_ind=g_malloc((1+_UC.num_best)*sizeof(gint));
+		_UC.best_ind[0]=0;
+		ix=0;
 		while(gen<=_UC.num_gen){
-		  ix=0;
 		  while(_UC.ind[ix].gen<gen) ix++;/*reach generation gen*/
 		  num=0;
 		  skip=ix;
+		  min_E=_UC.ind[ix].E;
+		  _UC.best_ind[gen]=ix;
 		  while(_UC.ind[ix].gen==gen){
+			if(_UC.ind[ix].E<min_E){
+				min_E=_UC.ind[ix].E;
+				_UC.best_ind[gen]=ix;
+			}
 			num++;
 			ix++;
 		  }
@@ -414,56 +427,27 @@ if(_UC.method==US_CM_USPEX){
 		  gen++;
 		  g_free(e);
 		}
+		/*prepare array*/
+		e=g_malloc((1+_UC.num_gen)*sizeof(gdouble));
+		e[0]=(gdouble)_UC.num_gen;
+		max_E=_UC.ind[_UC.best_ind[1]].E;
+		for(gen=0;gen<_UC.num_gen;gen++) {
+			if(_UC.ind[_UC.best_ind[gen+1]].E>max_E) max_E=_UC.ind[_UC.best_ind[gen+1]].E;
+			e[gen+1]=_UC.ind[_UC.best_ind[gen+1]].E;
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind[gen+1],e[gen+1]);
+#endif
+		}
+		graph_add_borned_data(
+			_UC.num_gen,e,0,_UC.num_gen,
+			_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
+		g_free(e);
 	}
 	/*set ticks*/
 	if(_UC.num_gen>15) ix=5;
 	else ix=_UC.num_gen+1;
 	graph_set_xticks(TRUE,ix,_UC.graph);
 	graph_set_yticks(TRUE,5,_UC.graph);
-/* --- prepare BEST individuals data */
-	_UC.graph_best=graph_new("BEST", model);
-	/*no need to load BESTIndividuals since we already know everything from Individuals*/
-if(_UC.num_struct>_UC.num_gen){
-gint gen=1;
-gdouble min_E;
-gdouble max_E;
-gdouble *e;
-	_UC.num_best=_UC.num_gen;
-	_UC.best_ind=g_malloc(_UC.num_best*sizeof(gint));
-	ix=0;
-	max_E=_UC.ind[ix].E;
-	do{
-		while(_UC.ind[ix].gen<gen) ix++;/*reach generation gen*/
-		_UC.best_ind[gen]=ix;
-		min_E=_UC.ind[ix].E;
-		while((_UC.ind[ix].gen==gen)&&(ix<_UC.num_struct)){
-			if(_UC.ind[ix].E<min_E){
-				min_E=_UC.ind[ix].E;
-				_UC.best_ind[gen]=ix;
-			}
-			ix++;
-		}
-		gen++;
-		ix--;
-	}while((ix<_UC.num_struct)&&(gen<=_UC.num_gen));
-	/*prepare array*/
-	e=g_malloc((1+_UC.num_gen)*sizeof(gdouble));
-	e[0]=(gdouble)_UC.num_gen;
-	max_E=_UC.ind[_UC.best_ind[1]].E;
-	for(gen=0;gen<_UC.num_gen;gen++) {
-			if(_UC.ind[_UC.best_ind[gen+1]].E>max_E) max_E=_UC.ind[_UC.best_ind[gen+1]].E;
-			e[gen+1]=_UC.ind[_UC.best_ind[gen+1]].E;
-#if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG:USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind[gen+1],e[gen+1]);
-#endif
-	}
-	graph_add_borned_data(
-		_UC.num_gen,e,0,_UC.num_gen,
-		_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
-}
-	/*set ticks*/
-	if(_UC.num_gen>15) ix=5;
-	else ix=_UC.num_gen+1;
 	graph_set_xticks(TRUE,ix,_UC.graph_best);
 	graph_set_yticks(TRUE,5,_UC.graph_best);
 
