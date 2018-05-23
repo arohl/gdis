@@ -39,6 +39,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #else
 #include <GL/gl.h>
 #endif
+/*for uspex structure -> should be in interface?*/
+#include "file_uspex.h"
 /* externals */
 extern struct sysenv_pak sysenv;
 extern gint gl_fontsize;
@@ -288,13 +290,12 @@ else
   graph->size = size;
 }
 
-if(type!=GRAPH_USPEX){
-ptr = g_malloc(size*sizeof(gdouble));
-
-memcpy(ptr, x, size*sizeof(gdouble));
+if((type==GRAPH_USPEX)||(type==GRAPH_USPEX_BEST)){
+ptr = g_malloc(1+((gint)x[0])*sizeof(gdouble));
+memcpy(ptr,x,(1+(gint)x[0])*sizeof(gdouble));
 }else{
-ptr = g_malloc(x[0]*sizeof(gdouble));
-memcpy(ptr,x,x[0]*sizeof(gdouble));
+ptr = g_malloc(size*sizeof(gdouble));
+memcpy(ptr, x, size*sizeof(gdouble));
 }
 
 graph->xmin = x_min;
@@ -384,6 +385,37 @@ g_assert(canvas!=NULL);
 
 /*check if the data point exists*/
 if((struct_sel<0)||(struct_sel>graph->size-1)) return;/*not in there*/
+
+/*USPEX_BEST: simple search*/
+if(graph->type==GRAPH_USPEX_BEST){
+list=graph->set_list;/*there should be only one list*/
+ptr = (gdouble *) list->data;
+i=struct_sel+1;
+yf = ptr[i];
+yf -= graph->ymin;
+yf /= (graph->ymax - graph->ymin);
+yf *= dy;
+yy = (gint) yf;
+yy *= -1;
+yy += oy;
+if((y>yy-3)&&(y<yy+3)){
+	uspex_calc_struct *uspex_calc=model->uspex;
+	/*we have a hit*/
+	graph->select=struct_sel;
+	graph->select_2=ptr[i];
+	g_free(graph->select_label);
+	graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
+	vf=fopen(model->filename, "r");
+	if(!vf) return;
+	model->cur_frame=(*uspex_calc).best_ind[struct_sel+1];/*this is the structure number*/
+	read_raw_frame(vf,model->cur_frame,model);
+	fclose(vf);
+	tree_model_refresh(model);
+	model_prep(model);/*model_prep has a problem with large sets here*/
+	return;/*no need to continue for all data!*/
+}
+}else{
+/*USPEX: more complex search*/
 j=0;n_struct=0;
 for (list=graph->set_list ; list ; list=g_slist_next(list))
   {
@@ -423,6 +455,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 		j++;
 	}
   }
+}
 }
 
 
@@ -729,13 +762,20 @@ flag = FALSE;
 sx = sy = 0;
 
 i = 1;
+oldx=-1;
 for (list=graph->set_list ; list ; list=g_slist_next(list))
   {
   ptr = (gdouble *) list->data;
-  for (j=1 ; j<(gint)ptr[0] ; j++)/*the first data is number of structures in a generation */
+  for (j=1 ; j<=(gint)ptr[0] ; j++)/*the first data is number of structures in a generation */
     {
+
+if(graph->type==GRAPH_USPEX){/*USPEX: draw i:y */
     xf = (gdouble) (i) / (gdouble) (graph->size);
     x = ox + xf*dx;
+}else{/*USPEX_BEST: draw j,y*/
+    xf = (gdouble) (j) / (gdouble) (graph->size);
+    x = ox + xf*dx;
+}
 
 /* scale real value to screen coords */
     yf = ptr[j];
@@ -754,8 +794,15 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
   gl_vertex_window(x-2, y+2, canvas);
   gl_vertex_window(x-2, y-2, canvas);
   glEnd();
-
-
+/*USPEX_BEST: draw line x,y oldx,y if oldx!=-1*/
+	if((graph->type==GRAPH_USPEX_BEST)&&(oldx!=-1)){
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(oldx,oldy,canvas);
+	gl_vertex_window(x,y,canvas);
+	glEnd();
+	}
+	oldx=x;
+	oldy=y;
     }
   i++;
   }
@@ -1569,6 +1616,7 @@ void graph_draw_1d(struct canvas_pak *canvas, struct graph_pak *graph)
 		graph_draw_1d_bandos(canvas,graph);
 		break;
 	case GRAPH_USPEX:
+	case GRAPH_USPEX_BEST:
 		graph_draw_1d_uspex(canvas,graph);
 		break;
 	case GRAPH_UNKNOWN:

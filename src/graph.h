@@ -27,6 +27,7 @@ typedef enum {
 	GRAPH_DOS,/*interleave e,dos plot*/
         GRAPH_BANDOS,/*dual BAND & DOS graph*/
 	GRAPH_USPEX,/*point graph with selectable*/
+	GRAPH_USPEX_BEST,/*linepoint graph with selectable*/
         GRAPH_UNKNOWN,/*for catching wrong type*/
 } graph_type;
 /*******************/

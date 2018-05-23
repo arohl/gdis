@@ -124,7 +124,7 @@ if (data->graph_active)
   struct graph_pak *graph=(struct graph_pak *)data->graph_active;
   if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
   if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
-  if(graph->type==GRAPH_USPEX) graph_uspex_select(x,y,data);
+  if((graph->type==GRAPH_USPEX)||(graph->type==GRAPH_USPEX_BEST)) graph_uspex_select(x,y,data);
   return(FALSE);
   }
 

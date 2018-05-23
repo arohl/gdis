@@ -56,6 +56,7 @@ typedef struct {
 	gint *best_ind;
 /*interpretation*/
 	gpointer graph;
+	gpointer graph_best;
 } uspex_calc_struct;
 /* execution structure */
 typedef struct {
