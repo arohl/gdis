@@ -13,7 +13,7 @@ SRC =	main.c model.c coords.c connect.c matrix.c module.c task.c \
 	file_abinit.c file_pdb.c file_povray.c file_nwchem.c file_castep.c \
 	file_gauss.c file_qe.c file_rietica.c file_geomview.c file_cssr.c file_cel.c \
 	file_dmol.c file_dlpoly.c file_bgf.c file_cgf.c file_dlp.c \
-	file_gromacs.c file_meta.c file_mol2.c
+	file_gromacs.c file_meta.c file_mol2.c file_uspex.c
 
 ifeq ($(USE_GUI), YES)
 SRC := $(SRC) gui_main.c gui_canvas.c gui_shorts.c \

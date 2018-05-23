@@ -894,7 +894,9 @@ while (list)
   {
   bond = list->data;
   list = g_slist_next(list);
-
+/*_BUG_ many bonds/structures cause this to fail... (OVHPA)*/
+  if(!list) break;
+/*end _BUG_*/
   core1 = bond->atom1;
   core2 = bond->atom2;
 /* remove both core references and main list reference, then free it */
