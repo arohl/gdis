@@ -28,7 +28,8 @@ typedef enum {
         GRAPH_BANDOS,/*dual BAND & DOS graph*/
 	GRAPH_USPEX,/*point graph with selectable*/
 	GRAPH_USPEX_BEST,/*linepoint graph with selectable*/
-        GRAPH_UNKNOWN,/*for catching wrong type*/
+	GRAPH_USPEX_COMP,/*composition vs energy, point with selectable*/
+	GRAPH_USPEX_2D,/*2D point graph with selectable*/
 } graph_type;
 /*******************/
 /* data structures */
@@ -52,10 +53,10 @@ struct graph_pak
 	gdouble ymax;
 	/* NB: all sets are required to be <= size */
 	gint size;
-	GSList *set_list;
+	GSList *set_list;/*in case of 1D graph, set_list={x[,tag]} for 2D set_list={x,y[,tag]}*/
 	/* peak selection */
 	gint select;
-	gdouble select_2;/*for uspex peak selection*/
+	gdouble select_2;/*uspex peak selections require two index*/
 	gchar *select_label;
 };
 gpointer graph_new(const gchar *, struct model_pak *);

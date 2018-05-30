@@ -619,8 +619,8 @@ if(band_structure) {/*try to read band structure information, if any.*/
 	sscanf(line,"Number of eigenvalues %d",&(model->nbands));
 	if(fgetline(fp, line)) goto castep_done;
 	sscanf(line,"Fermi energy (%*[^)]) %lf",&(model->efermi));
-	while (!fgetline(fp, line)) if (g_strrstr(line, "K-point") != NULL) break;
-	if(!line) goto castep_done;
+	while(!fgetline(fp, line)) if (g_strrstr(line, "K-point") != NULL) break;
+	if(feof(fp)) goto castep_done;
 	model->kpts_d=g_malloc((model->nkpoints)*sizeof(gdouble));
 	x=g_malloc((model->nkpoints)*sizeof(gdouble));
 	y=g_malloc((model->nkpoints)*sizeof(gdouble));
@@ -628,7 +628,7 @@ if(band_structure) {/*try to read band structure information, if any.*/
 	model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	if(model->spin_polarized) model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	evmin=0.;evmax=0.;
-	while(line){
+	while(!feof(fp)){
 		sscanf(line,"K-point  %i %lf %lf %lf %*f",&ik,&xi,&yi,&zi);
 		ik--;
 		/*kpts are *not* in order*/

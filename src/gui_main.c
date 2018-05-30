@@ -125,6 +125,7 @@ if (data->graph_active)
   if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
   if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
   if((graph->type==GRAPH_USPEX)||(graph->type==GRAPH_USPEX_BEST)) graph_uspex_select(x,y,data);
+  if(graph->type==GRAPH_USPEX_2D) graph_uspex_2d_select(x,y,data);
   return(FALSE);
   }
 

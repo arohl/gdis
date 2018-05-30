@@ -30,11 +30,12 @@ typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
 } uspex_method;
 
 typedef struct {
-        gint gen;
-	gint natoms;
-        gdouble energy;
-	gdouble E;
-        gdouble volume;
+        gint gen;		/*generation of this individual*/
+	gint natoms;		/*number of atoms*/
+	gint *atoms;		/*number of atoms per species*/
+        gdouble energy;		/*total energy*/
+	gdouble E;		/*reduce energy / atoms*/
+        gdouble volume;		/*total volume*/
 } uspex_individual;
 
 /* global calculation structure */
@@ -44,11 +45,17 @@ typedef struct {
 /*system parameters*/
 	uspex_method method;
 	gint type;
+	/* in detail */
+        gint dim;
+        gboolean mol;
+        gboolean var;
+	/* optimization */
 	gint opt_type;
 
 /*structures*/
 	gint num_gen;
 	gint num_struct;
+	gint nspecies;          /*number of species*/
 	gdouble min_E;
 	gdouble max_E;
 	uspex_individual *ind;
@@ -57,6 +64,7 @@ typedef struct {
 /*interpretation*/
 	gpointer graph;
 	gpointer graph_best;
+	gpointer graph_comp;
 } uspex_calc_struct;
 /* execution structure */
 typedef struct {

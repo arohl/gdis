@@ -559,7 +559,7 @@ void gui_plots_dialog(void){
 	gchar *tmp, *title;
 	gpointer dialog;
 	GtkWidget *window, *frame, *vbox, *hbox;
-	GtkWidget *notebook, *page, *button, *label;
+	GtkWidget *notebook, *page, *label;
 	/* special */
 	GtkWidget *ionic_box, *electronic_box, *frequency_box;
 	struct model_pak *data;

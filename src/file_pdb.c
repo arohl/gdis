@@ -272,7 +272,7 @@ gchar *fort_read_string(char *line, gint start_col, gint end_col)
 /*************************************************/
 gchar fort_read_char(char *line, gint start_col)
 {
-  g_return_val_if_fail(start_col > 0, "");
+  g_return_val_if_fail(start_col > 0, '\0');/*OVHPA: char, not char * so "" is incorrect*/
   return(line[start_col-1]);
 }
 

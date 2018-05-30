@@ -29,6 +29,7 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #include "gdis.h"
 #include "coords.h"
+#include "edit.h"
 #include "error.h"
 #include "file.h"
 #include "parse.h"
@@ -1769,6 +1770,8 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
 	gint idx,ix;
 	gchar *line;
 	gchar *label;
+	gchar *spec;
+	gchar *name;
 	gdouble a0;
 	/*atom determination*/
 	gchar *ptr;
@@ -1807,6 +1810,10 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
 	idx=0;ptr2=&(line[0]);ptr3=label;
 	sym[2]='\0';/*always*/
 	model->num_atoms=0;
+/*FIX _BUG_ core list grow!*/
+core_delete_all(model);
+	spec=NULL;
+	name=g_strdup_printf("");
         do{
 		ptr=ptr2;
 		ix=g_ascii_strtod(ptr,&ptr2);
@@ -1814,7 +1821,7 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
 		while(*ptr3==' ') ptr3++;
 		sym[0]=*ptr3;
 		ptr3++;
-		if((*ptr3==' ')||(*ptr3=='\0')) sym[1]='\0';
+		if((*ptr3==' ')||(*ptr3=='\0')||(*ptr3=='\n')) sym[1]='\0';
 		else sym[1]=*ptr3;
 		ptr3++;
 		for(idx=0;idx<ix;idx++){
@@ -1822,8 +1829,13 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
                         core->charge=0.;/*no such information on POSCAR*/
                         model->cores=g_slist_append(model->cores,core);
 		}
+		g_free(spec);
+		spec=g_strdup_printf("%s%s(%i)",name,sym,ix);
+		g_free(name);
+		name=g_strdup(spec);
                 model->num_atoms+=ix;
         }while(1);
+property_add_ranked(7, "Formula", name, model);
 	g_free(line);
 	/*Always true in VASP*/
         model->fractional=TRUE;

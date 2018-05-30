@@ -152,6 +152,7 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	gint idx=0;
 	gchar *ptr;
 	gchar *ptr2;
+	gint spe;
 	/*start*/
         vf = fopen(filename, "rt");
         if (!vf) return 1;
@@ -184,26 +185,32 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	/* now prepare arrays <- JOB=USPEX/300 example */
 	if(_UC.num_struct==0) return 1;
 	_UC.ind=g_malloc(_UC.num_struct*sizeof(uspex_individual));
-	sscanf(line," %*i %*i %*[a-zA-Z] \[%[^\]]\] %lf %*lf %*s",
+	sscanf(line," %*i %*i %*[a-zA-Z] [%[^]]] %lf %*f %*s",
 		&(tmp[0]),&(_UC.min_E));
 	idx=0;ptr=&(tmp[0]);ptr2=ptr;
-	do{
+	_UC.nspecies=0;
+	do{/*get number of atoms*/
 		idx+=g_ascii_strtod(ptr,&ptr2);
+		_UC.nspecies++;
 		if(ptr2==ptr) break;
 		ptr=ptr2;
 	}while(1);
+	_UC.nspecies--;
 	_UC.min_E/=(gdouble)idx;
 	_UC.max_E=_UC.min_E;
 	idx=0;_UC.num_gen=1;
 	while (line){
-		sscanf(line," %i %*i %*[a-zA-Z] \[%[^\]]\] %lf %lf %*s",
+		sscanf(line," %i %*i %*[a-zA-Z] [%[^]]] %lf %lf %*s",
 			&(_UC.ind[idx].gen),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
 		if(_UC.ind[idx].gen>_UC.num_gen) _UC.num_gen=_UC.ind[idx].gen;
 		/*calculate number of atoms*/
 		_UC.ind[idx].natoms=0;ptr=&(tmp[0]);ptr2=ptr;
+		spe=0;_UC.ind[idx].atoms=g_malloc(_UC.nspecies*sizeof(gint));
 		do{
-			_UC.ind[idx].natoms+=g_ascii_strtod(ptr,&ptr2);
+			_UC.ind[idx].atoms[spe]=g_ascii_strtod(ptr,&ptr2);
+			_UC.ind[idx].natoms+=_UC.ind[idx].atoms[spe];
 			if(ptr2==ptr) break;
+			spe++;
 			ptr=ptr2;
 		}while(1);
 		_UC.ind[idx].E=_UC.ind[idx].energy/_UC.ind[idx].natoms;
@@ -268,8 +275,6 @@ gint read_best_individuals_uspex(gchar *filename, struct model_pak *model){
 
 gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gchar *line=NULL;
-	int isok=0;
-	int num_frames=1;
 	FILE *vf;
 	long int vfpos;
 	gchar *ptr;
@@ -310,18 +315,54 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	if(fetch_in_file(vf,"Block for system description")==0) goto uspex_fail;
 	/*next line contains Dimensionality*/
 	line = file_read_line(vf);
+	/*unless from a previous version and it contains a lot of '-' character*/
+	if (find_in_string("Dimensionality",line) == NULL) {
+		g_free(line);
+		line = file_read_line(vf);
+	}
 	sscanf(line," Dimensionality : %i ",&(ix));
+	switch (ix){/*to be use later*/
+		case -2:
+		/*we do not deal with 2D crystal yet*/
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		_UC.dim=ix;
+		break;
+		default:
+		line = g_strdup_printf("ERROR: reading USPEX OUTPUT.txt file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
 	job=ix*100;
 	g_free(line);
 	/*next line contains Molecular*/
 	line = file_read_line(vf);
 	sscanf(line," Molecular : %i %*s",&(ix));
 	job+=(ix*10);
+	if(ix==0) _UC.mol=FALSE;
+	else if(ix==1) _UC.mol=TRUE;
+	else{
+		line = g_strdup_printf("ERROR: reading USPEX OUTPUT.txt file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
 	g_free(line);
 	/*next line contains Variable Composition*/
 	line = file_read_line(vf);
 	sscanf(line," Variable Composition : %i %*s",&(ix));
 	job+=ix;
+	if(ix==0) _UC.var=FALSE;
+	else if(ix==1) _UC.var=TRUE;
+	else{
+		line = g_strdup_printf("ERROR: reading USPEX OUTPUT.txt file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
 #if DEBUG_USPEX_READ
 	fprintf(stdout,"#DBG: USPEX OUTPUT calculationType=%i\n",job);
 #endif
@@ -338,7 +379,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	}
 /* --- CHECK type from Parameters.txt matches that of OUTPUT.TXT */
 	if(job!=_UC.type) {
-		line = g_strdup_printf("ERROR: inconsistent USPEX files!\n");
+		line = g_strdup_printf("ERROR: inconsistent USPEX files (%i!=%i)!\n",job,_UC.type);
 		gui_text_show(ERROR, line);
 		g_free(line);
 		goto uspex_fail;
@@ -450,6 +491,109 @@ fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind
 	graph_set_yticks(TRUE,5,_UC.graph);
 	graph_set_xticks(TRUE,ix,_UC.graph_best);
 	graph_set_yticks(TRUE,5,_UC.graph_best);
+
+/* --- variable composition */
+if(_UC.var){
+	/*add a graph with binary composition, if binary*/
+	if(_UC.nspecies==2){
+		gdouble *e;
+		gdouble *c;
+		gdouble *tag;
+		gdouble *tmp;
+		gdouble compo;
+		gdouble max_E;
+		gint n_compo;/*number of different compositions*/
+		gint jdx;
+		n_compo=2;
+		ix=0;
+		/*check for 2 different compositions <- useful?*/
+		c=g_malloc(2*sizeof(gdouble));
+		c[0]=(gdouble)_UC.ind[0].atoms[1] / (gdouble)_UC.ind[0].natoms;
+		c[1]=c[0];
+		do{
+			compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
+			if(compo!=c[0]){
+				if(compo>c[0]) c[1]=compo;
+				else {
+					c[1]=c[0];c[0]=compo;
+				}
+			}
+			ix++;
+		}while((compo==c[0])&&(ix<_UC.num_struct));
+if(c[1]!=c[0]){
+		/*we have 2 different composition*/
+		/*build the compo array*/
+		for(ix=0;ix<_UC.num_struct;ix++){
+			compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
+			if(compo<c[0]) {/*we have a new first element*/
+				tmp=g_malloc((n_compo+1)*sizeof(gdouble));
+				tmp[0]=compo;
+				memcpy(&(tmp[1]),c,n_compo*sizeof(gdouble));
+				g_free(c);
+				c=tmp;
+				n_compo++;
+				continue;
+			}
+			if(compo>c[n_compo-1]){/*we have a new last element*/
+				tmp=g_malloc((n_compo+1)*sizeof(gdouble));
+				tmp[n_compo]=compo;
+				memcpy(&(tmp[0]),c,n_compo*sizeof(gdouble));
+				g_free(c);
+				c=tmp;
+				n_compo++;
+				continue;
+			}
+			for(jdx=1;jdx<n_compo;jdx++){
+				if((compo>c[jdx-1])&&(compo<c[jdx])){
+				/*insert a new element at position jdx*/
+					tmp=g_malloc((n_compo+1)*sizeof(gdouble));
+					tmp[jdx]=compo;
+					memcpy(&(tmp[0]),c,(jdx)*sizeof(gdouble));
+					memcpy(&(tmp[jdx+1]),&(c[jdx]),(n_compo-jdx)*sizeof(gdouble));
+					g_free(c);
+					c=tmp;
+					n_compo++;
+					jdx=n_compo;/*exit loop*/
+					continue;
+				}
+				
+			}
+		}
+		/*build the energy array*/
+		e=g_malloc(n_compo*sizeof(gdouble));
+		tag=g_malloc(n_compo*sizeof(gdouble));
+		max_E=_UC.min_E;
+		for(ix=0;ix<n_compo;ix++) e[ix]=_UC.max_E;
+		for(ix=0;ix<_UC.num_struct;ix++){	
+			for(jdx=0;jdx<n_compo;jdx++){
+				compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
+				if(c[jdx]==compo){
+					if(_UC.ind[ix].E < e[jdx]) {
+						e[jdx] = _UC.ind[ix].E;
+						tag[jdx] = (gdouble) ix;
+						if(e[jdx]>max_E) max_E=e[jdx];
+					}
+				}
+			}
+		}
+		/* prepare composition diagram*/
+		_UC.graph_comp=graph_new("COMP", model);
+                graph_add_borned_data(
+			n_compo,tag,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
+		graph_add_borned_data(
+			n_compo,c,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
+		graph_add_borned_data(
+			n_compo,e,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
+                g_free(tag);
+		g_free(c);
+		g_free(e);
+        	/*set ticks*/
+        	graph_set_xticks(TRUE,3,_UC.graph_comp);
+        	graph_set_yticks(TRUE,5,_UC.graph_comp);
+}
+/*2 species, but only one composition?*/
+	}
+}
 
 	/*refresh model*/
 	tree_model_refresh(model);

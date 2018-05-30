@@ -95,7 +95,7 @@ gint find_pid_index(gint pid)
 {
 gint i;
 
-for (i = psarray->len - 1; i >= 0 && g_array_index(psarray, struct task_pak, i).pid != pid; i--);
+  for (i = psarray->len - 1; i >= 0 && g_array_index(psarray, struct task_pak, i).pid != pid; i--);
   return(i);
 }
 
