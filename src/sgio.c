@@ -1561,7 +1561,7 @@ const char *RTMx2XYZ(const T_RTMx *RTMx, int FacRo, int FacTr,
     if (iTr >  FacTr / 2)
         iTr -= FacTr;
 
-        tr = FormatFraction(iTr, FacTr, Decimal,
+    tr = FormatFraction(iTr, FacTr, Decimal,
                             buf_tr, sizeof buf_tr / sizeof (*buf_tr));
     if (tr == NULL)
       return NULL;
@@ -1652,7 +1652,7 @@ void PrintMapleRTMx(const T_RTMx *RTMx, int FacRo, int FacTr,
     if (nt >  FacTr / 2)
         nt -= FacTr;
 
-        ff = FormatFraction(nt, FacTr, 0, NULL, 0);
+    ff = FormatFraction(nt, FacTr, 0, NULL, 0);
     if (ff == NULL)
       return;
 
@@ -1683,7 +1683,7 @@ static void PrintSeitzMx(const T_RTMx *SMx, FILE *fpout)
     if (nt >  STBF / 2)
         nt -= STBF;
 
-        ff = FormatFraction(nt, STBF, 0, NULL, 0);
+    ff = FormatFraction(nt, STBF, 0, NULL, 0);
     if (ff == NULL)
       return;
 

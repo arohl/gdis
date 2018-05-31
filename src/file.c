@@ -1574,7 +1574,10 @@ file_dialog("Load file", NULL, FILE_LOAD, (gpointer) file_load, sysenv.file_type
 /**********************************/
 gint file_save_as(gchar *filename, struct model_pak *model)
 {
-gint id, ret;
+gint ret;
+#ifdef UNUSED_BUT_SET
+gint id;
+#endif
 gchar *name;
 struct file_pak *file_data;
 
@@ -1590,7 +1593,9 @@ file_data = get_file_info((gpointer *) filename, BY_EXTENSION);
 if (file_data)
   {
 /* use extension */
+#ifdef UNUSED_BUT_SET
   id = file_data->id;
+#endif
   strcpy(model->filename, filename);
   g_free(model->basename);
   model->basename = parse_strip(filename);
@@ -1607,7 +1612,9 @@ else
   if (!ext)
     return(2);
 
+#ifdef UNUSED_BUT_SET
   id = file_data->id;
+#endif
   g_free(model->basename);
   model->basename = parse_strip(filename);
 

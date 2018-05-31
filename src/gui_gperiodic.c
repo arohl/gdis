@@ -149,10 +149,11 @@ void display_element_dialog(GtkWidget *w, gint i)
 gchar *text;
 gpointer dialog;
 GtkWidget *window, *frame, *vbox, *hbox, *label;
+#ifdef UNUSED_BUT_SET
 struct table_entry *entry;
 
 entry = (struct table_entry *) &table[i];
-
+#endif
 /* get global elem data */
 get_elem_data(i+1, &elem_edit, NULL);
 

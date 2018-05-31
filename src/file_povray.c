@@ -307,9 +307,12 @@ gint write_povray(gchar *povfile, struct model_pak *data)
 gint n, m, i, j;
 gint r, g, b;
 gint style;				/* for selecting the colour style of iso-surfaces */
-gdouble rad, scale, len;
+gdouble rad, len;
 gdouble x1, y1, z1, x2, y2, z2;
+#ifdef UNUSED_BUT_SET
+gdouble scale;
 gdouble xmin, ymin, zmin, xmax, ymax, zmax;
+#endif
 gdouble rf, gf, bf;
 gdouble vec[3], vec1[3], vec2[3];
 gdouble v1[4], v2[4], v3[3], n1[3], n2[3], n3[3];
@@ -349,11 +352,13 @@ povray_hdr(fp,data);
 
 write_povray_colour_textures(fp,data,style);
 
+#ifdef UNUSED_BUT_SET
 /* limits - for intelligent axes placement */
 xmin = ymin = zmin = 99999999.9;
 xmax = ymax = zmax = -99999999.9;
 /* pixel to coord scaling factor */
 scale = sysenv.subscale * 0.5 / data->rmax;
+#endif
 
 /* FIXME - can we just sub in data->display_lattice??? */
 /* precalc matrix products */

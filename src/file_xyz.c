@@ -234,7 +234,9 @@ return(0);
 #define DEBUG_READ_XYZ 0
 gint read_xyz(gchar *filename, struct model_pak *data)
 {
+#ifdef UNUSED_BUT_SET
 gint flag;
+#endif
 FILE *fp;
 
 /* checks */
@@ -246,7 +248,9 @@ if (!fp)
   return(3);
 
 /* loop while there's data */
+#ifdef UNUSED_BUT_SET
 flag=0;
+#endif
 data->num_frames = 0;
 
 read_xyz_block(fp, data);

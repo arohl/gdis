@@ -166,7 +166,9 @@ return(1);
 #define DEBUG_READ_XYZ 0
 gint read_dmol(gchar *filename, struct model_pak *model)
 {
+#ifdef UNUSED_BUT_SET
 gint flag;
+#endif
 FILE *fp;
 
 /* checks */
@@ -178,7 +180,9 @@ if (!fp)
   return(3);
 
 /* loop while there's data */
+#ifdef UNUSED_BUT_SET
 flag=0;
+#endif
 model->num_frames = 0;
 
 read_dmol_frame(fp, model);

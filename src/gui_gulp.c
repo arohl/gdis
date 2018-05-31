@@ -922,7 +922,10 @@ update_phonon_range(data);
 /* TODO - put elsewhere? */
 void gulp_cosmic_read(gchar *filename, struct model_pak *model)
 {
-gint i, n=0, dim, expect=-1, num_tokens;
+gint i, n=0, dim, num_tokens;
+#ifdef UNUSED_BUT_SET
+gint expect=-1;
+#endif
 gchar **buff;
 gdouble x[3], colour[3];
 gpointer scan, spatial;
@@ -939,8 +942,10 @@ if (!scan)
 
 /* header */
 buff = scan_get_tokens(scan, &num_tokens);
+#ifdef UNUSED_BUT_SET
 if (num_tokens == 1)
   expect = str_to_float(*buff);
+#endif
 
 /* new GULP version  - dimension + cell vectors */
 buff = scan_get_tokens(scan, &num_tokens);

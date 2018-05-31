@@ -1246,12 +1246,17 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 #define DEBUG_CONSTRUCT_BACKBONE 0
 void construct_backbone(struct core_pak *start, struct model_pak *data)
 {
-gint match, num_exits;
+gint num_exits;
+#ifdef UNUSED_BUT_SET
+gint match
+#endif
 GList *list, *list2, *node_list=NULL, *link_list;
 GList *current_chain=NULL;
 GSList *tmp_list;
 struct node_pak *current_node, *repeat_node, *temp_node;
+#if DEBUG_CONSTRUCT_BACKBONE
 struct link_pak *current_link;
+#endif
 struct core_pak *core, *path;
 
 /* checks */
@@ -1368,7 +1373,9 @@ while (current_node)
 /* >= 2 : this atom is a node */
     default:
 /* is it a pre-existing node? */
+#ifdef UNUSED_BUT_SET
       match=0;
+#endif
 
 #if GOK
       repeat_node = NULL;
@@ -1458,8 +1465,8 @@ printf("-------------------------\n");
 #endif
 
 /* summary (stop compiler warnings) */
-current_link=NULL;
 #if DEBUG_CONSTRUCT_BACKBONE
+current_link=NULL;
 list = node_list;
 while (list)
   {
@@ -1546,7 +1553,10 @@ struct link_pak *current_link, *link2, *group1, *group2;
 struct node_pak *current_node, *node2;
 struct ribbon_pak *ribbon1, *ribbon2;
 struct object_pak *object_data;
-struct core_pak *core, *join1, *join2;
+struct core_pak *core;
+#if DEBUG_CONSTRUCT_RIBBON
+struct core_pak *join1, *join2;
+#endif
 
 /* TODO - scan the SINGLE links & check if they reference */
 /* two cyclic groups at their end points (this should always */
@@ -1574,7 +1584,9 @@ while (list)
       {
         list2 = node_list;
         group1=group2=NULL;
-        join1=join2=NULL;
+#if DEBUG_CONSTRUCT_RIBBON
+	join1=join2=NULL;
+#endif
         while (list2)
           {
           node2 = list2->data;
@@ -1594,12 +1606,16 @@ while (list)
                 if (current_link->first == core)
                   {
                   group1 = link2;
+#if DEBUG_CONSTRUCT_RIBBON
                   join1 = core;
+#endif
                   }
                 if (current_link->last == core)
                   {
                   group2 = link2;
+#if DEBUG_CONSTRUCT_RIBBON
                   join2 = core;
+#endif
                   }
                 list4 = g_list_next(list4);
                 }

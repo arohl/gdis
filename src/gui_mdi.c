@@ -311,7 +311,10 @@ g_string_free(frame_label, TRUE);
 #define DEBUG_MDI_MODEL_CREATE 0
 void mdi_model_create(gint new)
 {
-gint i,j,na,nb,ns,replace,ret;
+gint i,j,replace,ret;
+#ifdef UNUSED_BUT_SET
+gint na, nb, ns;
+#endif
 struct model_pak *data;
 #ifndef __WIN32
 struct tms buffer;
@@ -322,8 +325,10 @@ mdi_data.array = (gint *) g_malloc0(mdi_data.box_dim*mdi_data.box_dim*
                                    mdi_data.box_dim*sizeof(gint));
 
 /* calculate the total number of atoms & bonds & sites in the box */
+#ifdef UNUSED_BUT_SET
 na = nb = 0;
 ns = -mdi_data.comp_req[0];
+#endif
 for (i=0 ; i<mdi_data.num_comp ; i++)
   {
   data = model_ptr(i, RECALL);
@@ -569,7 +574,10 @@ return(0);
 /*********************/
 void write_dat(struct model_pak *dest)
 {
-gint s,m,pos,dat;
+gint s,m,pos;
+#ifdef UNUSED_BUT_SET
+gint dat;
+#endif
 gdouble x,y,z,phi,theta,psi,start,stop,step;
 gdouble q[3],box_len;
 gdouble ran2();
@@ -593,7 +601,9 @@ printf("Box rng = %f,%f,%f\n",start,stop,step);
 #endif
 
 pos=0; /* pointer - current array position */
+#ifdef UNUSED_BUT_SET
 dat=0; /* new model - atom coords pointer */
+#endif
 
 
 for (z=start ; z<stop ; z+=step)

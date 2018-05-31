@@ -2297,6 +2297,7 @@ gui_spatial_populate();
 void gui_edit_dialog(void)
 {
 gint i;
+gpointer p_i=0;
 gpointer dialog;
 GtkWidget *window, *frame, *label;
 GtkWidget *notebook, *page;
@@ -2356,9 +2357,13 @@ gtk_widget_show_all(window);
  
 /* init the transformation values */
 reset_transmat();
-for (i=0 ; i<12; i++)
-  g_signal_connect(GTK_OBJECT(transmat[i]), "changed", 
-                   GTK_SIGNAL_FUNC(change_transmat), (gpointer) i);
+//for (i=0 ; i<12; i++)
+//  g_signal_connect(GTK_OBJECT(transmat[i]), "changed", 
+//                   GTK_SIGNAL_FUNC(change_transmat), (gpointer) i);
+p_i=0;
+for(i=0;i<12;p_i++ , i++)
+  g_signal_connect(GTK_OBJECT(transmat[i]), "changed",
+                   GTK_SIGNAL_FUNC(change_transmat), p_i);
 }
 
 /* globals for the atom properties dialog */

@@ -183,7 +183,9 @@ gint read_castep_out_block(FILE *fp, struct model_pak *model)
 gint i;
 gint num_tokens;
 gint no_grad = 0;
+#ifdef UNUSED_BUT_SET
 gint last_frame = FALSE;
+#endif
 gdouble grad, max_grad = 0.0, rms_grad = 0.0;
 gdouble pressure;
 gchar **buff, line[LINELEN], *ext, *text;
@@ -250,7 +252,7 @@ int skip=0;
       }
 
 
-    buff = tokenize(line, &num_tokens);
+  buff = tokenize(line, &num_tokens);
     while (num_tokens == 7)
       {
       if (clist)
@@ -395,7 +397,9 @@ int skip=0;
     }
   if (g_strrstr(line, "Final Enthalpy") != NULL)
     {
+#ifdef UNUSED_BUT_SET
     last_frame = TRUE;
+#endif
     model->castep.min_ok = TRUE;
     buff = g_strsplit(line, "=", 2);
     text = format_value_and_units(*(buff+1), 5);

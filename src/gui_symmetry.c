@@ -548,9 +548,8 @@ do {
 f = eval_optimization_target_function( elem, NULL ) ;
 if( cycle >= MaxOptCycles ) BadOptimization = 1 ;
 if( verbose > 0 ) {
-    if( cycle >= MaxOptCycles )
-        printf( "        maximum number of optimization cycles made\n" ) ;
-        printf( "        optimization completed after %d cycles with f = %g\n", cycle, f ) ;
+    if( cycle >= MaxOptCycles ) printf( "        maximum number of optimization cycles made\n" ) ;
+    printf( "        optimization completed after %d cycles with f = %g\n", cycle, f ) ;
     }
 return(0);
 }

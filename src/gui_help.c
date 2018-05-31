@@ -151,7 +151,10 @@ g_hash_table_foreach(sysenv.manual, gui_help_populate, list);
 /*********************************************/
 void gui_help_topic_show(GtkTextBuffer *buffer, gchar *source)
 {
-gint i, j, n, start, stop;
+gint i, j, n, stop;
+#ifdef UNUSED_BUT_SET
+gint start;
+#endif
 gchar *text;
 GdkPixbuf *pixbuf;
 GtkTextIter a, b;
@@ -205,7 +208,9 @@ tag_bold = gtk_text_buffer_create_tag(buffer, "bold", "style", PANGO_WEIGHT_OBLI
 gtk_text_buffer_set_text(buffer, source, -1);
 
 n = strlen(source);
+#ifdef UNUSED_BUT_SET
 start = i = 0;
+#endif
 stop = -1;
 while (i<n)
   {

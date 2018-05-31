@@ -949,7 +949,8 @@ MAT	*m_resize(MAT *A,int new_m, int new_n)
    if ( new_m > A->max_m )
    {	/* re-allocate A->me */
 
-      A->me = RENEW(A->me,new_m,Real *);
+//      A->me = RENEW(A->me,new_m,Real *);
+      RENEW_2(A->me,new_m,Real *);
       if ( ! A->me )
 		g_assert_not_reached();
    }
@@ -960,7 +961,8 @@ MAT	*m_resize(MAT *A,int new_m, int new_n)
    if ( new_size > A->max_size )
    {	/* re-allocate A->base */
 
-      A->base = RENEW(A->base,new_size,Real);
+//      A->base = RENEW(A->base,new_size,Real);
+      RENEW_2(A->base,new_size,Real);
       if ( ! A->base )
 		g_assert_not_reached();
       A->max_size = new_size;
@@ -1023,7 +1025,8 @@ VEC	*v_resize(VEC *x, int new_dim)
    if ( new_dim > x->max_dim )
    {
 
-      x->ve = RENEW(x->ve,new_dim,Real);
+//      x->ve = RENEW(x->ve,new_dim,Real);
+      RENEW_2(x->ve,new_dim,Real);
       if ( ! x->ve )
 		g_assert_not_reached();
       x->max_dim = new_dim;

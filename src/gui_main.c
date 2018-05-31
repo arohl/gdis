@@ -85,7 +85,10 @@ GtkWidget *viewing_mode;
 gint gui_press_event(GtkWidget *w, GdkEventButton *event)
 {
 gint refresh=0, x, y;
-gint shift=FALSE, ctrl=FALSE;
+gint shift=FALSE;
+#ifdef UNUSED_BUT_SET
+gint ctrl=FALSE;
+#endif
 GdkModifierType state;
 struct model_pak *data;
 struct bond_pak *bond;
@@ -111,8 +114,10 @@ canvas_select(x, y);
 state = (GdkModifierType) event->state;
 if ((state & GDK_SHIFT_MASK))
   shift = TRUE;
+#ifdef UNUSED_BUT_SET
 if ((state & GDK_CONTROL_MASK))
   ctrl = TRUE;
+#endif
 
 /* only want button 1 (for now) */
 if (event->button != 1)
@@ -222,7 +227,9 @@ gint gui_release_event(GtkWidget *w, GdkEventButton *event)
 {
 gint x, y;
 struct model_pak *data;
+#ifdef UNUSED_BUT_SET
 GdkModifierType state;
+#endif
 
 /* get model */
 data = sysenv.active_model;
@@ -232,7 +239,9 @@ if (!data)
 /* get event info */
 x = event->x;
 y = event->y;
+#ifdef UNUSED_BUT_SET
 state = (GdkModifierType) event->state;
+#endif
 
 /* NEW - motion flag */
 sysenv.moving = FALSE;

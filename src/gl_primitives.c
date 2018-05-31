@@ -560,7 +560,10 @@ draw_cone(vb, vec, 3*size, 9);
 void draw_arc(gdouble *p0, gdouble *p1, gdouble *p2)
 {
 gint i, num_points;
-gdouble angle, theta, st, ct;
+gdouble theta, st, ct;
+#ifdef UNUSED_BUT_SET
+gdouble angle;
+#endif
 gdouble v[3], v1[3], v2[3], len1, len2;
 
 /* get vector to arc start */
@@ -588,9 +591,9 @@ else
   {
   VEC3MUL(v1, len2/len1);
   }
-
+#ifdef UNUSED_BUT_SET
 angle = via(v1, v2, 3);
-
+#endif
 num_points = 32;
 
 glBegin(GL_LINE_STRIP);

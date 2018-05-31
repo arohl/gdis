@@ -69,8 +69,11 @@ gint stereo_x=0, stereo_y=0, stereo_width=0, stereo_height=0, stereo_depth=0;
 #define DEBUG_STEREO_REDRAW 0
 void stereo_redraw(void)
 {
-gint x1, y1, x2, y2, width, height, dim;
+gint x1, y1, x2, y2, dim;
+#ifdef UNUSED_BUT_SET
+gint width, height;
 gdouble s, x, y;
+#endif
 gdouble dist, eye, off;
 struct model_pak *model;
 struct canvas_pak left, right;
@@ -103,8 +106,10 @@ x1 = SGI_STEREO_X;
 y1 = SGI_STEREO_Y;
 x2 = SGI_STEREO_X;
 y2 = 0;
+#ifdef UNUSED_BUT_SET
 width = SGI_STEREO_WIDTH;
 height = SGI_STEREO_HEIGHT;
+#endif
 #else
 if (sysenv.stereo_fullscreen && !sysenv.render.stereo_quadbuffer)
   {
@@ -117,23 +122,28 @@ if (sysenv.stereo_fullscreen && !sysenv.render.stereo_quadbuffer)
 
   x2 = stereo_width/2 + x1;
   y2 = (stereo_height - dim)/2;
-
+#ifdef UNUSED_BUT_SET
   width = dim;
   height = dim;
+#endif
   }
 else
   {
   x1 = x2 = stereo_x;
   y1 = y2 = stereo_y;
+#ifdef UNUSED_BUT_SET
   width = stereo_width;
   height = stereo_height;
+#endif
   }
 #endif
 
+#ifdef UNUSED_BUT_SET
 /* full canvas perspective projection */
 s = sysenv.size;
 x = sysenv.rsize * width/s;
 y = sysenv.rsize * height/s;
+#endif
 
 /* NEW - fudge to make old code work with new canvas scheme */
 left.x = x1;

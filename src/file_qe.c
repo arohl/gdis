@@ -757,7 +757,10 @@ gint fgetqeline(FILE *fp, gchar *line)
 gint read_qe(gchar *filename, struct model_pak *model)
 {
   gint i, num_tokens;
-  gint nat=0, ntyp=0, ibrav=0;
+  gint nat=0, ibrav=0;
+#ifdef UNUSED_BUT_SET
+  gint ntyp=0;
+#endif
   gdouble celldm[6] ={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   gchar **buff, *text, line[LINELEN];
   FILE *fp;
@@ -798,7 +801,9 @@ gint read_qe(gchar *filename, struct model_pak *model)
         else if (g_strrstr(line, "ntyp") != NULL)
           {
           buff = g_strsplit(line, "=", 2);
+#ifdef UNUSED_BUT_SET
           ntyp = (gint) str_to_float(*(buff+1));
+#endif
           g_strfreev(buff);
           }
         else if (g_strrstr(line, "ecutwfc") != NULL)
@@ -960,6 +965,8 @@ gint read_qe(gchar *filename, struct model_pak *model)
           case QE_COORD_BOHR:
           model->fractional = FALSE;
           multiplier = BOHR_TO_ANGS;
+          break;
+          case QE_COORD_FRAC:
           break;
         }
       for (i=0; i< 3; i++)

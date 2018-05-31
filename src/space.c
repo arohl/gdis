@@ -302,7 +302,10 @@ gint space_lookup(struct model_pak *data)
 {
 gint f, i, j, nt;
 gint m;
-gint iList, nTrV, iTrV, nLoopInv, iLoopInv, iMatrix;
+gint iList, nTrV, iTrV, nLoopInv, iLoopInv;
+#ifdef UNUSED_BUT_SET
+gint iMatrix;
+#endif
 gchar *label;
 GString *name;
 const T_RTMx  *lsmx;
@@ -453,7 +456,9 @@ data->sginfo.order = SgInfo.OrderL;
 data->sginfo.matrix = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
 data->sginfo.offset = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
 
+#ifdef UNUSED_BUT_SET
 iMatrix = 0;
+#endif
 
 nLoopInv = Sg_nLoopInv(&SgInfo);
 
@@ -702,7 +707,10 @@ space_make_p1(model);
 void space_make_images(gint mode, struct model_pak *model)
 {
 gint a, b, c, i;
-gint num_cells, num_images;
+gint num_cells;
+#ifdef UNUSED_BUT_SET
+gint num_images;
+#endif
 struct image_pak *image;
 
 /* checks */
@@ -717,7 +725,9 @@ printf("c : %f - %f\n", model->image_limit[4], model->image_limit[5]);
 printf("---------------------------\n");
 #endif
 
+#ifdef UNUSED_BUT_SET
 num_images = 0;
+#endif
 /* check mode */
 switch(mode)
   {
@@ -728,7 +738,9 @@ switch(mode)
     num_cells = (model->image_limit[0]+model->image_limit[1])
               * (model->image_limit[2]+model->image_limit[3])
               * (model->image_limit[4]+model->image_limit[5]);
+#ifdef UNUSED_BUT_SET
     num_images = num_cells-1;
+#endif
 /* setup for pic iteration */
     a = -model->image_limit[0];
     b = -model->image_limit[2];

@@ -89,8 +89,7 @@ if (data->periodic == 2)
     depth = 2.0*data->rmax;
   fprintf(fp, "_cell_length_c            %8.4f\n", depth);
   }
-else
-  fprintf(fp, "_cell_length_c            %8.4f\n",data->pbc[2]);
+else fprintf(fp, "_cell_length_c            %8.4f\n",data->pbc[2]);
 
   fprintf(fp, "_cell_angle_alpha       %8.2f\n",180.0*data->pbc[3]/PI);
   fprintf(fp, "_cell_angle_beta        %8.2f\n",180.0*data->pbc[4]/PI);

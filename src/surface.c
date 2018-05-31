@@ -133,7 +133,10 @@ vector normal;
 vector lattice_vector[3];    /* lattice vectors */
 vector t_mat[3];             /* transformation matrix */
 vector work_lat[3];          /* transformed lattice vectors */
+#ifdef UNUSED_BUT_SET
 vector rec_work_lat[3];      /* reciprocal transformed lattice vectors */
+gdouble inv_denom;
+#endif
 vector s[3];                 /* space we are trying to fill */
 vector tempvec;
 vector *sv;
@@ -142,7 +145,6 @@ boolean s2_found = FALSE;
 gint c, i, j, h, k, l, flag;
 gint GCD(gint, gint);
 gint vector_compare(vector *, vector *);
-gdouble inv_denom;
 gdouble depth, depth_min;
 gdouble gcd, cd, x;
 gdouble tmat[9], norm[3], va[3];
@@ -290,13 +292,21 @@ for (j = 0; j < 3; j++)
 
 /* calculate reciprocal transformed lattice vectors */
 V_CROSS(tempvec, work_lat[1], work_lat[2]);
+#ifdef UNUSED_BUT_SET
 inv_denom = 1.0 / V_DOT(tempvec, work_lat[0]);
+#endif
 V_CROSS(tempvec, work_lat[1], work_lat[2]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[0], inv_denom, tempvec);
+#endif
 V_CROSS(tempvec, work_lat[2], work_lat[0]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[1], inv_denom, tempvec);
+#endif
 V_CROSS(tempvec, work_lat[0], work_lat[1]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[2], inv_denom, tempvec);
+#endif
 
 /* calculate transformed surface vectors */
 for (i = 0; i < 3; i++)
@@ -723,9 +733,12 @@ vector normal;
 vector lattice_vector[3];    /* lattice vectors */
 vector t_mat[3];             /* transformation matrix */
 vector work_lat[3];          /* transformed lattice vectors */
+#ifdef UNUSED_BUT_SET
 vector rec_work_lat[3];      /* reciprocal transformed lattice vectors */
-vector s[3];                 /* space we are trying to fill */
+gdouble inv_denom;
 vector rec_s[2];             /* reciprocal of s[0] and s[1] */
+#endif
+vector s[3];                 /* space we are trying to fill */
 vector tempvec;
 vector *sv;
 vector a, *v_a=NULL, *v_b=NULL;
@@ -736,7 +749,6 @@ gint amin, amax, bmin, bmax, cmin, cmax;
 gint ob, sb;
 gint GCD(gint, gint);
 gint vector_compare(vector *, vector *);
-gdouble inv_denom;
 gdouble shift, depth, depth_1, depth_2, depth_min;
 gdouble gcd, cd, x;
 gdouble z1_max, z1_min, z2_max, z2_min;
@@ -891,13 +903,21 @@ for (j = 0; j < 3; j++)
 
 /* calculate reciprocal transformed lattice vectors */
 V_CROSS(tempvec, work_lat[1], work_lat[2]);
+#ifdef UNUSED_BUT_SET
 inv_denom = 1.0 / V_DOT(tempvec, work_lat[0]);
+#endif
 V_CROSS(tempvec, work_lat[1], work_lat[2]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[0], inv_denom, tempvec);
+#endif
 V_CROSS(tempvec, work_lat[2], work_lat[0]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[1], inv_denom, tempvec);
+#endif
 V_CROSS(tempvec, work_lat[0], work_lat[1]);
+#ifdef UNUSED_BUT_SET
 V_SCALER(rec_work_lat[2], inv_denom, tempvec);
+#endif
 
 /* calculate transformed surface vectors */
 for (i = 0; i < 3; i++)
@@ -959,6 +979,7 @@ VEC3SET(&dest->latmat[3], V_Y(s[0]), V_Y(s[1]), 0.0);
 VEC3SET(&dest->latmat[6], 0.0, 0.0, 1.0);
 
 /* calculate reciprocal of two surface vectors */
+#ifdef UNUSED_BUT_SET
 inv_denom = 1.0 / (V_X(s[0])*V_Y(s[1]) - V_Y(s[0])*V_X(s[1]));
 V_X(rec_s[0]) =  V_Y(s[1])*inv_denom;
 V_Y(rec_s[0]) = -V_X(s[1])*inv_denom;
@@ -966,6 +987,7 @@ V_Z(rec_s[0]) =  0.0;
 V_X(rec_s[1]) = -V_Y(s[0])*inv_denom;
 V_Y(rec_s[1]) =  V_X(s[0])*inv_denom;
 V_Z(rec_s[1]) =  0.0;
+#endif
 
 z2_min = z1_min = 0.00;
 z2_max = V_Z(s[2]);

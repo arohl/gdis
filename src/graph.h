@@ -66,6 +66,7 @@ void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
 void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
 void graph_frequency_select(gint x, gint y, struct model_pak *model);
 void graph_uspex_select(gint x, gint y, struct model_pak *model);
+void graph_uspex_2d_select(gint x, gint y, struct model_pak *model);
 void graph_set_grafted(gint, gpointer);
 void graph_set_xticks(gint, gint, gpointer);
 void graph_set_yticks(gint, gint, gpointer);

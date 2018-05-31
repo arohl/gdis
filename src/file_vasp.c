@@ -1813,7 +1813,7 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
 /*FIX _BUG_ core list grow!*/
 core_delete_all(model);
 	spec=NULL;
-	name=g_strdup_printf("");
+	name=g_strdup_printf("%c",'\0');
         do{
 		ptr=ptr2;
 		ix=g_ascii_strtod(ptr,&ptr2);

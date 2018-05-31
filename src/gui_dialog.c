@@ -414,14 +414,18 @@ return(gtk_tree_view_get_model(GTK_TREE_VIEW(file_name_tv)));
 #define DEBUG_UPDATE_FILE_PANE 0
 gint update_file_pane(void)
 {
+#if OLD_GOK
 gint filter;
+#endif
 gchar *name, *full;
 GSList *list;
 GtkTreeIter iter;
 struct stat buff;
 
+#if OLD_GOK
 /* NEW */
 filter = sysenv.file_type;
+#endif
 
 /* getting from this directory */
 gtk_label_set_text(GTK_LABEL(curr_path), sysenv.cwd);

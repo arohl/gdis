@@ -553,9 +553,11 @@ void xml_start_element(GMarkupParseContext *context,
                        gpointer current_model,
                        GError **error)
 {
+#ifdef UNUSED_BUT_SET
 struct model_pak *model;
 
 model = current_model;
+#endif
 
 /* context switching control */
 if (g_ascii_strncasecmp(element_name, "system\0", 7) == 0)

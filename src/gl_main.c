@@ -877,7 +877,10 @@ printf(" wire: %d\n", g_slist_length(*wire));
 #define DEBUG_DRAW_CORES 0
 void gl_draw_cores(GSList *cores, struct model_pak *model)
 {
-gint max, quality, dx;
+gint max, quality;
+#ifdef UNUSED_BUT_SET
+gint dx;
+#endif
 gdouble radius, x[3], colour[4];
 GSList *list, *ilist;
 struct core_pak *core;
@@ -891,7 +894,9 @@ if (sysenv.render.auto_quality)
   {
   radius = sysenv.size / model->zoom;
   max = radius/10;
+#ifdef UNUSED_BUT_SET
   dx = 10;
+#endif
 
 #if DEBUG_DRAW_CORES
 printf("%f : %d [%d]\n", radius, max, quality);
@@ -1233,7 +1238,9 @@ gl_free_points(&sphere);
 /* TODO - only do minimum necessary for each stage */
 void gl_draw_pipes(gint line, GSList *pipe_list, struct model_pak *model)
 {
+#ifdef UNUSED_BUT_SET
 gint dx;
+#endif
 guint q;
 gdouble v1[3], v2[3];
 GSList *list, *ilist;
@@ -1255,9 +1262,9 @@ if (sysenv.render.auto_quality)
       q = sysenv.render.cylinder_quality;
     }
   }
-
+#ifdef UNUSED_BUT_SET
 dx = 10;
-
+#endif
 /* enumerate the supplied pipes (half bonds) */
 for (list=pipe_list ; list ; list=g_slist_next(list))
   {
