@@ -433,6 +433,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 			yy *= -1;
 			yy += oy;
 			if((y>yy-3)&&(y<yy+3)){
+				uspex_calc_struct *uspex_calc=model->uspex;
 				/*we have a hit*/
 				graph->select=struct_sel;
 				graph->select_2=ptr[i];
@@ -440,6 +441,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 				graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
 				vf=fopen(model->filename, "r");
 				if(!vf) return;
+				if((*uspex_calc).method==US_CM_META) n_struct++;
 				model->cur_frame=n_struct+i-1;
 				read_raw_frame(vf,n_struct+i-1,model);
 				fclose(vf);
@@ -858,11 +860,11 @@ for ( ; list ; list=g_slist_next(list))
 /*get real values*/
 switch (graph->type){
 	case GRAPH_USPEX_BEST:
-	xf = 1 + (gdouble) (i);
+	xf = (gdouble) (i);
 	yf = ptr[i+1];
 	break;
 	case GRAPH_USPEX:
-	xf = 1 + (gdouble) (j);
+	xf = (gdouble) (j);
 	yf = ptr[i+1];
 	break;
 	case GRAPH_FREQUENCY:
@@ -953,6 +955,7 @@ switch (graph->type){
 	break;
 	case GRAPH_USPEX_BEST:
 	case GRAPH_USPEX:
+	xf += 1.;
 	xf /= (gdouble) (graph->size);/*NOT size*/
 	x = ox + xf*dx;
 	yf -= graph->ymin;

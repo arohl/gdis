@@ -56,6 +56,7 @@ typedef struct {
 	gint num_gen;
 	gint num_struct;
 	gint nspecies;          /*number of species*/
+	gint *red_index;	/*in case not all structure are displayed (ie. META)*/
 	gdouble min_E;
 	gdouble max_E;
 	uspex_individual *ind;

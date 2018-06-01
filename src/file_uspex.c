@@ -151,11 +151,19 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
         /* specific */
 	gint idx=0;
 	gchar *ptr;
-	gchar *ptr2;
-	gint spe;
+//	gchar *ptr2;
+//	gint spe;
+	gint max_struct;
+	gint red_index;
+	/*since energy is sometimes eV, and sometimes eV/atom ?*/
+	gboolean e_red=FALSE;
+//	gint mul;
 	/*start*/
         vf = fopen(filename, "rt");
         if (!vf) return 1;
+	/* deal with the problematic units */
+	if(fetch_in_file(vf,"eV/atom")!=0) e_red=TRUE;
+	rewind(vf);
         /* Skip header: FIX a _BUG_ when Individuals file sometimes has 2 line and sometimes only 1 */
         vfpos=ftell(vf);/* flag */
         line = file_read_line(vf);
@@ -171,11 +179,20 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
                 line = file_read_line(vf);
         }
         if(line==NULL) return -1;
-	/**/
+	/* META calculation have a gen=0 Individual
+	  unfortunately, it is *not* in the gather-
+	 -POSCARS file, so we ignore gen=0 for now. */
+	if(_UC.method==US_CM_META){
+		g_free(line);
+		line = file_read_line(vf);
+		vfpos=ftell(vf);/* flag */
+	}
 	/*do a 1st pass to count stuctures*/
 	_UC.num_struct=0;
         while (line){
 		_UC.num_struct++;
+		sscanf(line," %*i %i %*s",&idx);
+		if(idx>max_struct) max_struct=idx;
 		g_free(line);
 		line = file_read_line(vf);
 	}
@@ -184,36 +201,55 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	line = file_read_line(vf);
 	/* now prepare arrays <- JOB=USPEX/300 example */
 	if(_UC.num_struct==0) return 1;
-	_UC.ind=g_malloc(_UC.num_struct*sizeof(uspex_individual));
+//	_UC.ind=g_malloc(_UC.num_struct*sizeof(uspex_individual));
+	_UC.red_index=g_malloc(max_struct*sizeof(gint));
+	for(idx=0;idx<max_struct;idx++) _UC.red_index[idx]=0;
 	sscanf(line," %*[^[][%[^]]] %lf %*f %*s",
 		&(tmp[0]),&(_UC.min_E));
-	idx=0;ptr=&(tmp[0]);ptr2=ptr;
-	_UC.nspecies=0;
-	do{/*get number of atoms*/
-		idx+=g_ascii_strtod(ptr,&ptr2);
-		_UC.nspecies++;
-		if(ptr2==ptr) break;
-		ptr=ptr2;
-	}while(1);
-	_UC.nspecies--;
-	_UC.min_E/=(gdouble)idx;
+//	idx=0;ptr=&(tmp[0]);ptr2=ptr;
+//	_UC.nspecies=0;
+//	do{/*get number of atoms*/
+//		idx+=g_ascii_strtod(ptr,&ptr2);
+//		_UC.nspecies++;
+//		if(ptr2==ptr) break;
+//		ptr=ptr2;
+//	}while(1);
+//	_UC.nspecies--;
+	if(!e_red) _UC.min_E/=(gdouble)_UC.ind[0].natoms;
 	_UC.max_E=_UC.min_E;
 	idx=0;_UC.num_gen=1;
 	while (line){
-		sscanf(line," %i %*[^[][%[^]]] %lf %lf %*s",
-			&(_UC.ind[idx].gen),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
+sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*s",&(_UC.ind[idx].gen),&(red_index),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
+		if(_UC.ind[idx].gen<_UC.num_gen) _UC.ind[idx].gen++;
 		if(_UC.ind[idx].gen>_UC.num_gen) _UC.num_gen=_UC.ind[idx].gen;
+		_UC.red_index[red_index]=idx;
 		/*calculate number of atoms*/
-		_UC.ind[idx].natoms=0;ptr=&(tmp[0]);ptr2=ptr;
-		spe=0;_UC.ind[idx].atoms=g_malloc(_UC.nspecies*sizeof(gint));
-		do{
-			_UC.ind[idx].atoms[spe]=g_ascii_strtod(ptr,&ptr2);
-			_UC.ind[idx].natoms+=_UC.ind[idx].atoms[spe];
-			if(ptr2==ptr) break;
-			spe++;
-			ptr=ptr2;
-		}while(1);
-		_UC.ind[idx].E=_UC.ind[idx].energy/_UC.ind[idx].natoms;
+//		_UC.ind[idx].natoms=0;ptr=&(tmp[0]);ptr2=ptr;
+//		spe=0;_UC.ind[idx].atoms=g_malloc(_UC.nspecies*sizeof(gint));
+//		do{
+//			_UC.ind[idx].atoms[spe]=g_ascii_strtod(ptr,&ptr2);
+//			_UC.ind[idx].natoms+=_UC.ind[idx].atoms[spe];
+//			if(ptr2==ptr) break;
+//			spe++;
+//			ptr=ptr2;
+//		}while(1);
+		if(!e_red) _UC.ind[idx].E=_UC.ind[idx].energy/_UC.ind[idx].natoms;
+		else _UC.ind[idx].E=_UC.ind[idx].energy;
+/*	calculate the number of supercells
+			{
+			ptr=&(tmp[0]);ptr2=ptr;mul=1;
+			do{
+				spe=g_ascii_strtod(ptr,&ptr2);
+				if(spe!=0) mul*=spe;
+				if(ptr2==ptr) break;
+				ptr=ptr2;
+			}while(1);
+			_UC.ind[idx].E=_UC.ind[idx].energy/(gdouble)mul;
+			}
+*/
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX[Individual]: GEN=%i STRUCT=%i e=%lf n_atom=%i E=%lf\n",_UC.ind[idx].gen,idx+1,_UC.ind[idx].energy,_UC.ind[idx].natoms,_UC.ind[idx].E);
+#endif
 		if(_UC.ind[idx].E<_UC.min_E) _UC.min_E=_UC.ind[idx].E;
 		if(_UC.ind[idx].E>_UC.max_E) _UC.max_E=_UC.ind[idx].E;
 		g_free(line);
@@ -225,63 +261,19 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	return 0;
 }
 
-gint read_best_individuals_uspex(gchar *filename, struct model_pak *model){
-        FILE *vf;
-        long int vfpos;
-        gchar *line=NULL;
-	gchar *ptr;
-	gint idx;
-        uspex_calc_struct *uspex_calc=model->uspex;
-        /*start*/
-        vf = fopen(filename, "rt");
-        if (!vf) return 1;
-	/* Skip header */
-	vfpos=ftell(vf);/* flag */
-	line = file_read_line(vf);
-	while(line){
-		ptr=&(line[0]);
-		while(*ptr==' ') ptr++;
-		if(g_ascii_isdigit(*ptr)) {
-			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-			break;
-		}
-		vfpos=ftell(vf);/* flag */
-		g_free(line);
-		line = file_read_line(vf);
-	}
-	if(line==NULL) return -1;
-	/*get the number of best structure (should be the same as generation number, but...)*/
-	_UC.num_best=0;
-	line = file_read_line(vf);
-	while(line){
-		_UC.num_best++;
-		g_free(line);
-		line = file_read_line(vf);
-	}
-	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-	/*now alloc*/
-	_UC.best_ind=g_malloc(_UC.num_best*sizeof(gint));
-	line = file_read_line(vf);
-	idx=0;
-	while(line){
-		sscanf(line," %*i %i %*s",&(_UC.best_ind[idx]));
-		g_free(line);
-		line = file_read_line(vf);
-		idx++;
-	}
-	/*that's all*/
-	return 0;
-}
-
 gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gchar *line=NULL;
 	FILE *vf;
 	long int vfpos;
 	gchar *ptr;
+	gchar *ptr2;
         gchar *res_folder;
 	gchar *aux_file;
 	/* of interest */
 	gint ix=0;
+	gint idx;
+	gint jdx;
+	
 	gint job=0;
 	uspex_calc_struct *uspex_calc;
 	/* checks */
@@ -398,49 +390,114 @@ if(job>-1){
 	g_free(aux_file);
 if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 	model->basename=g_strdup_printf("uspex");
+/* we have to open structure file first because of inconsistency in atom reporting in Individuals file*/
+/* --- READ gatheredPOSCARS <- this is going to be the main model file */
+/* ^^^ META: If gatheredPOSCARS_relaxed exists, read it instead */
+        if(_UC.method==US_CM_META) {
+                aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
+                vf = fopen(aux_file, "rt");
+                if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+                else fclose(vf);
+        }else{  
+                aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+        }
+        vf = fopen(aux_file, "rt");
+        if (!vf) {
+                if(_UC.ind!=NULL) g_free(_UC.ind);
+                line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
+                gui_text_show(ERROR, line);
+                g_free(line);
+                goto uspex_fail;
+        }
+	/*count number of structures*/
+	_UC.num_struct=0;
+	line = file_read_line(vf);
+	while(!feof(vf)){
+		if((line[0]=='E')&&(line[1]=='A')) _UC.num_struct++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	rewind(vf);
+        model->num_frames=0;
+        vfpos=ftell(vf);/* flag */
+        line = file_read_line(vf);
+	_UC.ind=g_malloc((_UC.num_struct)*sizeof(uspex_individual));
+	idx=0;ix=-1;
+        while(!feof(vf)){
+                if((line[0]=='E')&&(line[1]=='A')) {
+			idx=0;ix++;
+                        fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+                        add_frame_offset(vf, model);
+                        model->num_frames++;
+                        g_free(line);
+                        line = file_read_line(vf);
+                }
+		if(idx==6){/*calculate number of species and atoms*/
+			ptr=&(line[0]);
+			//while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+			ptr2=ptr;
+			_UC.nspecies=0;
+			do{/*get number of species*/
+				jdx=g_ascii_strtod(ptr,&ptr2);
+				_UC.nspecies++;
+				if(ptr2==ptr) break;
+				ptr=ptr2;
+			}while(1);
+			ptr=&(line[0]);
+			//while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+			ptr2=ptr;jdx=0;
+			_UC.ind[ix].natoms=0;
+			_UC.ind[ix].atoms=g_malloc(_UC.nspecies*sizeof(gint));
+			do{/*get number of atoms*/
+				_UC.ind[ix].atoms[jdx]=g_ascii_strtod(ptr,&ptr2);
+				_UC.ind[ix].natoms+=_UC.ind[ix].atoms[jdx];
+				if(ptr2==ptr) break;
+				jdx++;
+				ptr=ptr2;
+			}while(1);
+		}
+                vfpos=ftell(vf);/* flag */
+		idx++;
+                g_free(line);
+                line = file_read_line(vf);
+        }
+        strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
+        g_free(aux_file);
+
 /* --- READ Individuals <- information about all structures */
-/* ^^^ *BUT for META calculations, it is better to read Individuals_relaxed */
-	if(_UC.method==US_CM_USPEX) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
-	if(_UC.method==US_CM_META) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
+/* ^^^ META: If Individuals_relaxed exists, read it instead */
+	if(_UC.method==US_CM_META) {
+		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
+		vf = fopen(aux_file, "rt");
+		if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
+		else fclose(vf);
+	}else{
+		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
+	}
 	if(read_individuals_uspex(aux_file,model)!=0) {
-		if(_UC.method==US_CM_USPEX) line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
-		if(_UC.method==US_CM_META) line = g_strdup_printf("ERROR: reading USPEX Individuals_relaxed file!\n");
+		line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
 		goto uspex_fail;
 	}
 	g_free(aux_file);
-/* --- READ gatheredPOSCARS <- this is going to be the main model file */
-/* ^^^ *BUT for META calculations, it is better to read gatherPOSCARS_relaxed */
-	if(_UC.method==US_CM_USPEX) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-	if(_UC.method==US_CM_META) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
+/* --- open the last frame */
+	if(_UC.method==US_CM_META) {
+		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
+		vf = fopen(aux_file, "rt");
+		if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+		else fclose(vf);
+	}else{
+		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+	}
         vf = fopen(aux_file, "rt");
-        if (!vf) {
+        if (!vf) {/*very unlikely, we just opened it*/
                 if(_UC.ind!=NULL) g_free(_UC.ind);
-                if(_UC.method==US_CM_USPEX) line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
-		if(_UC.method==US_CM_META) line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS_relaxed file!\n");
+                line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
                 gui_text_show(ERROR, line);
                 g_free(line);
                 goto uspex_fail;
         }
-        model->num_frames=0;
-	vfpos=ftell(vf);/* flag */
-	line = file_read_line(vf);
-        while(!feof(vf)){
-		if((line[0]=='E')&&(line[1]=='A')) {
-			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-			add_frame_offset(vf, model);
-			model->num_frames++;
-			g_free(line);
-			line = file_read_line(vf);
-		}
-		vfpos=ftell(vf);/* flag */
-		g_free(line);
-		line = file_read_line(vf);
-        }
-        strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
-	g_free(aux_file);
-	rewind(vf);
 	read_frame_uspex(vf,model);/*open first frame*/
         fclose(vf);
 
@@ -497,6 +554,9 @@ if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind[gen+1],e[gen+1]);
 #endif
 		}
+		if(_UC.method==US_CM_META) {/*shift best_ind by 1*/
+			for(gen=1;gen<=_UC.num_gen;gen++) _UC.best_ind[gen]++;
+		}
 		graph_add_borned_data(
 			_UC.num_gen,e,0,_UC.num_gen,
 			_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
@@ -509,7 +569,6 @@ fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind
 	graph_set_yticks(TRUE,5,_UC.graph);
 	graph_set_xticks(TRUE,ix,_UC.graph_best);
 	graph_set_yticks(TRUE,5,_UC.graph_best);
-
 /* --- variable composition */
 if(_UC.var){
 	/*add a graph with binary composition, if binary*/
@@ -801,6 +860,9 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UC.i
 	}
 	fclose(vf);
 	g_free(aux_file);
+	/*create the reduced index table*/
+	_UC.red_index=g_malloc(_UC.num_struct*sizeof(gint));
+	for(idx=0;idx<_UC.num_struct;idx++) _UC.red_index[idx]=idx;
 	aux_file = g_strdup_printf("%s%s",res_folder,"transitionPath_POSCARs5");
 /* --- reopen the newly created transitionPath_POSCARs5 file for reading <- this will be our new model file*/
 	vf=fopen(aux_file,"rt");
@@ -893,9 +955,11 @@ while(g_ascii_isalpha(*ptr)) ptr++;
 sscanf(ptr,"%i%*s",&idx);
 fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
         if(vasp_load_poscar5(vf,model)<0) return 3;
-	line=g_strdup_printf("%lf eV",_UC.ind[idx-1].energy);
+/* in case of meta idx is *not* the real number of the structure */
+/* now the index should always be _UC.red_index[idx-1] <- I THINK*/
+	line=g_strdup_printf("%lf eV",_UC.ind[_UC.red_index[idx]].energy);
 	property_add_ranked(3, "Energy", line, model);
-	model->volume=_UC.ind[idx-1].volume;
+	model->volume=_UC.ind[_UC.red_index[idx]].volume;
 	g_free(line);
 	line=g_strdup_printf("%i",idx);
 	property_add_ranked(8, "Structure", line, model);
