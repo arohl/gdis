@@ -185,7 +185,7 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	/* now prepare arrays <- JOB=USPEX/300 example */
 	if(_UC.num_struct==0) return 1;
 	_UC.ind=g_malloc(_UC.num_struct*sizeof(uspex_individual));
-	sscanf(line," %*i %*i %*[a-zA-Z] [%[^]]] %lf %*f %*s",
+	sscanf(line," %*[^[][%[^]]] %lf %*f %*s",
 		&(tmp[0]),&(_UC.min_E));
 	idx=0;ptr=&(tmp[0]);ptr2=ptr;
 	_UC.nspecies=0;
@@ -200,7 +200,7 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	_UC.max_E=_UC.min_E;
 	idx=0;_UC.num_gen=1;
 	while (line){
-		sscanf(line," %i %*i %*[a-zA-Z] [%[^]]] %lf %lf %*s",
+		sscanf(line," %i %*[^[][%[^]]] %lf %lf %*s",
 			&(_UC.ind[idx].gen),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
 		if(_UC.ind[idx].gen>_UC.num_gen) _UC.num_gen=_UC.ind[idx].gen;
 		/*calculate number of atoms*/
@@ -282,7 +282,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gchar *aux_file;
 	/* of interest */
 	gint ix=0;
-	gint job;
+	gint job=0;
 	uspex_calc_struct *uspex_calc;
 	/* checks */
 	g_return_val_if_fail(model != NULL, 1);
@@ -312,7 +312,14 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	sysenv.render.show_energy = TRUE;
 	
 /* --- read the system parameters (AS A CHECK)*/
-	if(fetch_in_file(vf,"Block for system description")==0) goto uspex_fail;
+	if(fetch_in_file(vf,"Block for system description")==0) {
+/*since VCNEB will fail here due to a non-unified OUTPUT.txt format
+ *we need to be a little more permissive... */ 
+		rewind(vf);
+		if(fetch_in_file(vf,"VCNEB")==0) goto uspex_fail;/*definitely wrong*/
+		job=-1;
+	}
+if(job>-1){
 	/*next line contains Dimensionality*/
 	line = file_read_line(vf);
 	/*unless from a previous version and it contains a lot of '-' character*/
@@ -367,6 +374,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	fprintf(stdout,"#DBG: USPEX OUTPUT calculationType=%i\n",job);
 #endif
 	g_free(line);
+}/*in case of VCNEB, we don't have a correct job number*/
 /* --- and close */
 	fclose(vf);
 /* --- READ Parameters.txt */
@@ -378,7 +386,9 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 		goto uspex_fail;
 	}
 /* --- CHECK type from Parameters.txt matches that of OUTPUT.TXT */
-	if(job!=_UC.type) {
+	if((job!=-1)&&(job!=_UC.type)){
+/*since VCNEB will fail here due to a non-unified OUTPUT.txt format
+ *we need to be a little more permissive... */
 		line = g_strdup_printf("ERROR: inconsistent USPEX files (%i!=%i)!\n",job,_UC.type);
 		gui_text_show(ERROR, line);
 		g_free(line);
@@ -386,22 +396,29 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	}
 /* --- if calculationMethod=USPEX */
 	g_free(aux_file);
-if(_UC.method==US_CM_USPEX){
+if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 	model->basename=g_strdup_printf("uspex");
 /* --- READ Individuals <- information about all structures */
-	aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
+/* ^^^ *BUT for META calculations, it is better to read Individuals_relaxed */
+	if(_UC.method==US_CM_USPEX) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
+	if(_UC.method==US_CM_META) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
 	if(read_individuals_uspex(aux_file,model)!=0) {
-		line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
+		if(_UC.method==US_CM_USPEX) line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
+		if(_UC.method==US_CM_META) line = g_strdup_printf("ERROR: reading USPEX Individuals_relaxed file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
 		goto uspex_fail;
 	}
+	g_free(aux_file);
 /* --- READ gatheredPOSCARS <- this is going to be the main model file */
-	aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+/* ^^^ *BUT for META calculations, it is better to read gatherPOSCARS_relaxed */
+	if(_UC.method==US_CM_USPEX) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
+	if(_UC.method==US_CM_META) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
         vf = fopen(aux_file, "rt");
         if (!vf) {
                 if(_UC.ind!=NULL) g_free(_UC.ind);
-                line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
+                if(_UC.method==US_CM_USPEX) line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
+		if(_UC.method==US_CM_META) line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS_relaxed file!\n");
                 gui_text_show(ERROR, line);
                 g_free(line);
                 goto uspex_fail;
@@ -422,6 +439,7 @@ if(_UC.method==US_CM_USPEX){
 		line = file_read_line(vf);
         }
         strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
+	g_free(aux_file);
 	rewind(vf);
 	read_frame_uspex(vf,model);/*open first frame*/
         fclose(vf);
@@ -603,8 +621,245 @@ if(c[1]!=c[0]){
         model_prep(model);
 
 
+}else if(_UC.method==US_CM_VCNEB){
+/* --- tentative at adding VCNEB, which format is different**/
+/* ^^^ *BUT unfortunately, we NEED a vasp5 output (VCNEB stayed at VASP4) */
+/*      thus we create a new file called transitionPath_POSCARs5 which is a
+ *      translation of transitionPath_POSCARs for VASP5...*/
+	FILE *f_src;
+	FILE *f_dest;
+	gchar *atoms=NULL;
+	gchar *ptr2;
+	gint idx;
+	gint natoms;
+	gdouble *e;
+/*fist let's get atomType line from Parameters.txt file*/
+	aux_file = g_strdup_printf("%s%s",res_folder,"Parameters.txt");
+	vf = fopen(aux_file, "rt");
+        if (!vf) {
+                line = g_strdup_printf("ERROR: can't open USPEX Parameters.txt file!\n");
+                gui_text_show(ERROR, line);
+                g_free(line);
+                goto uspex_fail;
+        }
+	if(fetch_in_file(vf,"atomType")==0) {
+		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain atomType information!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+	_UC.nspecies=1;/*there is at least 1 species*/
+	line = file_read_line(vf);/*this line contain atom information*/
+	ptr=&(line[0]);
+	while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+	if(g_ascii_isdigit(*ptr)){
+		/*ok, we need to translate all numbers to symbol...*/
+		if(elem_number_test(ptr)){/*it is a valid number*/
+			ptr2=ptr;
+			do{
+				idx=g_ascii_strtod(ptr,&ptr2);
+				
+				if(ptr2==ptr) break;
+				if(!atoms) atoms=g_strdup_printf("%s",elements[idx].symbol);
+				else atoms=g_strdup_printf("%s %s",atoms,elements[idx].symbol);
+                		_UC.nspecies++;
+                		ptr=ptr2;
+        		}while(1);
+			g_free(line);
+		}else{
+			line = g_strdup_printf("ERROR: USPEX Parameters.txt file contain invalid atom definition!\n");
+			gui_text_show(ERROR, line);
+			g_free(line);
+			goto uspex_fail;
+			
+		}
+	}else{
+		if(elem_symbol_test(ptr)){
+			atoms = g_strdup_printf("%s",line);
+			g_free(line);
+		}else{
+			line = g_strdup_printf("ERROR: USPEX Parameters.txt file contain invalid atom definition!\n");
+			gui_text_show(ERROR, line);
+			g_free(line);
+			goto uspex_fail;
+		}
+	}
+	/*now find num_species*/
+	rewind(vf);
+	if(fetch_in_file(vf,"numSpecies")==0) {
+		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain numSpecies information!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+	line = file_read_line(vf);/*this line contain natoms information*/
+	ptr=&(line[0]);
+	while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+	if(g_ascii_isdigit(*ptr)){
+		natoms=0;
+		ptr2=ptr;
+		do{ 
+			natoms+=g_ascii_strtod(ptr,&ptr2);
+			if(ptr2==ptr) break;
+			ptr=ptr2;
+		}while(1);
+		g_free(line);
+	}else{/*not a number*/
+		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain valid numSpecies information!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX[VCNEB] atoms = %s natoms=%i\n",atoms,natoms);
+#endif
+/* now, we can open transitionPath_POSCARs and start to convert to transitionPath_POSCARs5 */
+	g_free(aux_file);
+	aux_file = g_strdup_printf("%s%s",res_folder,"transitionPath_POSCARs");
+	f_src = fopen(aux_file, "rt");
+	if(!f_src) {
+		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+	g_free(aux_file);
+	aux_file = g_strdup_printf("%s%s",res_folder,"transitionPath_POSCARs5");
+	f_dest = fopen(aux_file, "w");
+	if(!f_dest) {
+		vf=f_src;
+		line = g_strdup_printf("ERROR: can't WRITE into USPEX transitionPath_POSCARs5 file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+	idx=0;
+	_UC.num_struct=0;
+	line = file_read_line(f_src);
+	while(line){
+		fprintf(f_dest,"%s",line);
+		if (find_in_string("Image",line) != NULL) {
+			idx=0;
+			_UC.num_struct++;
+		}
+		if(idx==4) fprintf(f_dest,"%s",atoms);
+		idx++;
+		g_free(line);
+		line = file_read_line(f_src);
+	}
+	fclose(f_src);
+	fclose(f_dest);
+	fclose(vf);
+	g_free(atoms);
+	_UC.ind=g_malloc((_UC.num_struct)*sizeof(uspex_individual));
+/* --- read energies from the Energy file */
+	g_free(aux_file);
+	aux_file = g_strdup_printf("%s%s",res_folder,"Energy");
+	vf=fopen(aux_file,"rt");
+	if (!vf) {
+		g_free(_UC.ind);
+		line = g_strdup_printf("ERROR: can't open USPEX Energy file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		goto uspex_fail;
+	}
+	/*first get to the first data line*/
+	line = file_read_line(vf);
+	ptr=&(line[0]);
+	while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+	while(!g_ascii_isdigit(*ptr)){
+		g_free(line);
+		line = file_read_line(vf);
+		ptr=&(line[0]);
+		while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
+	}/*line should now point to the first data line*/
+	/*get first energy*/
+	_UC.best_ind=g_malloc((1+_UC.num_struct)*sizeof(gint));
+	e = g_malloc((_UC.num_struct+1)*sizeof(gdouble));
+	e[0]=(gdouble) _UC.num_struct;/*first element is the size*/
+	sscanf(line," %*i %lf %*s",&(e[1]));
+	e[1] /= (gdouble)natoms;
+	_UC.min_E=e[1];
+	_UC.max_E=e[1];
+	for(idx=0;idx<_UC.num_struct;idx++){
+		if(!line) break;/*<- useful? */
+		sscanf(line," %*i %lf %*s",&(_UC.ind[idx].energy));
+		_UC.ind[idx].atoms=g_malloc(_UC.nspecies*sizeof(gint));
+		_UC.ind[idx].natoms=natoms;/*<-constant*/
+		_UC.ind[idx].E = _UC.ind[idx].energy / (gdouble)_UC.ind[idx].natoms;
+		_UC.ind[idx].gen=idx;/*<- this is actually *not* true*/
+		_UC.best_ind[idx+1]=idx;
+		e[idx+1]=_UC.ind[idx].E;
+		if(e[idx+1]<_UC.min_E) _UC.min_E=e[idx+1];
+		if(e[idx+1]>_UC.max_E) _UC.max_E=e[idx+1];
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UC.ind[idx].gen,_UC.ind[idx].natoms,_UC.ind[idx].energy,e[idx]);
+#endif
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	fclose(vf);
+	g_free(aux_file);
+	aux_file = g_strdup_printf("%s%s",res_folder,"transitionPath_POSCARs5");
+/* --- reopen the newly created transitionPath_POSCARs5 file for reading <- this will be our new model file*/
+	vf=fopen(aux_file,"rt");
+        if (!vf) {/*very unlikely: we just create it*/
+		g_free(_UC.ind);
+		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs5 file!\n");
+                gui_text_show(ERROR, line);
+                g_free(line);
+                goto uspex_fail;
+        }
+        model->num_frames=0;
+        vfpos=ftell(vf);/* flag */
+        line = file_read_line(vf);
+	idx=0;
+        while(!feof(vf)){
+		if (find_in_string("Image",line) != NULL) {
+			idx=0;
+                        fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+                        add_frame_offset(vf, model);
+                        model->num_frames++;
+                        g_free(line);
+                        line = file_read_line(vf);
+		}
+                vfpos=ftell(vf);/* flag */
+                g_free(line);
+                line = file_read_line(vf);
+		idx++;
+        }
+        strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
+        g_free(aux_file);
+        rewind(vf);
+        read_frame_uspex(vf,model);/*open first frame*/
+        fclose(vf);
+
+	/*do a "best" graph with each image*/
+        _UC.graph_best=graph_new("PATH", model);
+	_UC.num_gen=_UC.num_struct;
+        graph_add_borned_data(
+                _UC.num_gen,e,0,_UC.num_gen,
+                _UC.min_E-(_UC.max_E-_UC.min_E)*0.05,_UC.max_E+(_UC.max_E-_UC.min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
+        g_free(e);
+        /*set ticks*/
+        if(_UC.num_gen>15) ix=5;
+        else ix=_UC.num_gen+1;
+        graph_set_xticks(TRUE,ix,_UC.graph_best);
+        graph_set_yticks(TRUE,5,_UC.graph_best);
+
+
+        /*refresh model*/
+        tree_model_refresh(model);
+        model->redraw = TRUE;
+        /* always show this information */
+        gui_text_show(ITALIC,g_strdup_printf("USPEX: %i structures detected.\n",model->num_frames));
+        model_prep(model);
+
+
+
 }else{/*calculation is not USPEX*/
-	line = g_strdup_printf("ERROR: USPEX support is limited to calculationMethod=USPEX for now!\n");
+	line = g_strdup_printf("ERROR: USPEX support is limited to calculationMethod={USPEX,META,VCNEB} for now!\n");
 	gui_text_show(ERROR, line);
 	g_free(line);
 	goto uspex_fail;
