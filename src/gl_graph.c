@@ -107,7 +107,8 @@ g_assert(model != NULL);
 
 graph = g_malloc(sizeof(struct graph_pak));
 
-graph->treename = g_strdup_printf("%s_%d", name, n);
+graph->treename = g_strdup_printf("%s", name);
+graph->treenumber = n;
 graph->wavelength = 0.0;
 graph->grafted = FALSE;
 graph->xlabel = TRUE;

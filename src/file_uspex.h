@@ -35,6 +35,7 @@ typedef struct {
 	gint *atoms;		/*number of atoms per species*/
         gdouble energy;		/*total energy*/
 	gdouble E;		/*reduce energy / atoms*/
+	gdouble fitness;	/*NEW: fitness*/
         gdouble volume;		/*total volume*/
 } uspex_individual;
 
@@ -42,6 +43,7 @@ typedef struct {
 typedef struct {
 /*name*/
 	gchar *name;
+	gint version;
 /*system parameters*/
 	uspex_method method;
 	gint type;
@@ -51,11 +53,13 @@ typedef struct {
         gboolean var;
 	/* optimization */
 	gint opt_type;
+	gboolean have_fitness;
 
 /*structures*/
 	gint num_gen;
 	gint num_struct;
 	gint nspecies;          /*number of species*/
+	gint *spe_Z;		/*atomic number of each species*/
 	gint *red_index;	/*in case not all structure are displayed (ie. META)*/
 	gdouble min_E;
 	gdouble max_E;

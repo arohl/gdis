@@ -22,17 +22,15 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* USPEX Parser:
  * The reading of USPEX result file is a little different:
- *	1/ load the optimal structure as base model.
- *		-> each optimal structure, for each generation, is represented as a frame
- *		   in this model.
- *	2/ make a graph representing all structures energy levels vs.  generation numbers
+ * 	1/ make a graph representing all structures energy levels vs.  generation numbers
  *		-> make each point on that graph clickable so that selecting a point will
  *		   open a new model containing the corresponding structure.
- * TODO for later:
+ *	2/ load the optimal structures as base model.
+ *		-> each optimal structure, for each generation, is represented as a frame
+ *		   in this model.
+ * TODO:
  * 	1/ include other data plots:
- * 		- hardness vs. generation
- * 		- energy vs. stoechiometry
- * 		- energy vs. image number
+ * 		- hardness / force vs. generation
  * 	2/ calculate some other properties...
  * */
 
@@ -65,10 +63,13 @@ extern struct elem_pak elements[];
 gint read_parameter_uspex(gchar *filename, struct model_pak *model){
 	FILE *vf;
         gchar *line=NULL;
+	gchar *ptr;
+	gint idx;
         uspex_calc_struct *uspex_calc=model->uspex;
 	/* specific */
 	gchar method;
 	/*start*/
+	_UC.nspecies=0;
         vf = fopen(filename, "rt");
         if (!vf) return 1;
         line = file_read_line(vf);
@@ -130,9 +131,46 @@ fprintf(stdout,"#DBG: USPEX optType=%i\n",_UC.type);
 #endif
 
 		}
-
-                g_free(line);
-                line = file_read_line(vf);
+		if (find_in_string("atomType",line) !=NULL){
+		  /*let's count number of species here*/
+		  g_free(line);
+		  line = file_read_line(vf);
+		  ptr=&(line[0]);
+		  while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+		  _UC.nspecies=1;/*there is at lease one species*/
+		  while(*ptr!='\0'){
+		  	if(*ptr==' ') {
+	 	 		_UC.nspecies++;ptr++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+ 	 		}else ptr++;
+  		  }
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX number_of_species=%i\n",_UC.nspecies);
+#endif
+		  /*now let's find each species symbol*/
+		  _UC.spe_Z=g_malloc(_UC.nspecies*sizeof(gint));
+		  ptr=&(line[0]);idx=0;
+		  while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+		  while((*ptr!='\n')&&(*ptr!='\0')){
+		  	if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+        		if(g_ascii_isdigit(*ptr)) _UC.spe_Z[idx]=g_ascii_strtod(ptr,NULL);/*user provided Z number*/
+			else _UC.spe_Z[idx]=elem_symbol_test(ptr);/*user provided symbol*/
+			if((_UC.spe_Z[idx]<=0)||(_UC.spe_Z[idx]>MAX_ELEMENTS-1)){/*X not allowed*/
+				g_free(line);
+				line = g_strdup_printf("ERROR: USPEX Parameters.txt file contain invalid atom definition!\n");
+				gui_text_show(ERROR, line);
+				g_free(line);
+				return -1;
+			}
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX species[%i] Z=%i\n",idx,_UC.spe_Z[idx]);
+#endif
+			ptr++;idx++;
+			while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+		    }
+		}
+	g_free(line);
+	line = file_read_line(vf);
         }
 /*other parameters will be filled later for gui_uspex */
 
@@ -151,16 +189,19 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
         /* specific */
 	gint idx=0;
 	gchar *ptr;
-//	gchar *ptr2;
-//	gint spe;
 	gint max_struct;
 	gint red_index;
 	/*since energy is sometimes eV, and sometimes eV/atom ?*/
 	gboolean e_red=FALSE;
-//	gint mul;
 	/*start*/
         vf = fopen(filename, "rt");
         if (!vf) return 1;
+	/*Have fitness? Better watch for each case...*/
+	/*^^^^ I thought that calculationMethod = USPEX => fitness, but got defeated by EX19*/
+	line = file_read_line(vf);
+	if (find_in_string("Fitness",line) != NULL) _UC.have_fitness=TRUE;
+	else _UC.have_fitness=FALSE;
+	rewind(vf);
 	/* deal with the problematic units */
 	if(fetch_in_file(vf,"eV/atom")!=0) e_red=TRUE;
 	rewind(vf);
@@ -201,52 +242,26 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	line = file_read_line(vf);
 	/* now prepare arrays <- JOB=USPEX/300 example */
 	if(_UC.num_struct==0) return 1;
-//	_UC.ind=g_malloc(_UC.num_struct*sizeof(uspex_individual));
 	_UC.red_index=g_malloc(max_struct*sizeof(gint));
 	for(idx=0;idx<max_struct;idx++) _UC.red_index[idx]=0;
 	sscanf(line," %*[^[][%[^]]] %lf %*f %*s",
 		&(tmp[0]),&(_UC.min_E));
-//	idx=0;ptr=&(tmp[0]);ptr2=ptr;
-//	_UC.nspecies=0;
-//	do{/*get number of atoms*/
-//		idx+=g_ascii_strtod(ptr,&ptr2);
-//		_UC.nspecies++;
-//		if(ptr2==ptr) break;
-//		ptr=ptr2;
-//	}while(1);
-//	_UC.nspecies--;
 	if(!e_red) _UC.min_E/=(gdouble)_UC.ind[0].natoms;
 	_UC.max_E=_UC.min_E;
 	idx=0;_UC.num_gen=1;
 	while (line){
-sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*s",&(_UC.ind[idx].gen),&(red_index),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
+if(_UC.have_fitness){
+	sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*f %lf %*s",
+		&(_UC.ind[idx].gen),&(red_index),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume),&(_UC.ind[idx].fitness));
+	if(isnan(_UC.ind[idx].fitness)) _UC.ind[idx].fitness=10000;
+}else
+	sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*s",
+		&(_UC.ind[idx].gen),&(red_index),&(tmp[0]),&(_UC.ind[idx].energy),&(_UC.ind[idx].volume));
 		if(_UC.ind[idx].gen<_UC.num_gen) _UC.ind[idx].gen++;
 		if(_UC.ind[idx].gen>_UC.num_gen) _UC.num_gen=_UC.ind[idx].gen;
 		_UC.red_index[red_index]=idx;
-		/*calculate number of atoms*/
-//		_UC.ind[idx].natoms=0;ptr=&(tmp[0]);ptr2=ptr;
-//		spe=0;_UC.ind[idx].atoms=g_malloc(_UC.nspecies*sizeof(gint));
-//		do{
-//			_UC.ind[idx].atoms[spe]=g_ascii_strtod(ptr,&ptr2);
-//			_UC.ind[idx].natoms+=_UC.ind[idx].atoms[spe];
-//			if(ptr2==ptr) break;
-//			spe++;
-//			ptr=ptr2;
-//		}while(1);
 		if(!e_red) _UC.ind[idx].E=_UC.ind[idx].energy/_UC.ind[idx].natoms;
 		else _UC.ind[idx].E=_UC.ind[idx].energy;
-/*	calculate the number of supercells
-			{
-			ptr=&(tmp[0]);ptr2=ptr;mul=1;
-			do{
-				spe=g_ascii_strtod(ptr,&ptr2);
-				if(spe!=0) mul*=spe;
-				if(ptr2==ptr) break;
-				ptr=ptr2;
-			}while(1);
-			_UC.ind[idx].E=_UC.ind[idx].energy/(gdouble)mul;
-			}
-*/
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG: USPEX[Individual]: GEN=%i STRUCT=%i e=%lf n_atom=%i E=%lf\n",_UC.ind[idx].gen,idx+1,_UC.ind[idx].energy,_UC.ind[idx].natoms,_UC.ind[idx].E);
 #endif
@@ -256,25 +271,41 @@ fprintf(stdout,"#DBG: USPEX[Individual]: GEN=%i STRUCT=%i e=%lf n_atom=%i E=%lf\
 		line = file_read_line(vf);
 		idx++;
 	}
-
 	/*all done*/
 	return 0;
 }
 
 gint read_output_uspex(gchar *filename, struct model_pak *model){
-	gchar *line=NULL;
+	gchar *line;
 	FILE *vf;
 	long int vfpos;
 	gchar *ptr;
 	gchar *ptr2;
         gchar *res_folder;
 	gchar *aux_file;
-	/* of interest */
-	gint ix=0;
+	gint ix;
 	gint idx;
 	gint jdx;
-	
-	gint job=0;
+	gint min,max,med;
+	gint job;
+	/* results */
+	FILE *f_src;
+	FILE *f_dest;
+	gdouble *e;
+	gdouble *c;
+	gdouble *tag;
+	gdouble *tmp;
+	gdouble compo;
+	gint n_compo;
+	gint skip=0;
+	gint gen=1;
+	gint num;
+	gint natoms;
+	gint species_index;
+	gdouble min_E;
+	gdouble min_F;
+	gdouble max_E;
+	gchar *atoms;
 	uspex_calc_struct *uspex_calc;
 	/* checks */
 	g_return_val_if_fail(model != NULL, 1);
@@ -303,7 +334,35 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 /* --- setup environment */
 	sysenv.render.show_energy = TRUE;
 	
-/* --- read the system parameters (AS A CHECK)*/
+/* --- read the system OUTPUT.txt (will be confirmed by Parameters.txt)*/
+	if(fetch_in_file(vf,"Version")==0){
+		/*can't get version number (10.0.0 example will fail here)*/
+		/* -> just produce a warning... file might actually be processed correctly*/
+		line = g_strdup_printf("WARNING: USPEX version unsupported!\n");
+		gui_text_show(WARNING, line);
+		g_free(line);
+	}else{
+		rewind(vf);
+		line = file_read_line(vf);
+		while(line) {
+			if (find_in_string("Version",line) != NULL){
+				sscanf(line,"| Version %i.%i.%i %*s",&(max),&(med),&(min));
+				_UC.version=min+10*med+100*max;
+				if(_UC.version!=944){
+					g_free(line);
+					line = g_strdup_printf("WARNING: USPEX version %i unsupported!\n",_UC.version);
+					gui_text_show(WARNING, line);
+
+				}
+				g_free(line);
+				break;
+			}
+			g_free(line);
+			line = file_read_line(vf);
+		}
+	}
+	rewind(vf);
+	job=0;
 	if(fetch_in_file(vf,"Block for system description")==0) {
 /*since VCNEB will fail here due to a non-unified OUTPUT.txt format
  *we need to be a little more permissive... */ 
@@ -313,6 +372,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	}
 if(job>-1){
 	/*next line contains Dimensionality*/
+	ix=0;
 	line = file_read_line(vf);
 	/*unless from a previous version and it contains a lot of '-' character*/
 	if (find_in_string("Dimensionality",line) == NULL) {
@@ -367,6 +427,17 @@ if(job>-1){
 #endif
 	g_free(line);
 }/*in case of VCNEB, we don't have a correct job number*/
+	line = file_read_line(vf);
+	num=0;
+	while(line){
+		if(find_in_string("types of atoms in the system",line) != NULL) {
+			/**/
+			sscanf(line," There are %i %*s",&(num));
+		}
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	g_free(line);
 /* --- and close */
 	fclose(vf);
 /* --- READ Parameters.txt */
@@ -386,9 +457,11 @@ if(job>-1){
 		g_free(line);
 		goto uspex_fail;
 	}
-/* --- if calculationMethod=USPEX */
 	g_free(aux_file);
+	/*special case: no nspecies information*/
+	if(_UC.nspecies==0) _UC.nspecies=num;
 if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
+/* --- if calculationMethod={USPEX,META} */
 	model->basename=g_strdup_printf("uspex");
 /* we have to open structure file first because of inconsistency in atom reporting in Individuals file*/
 /* --- READ gatheredPOSCARS <- this is going to be the main model file */
@@ -432,29 +505,60 @@ if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
                         g_free(line);
                         line = file_read_line(vf);
                 }
-		if(idx==6){/*calculate number of species and atoms*/
-			ptr=&(line[0]);
-			//while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
-			ptr2=ptr;
-			_UC.nspecies=0;
-			do{/*get number of species*/
-				jdx=g_ascii_strtod(ptr,&ptr2);
-				_UC.nspecies++;
-				if(ptr2==ptr) break;
-				ptr=ptr2;
-			}while(1);
-			ptr=&(line[0]);
-			//while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
-			ptr2=ptr;jdx=0;
-			_UC.ind[ix].natoms=0;
+		if(idx==5){/*calculate number of species and atoms*/
 			_UC.ind[ix].atoms=g_malloc(_UC.nspecies*sizeof(gint));
-			do{/*get number of atoms*/
-				_UC.ind[ix].atoms[jdx]=g_ascii_strtod(ptr,&ptr2);
-				_UC.ind[ix].natoms+=_UC.ind[ix].atoms[jdx];
-				if(ptr2==ptr) break;
-				jdx++;
-				ptr=ptr2;
-			}while(1);
+			for(jdx=0;jdx<_UC.nspecies;jdx++) _UC.ind[ix].atoms[jdx]=0;/*init atoms*/
+			_UC.ind[ix].natoms=0;
+			/*get this structure nspecies*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+			jdx=1;/*there is at least one species*/
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					jdx++;ptr++;
+					while(*ptr==' ') ptr++;/*skip space*/
+				}else ptr++;
+			}
+			if(jdx<_UC.nspecies){
+				gchar *line2;/*double buffer*/
+				/*we need to know which species is here*/
+				line2 = file_read_line(vf);
+				ptr=&(line[0]);
+				ptr2=&(line2[0]);
+				idx++;
+				jdx=0;
+				while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+				while(*ptr2==' ') ptr2++;/*skip initial space (if any)*/
+				while((*ptr!='\0')&&(*ptr2!='\0')){
+					/*get the correct jdx number*/
+					jdx=0;/*we reset jdx to cope with 'OUT OF ORDER' poscar species, if any*/
+					while((jdx<_UC.nspecies)&&(_UC.spe_Z[jdx]!=elem_symbol_test(ptr))) jdx++;
+					_UC.ind[ix].atoms[jdx]=g_ascii_strtod(ptr2,NULL);
+					_UC.ind[ix].natoms+=_UC.ind[ix].atoms[jdx];
+					ptr++;ptr2++;
+					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					while(g_ascii_isgraph(*ptr2)) ptr2++;/*go to next space/end*/
+					ptr++;ptr2++;
+					while(*ptr==' ') ptr++;/*skip space*/
+					while(*ptr2==' ') ptr2++;/*skip space*/
+				}
+				g_free(line);
+				line=line2;
+			}else{
+				/*get a new line (the number of each atoms)*/
+				g_free(line);
+				line = file_read_line(vf);
+				idx++;
+				ptr=&(line[0]);
+				ptr2=ptr;jdx=0;
+				do{/*get the number of each species (in the Parameters.txt order)*/
+					_UC.ind[ix].atoms[jdx]=g_ascii_strtod(ptr,&ptr2);
+					_UC.ind[ix].natoms+=_UC.ind[ix].atoms[jdx];
+					if(ptr2==ptr) break;
+					jdx++;
+					ptr=ptr2;
+				}while(1);
+			}
 		}
                 vfpos=ftell(vf);/* flag */
 		idx++;
@@ -506,12 +610,8 @@ if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 	_UC.graph=graph_new("ALL", model);
 	_UC.graph_best=graph_new("BEST", model);
 	if(_UC.num_struct>_UC.num_gen){
-		gdouble *e;
-		gint skip=0;
-		gint gen=1;
-		gint num;
-		gdouble min_E;
-		gdouble max_E;
+		skip=0;
+		gen=1;
 		_UC.num_best=_UC.num_gen;
 		_UC.best_ind=g_malloc((1+_UC.num_best)*sizeof(gint));
 		_UC.best_ind[0]=0;
@@ -521,11 +621,19 @@ if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 		  num=0;
 		  skip=ix;
 		  min_E=_UC.ind[ix].E;
+		  if(_UC.have_fitness) min_F=_UC.ind[ix].fitness;
 		  _UC.best_ind[gen]=ix;
 		  while(_UC.ind[ix].gen==gen){
-			if(_UC.ind[ix].E<min_E){
-				min_E=_UC.ind[ix].E;
-				_UC.best_ind[gen]=ix;
+			if(_UC.have_fitness){
+				if(_UC.ind[ix].fitness<min_F){
+					min_F=_UC.ind[ix].fitness;
+					_UC.best_ind[gen]=ix;
+				}
+			}else{
+				if(_UC.ind[ix].E<min_E){
+					min_E=_UC.ind[ix].E;
+					_UC.best_ind[gen]=ix;
+				}
 			}
 			num++;
 			ix++;
@@ -547,8 +655,10 @@ if((_UC.method==US_CM_USPEX)||(_UC.method==US_CM_META)){
 		e=g_malloc((1+_UC.num_gen)*sizeof(gdouble));
 		e[0]=(gdouble)_UC.num_gen;
 		max_E=_UC.ind[_UC.best_ind[1]].E;
+		min_E=max_E;
 		for(gen=0;gen<_UC.num_gen;gen++) {
 			if(_UC.ind[_UC.best_ind[gen+1]].E>max_E) max_E=_UC.ind[_UC.best_ind[gen+1]].E;
+			if(_UC.ind[_UC.best_ind[gen+1]].E<min_E) min_E=_UC.ind[_UC.best_ind[gen+1]].E;
 			e[gen+1]=_UC.ind[_UC.best_ind[gen+1]].E;
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind[gen+1],e[gen+1]);
@@ -559,7 +669,7 @@ fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind
 		}
 		graph_add_borned_data(
 			_UC.num_gen,e,0,_UC.num_gen,
-			_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
+			min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,GRAPH_USPEX_BEST,_UC.graph_best);
 		g_free(e);
 	}
 	/*set ticks*/
@@ -571,38 +681,31 @@ fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UC.best_ind
 	graph_set_yticks(TRUE,5,_UC.graph_best);
 /* --- variable composition */
 if(_UC.var){
-	/*add a graph with binary composition, if binary*/
-	if(_UC.nspecies==2){
-		gdouble *e;
-		gdouble *c;
-		gdouble *tag;
-		gdouble *tmp;
-		gdouble compo;
-		gdouble max_E;
-		gint n_compo;/*number of different compositions*/
-		gint jdx;
-		n_compo=2;
-		ix=0;
-		/*check for 2 different compositions <- useful?*/
-		c=g_malloc(2*sizeof(gdouble));
-		c[0]=(gdouble)_UC.ind[0].atoms[1] / (gdouble)_UC.ind[0].natoms;
-		c[1]=c[0];
-		do{
-			compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
-			if(compo!=c[0]){
-				if(compo>c[0]) c[1]=compo;
-				else {
-					c[1]=c[0];c[0]=compo;
-				}
+/* --- NEW: add a simple composition % graph for each species */
+if(_UC.nspecies>1){
+n_compo=2;
+ix=0;
+for(species_index=0;species_index<_UC.nspecies;species_index++){
+	c=g_malloc(2*sizeof(gdouble));/*suppose at least 2 different compositions*/
+	c[0]=(gdouble)_UC.ind[0].atoms[species_index] / (gdouble)_UC.ind[0].natoms;
+	c[1]=c[0];
+	compo=c[0];
+	ix=0;
+	while((compo==c[0])&&(ix<_UC.num_struct)){
+		compo=(gdouble)_UC.ind[ix].atoms[species_index] / (gdouble)_UC.ind[ix].natoms;
+		if(compo!=c[0]){
+			if(compo>c[0]) c[1]=compo;
+			else {
+				c[1]=c[0];c[0]=compo;
 			}
-			ix++;
-		}while((compo==c[0])&&(ix<_UC.num_struct));
-if(c[1]!=c[0]){
-		/*we have 2 different composition*/
-		/*build the compo array*/
-		for(ix=0;ix<_UC.num_struct;ix++){
-			compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
-			if(compo<c[0]) {/*we have a new first element*/
+		}
+		ix++;
+	}
+	if(c[1]==c[0]) continue;/*in VARCOMP calculation, one species can be kept fixed*/
+	for(ix=0;ix<_UC.num_struct;ix++){
+		compo=(gdouble)_UC.ind[ix].atoms[species_index] / (gdouble)_UC.ind[ix].natoms;
+		if(compo<c[0]) {/*we have a new first element*/
+			tmp=g_malloc((n_compo+1)*sizeof(gdouble));
 				tmp=g_malloc((n_compo+1)*sizeof(gdouble));
 				tmp[0]=compo;
 				memcpy(&(tmp[1]),c,n_compo*sizeof(gdouble));
@@ -641,9 +744,9 @@ if(c[1]!=c[0]){
 		tag=g_malloc(n_compo*sizeof(gdouble));
 		max_E=_UC.min_E;
 		for(ix=0;ix<n_compo;ix++) e[ix]=_UC.max_E;
-		for(ix=0;ix<_UC.num_struct;ix++){	
+		for(ix=0;ix<_UC.num_struct;ix++){
 			for(jdx=0;jdx<n_compo;jdx++){
-				compo=(gdouble)_UC.ind[ix].atoms[1] / (gdouble)_UC.ind[ix].natoms;
+				compo=(gdouble)_UC.ind[ix].atoms[species_index] / (gdouble)_UC.ind[ix].natoms;
 				if(c[jdx]==compo){
 					if(_UC.ind[ix].E < e[jdx]) {
 						e[jdx] = _UC.ind[ix].E;
@@ -654,23 +757,26 @@ if(c[1]!=c[0]){
 			}
 		}
 		/* prepare composition diagram*/
-		_UC.graph_comp=graph_new("COMP", model);
+		line=g_strdup_printf("COMP_%s",elements[_UC.spe_Z[species_index]].symbol);
+		_UC.graph_comp=graph_new(line, model);
                 graph_add_borned_data(
 			n_compo,tag,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
 		graph_add_borned_data(
 			n_compo,c,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
 		graph_add_borned_data(
 			n_compo,e,0,1,_UC.min_E-(max_E-_UC.min_E)*0.05,max_E+(max_E-_UC.min_E)*0.05,GRAPH_USPEX_2D,_UC.graph_comp);
-                g_free(tag);
+                g_free(line);
+		g_free(tag);
 		g_free(c);
 		g_free(e);
         	/*set ticks*/
         	graph_set_xticks(TRUE,3,_UC.graph_comp);
         	graph_set_yticks(TRUE,5,_UC.graph_comp);
-}
-/*2 species, but only one composition?*/
+
 	}
-}
+
+}/*variable composition with only 1 species...*/
+}/*not a VARCOMP calculation*/
 
 	/*refresh model*/
 	tree_model_refresh(model);
@@ -685,96 +791,13 @@ if(c[1]!=c[0]){
 /* ^^^ *BUT unfortunately, we NEED a vasp5 output (VCNEB stayed at VASP4) */
 /*      thus we create a new file called transitionPath_POSCARs5 which is a
  *      translation of transitionPath_POSCARs for VASP5...*/
-	FILE *f_src;
-	FILE *f_dest;
-	gchar *atoms=NULL;
-	gchar *ptr2;
-	gint idx;
-	gint natoms;
-	gdouble *e;
-/*fist let's get atomType line from Parameters.txt file*/
-	aux_file = g_strdup_printf("%s%s",res_folder,"Parameters.txt");
-	vf = fopen(aux_file, "rt");
-        if (!vf) {
-                line = g_strdup_printf("ERROR: can't open USPEX Parameters.txt file!\n");
-                gui_text_show(ERROR, line);
-                g_free(line);
-                goto uspex_fail;
-        }
-	if(fetch_in_file(vf,"atomType")==0) {
-		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain atomType information!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-		goto uspex_fail;
+	atoms = g_strdup_printf("%s",elements[_UC.spe_Z[0]].symbol);
+	for(idx=1;idx<_UC.nspecies;idx++){
+		line = g_strdup_printf("%s %s",atoms,elements[_UC.spe_Z[idx]].symbol);
+		g_free(atoms);
+		atoms=line;
 	}
-	_UC.nspecies=1;/*there is at least 1 species*/
-	line = file_read_line(vf);/*this line contain atom information*/
-	ptr=&(line[0]);
-	while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
-	if(g_ascii_isdigit(*ptr)){
-		/*ok, we need to translate all numbers to symbol...*/
-		if(elem_number_test(ptr)){/*it is a valid number*/
-			ptr2=ptr;
-			do{
-				idx=g_ascii_strtod(ptr,&ptr2);
-				
-				if(ptr2==ptr) break;
-				if(!atoms) atoms=g_strdup_printf("%s",elements[idx].symbol);
-				else atoms=g_strdup_printf("%s %s",atoms,elements[idx].symbol);
-                		_UC.nspecies++;
-                		ptr=ptr2;
-        		}while(1);
-			g_free(line);
-		}else{
-			line = g_strdup_printf("ERROR: USPEX Parameters.txt file contain invalid atom definition!\n");
-			gui_text_show(ERROR, line);
-			g_free(line);
-			goto uspex_fail;
-			
-		}
-	}else{
-		if(elem_symbol_test(ptr)){
-			atoms = g_strdup_printf("%s",line);
-			g_free(line);
-		}else{
-			line = g_strdup_printf("ERROR: USPEX Parameters.txt file contain invalid atom definition!\n");
-			gui_text_show(ERROR, line);
-			g_free(line);
-			goto uspex_fail;
-		}
-	}
-	/*now find num_species*/
-	rewind(vf);
-	if(fetch_in_file(vf,"numSpecies")==0) {
-		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain numSpecies information!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-		goto uspex_fail;
-	}
-	line = file_read_line(vf);/*this line contain natoms information*/
-	ptr=&(line[0]);
-	while((ptr)&&(*ptr==' ')) ptr++;/*skip blanks*/
-	if(g_ascii_isdigit(*ptr)){
-		natoms=0;
-		ptr2=ptr;
-		do{ 
-			natoms+=g_ascii_strtod(ptr,&ptr2);
-			if(ptr2==ptr) break;
-			ptr=ptr2;
-		}while(1);
-		g_free(line);
-	}else{/*not a number*/
-		line = g_strdup_printf("ERROR: USPEX Parameters.txt file does not contain valid numSpecies information!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-		goto uspex_fail;
-	}
-
-#if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG: USPEX[VCNEB] atoms = %s natoms=%i\n",atoms,natoms);
-#endif
-/* now, we can open transitionPath_POSCARs and start to convert to transitionPath_POSCARs5 */
-	g_free(aux_file);
+/* open transitionPath_POSCARs and start to convert to transitionPath_POSCARs5 */
 	aux_file = g_strdup_printf("%s%s",res_folder,"transitionPath_POSCARs");
 	f_src = fopen(aux_file, "rt");
 	if(!f_src) {
@@ -793,6 +816,23 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] atoms = %s natoms=%i\n",atoms,natoms);
 		g_free(line);
 		goto uspex_fail;
 	}
+/*get the total number of atoms*/
+	for(idx=0;idx<5;idx++){
+		line = file_read_line(f_src);
+		g_free(line);
+	}
+	natoms=1;/*there is at least one atom*/
+	ptr=&(line[0]);
+	do{
+		natoms+=g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		ptr=ptr2;
+	}while(1);
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: USPEX[VCNEB]: NATOMS=%i ATOMS=%s\n",natoms,atoms);
+#endif
+	/*translate input VASP4 into proper VASP5*/
+	rewind(f_src);
 	idx=0;
 	_UC.num_struct=0;
 	line = file_read_line(f_src);
@@ -802,7 +842,7 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] atoms = %s natoms=%i\n",atoms,natoms);
 			idx=0;
 			_UC.num_struct++;
 		}
-		if(idx==4) fprintf(f_dest,"%s",atoms);
+		if(idx==4) fprintf(f_dest,"%s\n",atoms);
 		idx++;
 		g_free(line);
 		line = file_read_line(f_src);
@@ -920,7 +960,7 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UC.i
 
 
 
-}else{/*calculation is not USPEX*/
+}else{/*calculation method is not supported*/
 	line = g_strdup_printf("ERROR: USPEX support is limited to calculationMethod={USPEX,META,VCNEB} for now!\n");
 	gui_text_show(ERROR, line);
 	g_free(line);

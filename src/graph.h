@@ -38,6 +38,7 @@ struct graph_pak
 {
 	gint grafted;
 	gchar *treename;
+	gint treenumber;
 	/* graph generation parameters */
 	gdouble wavelength;
 	/* flags */
