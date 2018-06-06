@@ -624,7 +624,9 @@ gdouble mat4[16], vec4[4];
 GSList *list=NULL, *list1, *list2;
 struct core_pak *core;
 struct shel_pak *shell;
+#ifdef UNUSED_BUT_SET
 struct model_pak *orig;
+#endif
 struct vec_pak *vector;
 struct vertex_pak *v;
 struct plane_pak *plane;
@@ -642,7 +644,9 @@ g_return_if_fail(data != NULL);
 
 /* update model & any overlayed (ghost) models */
 ghost=0;
+#ifdef UNUSED_BUT_SET
 orig = data;
+#endif
 while(data)
   {
 #if DEBUG_UPDATE_COORDS

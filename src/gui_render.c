@@ -171,7 +171,9 @@ gint event_render_modify(GtkWidget *w, gpointer *obj)
 {
 gint id, refresh=0;
 const gchar *entry;
+#ifdef UNUSED_BUT_SET
 struct model_pak *data;
+#endif
 
 /* checks */
 g_return_val_if_fail(obj != NULL, FALSE);
@@ -179,7 +181,9 @@ g_return_val_if_fail(obj != NULL, FALSE);
 /* ascertain type of modification required */
 id = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(obj), "id"));
 
+#ifdef UNUSED_BUT_SET
 data = sysenv.active_model;
+#endif
 
 sysenv.moving = FALSE;
 
@@ -1580,8 +1584,7 @@ for (i=0 ; i<=RENDER_LIGHT_TYPE ; i++)
   renderer = gtk_cell_renderer_text_new();
   column = gtk_tree_view_column_new_with_attributes(titles[i], renderer, "text", i, NULL);
 
-if (!i)
-  gtk_tree_view_column_add_attribute(column, renderer, "background", RENDER_LIGHT_ATTRIBUTE);
+if (!i) gtk_tree_view_column_add_attribute(column, renderer, "background", RENDER_LIGHT_ATTRIBUTE);
 
   gtk_tree_view_append_column(GTK_TREE_VIEW(render_light_tv), column);
   }

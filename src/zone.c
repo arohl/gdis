@@ -539,7 +539,10 @@ return(TRUE);
 /*******************************/
 void zone_visible_init(struct model_pak *model)
 {
-gint i, n, flag, g[3];
+gint i, n, g[3];
+#ifdef UNUSED_BUT_SET
+gint flag;
+#endif
 gdouble x[4];
 GSList *list;
 struct core_pak *core;
@@ -567,7 +570,9 @@ zone->visible = TRUE;
   if (zone->cores)
     {
     ARR3SET(g, zone->grid);
+#ifdef UNUSED_BUT_SET
     flag = 0;
+#endif
 
 /* get cube vertices */
     zone_coords_get(x, g[0], g[1], g[2], za);

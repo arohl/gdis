@@ -64,5 +64,8 @@ void task_new(const gchar *,
               gpointer, gpointer,
               gpointer, gpointer,
               gpointer);
-
+void task_system_new(const gchar *label,
+              gpointer func1, gpointer arg1,
+              gpointer func2, gpointer arg2,
+              gpointer model);
 gint exec_gulp(const gchar *, const gchar *);

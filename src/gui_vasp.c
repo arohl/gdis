@@ -1865,6 +1865,8 @@ void apply_species_flavor(GtkButton *button, gpointer data){
 	gchar sym[3];
 	gint idx;
 	gchar *result=NULL;
+	if(text==NULL) return;/*nothing selected*/
+	if(text[0]=='\0') return;/*nothing selected*/
 	sscanf(text,"%[^:]: %s",symbol,flavor);
 	text=g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor);
 	g_free(vasp_gui.calc.potcar_species_flavor);
@@ -1981,6 +1983,7 @@ void potcar_folder_get_info(){
         gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
         gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
 	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species_flavor),g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.species_flavor),0);
 }
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */

@@ -95,7 +95,7 @@ gint find_pid_index(gint pid)
 {
 gint i;
 
-for (i = psarray->len - 1; i >= 0 && g_array_index(psarray, struct task_pak, i).pid != pid; i--);
+  for (i = psarray->len - 1; i >= 0 && g_array_index(psarray, struct task_pak, i).pid != pid; i--);
   return(i);
 }
 
@@ -154,7 +154,9 @@ gint found;
 gchar line[LINELEN], *line_no_time, **buff, *cmd;
 struct task_pak curr_process, *process_ptr;
 struct tm start_tm;
+#if DEBUG_CALC_TASK_INFO
 time_t oldest_time;
+#endif
 FILE *fp;
 
 #ifdef _WIN32
@@ -267,7 +269,9 @@ tdata->pcpu =  tdata->pmem = 0;
 tdata->h_sec = tdata->sec = tdata->min = tdata->hour = 0;
 
 /* scan through the running processes and find the task thread */
+#if DEBUG_CALC_TASK_INFO
 oldest_time = time(NULL);
+#endif
 found = FALSE;
 for (me = 0; me < psarray->len; me++)
   {

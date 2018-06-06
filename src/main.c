@@ -87,7 +87,10 @@ host_free_all();
 /**********************************/
 gint read_gdisrc(void)
 {
-gint i, element_flag, num_tokens;
+gint num_tokens;
+#ifdef UNUSED_BUT_SET
+gint i, element_flag;
+#endif
 gchar line[LINELEN], **buff;
 gdouble version;
 FILE *fp;
@@ -119,8 +122,10 @@ else
   return(1);
 
 /* read until EOF, or (failsafe) reached elements[] array allocation */
+#ifdef UNUSED_BUT_SET
 element_flag=0;
 i=0;
+#endif
 for (;;)
   {
 /* NB: we need line[] to get the OpenGL font */

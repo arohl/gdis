@@ -188,7 +188,10 @@ gint write_cgf(gchar *filename, struct model_pak *data)
   GSList *core_iter, *bond_iter;//,
   GSList *primary_cores = NULL;
   FILE *fp;
-  gint nr_primary_cores = 0, max_bonds = 0, bond_counter = 0, offset_counter = 0;
+  gint nr_primary_cores = 0, max_bonds = 0, bond_counter = 0;
+#ifdef UNUSED_BUT_SET
+  gint offset_counter = 0;
+#endif
    
   gint *nr_bonds = g_new(gint, g_slist_length(data->cores));
   
@@ -237,7 +240,9 @@ gint write_cgf(gchar *filename, struct model_pak *data)
   fprintf(fp, "--------------------------------------------\n");
 
   bond_counter = 0;
+#ifdef UNUSED_BUT_SET
   offset_counter = 0;
+#endif
   
   for (core_iter = data->cores; core_iter; core_iter = core_iter->next)
   {

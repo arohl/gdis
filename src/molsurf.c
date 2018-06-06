@@ -2106,13 +2106,14 @@ void ms_cube(gdouble value, gint method, gint colour, struct model_pak *model)
 {
 gchar *text;
 gint i, j, k, z, index, eval, grid[3];
+#ifdef UNUSED_BUT_SET
 gint jjmTmp;
+#endif
 gdouble isolevel=0.0, dx, dy, dz;
 gdouble x[3], min[3], max[3], latmat[9];
 gpointer zone;
 GSList *plist, *tlist, *list;
 struct smv_pak **p;
-int errorStat;
 time_t jobStartTime, cubeStartTime;
 
 /* Give the user a rough idea of how long the job took - Wall time */
@@ -2181,7 +2182,9 @@ else
 	}	
     hfs_init();
     isolevel = 0.5;
+#ifdef UNUSED_BUT_SET
     jjmTmp = 0;
+#endif
     hsEnvironment = hfs_calc_env(model->selection,model);
 #if DEBUG_MS_CUBE    
     fprintf(stderr,"Total atoms: %d\n",model->num_atoms);
@@ -2263,7 +2266,7 @@ if (z > FRACTION_TOLERANCE)
   }
 
 if (method == MS_HIRSHFELD || method == MS_SSATOMS)
-  errorStat = hfs_calulation_limits(model->selection,model,min,max);
+  hfs_calulation_limits(model->selection,model,min,max);
 
 #if DEBUG_MS_CUBE
 P3VEC(" min: ", min);
@@ -2420,14 +2423,14 @@ if (method == MS_HIRSHFELD)
 #if DEBUG_MS_CUBE
   fprintf(stderr,"computing Hirshfeld surface normals...");
 #endif
-  errorStat = hfs_calc_normals(ms_points, model, hsEnvironment);
+  hfs_calc_normals(ms_points, model, hsEnvironment);
   }
 if (method == MS_SSATOMS)
 {
 #if DEBUG_MS_CUBE
 	fprintf(stderr,"computing surface normals...");
 #endif
-	errorStat = ssatoms_calc_normals(ms_points, model);
+	ssatoms_calc_normals(ms_points, model);
 } 
 
 

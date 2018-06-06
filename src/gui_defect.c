@@ -81,12 +81,16 @@ void gui_defect_refresh(gpointer data)
 /**********************************/
 void gui_defect_neutralization(GtkWidget *entry)
 {
+#ifdef UNUSED_BUT_SET
 const gchar *text;
+#endif
 
 g_assert(entry != NULL);
 g_assert(GTK_IS_ENTRY(entry));
 
+#ifdef UNUSED_BUT_SET
 text = gtk_entry_get_text(GTK_ENTRY(entry));
+#endif
 }
 
 /************************************/

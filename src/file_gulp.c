@@ -3940,7 +3940,10 @@ return(0);
 gint read_trj_frame(FILE *fp, struct model_pak *model, gint replace_coords)
 {
 gint i, j;
-int num_atoms, periodic;
+int num_atoms;
+#if DEBUG_TRJ_FRAME
+int periodic;
+#endif
 double time, ke, pe, temp, *x[6];
 double cell[9], velc[6];
 GSList *list;
@@ -3949,7 +3952,9 @@ struct shel_pak *shell;
 
 /* standard frame read */
 num_atoms = model->expected_cores + model->expected_shells;
+#if DEBUG_TRJ_FRAME
 periodic = model->periodic;
+#endif
 
 /* alloc for x,y,z & vx, vy, vz */
 for (j=0 ; j<6 ; j++)

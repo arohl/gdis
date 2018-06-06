@@ -357,10 +357,12 @@ void monty_input_box(GtkWidget *box, struct model_pak *data)
    */  
   new_radio_group(0, vbox, TT);
   wdgt = add_radio_button("kcal/mol", (gpointer) energy_unit_kcal, data);
-  if (data->monty.energy_unit == "kcal/mol")
+//  if (data->monty.energy_unit == "kcal/mol")
+  if(find_in_string("kcal/mol",data->monty.energy_unit) != NULL)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wdgt), TRUE);
   wdgt = add_radio_button("kJ/mol", (gpointer) energy_unit_kJ, data);
-  if (data->monty.energy_unit == "kJ/mol")
+//  if (data->monty.energy_unit == "kJ/mol")
+  if(find_in_string("kcal/mol",data->monty.energy_unit) != NULL)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wdgt), TRUE);
   
   wdgt = gui_text_entry("Solvation energy", &data->monty.esolv, TRUE, FALSE, vbox);  

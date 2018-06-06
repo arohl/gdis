@@ -244,7 +244,10 @@ return(sfc);
 void diff_calc_spectrum(GSList *list, struct model_pak *model)
 {
 gint i, n;
-gint cur_peak, old_peak;
+gint cur_peak;
+#ifdef UNUSED_BUT_SET
+gint old_peak;
+#endif
 gdouble angle, sol, f, g, lpf, dr;
 gdouble c1, sqrt_c1, sqrt_pi, sina, cosa, sin2a, cos2a, tana, fwhm, bf, intensity;
 gdouble *spectrum;
@@ -271,7 +274,9 @@ printf("----------------------------------------------------------------------\n
 #endif
 
 /* loop over all spplied peaks */
+#ifdef UNUSED_BUT_SET
 old_peak = -1;
+#endif
 for (item=list ; item ; item=g_slist_next(item))
   {
   plane = item->data;
@@ -305,9 +310,9 @@ for (item=list ; item ; item=g_slist_next(item))
   cur_peak = (gint) dr;
 */
   cur_peak = nearest_int(dr);
-
+#ifdef UNUSED_BUT_SET
   old_peak = cur_peak;
-
+#endif
 /* fill out the spectrum with the current peak */
   for (i=0 ; i<n ; i++)
     {

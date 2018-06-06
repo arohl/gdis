@@ -380,4 +380,5 @@ void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
 void vasprun_free(vasp_calc_struct *calc);
 
+gint vasp_load_poscar5(FILE *vf,struct model_pak *model);
 

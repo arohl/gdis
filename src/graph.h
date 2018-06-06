@@ -26,7 +26,10 @@ typedef enum {
         GRAPH_BAND,/*kpoints/state energy graph */
 	GRAPH_DOS,/*interleave e,dos plot*/
         GRAPH_BANDOS,/*dual BAND & DOS graph*/
-        GRAPH_UNKNOWN,/*for catching wrong type*/
+	GRAPH_USPEX,/*point graph with selectable*/
+	GRAPH_USPEX_BEST,/*linepoint graph with selectable*/
+	GRAPH_USPEX_COMP,/*composition vs energy, point with selectable*/
+	GRAPH_USPEX_2D,/*2D point graph with selectable*/
 } graph_type;
 /*******************/
 /* data structures */
@@ -35,6 +38,7 @@ struct graph_pak
 {
 	gint grafted;
 	gchar *treename;
+	gint treenumber;
 	/* graph generation parameters */
 	gdouble wavelength;
 	/* flags */
@@ -50,9 +54,10 @@ struct graph_pak
 	gdouble ymax;
 	/* NB: all sets are required to be <= size */
 	gint size;
-	GSList *set_list;
+	GSList *set_list;/*in case of 1D graph, set_list={x[,tag]} for 2D set_list={x,y[,tag]}*/
 	/* peak selection */
 	gint select;
+	gdouble select_2;/*uspex peak selections require two index*/
 	gchar *select_label;
 };
 gpointer graph_new(const gchar *, struct model_pak *);
@@ -61,6 +66,8 @@ void graph_free(gpointer, struct model_pak *);
 void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
 void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
 void graph_frequency_select(gint x, gint y, struct model_pak *model);
+void graph_uspex_select(gint x, gint y, struct model_pak *model);
+void graph_uspex_2d_select(gint x, gint y, struct model_pak *model);
 void graph_set_grafted(gint, gpointer);
 void graph_set_xticks(gint, gint, gpointer);
 void graph_set_yticks(gint, gint, gpointer);

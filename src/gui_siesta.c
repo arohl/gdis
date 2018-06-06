@@ -1779,9 +1779,11 @@ if (!model->siesta.eigen_values)
 
 void siesta_animation_dialog_destroy(GtkWidget *w, gpointer *dialog)
 {
+#ifdef UNUSED_BUT_SET
     struct model_pak * model;
 
     model = sysenv.active_model;
+#endif
 
     //stop the animation timer
 /*
@@ -1794,9 +1796,13 @@ void siesta_animation_dialog_destroy(GtkWidget *w, gpointer *dialog)
 
 void siesta_save_n_queue(GtkWidget *w, struct model_pak * model)
 {
-    int i, jobID=0;
+    int i;
     int total_files;
-    gchar * filename, * orig_basename, *queuepath, *jobID_string;
+    gchar * filename, * orig_basename, *queuepath;
+#ifdef UNUSED_BUT_SET
+    int jobID=0;
+    gchar *jobID_string;
+#endif
 
     total_files = model->num_atoms / model->siesta.atoms_per_job +1;
 
@@ -1807,9 +1813,9 @@ void siesta_save_n_queue(GtkWidget *w, struct model_pak * model)
     //default jobstorage dir??
     //"$homedir/.gdis_jobs/  ?
     queuepath = g_build_filename(g_get_home_dir(), ".gdis_jobman", NULL);
-
+#ifdef UNUSED_BUT_SET
     jobID_string = g_strdup_printf("%d", jobID);
-
+#endif
     if (g_file_test (queuepath, G_FILE_TEST_IS_DIR))
     {
         // yay - it exists.

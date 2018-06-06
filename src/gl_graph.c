@@ -26,6 +26,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <math.h>
 
 #include "gdis.h"
+#include "model.h"
 #include "graph.h"
 #include "matrix.h"
 #include "numeric.h"
@@ -39,6 +40,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #else
 #include <GL/gl.h>
 #endif
+/*for uspex structure -> should be in interface?*/
+#include "file_uspex.h"
 /* externals */
 extern struct sysenv_pak sysenv;
 extern gint gl_fontsize;
@@ -104,7 +107,8 @@ g_assert(model != NULL);
 
 graph = g_malloc(sizeof(struct graph_pak));
 
-graph->treename = g_strdup_printf("%s_%d", name, n);
+graph->treename = g_strdup_printf("%s", name);
+graph->treenumber = n;
 graph->wavelength = 0.0;
 graph->grafted = FALSE;
 graph->xlabel = TRUE;
@@ -288,9 +292,13 @@ else
   graph->size = size;
 }
 
+if((type==GRAPH_USPEX)||(type==GRAPH_USPEX_BEST)){
+ptr = g_malloc(1+((gint)x[0])*sizeof(gdouble));
+memcpy(ptr,x,(1+(gint)x[0])*sizeof(gdouble));
+}else{
 ptr = g_malloc(size*sizeof(gdouble));
-
 memcpy(ptr, x, size*sizeof(gdouble));
+}
 
 graph->xmin = x_min;
 graph->xmax = x_max;
@@ -314,7 +322,6 @@ void graph_frequency_select(gint x, gint y, struct model_pak *model){
         int i;
 	gdouble *ptr;
 	GSList *list;
-
         /*get the selected frequency, similar to diffraction graphs*/
 g_assert(model!=NULL);
         graph=(struct graph_pak *)model->graph_active;
@@ -338,6 +345,190 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 		return;/*no need to continue for all data!*/
         }
   }
+}
+/***************************************/
+/* Select a value in GRAPH_USPEX graph */
+/***************************************/
+void graph_uspex_select(gint x, gint y, struct model_pak *model){
+/*when selected, print value and open the corresponding structure file*/
+        struct graph_pak *graph;
+        struct canvas_pak *canvas;
+        gint struct_sel;
+        gdouble ox,dx;
+	gdouble oy,dy,yf;
+	gint yy;
+        int i,j;
+        gdouble *ptr;
+        GSList *list;
+/*just a try*/
+	FILE *vf;
+	gint n_struct;
+        /*get the selected structure*/
+g_assert(model!=NULL);
+        graph=(struct graph_pak *)model->graph_active;
+g_assert(graph!=NULL);
+        canvas = g_slist_nth_data(sysenv.canvas_list, 0);
+g_assert(canvas!=NULL);
+/*calculate real data*/
+	ox=canvas->x + 4*gl_fontsize;
+	if (graph->ylabel) ox+=4*gl_fontsize;
+	oy=canvas->y + canvas->height - 2*gl_fontsize;
+	if (graph->xlabel) oy-=2*gl_fontsize;
+	dy=(canvas->height-8.0*gl_fontsize);
+	dx=(canvas->width-2.0*ox);
+
+	struct_sel=(gint)(0.25+((x-ox)/dx)*(graph->size));/*generation*/
+	struct_sel--;
+
+/*check if the data point exists*/
+if((struct_sel<0)||(struct_sel>graph->size-1)) return;/*not in there*/
+
+/*USPEX_BEST: simple search*/
+if(graph->type==GRAPH_USPEX_BEST){
+list=graph->set_list;/*there should be only one list*/
+ptr = (gdouble *) list->data;
+i = struct_sel + 1;
+yf = ptr[i];
+yf -= graph->ymin;
+yf /= (graph->ymax - graph->ymin);
+yf *= dy;
+yy = (gint) yf;
+yy *= -1;
+yy += oy;
+if((y>yy-3)&&(y<yy+3)){
+	uspex_calc_struct *uspex_calc=model->uspex;
+	/*we have a hit*/
+	graph->select=struct_sel;
+	graph->select_2=ptr[i];
+	g_free(graph->select_label);
+	graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
+	vf=fopen(model->filename, "r");
+	if(!vf) return;
+	model->cur_frame=(*uspex_calc).best_ind[struct_sel+1];/*this is the structure number*/
+	read_raw_frame(vf,model->cur_frame,model);
+	fclose(vf);
+	tree_model_refresh(model);
+	model_prep(model);
+	return;/*no need to continue for all data!*/
+}
+}else{
+/*USPEX: more complex search*/
+j=0;n_struct=0;
+for (list=graph->set_list ; list ; list=g_slist_next(list))
+  {
+	if(j>struct_sel) return;
+	if(j<struct_sel) {
+		ptr = (gdouble *) list->data;
+		n_struct+=(gint)ptr[0];
+		j++;
+		continue;
+	}else{
+		/*we are on the good set*/
+		ptr = (gdouble *) list->data;
+		for(i=1;i<=(gint)ptr[0];i++){
+			yf = ptr[i];
+			yf -= graph->ymin;
+			yf /= (graph->ymax - graph->ymin);
+			yf *= dy;
+			yy = (gint) yf;
+			yy *= -1;
+			yy += oy;
+			if((y>yy-3)&&(y<yy+3)){
+				uspex_calc_struct *uspex_calc=model->uspex;
+				/*we have a hit*/
+				graph->select=struct_sel;
+				graph->select_2=ptr[i];
+				g_free(graph->select_label);
+				graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
+				vf=fopen(model->filename, "r");
+				if(!vf) return;
+				if((*uspex_calc).method==US_CM_META) n_struct++;
+				model->cur_frame=n_struct+i-1;
+				read_raw_frame(vf,n_struct+i-1,model);
+				fclose(vf);
+				tree_model_refresh(model);
+				model_prep(model);
+				return;/*no need to continue for all data!*/
+			}
+		}
+		j++;
+	}
+  }
+}
+}
+/******************************************/
+/* Select a value in GRAPH_USPEX_2D graph */
+/******************************************/
+void graph_uspex_2d_select(gint x, gint y, struct model_pak *model){
+/*when selected, print value and open the corresponding structure file*/
+        struct graph_pak *graph;
+        struct canvas_pak *canvas;
+        gdouble ox,dx, xf;
+        gdouble oy,dy, yf;
+        gint xx,yy;
+        int i;
+	gdouble *xval;
+        gdouble *yval;
+	gdouble *tag;
+        GSList *list;
+        FILE *vf;
+        /*get the selected structure*/
+g_assert(model!=NULL);
+        graph=(struct graph_pak *)model->graph_active;
+g_assert(graph!=NULL);
+        canvas = g_slist_nth_data(sysenv.canvas_list, 0);
+g_assert(canvas!=NULL);
+/*calculate real data*/
+        ox=canvas->x + 4*gl_fontsize;
+        if (graph->ylabel) ox+=4*gl_fontsize;
+        oy=canvas->y + canvas->height - 2*gl_fontsize;
+        if (graph->xlabel) oy-=2*gl_fontsize;
+        dy=(canvas->height-8.0*gl_fontsize);
+        dx=(canvas->width-2.0*ox);
+
+/*first set is tags*/
+list=graph->set_list;
+tag = (gdouble *) list->data;
+list=g_slist_next(list);
+/*second set is x*/
+xval = (gdouble *) list->data;
+list=g_slist_next(list);
+
+for ( ; list ; list=g_slist_next(list)){
+  i=0;
+  yval = (gdouble *) list->data;
+  while(i<graph->size){
+        xf = xval[i];
+	xf -= graph->xmin;
+	xf /= (graph->xmax - graph->xmin);
+	xx = ox + xf*dx;
+	if((x>xx-3)&&(x<xx+3)){/*x is good*/
+		yf = yval[i];
+		yf -= graph->ymin;
+		yf /= (graph->ymax - graph->ymin);
+		yf *= dy;
+		yy = (gint) yf;
+		yy *= -1;
+		yy += oy;
+		if((y>yy-3)&&(y<yy+3)){/*y also good*/
+			graph->select=i;
+			graph->select_2=yval[i];
+			g_free(graph->select_label);
+			graph->select_label=g_strdup_printf("[%f,%f]",xval[i],yval[i]);
+			vf=fopen(model->filename, "r");
+			if(!vf) return;
+			model->cur_frame=tag[i];
+			read_raw_frame(vf,tag[i],model);
+			fclose(vf);
+			tree_model_refresh(model);
+			model_prep(model);
+			return;/*no need to continue for all data!*/
+		}
+	}
+	i++;
+  }
+
+}
 }
 /************************************/
 /* graph data extraction primitives */
@@ -371,151 +562,571 @@ gint graph_grafted(gpointer data)
 struct graph_pak *graph = data;
 return(graph->grafted);
 }
-
-/****************/
-/* draw a graph */
-/****************/
-#define DEBUG_GRAPH_1D 0
-void graph_draw_1d_regular(struct canvas_pak *canvas, struct graph_pak *graph)
-{/*previously the only type of graph*/
-gint i, x, y, oldx, oldy, ox, oy, sx, sy;
+/****************************************************/
+/* draw a graph using the new, general graph system */
+/****************************************************/
+void graph_draw_new(struct canvas_pak *canvas, struct graph_pak *graph){
+/*draw a graph using the new, more general graph system*/
+gint i, j, x, y, oldx, oldy, ox, oy, sx, sy;
 gint flag;
 gchar *text;
 gdouble *ptr;
 gdouble xf, yf, dx, dy;
 GSList *list;
-
-#if DEBUG_GRAPH_1D
-printf("x range: [%f - %f]\n", graph->xmin, graph->xmax);
-printf("y range: [%f - %f]\n", graph->ymin, graph->ymax);
-#endif
-
+/*specific*/
+gint size;
+gint shift;
+gint nkpoints;
+gdouble sz;
+gdouble *xval;
+gdouble xmin,xmax;
 /* compute origin */
 ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel)
-  ox += 4*gl_fontsize;
-
+if (graph->ylabel) ox += 4*gl_fontsize;
 oy = canvas->y + canvas->height - 2*gl_fontsize;
-if (graph->xlabel)
-  oy -= 2*gl_fontsize;
-
+if (graph->xlabel) oy -= 2*gl_fontsize;
 /* increments for screen drawing */
 dy = (canvas->height-8.0*gl_fontsize);
 dx = (canvas->width-2.0*ox);
-
 /* axes label colour */
-glColor3f(sysenv.render.fg_colour[0],
-          sysenv.render.fg_colour[1],
-          sysenv.render.fg_colour[2]);
+glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
 glLineWidth(2.0);
-
-
 /* x labels */
-oldx = ox;
-for (i=0 ; i<graph->xticks ; i++)
-  {
-/* get real index */
+if((graph->type==GRAPH_DOS)&&(graph->xticks>2)){
+	/* we WANT 0 to be a tick, if nticks>2 */
+        sz=(graph->xmax-graph->xmin)/(graph->xticks);/*size of a tick*/
+        shift=(gint)(graph->xmin/sz);
+        oldx=ox;
+        for (i=0 ; i<=graph->xticks ; i++){
+        /* get real index */
+                xf=(i*sz+shift*sz);
+                xf -= graph->xmin;
+                xf /= (graph->xmax-graph->xmin);
+                x = ox + xf*dx;
+                if(x>ox+dx) continue;
+          if (graph->xlabel){
+            xf=(i+shift)*sz;/*label name*/
+            text = g_strdup_printf("%.2f", xf);
+            gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
+            g_free(text);
+          }
+        /* axis segment + tick */
+          glBegin(GL_LINE_STRIP);
+          gl_vertex_window(oldx, oy, canvas);
+          gl_vertex_window(x, oy, canvas);
+          gl_vertex_window(x, oy+5, canvas);
+          glEnd();
+          oldx = x;
+        }
+        /*we need to add a last segment*/
+        x=ox+dx;
+        glBegin(GL_LINE_STRIP);
+        gl_vertex_window(oldx, oy, canvas);
+        gl_vertex_window(x, oy, canvas);
+        glEnd();
+}else{/*do the usual xmin,xmax ticks*/
+  oldx = ox;
+  for (i=0 ; i<graph->xticks ; i++){
+  /* get real index */
   xf = (gdouble) i / (gdouble) (graph->xticks-1);
-
-  x = ox + xf*dx;
-
-  if (graph->xlabel)
-    {/*only calculate real value when needed*/
-    xf *= (graph->xmax-graph->xmin);
-    xf += graph->xmin;
+  if(graph->type==GRAPH_BANDOS){
+    x = ox + xf*dx*0.3;
+  }else{
+    x = ox + xf*dx;
+  }
+  if (graph->xlabel){
+	/*only calculate real value when needed*/
+	if(graph->type!=GRAPH_BANDOS){
+	    xf *= (graph->xmax-graph->xmin);
+	    xf += graph->xmin;
+	}
     text = g_strdup_printf("%.2f", xf);
     gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
     g_free(text);
-    }
-
-/* axis segment + tick */
+  }
+  /* axis segment + tick */
   glBegin(GL_LINE_STRIP);
   gl_vertex_window(oldx, oy, canvas);
   gl_vertex_window(x, oy, canvas);
   gl_vertex_window(x, oy+5, canvas);
   glEnd();
-
   oldx = x;
   }
-
-/* y labels */
-oldy = oy;
-for (i=0 ; i<graph->yticks ; i++)
-  {
-/* get screen position */
-  yf = (gdouble) i / (gdouble) (graph->yticks-1);
-  y = -yf*dy;
-  y += oy;
-
-/* label */
-  if (graph->ylabel)
-    {/*only calculate real value when needed*/
-    yf *= (graph->ymax - graph->ymin);
-    yf += graph->ymin;
-    if (graph->ymax > 999.999999)
-      text = g_strdup_printf("%.2e", yf);
-    else
-      text = g_strdup_printf("%7.2f", yf);
-    gl_print_window(text, 0, y-1, canvas);
+}
+/* another x axis */
+if(graph->type==GRAPH_BANDOS){
+  /*second x axis*/
+  oldx = ox+dx*0.4;
+  for (i=0 ; i<graph->xticks ; i++){
+  /* get real index */
+  xf = (gdouble) i / (gdouble) (graph->xticks-1);
+  x = ox + dx*0.4 + xf*dx*0.6;
+  if (graph->xlabel){
+    /*only calculate real value when needed*/
+    text = g_strdup_printf("%.2f", xf);
+    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
     g_free(text);
     }
-
-/* axis segment + tick */
+  /* axis segment + tick */
+  glBegin(GL_LINE_STRIP);
+  gl_vertex_window(oldx, oy, canvas);
+  gl_vertex_window(x, oy, canvas);
+  gl_vertex_window(x, oy+5, canvas);
+  glEnd();
+  oldx = x;
+  }
+}
+/* y labels */
+if(((graph->type==GRAPH_BANDOS)||(graph->type==GRAPH_BAND))&&(graph->yticks>2)){
+  /* we WANT 0 to be a tick, if nticks>2 */
+  sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
+  shift=(gint)(graph->ymin/sz);
+  oldy=oy;
+  for (i=0 ; i<=graph->yticks ; i++){
+    /* get real index */
+    yf=(i*sz+shift*sz);
+    yf -= graph->ymin;
+    yf /= (graph->ymax-graph->ymin);
+    y = oy - yf*dy;
+    if(y<oy-dy) continue;
+    if (graph->ylabel){
+	yf=(i+shift)*sz;/*label name*/
+	if (graph->ymax > 999.999999)
+		text = g_strdup_printf("%.2e", yf);
+	else
+		text = g_strdup_printf("%7.2f", yf);
+	gl_print_window(text, 0, y-1, canvas);
+	g_free(text);
+    }
+    /* axis segment + tick */
+    glBegin(GL_LINE_STRIP);
+    gl_vertex_window(ox, oldy, canvas);
+    gl_vertex_window(ox, y-1, canvas);
+    gl_vertex_window(ox-5, y-1, canvas);
+    glEnd();
+    oldy = y;
+  }
+  /*we need to add a last segment*/
+  y=oy-dy;
   glBegin(GL_LINE_STRIP);
   gl_vertex_window(ox, oldy, canvas);
   gl_vertex_window(ox, y-1, canvas);
-  gl_vertex_window(ox-5, y-1, canvas);
   glEnd();
-
-  oldy = y;
+}else{/*do the usual ymin,ymax ticks*/
+  oldy = oy;
+  for (i=0 ; i<graph->yticks ; i++){
+    /* get screen position */
+    yf = (gdouble) i / (gdouble) (graph->yticks-1);
+    y = -yf*dy;
+    y += oy;
+    /* label */
+    if (graph->ylabel){
+	/*only calculate real value when needed*/
+	yf *= (graph->ymax - graph->ymin);
+	yf += graph->ymin;
+	if (graph->ymax > 999.999999)
+		text = g_strdup_printf("%.2e", yf);
+	else
+		text = g_strdup_printf("%7.2f", yf);
+	gl_print_window(text, 0, y-1, canvas);
+	g_free(text);
+    }
+    /* axis segment + tick */
+    glBegin(GL_LINE_STRIP);
+    gl_vertex_window(ox, oldy, canvas);
+    gl_vertex_window(ox, y-1, canvas);
+    gl_vertex_window(ox-5, y-1, canvas);
+    glEnd();
+    oldy = y;
   }
-
+}
+/* another y axis */
+if(graph->type==GRAPH_BANDOS){
+  x=ox+0.4*dx;
+  y=oy-dy;
+  oldy=oy;
+  /* second axis y ticks - NO labels */
+  /* we WANT 0 to be a tick, if nticks>2 */
+  if(graph->yticks>2){
+    sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
+    shift=(gint)(graph->ymin/sz);
+    oldy=oy;
+    for (i=0 ; i<=graph->yticks ; i++){
+	/* get real index */
+	yf=(i*sz+shift*sz);
+	yf -= graph->ymin;
+	yf /= (graph->ymax-graph->ymin);
+	y = oy - yf*dy;
+	if(y<oy-dy) continue;
+	/* axis segment + tick */
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x, oldy, canvas);
+	gl_vertex_window(x, y-1, canvas);
+	gl_vertex_window(x-5, y-1, canvas);
+	glEnd();
+	oldy = y;
+    }
+    /*we need to add a last segment*/
+    y=oy-dy;
+    glBegin(GL_LINE_STRIP);
+    gl_vertex_window(x, oldy, canvas);
+    gl_vertex_window(x, y-1, canvas);
+    glEnd();
+  }else{/*do the usual ymin,ymax ticks*/
+    oldy = oy;
+    glBegin(GL_LINE_STRIP);
+    gl_vertex_window(x, oldy, canvas);
+    gl_vertex_window(x, y-1, canvas);
+    gl_vertex_window(x-5, y-1, canvas);
+    glEnd();
+    for (i=0 ; i<graph->yticks ; i++){
+	/* get screen position */
+	yf = (gdouble) i / (gdouble) (graph->yticks-1);
+	y = -yf*dy;
+	y += oy;
+	/* axis segment + tick */
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(ox+0.4*dx, oldy, canvas);
+	gl_vertex_window(ox+0.4*dx, y-1, canvas);
+	gl_vertex_window(ox+0.4*dx-5, y-1, canvas);
+	glEnd();
+	oldy = y;
+    }
+  }
+}
 /* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],
-          sysenv.render.title_colour[1],
-          sysenv.render.title_colour[2]);
+glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
 glLineWidth(1.0);
-
-
 flag = FALSE;
 sx = sy = 0;
-
-for (list=graph->set_list ; list ; list=g_slist_next(list))
+list=graph->set_list;
+size=graph->size;
+if(graph->type==GRAPH_BANDOS){
+/*first set is the DOS, to put on [0,0.3] of x, rotated by 90 degrees*/
+	ptr = (gdouble *) list->data;
+	glBegin(GL_LINE_STRIP);
+	for (i=0 ; i<size ; i+=2) {
+	                xf = ptr[i+1];
+	                xf -= graph->xmin;
+	                xf /= (graph->xmax - graph->xmin);
+	                x = ox+xf*dx*0.3;
+	                yf = ptr[i];
+	                if((yf<graph->ymin)||(yf>graph->ymax)) continue;
+	                yf -= graph->ymin;
+	                yf /= (graph->ymax - graph->ymin);
+	                yf *= dy;
+	                y = (gint) yf;
+	                y *= -1;
+	                y += oy;
+	                gl_vertex_window(x, y-1, canvas);
+	}
+	glEnd();
+/* next set contain nkpoints, new xmin xmax, and x values */
+	list=g_slist_next(list);
+	ptr = (gdouble *) list->data;
+/*we do not read the full header (yet)*/
+	nkpoints=(gint)ptr[1];
+	xmin=ptr[4];
+	xmax=ptr[nkpoints+3];
+/*setup x values*/
+	xval=&(ptr[4]);
+	size=nkpoints;
+	list=g_slist_next(list);
+}
+if(graph->type==GRAPH_BAND){
+/*the first set of GRAPH_BAND data contain X values*/
+/*we do not read the full header (yet)*/
+	ptr = (gdouble *) list->data;
+	xval=&(ptr[4]);
+	list=g_slist_next(list);
+}
+if(graph->type==GRAPH_USPEX_2D){
+/*first set is the tags, ignore*/
+list=g_slist_next(list);
+/*second set is x*/
+	ptr = (gdouble *) list->data;
+	xval=&(ptr[0]);
+	list=g_slist_next(list);
+}
+j=0;
+for ( ; list ; list=g_slist_next(list))
   {
   ptr = (gdouble *) list->data;
-
-  glBegin(GL_LINE_STRIP);
-  for (i=0 ; i<graph->size ; i++)
+  oldx=-1;
+  oldy=-1;
+  i=0;
+  if(graph->type==GRAPH_USPEX) size=(gint)ptr[0];
+  while(i<size)
     {
-    xf = (gdouble) i / (gdouble) (graph->size-1);
-    x = ox + xf*dx;
-
-/* scale real value to screen coords */
-    yf = ptr[i];
-    yf -= graph->ymin;
-    yf /= (graph->ymax - graph->ymin);
-    yf *= dy;
-
-    y = (gint) yf;
-    y *= -1;
-    y += oy;
-
-if (i == graph->select)
-  {
-  sx = x;
-  sy = y-1;
-  flag = TRUE;
+/*get real values*/
+switch (graph->type){
+	case GRAPH_USPEX_BEST:
+	xf = (gdouble) (i);
+	yf = ptr[i+1];
+	break;
+	case GRAPH_USPEX:
+	xf = (gdouble) (j);
+	yf = ptr[i+1];
+	break;
+	case GRAPH_FREQUENCY:
+	case GRAPH_DOS:
+	xf = ptr[i];
+	yf = ptr[i+1];
+	break;
+	case GRAPH_USPEX_2D:
+	case GRAPH_BANDOS:
+	case GRAPH_BAND:
+	xf = xval[i];
+	yf = ptr[i];
+	break;
+/*complete until full*/
+	case GRAPH_REGULAR:
+	default:
+	xf = (gdouble) i;
+	yf = ptr[i];
+}
+/*new: skip drawing for points outside of graph extrema (also interrupt line when line drawing)*/
+if((xf<graph->xmin)||(xf>graph->xmax)||(yf<graph->ymin)||(yf>graph->ymax)) {
+	/*update index*/
+	switch(graph->type){
+	  case GRAPH_FREQUENCY:
+	  case GRAPH_DOS:
+		i++;/* ie twice ++ */
+	  case GRAPH_USPEX_2D:
+	  case GRAPH_USPEX_BEST:
+	  case GRAPH_USPEX:
+	  case GRAPH_BAND:
+	  case GRAPH_BANDOS:
+	  case GRAPH_REGULAR:
+	  default:
+		i++;
+	}
+	oldx=-1;
+	continue;
+}
+/*calculate screen values*/
+switch (graph->type){
+	case GRAPH_FREQUENCY:
+	/*we can draw impulse directly*/
+	glBegin(GL_LINE_STRIP);
+	xf = ptr[i];/*1/2 size of rectangle*/
+	xf -= graph->xmin;
+	xf /= (graph->xmax - graph->xmin);
+	x = ox + xf*dx;
+	y = oy;/*base*/
+	/*selector for frequency*/
+	if (i==graph->select){
+		sx=x;sy=y-1;flag = TRUE;
+	}
+	gl_vertex_window(x-1,y-1,canvas);/*go to*/
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	gl_vertex_window(x-1,y-1, canvas);/*go up*/
+	gl_vertex_window(x+1,y-1, canvas);/*move right*/
+	y = oy;/*base*/
+	gl_vertex_window(x+1,y-1, canvas);/*go down*/
+	glEnd();
+	break;
+	case GRAPH_DOS:
+	case GRAPH_BAND:
+	xf -= graph->xmin;
+	xf /= (graph->xmax - graph->xmin);
+	x = ox + xf*dx;
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	break;
+	case GRAPH_BANDOS:
+	xf -= xmin;
+	xf /= (xmax - xmin);
+	x = ox + dx*0.4 + xf*dx*0.6;
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	break;
+	case GRAPH_USPEX_BEST:
+	case GRAPH_USPEX:
+	xf += 1.;
+	xf /= (gdouble) (graph->size);/*NOT size*/
+	x = ox + xf*dx;
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	/*draw a rectangle*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	gl_vertex_window(x-2, y-2, canvas);
+	glEnd();
+	break;
+	case GRAPH_USPEX_2D:
+	xf -= graph->xmin;
+	xf /= (graph->xmax - graph->xmin);
+	x = ox + xf*dx;
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	/*draw a rectangle*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	gl_vertex_window(x-2, y-2, canvas);
+	glEnd();
+	if((i == graph->select)&&(ptr[i] == graph->select_2)){
+		sx=x;
+		sy=y-1;
+		flag=TRUE;
+	}
+	break;
+	case GRAPH_REGULAR:
+	default:
+	xf = (gdouble) i / (gdouble) (graph->size-1);
+	x = ox + xf*dx;
+	yf -= graph->ymin;
+	yf /= (graph->ymax - graph->ymin);
+	yf *= dy;
+	y = (gint) yf;
+	y *= -1;
+	y += oy;
+	/*selector will be only within graph limits*/
+	if (i == graph->select){
+		sx=x;
+		sy=y-1;
+		flag=TRUE;
+	}
+}
+if(oldx!=-1){
+	/*plot LINE data*/
+  switch(graph->type){
+	case GRAPH_USPEX:
+	case GRAPH_USPEX_2D:
+	break;
+	case GRAPH_FREQUENCY:
+		/*we should never reach here*/
+	break;
+	case GRAPH_USPEX_BEST:
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(oldx,oldy-1,canvas);
+	gl_vertex_window(x,y-1,canvas);
+	glEnd();
+	break;
+	case GRAPH_DOS:
+	case GRAPH_BAND:
+	case GRAPH_REGULAR:
+	default:
+	/*draw a line*/
+	glBegin(GL_LINE_STRIP);
+	/* lift y axis 1 pixel up so y=0 won't overwrite the x axis */
+	gl_vertex_window(oldx, oldy-1, canvas);
+	gl_vertex_window(x, y-1, canvas);
+	glEnd();
   }
-
-/* lift y axis 1 pixel up so y=0 won't overwrite the x axis */
-    gl_vertex_window(x, y-1, canvas);
+}
+	oldx=x;
+	oldy=y;
+/*update index*/
+	switch(graph->type){
+	case GRAPH_FREQUENCY:
+	case GRAPH_DOS:
+		i++;/* ie twice ++ */
+	case GRAPH_USPEX:
+	case GRAPH_USPEX_BEST:
+	case GRAPH_USPEX_2D:
+	case GRAPH_BAND:
+	case GRAPH_BANDOS:
+	case GRAPH_REGULAR:
+	default:
+		i++;
+	}
     }
-  glEnd();
+    j++;
+  }
+/*outside of loop*/
+switch (graph->type){
+	/*plot add-axis*/
+	case GRAPH_DOS:
+	/* need 0 y axis at Fermi level */
+	  glBegin(GL_LINE_STRIP);
+	  glColor3f(0.9, 0.7, 0.4);
+	  glLineWidth(2.0);
+	  xf = -1.0*graph->xmin/(graph->xmax - graph->xmin);
+	  x = ox+xf*dx;
+	  yf = -1.0*graph->ymin/(graph->ymax - graph->ymin);
+	  y = oy - dy*yf;
+	  gl_vertex_window(x, y-1, canvas);
+	  y = oy - dy;
+	  gl_vertex_window(x, y-1, canvas);
+	  glEnd();
+	break;
+	case GRAPH_BAND:
+	/* need 0 x axis at Fermi level */
+	  glBegin(GL_LINE_STRIP);
+	  glColor3f(0.9, 0.7, 0.4);
+	  glLineWidth(2.0);
+	  x = ox;
+	  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+	  y = oy - dy*yf;
+	  gl_vertex_window(x, y-1, canvas);
+	  x = ox+dx;
+	  gl_vertex_window(x, y-1, canvas);
+	  glEnd();
+	break;
+	case GRAPH_BANDOS:
+	/*BANDOS requires two special 0 y axis at fermi level*/
+	  glBegin(GL_LINE_STRIP);
+	  glColor3f(0.9, 0.7, 0.4);
+	  glLineWidth(2.0);
+	  x = ox;
+	  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+	  y = oy - dy*yf;
+	  gl_vertex_window(x, y-1, canvas);
+	  x = ox+dx*0.3;
+	  gl_vertex_window(x, y-1, canvas);
+	  glEnd();
+	/* second axis */
+	  glBegin(GL_LINE_STRIP);
+	  glColor3f(0.9, 0.7, 0.4);
+	  glLineWidth(2.0);
+	  x = ox+dx*0.4;
+	  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
+	  y = oy - dy*yf;
+	  gl_vertex_window(x, y-1, canvas);
+	  x = ox+dx;
+	  gl_vertex_window(x, y-1, canvas);
+	  glEnd();
+	break;
+	case GRAPH_USPEX_BEST:
+	case GRAPH_USPEX_2D:/*TODO: add a 0.5 composition axis?*/
+	case GRAPH_USPEX:
+	case GRAPH_FREQUENCY:
+	case GRAPH_REGULAR:
+	default:
+	break;
+}
 
-/* draw peak selector (if any) */
-/* TODO - turn off is click outside range? */
-  if (flag)
-    {
+/* draw peak selector */
+/*regular, frequency*/
+  if (flag) {
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1, 0x0303);
     glColor3f(0.9, 0.7, 0.4);
@@ -535,784 +1146,61 @@ if (i == graph->select)
       gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
       }
     glDisable(GL_LINE_STIPPLE);
-    }
   }
-
-
-}
-
-void graph_draw_1d_frequency(struct canvas_pak *canvas, struct graph_pak *graph)
-{
-gint i, x, y, oldx, oldy, ox, oy, sx, sy;
-gint flag;
-gchar *text;
-gdouble *ptr;
-gdouble xf, yf, dx, dy;
-GSList *list;
-
-/* compute origin */
-ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel) ox+=4*gl_fontsize;
-
-oy = canvas->y + canvas->height - 2*gl_fontsize;
-if (graph->xlabel) oy-=2*gl_fontsize;
-
-/* increments for screen drawing */
-dy = (canvas->height-8.0*gl_fontsize);
-dx = (canvas->width-2.0*ox);
-
-/* axes label colour */
-glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
-glLineWidth(2.0);
-
-/* x labels */
-oldx = ox;
-for (i=0 ; i<graph->xticks ; i++)
-  {
-/* get real index */
-  xf = (gdouble) i / (gdouble) (graph->xticks-1);
-  x = ox + xf*dx;
-  if (graph->xlabel)
-    {/*only calculate real value when needed*/
-    xf *= (graph->xmax-graph->xmin);
-    xf += graph->xmin;
-    text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(oldx, oy, canvas);
-  gl_vertex_window(x, oy, canvas);
-  gl_vertex_window(x, oy+5, canvas);
-  glEnd();
-  oldx = x;
-  }
-
-/* y labels */
-oldy = oy;
-for (i=0 ; i<graph->yticks ; i++)
-  {
-/* get screen position */
-  yf = (gdouble) i / (gdouble) (graph->yticks-1);
-  y = -yf*dy;
-  y += oy;
-/* label */
-  if (graph->ylabel)
-    {/*only calculate real value when needed*/
-    yf *= (graph->ymax - graph->ymin);
-    yf += graph->ymin;
-    if (graph->ymax > 999.999999)
-      text = g_strdup_printf("%.2e", yf);
-    else
-      text = g_strdup_printf("%7.2f", yf);
-    gl_print_window(text, 0, y-1, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(ox, oldy, canvas);
-  gl_vertex_window(ox, y-1, canvas);
-  gl_vertex_window(ox-5, y-1, canvas);
-  glEnd();
-  oldy = y;
-  }
-
-/* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
-glLineWidth(1.0);
-
-flag = FALSE;
-sx = sy = 0;
-
-/* plot 1 unit rectangle */
-for (list=graph->set_list ; list ; list=g_slist_next(list))
-  {
-        ptr = (gdouble *) list->data;
-        glBegin(GL_LINE_STRIP);
-        i=0;
-        while(i<graph->size){
-                /*each peak is listed here*/
-                xf = ptr[i]-1.0;/*1/2 size of rectangle*/
-                xf -= graph->xmin;
-                xf /= (graph->xmax - graph->xmin);
-                x = ox + xf*dx;
-                y = oy;/*base*/
-if (i==graph->select){
-	xf=(ptr[i]-graph->xmin)/(graph->xmax-graph->xmin);
-	sx = ox+xf*dx;sy = y-1;flag = TRUE;
-}
-                gl_vertex_window(x, y-1, canvas);/*go to*/
-                yf = ptr[i+1];/*aka intensity*/
-                yf -= graph->ymin;
-                yf /= (graph->ymax - graph->ymin);
-                yf *= dy;
-                y = (gint) yf;
-                y *= -1;
-                y += oy;
-                gl_vertex_window(x, y-1, canvas);/*go up*/
-                xf = ptr[i]+1.0;/*1/2 size of rectangle*/
-                xf -= graph->xmin;
-                xf /= (graph->xmax - graph->xmin);
-                x = ox + xf*dx;
-                gl_vertex_window(x, y-1, canvas);/*move up*/
-                y = oy;/*base*/
-                gl_vertex_window(x, y-1, canvas);/*go down*/
-                i+=2;
-        }
+/* uspex, uspex_best */
+  if(((graph->type==GRAPH_USPEX)||(graph->type==GRAPH_USPEX_BEST))&&(graph->select_label!=NULL)){
+        xf = (gdouble) (graph->select+1) / (gdouble) (graph->size);
+        sx = ox + xf*dx;
+        yf = graph->select_2;
+        yf -= graph->ymin;
+        yf /= (graph->ymax - graph->ymin);
+        yf *= dy;
+        sy = (gint) yf;
+        sy *= -1;
+        sy += oy;
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(1, 0x0303);
+        glColor3f(0.9, 0.7, 0.4);
+        glLineWidth(2.0);
+        /*horizontal*/
+        glBegin(GL_LINES);
+        gl_vertex_window(ox, sy, canvas);
+        gl_vertex_window(sx, sy, canvas);
         glEnd();
-if (flag){
-	glEnable(GL_LINE_STIPPLE);
-	glLineStipple(1, 0x0303);
-	glColor3f(0.9, 0.7, 0.4);
-	glLineWidth(2.0);
-	glBegin(GL_LINES);
-	gl_vertex_window(sx, sy-10, canvas);
-	gl_vertex_window(sx, 3*gl_fontsize, canvas);
-	glEnd();
-	if (graph->select_label)
-	{
-		gint xoff;
-		xoff = strlen(graph->select_label);
-		xoff *= gl_fontsize;
-		xoff /= 4;
-		gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
-	}
-	glDisable(GL_LINE_STIPPLE);
-}
-  }
-}
-void graph_draw_1d_band(struct canvas_pak *canvas, struct graph_pak *graph)
-{
-gint i, x, y, oldx, oldy, ox, oy;
-gchar *text;
-gdouble *ptr;
-gdouble xf, yf, dx, dy;
-gint shift;
-gdouble sz;
-gint nbands, nkpoints, efermi, ispin;
-gdouble *eval;
-GSList *list;
-
-/* compute origin */
-ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel) ox+=4*gl_fontsize;
-
-oy = canvas->y + canvas->height - 2*gl_fontsize;
-if (graph->xlabel) oy-=2*gl_fontsize;
-
-/* increments for screen drawing */
-dy = (canvas->height-8.0*gl_fontsize);
-dx = (canvas->width-2.0*ox);
-
-/* axes label colour */
-glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
-glLineWidth(2.0);
-
-/* x labels */
-oldx = ox;
-for (i=0 ; i<graph->xticks ; i++)
-  {
-/* get real index */
-  xf = (gdouble) i / (gdouble) (graph->xticks-1);
-  x = ox + xf*dx;
-  if (graph->xlabel)
-    {/*only calculate real value when needed*/
-    xf *= (graph->xmax-graph->xmin);
-    xf += graph->xmin;
-    text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(oldx, oy, canvas);
-  gl_vertex_window(x, oy, canvas);
-  gl_vertex_window(x, oy+5, canvas);
-  glEnd();
-  oldx = x;
-  }
-
-/* y labels */
-/* we WANT 0 to be a tick, if nticks>2 */
-if(graph->yticks>2) {
-	sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
-	shift=(gint)(graph->ymin/sz);
-	oldy=oy;
-	for (i=0 ; i<=graph->yticks ; i++)
-	{/* get real index */
-		yf=(i*sz+shift*sz);
-		yf -= graph->ymin;
-		yf /= (graph->ymax-graph->ymin);
-		y = oy - yf*dy;
-		if(y<oy-dy) continue;
-		if (graph->ylabel)
-		{
-			yf=(i+shift)*sz;/*label name*/
-			if (graph->ymax > 999.999999)
-				text = g_strdup_printf("%.2e", yf);
-			else
-				text = g_strdup_printf("%7.2f", yf);
-			gl_print_window(text, 0, y-1, canvas);
-			g_free(text);
-		}
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox, oldy, canvas);
-		gl_vertex_window(ox, y-1, canvas);
-		gl_vertex_window(ox-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-	}
-	/*we need to add a last segment*/
-	y=oy-dy;
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(ox, oldy, canvas);
-	gl_vertex_window(ox, y-1, canvas);
-	glEnd();
-}else{/*do the usual ymin,ymax ticks*/
-	oldy = oy;
-	for (i=0 ; i<graph->yticks ; i++)
-	{/* get screen position */
-		yf = (gdouble) i / (gdouble) (graph->yticks-1);
-		y = -yf*dy;
-		y += oy;
-		/* label */
-		if (graph->ylabel)
-		{/*only calculate real value when needed*/
-			yf *= (graph->ymax - graph->ymin);
-			yf += graph->ymin;
-			if (graph->ymax > 999.999999)
-				text = g_strdup_printf("%.2e", yf);
-			else
-				text = g_strdup_printf("%7.2f", yf);
-			gl_print_window(text, 0, y-1, canvas);
-			g_free(text);
-		}
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox, oldy, canvas);
-		gl_vertex_window(ox, y-1, canvas);
-		gl_vertex_window(ox-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-		}
-}
-
-/* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
-glLineWidth(1.0);
-
-/*the first set of GRAPH_BAND data have a special 4 value header*/
-list=graph->set_list;
-ptr = (gdouble *) list->data;
-nbands=ptr[0];
-nkpoints=ptr[1];
-efermi=ptr[2];
-ispin=ptr[3];
-/*x is then stored as the next nkpoints value */
-eval=g_malloc(nkpoints*sizeof(gdouble));/*TODO: eliminate the need of g_malloc/g_free*/
-for(i=4;i<(graph->size+4);i++) eval[i-4]=ptr[i];
-/*now back to "regular"*/
-for (list=g_slist_next(list) ; list ; list=g_slist_next(list))
-  {
-  ptr = (gdouble *) list->data;
-
-  glBegin(GL_LINE_STRIP);
-  for (i=0 ; i<graph->size ; i++)
-    {
-    xf = eval[i];
-	if((xf<graph->xmin)||(xf>graph->xmax)) continue;
-    xf -= graph->xmin;
-    xf /= (graph->xmax - graph->xmin);
-    x = ox + xf*dx;
-
-    yf = ptr[i];
-	if((yf<graph->ymin)||(yf>graph->ymax)) continue;
-    yf -= graph->ymin;
-    yf /= (graph->ymax - graph->ymin);
-    yf *= dy;
-
-    y = (gint) yf;
-    y *= -1;
-    y += oy;
-
-    gl_vertex_window(x, y-1, canvas);
-    }
-  glEnd();
-
-  }
-/*BAND requires a special axis at fermi level*/
-  glBegin(GL_LINE_STRIP);
-  glColor3f(0.9, 0.7, 0.4);
-  glLineWidth(2.0);
-  x = ox;
-  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
-  y = oy - dy*yf;
-  gl_vertex_window(x, y-1, canvas);
-  x = ox+dx;
-  gl_vertex_window(x, y-1, canvas);
-  glEnd();
-
-g_free(eval);
-}
-void graph_draw_1d_dos(struct canvas_pak *canvas, struct graph_pak *graph)
-{
-gint i, x, y, oldx, oldy, ox, oy;
-gchar *text;
-gdouble *ptr;
-gdouble xf, yf, dx, dy;
-gint shift;
-gdouble sz;
-GSList *list;
-
-/* compute origin */
-ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel) ox += 4*gl_fontsize;
-oy = canvas->y + canvas->height - 2*gl_fontsize;
-if (graph->xlabel) oy -= 2*gl_fontsize;
-
-/* increments for screen drawing */
-dy = (canvas->height-8.0*gl_fontsize);
-dx = (canvas->width-2.0*ox);
-
-/* axes label colour */
-glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
-glLineWidth(2.0);
-
-/* x labels */
-/* we WANT 0 to be a tick, if nticks>2 */
-if(graph->xticks>2) {
-	sz=(graph->xmax-graph->xmin)/(graph->xticks);/*size of a tick*/
-	shift=(gint)(graph->xmin/sz);
-	oldx=ox;
-	for (i=0 ; i<=graph->xticks ; i++)
-	  {
-	/* get real index */
-		xf=(i*sz+shift*sz);
-		xf -= graph->xmin;
-		xf /= (graph->xmax-graph->xmin);
-		x = ox + xf*dx;
-		if(x>ox+dx) continue;
-	  if (graph->xlabel)
-	    {
-	    xf=(i+shift)*sz;/*label name*/
-	    text = g_strdup_printf("%.2f", xf);
-	    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-	    g_free(text);
-	    }
-	/* axis segment + tick */
-	  glBegin(GL_LINE_STRIP);
-	  gl_vertex_window(oldx, oy, canvas);
-	  gl_vertex_window(x, oy, canvas);
-	  gl_vertex_window(x, oy+5, canvas);
-	  glEnd();
-	  oldx = x;
-	  }
-	/*we need to add a last segment*/
-	x=ox+dx;
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(oldx, oy, canvas);
-	gl_vertex_window(x, oy, canvas);
-	glEnd();
-}else{/*do the usual xmin,xmax ticks*/
-	oldx = ox;
-	for (i=0 ; i<graph->xticks ; i++)
-	  {
-	/* get real index */
-	  xf = (gdouble) i / (gdouble) (graph->xticks-1);
-	  x = ox + xf*dx;
-	  if (graph->xlabel)
-	    {/*only calculate real value when needed*/
-	    xf *= (graph->xmax-graph->xmin);
-	    xf += graph->xmin;
-	    text = g_strdup_printf("%.2f", xf);
-	    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-	    g_free(text);
-	    }
-	/* axis segment + tick */
-	  glBegin(GL_LINE_STRIP);
-	  gl_vertex_window(oldx, oy, canvas);
-	  gl_vertex_window(x, oy, canvas);
-	  gl_vertex_window(x, oy+5, canvas);
-	  glEnd();
-	  oldx = x;
-	  }
-}
-
-/* y labels - useful? */
-oldy = oy;
-for (i=0 ; i<graph->yticks ; i++)
-  {
-/* get screen position */
-  yf = (gdouble) i / (gdouble) (graph->yticks-1);
-  y = -yf*dy;
-  y += oy;
-/* label */
-  if (graph->ylabel)
-    {/*only calculate real value when needed*/
-    yf *= (graph->ymax - graph->ymin);
-    yf += graph->ymin;
-    if (graph->ymax > 999.999999)
-      text = g_strdup_printf("%.2e", yf);
-    else
-      text = g_strdup_printf("%7.2f", yf);
-    gl_print_window(text, 0, y-1, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(ox, oldy, canvas);
-  gl_vertex_window(ox, y-1, canvas);
-  gl_vertex_window(ox-5, y-1, canvas);
-  glEnd();
-  oldy = y;
-  }
-
-/* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
-glLineWidth(1.0);
-
-  for (list=graph->set_list ; list ; list=g_slist_next(list))
-        {
-        ptr = (gdouble *) list->data;
-        glBegin(GL_LINE_STRIP);
-        for (i=0 ; i<graph->size ; i+=2) {
-                xf = ptr[i];
-		if((xf<graph->xmin)||(xf>graph->xmax)) continue;
-                xf -= graph->xmin;
-                xf /= (graph->xmax - graph->xmin);
-                x = ox+xf*dx;
-                yf = ptr[i+1];
-                yf -= graph->ymin;
-                yf /= (graph->ymax - graph->ymin);
-                yf *= dy;
-                y = (gint) yf;
-                y *= -1;
-                y += oy;
-                gl_vertex_window(x, y-1, canvas);
-        }
+        /*vertical*/
+        glBegin(GL_LINES);
+        gl_vertex_window(sx, sy, canvas);
+        gl_vertex_window(sx, -1*(gint)(dy)+oy, canvas);
         glEnd();
+        /*label*/
+        gint xoff;
+        xoff = (gint) strlen(graph->select_label);
+        xoff *= gl_fontsize;
+        xoff /= 4;
+        gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
+        glDisable(GL_LINE_STIPPLE);
   }
-/*DOS requires a special axis at e=0 (fermi level)*/
-  glBegin(GL_LINE_STRIP);
-  glColor3f(0.9, 0.7, 0.4);
-  glLineWidth(2.0);
-  xf = -1.0*graph->xmin/(graph->xmax - graph->xmin);
-  x = ox+xf*dx;
-  yf = -1.0*graph->ymin/(graph->ymax - graph->ymin);
-  y = oy - dy*yf;
-  gl_vertex_window(x, y-1, canvas);
-  y = oy - dy;
-  gl_vertex_window(x, y-1, canvas);
-  glEnd();
-
-}
-void graph_draw_1d_bandos(struct canvas_pak *canvas, struct graph_pak *graph)
-{
-gint i, x, y, oldx, oldy, ox, oy;
-gchar *text;
-gdouble *ptr,*xptr;
-gdouble xf, yf, dx, dy;
-gint shift;
-gdouble sz;
-gdouble xmin=0.;
-gdouble xmax=1.;
-gint nbands, nkpoints, efermi, ispin;
-GSList *list;
-GSList *xlist;
-
-/* compute origin */
-ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel) ox+=4*gl_fontsize;
-
-oy = canvas->y + canvas->height - 2*gl_fontsize;
-if (graph->xlabel) oy-=2*gl_fontsize;
-
-/* increments for screen drawing */
-dy = (canvas->height-8.0*gl_fontsize);
-dx = (canvas->width-2.0*ox);
-
-/* axes label colour */
-glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
-glLineWidth(2.0);
-
-/* x axis */
-oldx = ox;
-for (i=0 ; i<graph->xticks ; i++)
-  {
-/* get real index */
-  xf = (gdouble) i / (gdouble) (graph->xticks-1);
-  x = ox + xf*dx*0.3;
-  if (graph->xlabel)
-    {/*only calculate real value when needed*/
-    xf *= (xmax-xmin);
-    xf += xmin;
-    text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(oldx, oy, canvas);
-  gl_vertex_window(x, oy, canvas);
-  gl_vertex_window(x, oy+5, canvas);
-  glEnd();
-  oldx = x;
-  }
-
-/*second x axis*/
-oldx = ox+dx*0.4;
-for (i=0 ; i<graph->xticks ; i++)
-  {
-/* get real index */
-  xf = (gdouble) i / (gdouble) (graph->xticks-1);
-  x = ox + dx*0.4 + xf*dx*0.6;
-  if (graph->xlabel)
-    {/*only calculate real value when needed*/
-    xf *= (xmax-xmin);
-    xf += xmin;
-    text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
-    g_free(text);
-    }
-/* axis segment + tick */
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(oldx, oy, canvas);
-  gl_vertex_window(x, oy, canvas);
-  gl_vertex_window(x, oy+5, canvas);
-  glEnd();
-  oldx = x;
-  }
-
-/* y labels */
-/* we WANT 0 to be a tick, if nticks>2 */
-if(graph->yticks>2) {
-	sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
-	shift=(gint)(graph->ymin/sz);
-	oldy=oy;
-	for (i=0 ; i<=graph->yticks ; i++)
-	{/* get real index */
-		yf=(i*sz+shift*sz);
-		yf -= graph->ymin;
-		yf /= (graph->ymax-graph->ymin);
-		y = oy - yf*dy;
-		if(y<oy-dy) continue;
-		if (graph->ylabel)
-		{
-			yf=(i+shift)*sz;/*label name*/
-			if (graph->ymax > 999.999999)
-				text = g_strdup_printf("%.2e", yf);
-			else
-				text = g_strdup_printf("%7.2f", yf);
-			gl_print_window(text, 0, y-1, canvas);
-			g_free(text);
-		}
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox, oldy, canvas);
-		gl_vertex_window(ox, y-1, canvas);
-		gl_vertex_window(ox-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-	}
-	/*we need to add a last segment*/
-	y=oy-dy;
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(ox, oldy, canvas);
-	gl_vertex_window(ox, y-1, canvas);
-	glEnd();
-}else{/*do the usual ymin,ymax ticks*/
-	oldy = oy;
-	for (i=0 ; i<graph->yticks ; i++)
-	{/* get screen position */
-		yf = (gdouble) i / (gdouble) (graph->yticks-1);
-		y = -yf*dy;
-		y += oy;
-		/* label */
-		if (graph->ylabel)
-		{/*only calculate real value when needed*/
-			yf *= (graph->ymax - graph->ymin);
-			yf += graph->ymin;
-			if (graph->ymax > 999.999999)
-				text = g_strdup_printf("%.2e", yf);
-			else
-				text = g_strdup_printf("%7.2f", yf);
-			gl_print_window(text, 0, y-1, canvas);
-			g_free(text);
-		}
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox, oldy, canvas);
-		gl_vertex_window(ox, y-1, canvas);
-		gl_vertex_window(ox-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-		}
 }
 
-/*second y axis*/
-  x=ox+0.4*dx;
-  y=oy-dy;
-  oldy=oy;
-  glBegin(GL_LINE_STRIP);
-  gl_vertex_window(x, oldy, canvas);
-  gl_vertex_window(x, y-1, canvas);
-  gl_vertex_window(x-5, y-1, canvas);
-  glEnd();
-/* second axis y ticks - NO labels */
-/* we WANT 0 to be a tick, if nticks>2 */
-if(graph->yticks>2) {
-	sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
-	shift=(gint)(graph->ymin/sz);
-	oldy=oy;
-	for (i=0 ; i<=graph->yticks ; i++)
-	{/* get real index */
-		yf=(i*sz+shift*sz);
-		yf -= graph->ymin;
-		yf /= (graph->ymax-graph->ymin);
-		y = oy - yf*dy;
-		if(y<oy-dy) continue;
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox+0.4*dx, oldy, canvas);
-		gl_vertex_window(ox+0.4*dx, y-1, canvas);
-		gl_vertex_window(ox+0.4*dx-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-	}
-	/*we need to add a last segment*/
-	y=oy-dy;
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(ox+0.4*dx, oldy, canvas);
-	gl_vertex_window(ox+0.4*dx, y-1, canvas);
-	glEnd();
-}else{/*do the usual ymin,ymax ticks*/
-	oldy = oy;
-	for (i=0 ; i<graph->yticks ; i++)
-	{/* get screen position */
-		yf = (gdouble) i / (gdouble) (graph->yticks-1);
-		y = -yf*dy;
-		y += oy;
-		/* axis segment + tick */
-		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(ox+0.4*dx, oldy, canvas);
-		gl_vertex_window(ox+0.4*dx, y-1, canvas);
-		gl_vertex_window(ox+0.4*dx-5, y-1, canvas);
-		glEnd();
-		oldy = y;
-		}
-}
-
-/* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
-glLineWidth(1.0);
-
-/*first set is the DOS, which we need to put on [0,0.3] of x, rotated by 90 degrees*/
-list=graph->set_list;
-ptr = (gdouble *) list->data;
-glBegin(GL_LINE_STRIP);
-        for (i=0 ; i<graph->size ; i+=2) {
-                xf = ptr[i+1];
-                xf -= graph->xmin;
-                xf /= (graph->xmax - graph->xmin);
-                x = ox+xf*dx*0.3;
-                yf = ptr[i];
-		if((yf<graph->ymin)||(yf>graph->ymax)) continue;
-                yf -= graph->ymin;
-                yf /= (graph->ymax - graph->ymin);
-                yf *= dy;
-                y = (gint) yf;
-                y *= -1;
-                y += oy;
-                gl_vertex_window(x, y-1, canvas);
-        }
-  glEnd();
-/*BANDOS requires two special axis at fermi level*/
-  glBegin(GL_LINE_STRIP);
-  glColor3f(0.9, 0.7, 0.4);
-  glLineWidth(2.0);
-  x = ox;
-  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
-  y = oy - dy*yf;
-  gl_vertex_window(x, y-1, canvas);
-  x = ox+dx*0.3;
-  gl_vertex_window(x, y-1, canvas);
-  glEnd();
-/* data drawing colour */
-glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
-glLineWidth(1.0);
-/* next set contain the header of bands + x values */
-xlist=g_slist_next(list);
-xptr = (gdouble *) xlist->data;
-nbands=xptr[0];
-nkpoints=xptr[1];
-efermi=xptr[2];
-ispin=xptr[3];
-xmin=xptr[4];
-xmax=xptr[nkpoints+3];
-/*now to BAND plotting*/
-for (list=g_slist_next(xlist) ; list ; list=g_slist_next(list))
-  {
-  ptr = (gdouble *) list->data;
-
-  glBegin(GL_LINE_STRIP);
-  for (i=0 ; i<nkpoints ; i++)
-    {
-    xf = xptr[i+4];
-    xf -= xmin;
-    xf /= (xmax - xmin);
-    x = ox + dx*0.4 + xf*dx*0.6;
-
-    yf = ptr[i];
-	if((yf<graph->ymin)||(yf>graph->ymax)) continue;
-    yf -= graph->ymin;
-    yf /= (graph->ymax - graph->ymin);
-    yf *= dy;
-
-    y = (gint) yf;
-    y *= -1;
-    y += oy;
-
-    gl_vertex_window(x, y-1, canvas);
-    }
-  glEnd();
-
-  }
-/*BANDOS requires two special axis at fermi level*/
-  glBegin(GL_LINE_STRIP);
-  glColor3f(0.9, 0.7, 0.4);
-  glLineWidth(2.0);
-  x = ox+dx*0.4;
-  yf = (0.0-1.0*graph->ymin)/(graph->ymax - graph->ymin);
-  y = oy - dy*yf;
-  gl_vertex_window(x, y-1, canvas);
-  x = ox+dx;
-  gl_vertex_window(x, y-1, canvas);
-  glEnd();
-
-}
+/****************/
+/* generic call */
+/****************/
 void graph_draw_1d(struct canvas_pak *canvas, struct graph_pak *graph)
 {/* NEW graph selector */
 	switch(graph->type){
 	case GRAPH_REGULAR:
-		graph_draw_1d_regular(canvas,graph);
-		break;
 	case GRAPH_FREQUENCY:
-		graph_draw_1d_frequency(canvas,graph);
-		break;
 	case GRAPH_BAND:
-		graph_draw_1d_band(canvas,graph);
-		break;
 	case GRAPH_DOS:
-		graph_draw_1d_dos(canvas,graph);
-		break;
 	case GRAPH_BANDOS:
-		graph_draw_1d_bandos(canvas,graph);
+	case GRAPH_USPEX:
+	case GRAPH_USPEX_BEST:
+	case GRAPH_USPEX_2D:
+		graph_draw_new(canvas,graph);
 		break;
-	case GRAPH_UNKNOWN:
 	default:
-		fprintf(stderr,"ERROR: graph type unkonwn");
+		graph_draw_new(canvas,graph);
+		fprintf(stderr,"WARNING: graph type unknown!\n");
 	}
 }
 

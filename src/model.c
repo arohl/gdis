@@ -74,6 +74,7 @@ data->protein = FALSE;
 data->num_atoms = 0;
 data->num_asym = 0;
 data->num_shells = 0;
+data->num_species = 0;
 data->num_geom = 0;
 data->num_images = 0;
 data->num_frames = 1;
@@ -543,6 +544,9 @@ data->have_frequency = FALSE;
 data->nfreq=0;
 data->freq=NULL;
 data->freq_intens=NULL;
+
+/* uspex */
+data->uspex=NULL;
 
 /* no non-default element data for the model (yet) */
 data->elements = NULL;

@@ -142,7 +142,10 @@ else
 void va_generate_indices(gint depth, struct varray_pak *va)
 {
 gint d, i, j, m, n;
-gint mdiv, div, mstart, nstart;
+gint div, mstart, nstart;
+#ifdef UNUSED_BUT_SET
+gint mdiv;
+#endif
 
 g_assert(va != NULL);
 
@@ -163,7 +166,9 @@ for (d=1 ; d<depth+1 ; d++)
   nstart = n;
   div = d*6;
 
+#ifdef UNUSED_BUT_SET
 mdiv = 6*(d-1);
+#endif
 
   m = mstart;
 

@@ -78,7 +78,11 @@ GSList * create_pair(struct model_pak * model, struct mol_pak * mol1, struct mol
 
 /* some tree functions for setting up a tree with energies as keys */
 
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION > 10 
+/*NO GMemChunk for slice*/
+#else
 GMemChunk *key_chunk;
+#endif
 //GTree *tree;
 
 gint energy_comp(gconstpointer a_ptr, gconstpointer b_ptr, gpointer ignored)
@@ -95,7 +99,11 @@ gint energy_comp(gconstpointer a_ptr, gconstpointer b_ptr, gpointer ignored)
 
 void free_key(gpointer key)
 {
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION > 10
+  g_slice_free(gdouble,key); 
+#else
   g_mem_chunk_free(key_chunk, key);
+#endif
 }
 
 void free_value(gpointer value)
@@ -169,11 +177,14 @@ gint calculate_crystal_graph(struct model_pak * model)
     return 3;
   }
   gint nr_molecules = g_slist_length(model->moles);
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION > 10
+/*NO create for slice*/
+#else
   /* initialize the key chunk to hold the maximum number of  */
   key_chunk = g_mem_chunk_create(gint, 
                                  nr_molecules * nr_molecules *(2*a_images+1)*(2*b_images+1)*(2*c_images+1),
                                  G_ALLOC_AND_FREE);
-  
+#endif
   tree = g_tree_new_full(energy_comp, 
                          NULL,
                          free_key,
@@ -221,7 +232,11 @@ gint calculate_crystal_graph(struct model_pak * model)
             if (pair != NULL)
             {              
               gdouble *key_ptr;
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION > 10
+              key_ptr = g_slice_new(gdouble);
+#else
               key_ptr = g_chunk_new(gdouble, key_chunk);
+#endif
               *key_ptr = run_gulp(pair, model->gulp.species);
               *key_ptr *= 96.48474; //eV --> kJ / mol
               *key_ptr -= single_energies[m1];

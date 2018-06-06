@@ -850,7 +850,10 @@ return(rlist);
 #define DEBUG_CALC_SHIFTS 0
 gint calc_valid_shifts(struct model_pak *data, struct plane_pak *pdata)
 {
-gint build, num_cuts, num_shifts, dummy[3];
+gint build, num_cuts, dummy[3];
+#if DEBUG_CALC_SHIFTS
+gint num_shifts;
+#endif
 gdouble gcd, zlim, *z1, *z2, vec[3];
 GSList *slist, *list, *zlist;
 struct model_pak *surf;
@@ -1046,9 +1049,9 @@ printf("\n");
 #endif
 
 zlist = trim_zlist(zlist);
-num_shifts = g_slist_length(zlist);
 
 #if DEBUG_CALC_SHIFTS
+num_shifts = g_slist_length(zlist);
 printf("Unique shifts: %d\n", num_shifts);
 for (list=zlist ; list ; list=g_slist_next(list))
   {
@@ -1329,14 +1332,18 @@ gchar *inp, *out, *full_inp, *full_out;
 GSList *list;
 struct model_pak *surf;
 struct core_pak *core;
+#ifdef UNUSED_BUT_SET
 struct plane_pak *plane;
 struct shift_pak *shift;
+#endif
 
 g_assert(model != NULL);
 
+#ifdef UNUSED_BUT_SET
 /* retrieve plane & shift */
 plane = (model->planes)->data;
 shift = (plane->shifts)->data;
+#endif
 
 switch(type)
   {

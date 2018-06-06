@@ -283,7 +283,7 @@ return(value);
 /* extremeties of the selection atoms in	*/
 /* x,y,z plus <tolerance> in each direction */
 /********************************************/
-int hfs_calulation_limits(GSList *selection, struct model_pak *model, gdouble *min, gdouble *max)
+void hfs_calulation_limits(GSList *selection, struct model_pak *model, gdouble *min, gdouble *max)
 {
     
     gdouble tolerance[3] = {3.0, 3.0, 3.0}; /* Angstrom */
@@ -306,7 +306,7 @@ int hfs_calulation_limits(GSList *selection, struct model_pak *model, gdouble *m
         min[i] = min[i] - tolerance[i];
         max[i] = max[i] + tolerance[i];
     }
-    return(0);
+//    return(0); converted to void since only can return 0 (OVHPA)
 }
 
 /*************************************/
@@ -314,7 +314,7 @@ int hfs_calulation_limits(GSList *selection, struct model_pak *model, gdouble *m
 /* surface to calculate the normal   */
 /*************************************/
 
-int hfs_calc_normals(GSList *points, struct model_pak *model, GSList *myThing)
+void hfs_calc_normals(GSList *points, struct model_pak *model, GSList *myThing)
 {
     gdouble delta = 5.0e-3;
     gdouble gx, gy, gz; 
@@ -358,7 +358,7 @@ int hfs_calc_normals(GSList *points, struct model_pak *model, GSList *myThing)
 #if DEBUG_HFS_NORMALS
    fprintf(stderr," [%.1fs]\n",(float)(jobEndTime - jobStartTime));
 #endif
-   return(0);
+//   return(0); converted to void since only can return 0 (OVHPA)
 }
 
 /*************************************/
@@ -366,7 +366,7 @@ int hfs_calc_normals(GSList *points, struct model_pak *model, GSList *myThing)
 /* surface to calculate the normal   */
 /*************************************/
 
-int ssatoms_calc_normals(GSList *points, struct model_pak *model)
+void ssatoms_calc_normals(GSList *points, struct model_pak *model)
 {
     gdouble delta = 5.0e-3;
     gdouble gx, gy, gz; 
@@ -410,7 +410,7 @@ int ssatoms_calc_normals(GSList *points, struct model_pak *model)
 #if DEBUG_HFS_NORMALS
 	fprintf(stderr," [%.1fs]\n",(float)(jobEndTime - jobStartTime));
 #endif
-	return(0);
+//	return(0); converted to void since only can return 0 (OVHPA)
 }
 
 /******************************************/

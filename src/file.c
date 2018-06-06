@@ -638,6 +638,19 @@ sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */
 file_data = g_malloc(sizeof(struct file_pak));
+file_data->id = USPEX;
+file_data->group = USPEX;
+file_data->menu = TRUE;
+file_data->label = g_strdup("USPEX OUTPUT");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "txt");
+file_data->write_file = NULL;
+file_data->read_file = read_output_uspex;
+file_data->read_frame = read_frame_uspex;
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = TEXT;
 file_data->group = TEXT;
 file_data->menu = FALSE;
@@ -1111,7 +1124,20 @@ for(;;)
 /* all clear */
 return(0);
 }
-
+/****************************/
+/* reach a string in a file */
+/****************************/
+long int fetch_in_file(FILE *vf,const gchar *target){
+	gchar *line;
+	line = file_read_line(vf);
+	while (line){
+		if (find_in_string(target,line) != NULL) break;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	if(feof(vf)) return 0;
+	return ftell(vf);
+}
 /*****************************************/
 /* read in and return a line of any size */
 /*****************************************/
@@ -1206,10 +1232,10 @@ else
 format_string = g_string_new("");
 g_string_append_printf(format_string, "%%.%df %%s", dp);
 text = g_string_new("");
-g_string_append_printf(text, format_string->str, float_val, units);/*why append?*/
+g_string_append_printf(text, format_string->str, float_val, units);
 text_str = text->str;
 g_string_free(format_string, TRUE); 
-g_string_free(text, FALSE);/*in that case, text MUST be freed manually */ 
+g_string_free(text, FALSE);
 g_strfreev(buff);
 #else
 format_str=malloc(32*sizeof(char));
@@ -1548,7 +1574,10 @@ file_dialog("Load file", NULL, FILE_LOAD, (gpointer) file_load, sysenv.file_type
 /**********************************/
 gint file_save_as(gchar *filename, struct model_pak *model)
 {
-gint id, ret;
+gint ret;
+#ifdef UNUSED_BUT_SET
+gint id;
+#endif
 gchar *name;
 struct file_pak *file_data;
 
@@ -1564,7 +1593,9 @@ file_data = get_file_info((gpointer *) filename, BY_EXTENSION);
 if (file_data)
   {
 /* use extension */
+#ifdef UNUSED_BUT_SET
   id = file_data->id;
+#endif
   strcpy(model->filename, filename);
   g_free(model->basename);
   model->basename = parse_strip(filename);
@@ -1581,7 +1612,9 @@ else
   if (!ext)
     return(2);
 
+#ifdef UNUSED_BUT_SET
   id = file_data->id;
+#endif
   g_free(model->basename);
   model->basename = parse_strip(filename);
 

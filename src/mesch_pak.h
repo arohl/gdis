@@ -450,10 +450,16 @@ void	m_version( void );
 #define	NEW_A(num,type)	((type *)calloc((size_t)(num),(size_t)sizeof(type)))
 
  /* re-allocate arry to have num objects of the given type */
+#define RENEW_2(var,num,type) do{\
+        if(var) var=realloc((char *)(var),(size_t)((num)*sizeof(type)));\
+        else var=calloc((size_t)(num),(size_t)sizeof(type));\
+}while(0)
+
 #define	RENEW(var,num,type) \
     ((var)=(type *)((var) ? \
 		    realloc((char *)(var),(size_t)((num)*sizeof(type))) : \
 		    calloc((size_t)(num),(size_t)sizeof(type))))
+
 
 #define	MEMCOPY(from,to,n_items,type) \
  MEM_COPY((char *)(from),(char *)(to),(unsigned)(n_items)*sizeof(type))

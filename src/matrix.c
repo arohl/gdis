@@ -237,11 +237,18 @@ vptr--;
 /************************************************************/
 void vectmat(gdouble *mat, gdouble *vec)
 {
-gdouble x, y, z;
+gdouble y, z;
+#ifdef UNUSED_BUT_SET
+gdouble x;
+#endif
 gdouble *mptr=mat, *vptr=vec;
 
 /* init */
+#ifdef UNUSED_BUT_SET
 x = *vptr++;
+#else
+y = *vptr++;
+#endif
 y = *vptr++;
 z = *vptr--;
 

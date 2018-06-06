@@ -154,7 +154,10 @@ model->state = 0;
 #define DEBUG_DELETE_COMMIT 0
 void delete_commit(struct model_pak *data)
 {
-gint flag1=FALSE, flag2=FALSE;
+gint flag1=FALSE;
+#ifdef UNUSED_BUT_SET
+gint flag2=FALSE;
+#endif
 gpointer m;
 GSList *list1, *list2;
 struct core_pak *core;
@@ -226,7 +229,9 @@ while (list1)
 
   if (shell->status & DELETED)
     {
+#ifdef UNUSED_BUT_SET
     flag2 = TRUE;
+#endif
 /* update main list */
     data->shels = g_slist_remove(data->shels, shell);
     g_free(shell);
