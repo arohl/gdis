@@ -182,7 +182,9 @@ if (!help_tag_invisible)
                                                   NULL);
 */
 
-/* FIXME - hack due to above */
+/* FIXME - hack due to above
+ * ^^^^^ Unfortunately this hack will not work on a non white background
+ * _BUG_ --- OVHPA 
 if (!help_tag_invisible)
   {
   GdkColor white = {0, 65535, 65535, 65535};
@@ -192,7 +194,7 @@ if (!help_tag_invisible)
                                                   &white,
                                                   NULL);
   }
-
+*/
 if (!help_tag_fixed)
   {
   help_tag_fixed = gtk_text_buffer_create_tag(buffer,
@@ -209,8 +211,9 @@ gtk_text_buffer_set_text(buffer, source, -1);
 
 n = strlen(source);
 #ifdef UNUSED_BUT_SET
-start = i = 0;
+start = 0;
 #endif
+i = 0;
 stop = -1;
 while (i<n)
   {
@@ -224,8 +227,13 @@ while (i<n)
       case 'h':
 /* make the tag invisible */
         gtk_text_buffer_get_iter_at_offset(buffer, &a, i);
-        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
-        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+2);
+/*        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+ * removed due to above trouble with non white BG _BUG_ -- OVHPA */
+	gtk_text_buffer_delete(buffer, &a, &b);
+	gtk_text_buffer_insert(buffer,&b,"  ",2);
+	gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
+
         a = b;
 /* apply the bold tag to the rest of the line */
         stop = -1;
@@ -248,8 +256,13 @@ while (i<n)
       case 'i':
 /* make the tag invisible */
         gtk_text_buffer_get_iter_at_offset(buffer, &a, i);
-        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
-        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+2);
+/*        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+ * removed due to above trouble with non white BG _BUG_ -- OVHPA */
+	gtk_text_buffer_delete(buffer, &a, &b);
+	gtk_text_buffer_insert(buffer,&b,"  ",2);
+	gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
+
         a = b;
 /* apply the bold tag to the rest of the line */
         stop = -1;
@@ -272,8 +285,13 @@ while (i<n)
       case 'f':
 /* make the tag invisible */
         gtk_text_buffer_get_iter_at_offset(buffer, &a, i);
-        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
-        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+        gtk_text_buffer_get_iter_at_offset(buffer, &b, i+2);
+/*        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+ * removed due to above trouble with non white BG _BUG_ -- OVHPA */
+	gtk_text_buffer_delete(buffer, &a, &b);
+	gtk_text_buffer_insert(buffer,&b,"  ",2);
+	gtk_text_buffer_get_iter_at_offset(buffer, &b, i+3);
+
         a = b;
 /* apply the fixed tag to the rest of the line */
         stop = -1;
@@ -310,8 +328,13 @@ while (i<n)
 /* hide the tag */
         gtk_text_buffer_get_iter_at_offset(buffer, &a, i);
         gtk_text_buffer_get_iter_at_offset(buffer, &b, stop);
-        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+/*        gtk_text_buffer_apply_tag(buffer, help_tag_invisible, &a, &b);
+ * removed due to above trouble with non white BG _BUG_ -- OVHPA */
+	gtk_text_buffer_delete(buffer, &a, &b);
+	gtk_text_buffer_insert(buffer,&b,"                                             ",stop-i);
+	gtk_text_buffer_get_iter_at_offset(buffer, &b, i);
 
+	a = b;
 /* CURRENT - delete one char to compensate? */
 gtk_text_buffer_get_iter_at_offset(buffer, &b, i+1);
 gtk_text_buffer_delete(buffer, &a, &b);
