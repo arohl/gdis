@@ -209,6 +209,11 @@ Measurements can also be made using the search panel. Here, the component atoms 
 
 TODO
 
+\h Plots Analysis
+
+The Plots dialog allows, for the models containing an animation, to plot simple values: energy, force, volume, or pressure of each frame structure, if such data is available. One can define the limits of a given graph by using Xmin, Xmax, Ymin, and Ymax entries. When auto is selected, the latter values are automatically sets by the structure extrema. The tics indicate the number of marks and labels on each axis.
+Additionally, when available, the density of states, band-structure, and a graph combining both information can be plotted. Vibrational and Raman spectra can also be plotted. In that case, frequency mode value can be obtained directly by selecting a pic.
+
 %topic 6. File Types
 
 \h Recognized File Types 
@@ -234,6 +239,7 @@ Each loaded file can contain one or more chemical structures, or models. These c
 \f Rietica                 (.inp)                  -
 \f SIESTA input            (.fdf)                 (.fdf)
 \f SIESTA output           (.out)                  -
+\f USPEX output            (OUTPUT.txt)            -
 \f VASP xml output         (.xml)                  -
 \f XTL                     (.xtl)                 (.xtl)
 \f XYZ                     (.xyz)(.ani)           (.xyz)
@@ -241,6 +247,11 @@ Each loaded file can contain one or more chemical structures, or models. These c
 \h Animation File Types
 
 Some of the above file types can also contain animations. If a GULP input or restart file with an associated ascii trajectory file is loaded the animation sequence will automatically be constructed. Biosym .arc files may also contain multiple frames that will be used to build an animation. Also, output files from GULP, SIESTA and VASP minimizations will be converted to an animation sequence with each step corresponding to a single frame. Multi-frame xyz files (.ani extension) are also supported. Finally, it is possible to store recordings that have been created within GDIS by saving as XML. Naturally, multi-frame XML file reading is also supported.
+
+\h USPEX animation
+
+When opening an USPEX animation file, all the studied structures are loaded as animation frames. In the meantime, some graph are automatically created. Instead of viewing each surface as an animation (which is possible), it is more practical to navigate through structures by directly selecting the corresponding value (represented by a square symbol) on one of the graphs.
+The ALL graph contains all the structure energies plotted against the generation number. The BEST graph only shows the best structure of any given generation determined by fitness figure, or energy if the latter information is missing. The COMP_X graph shows the structure of lowest energy for each atomic composition of X (for variable composition calculation only). Finally the PATH graph shows each image structure of the best transition path for a VC-NEB calculation.
 
 \h Importing/Exporting Data
 
