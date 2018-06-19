@@ -2865,6 +2865,11 @@ void gui_vasp_dialog(void){
 	VASP_ENTRY_TABLE(vasp_gui.encut,vasp_gui.calc.encut,"%.2lf","ENCUT=",2,3,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.enaug,vasp_gui.calc.enaug,"%.2lf","ENAUG=",3,4,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.ediff,vasp_gui.calc.ediff,"%.2lE","EDIFF=",4,5,0,1);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.prec,"PREC: Ch. 6.11 DEFAULT: Normal\nSets numerical accuracy by providing:\nENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT\n(can be override manually)");
+	VASP_TOOLTIP(vasp_gui.encut,"ENCUT: Ch. 6.9 DEFAULT: MAX(ENMAX)\nPlane-wave basis cutoff energy (eV).\nDefault MAX(ENMAX) is taken from POTCAR file.");
+	VASP_TOOLTIP(vasp_gui.enaug,"ENAUG: Ch. 6.10 DEFAULT: EAUG\nKinetic cutoff for augmentation charges.\nDefault EAUG is taken from POTCAR file.");
+	VASP_TOOLTIP(vasp_gui.ediff,"EDIFF: Ch. 6.18 DEFAULT: 10^{-4}\nSet the criterion (eV) for electronic convergence.");
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.algo,"ALGO=",0,1,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.algo,"NORMAL");
@@ -2883,7 +2888,13 @@ void gui_vasp_dialog(void){
 	VASP_CHECK_TABLE(button,vasp_gui.calc.ldiag,NULL,"LDIAG",1,2,1,2);/*not calling anything*/
 	VASP_ENTRY_TABLE(vasp_gui.nsim,vasp_gui.calc.nsim,"%i","NSIM=",2,3,1,2);
 	VASP_ENTRY_TABLE(vasp_gui.vtime,vasp_gui.calc.vtime,"%.4lf","TIME=",3,4,1,2);
-	VASP_ENTRY_TABLE(vasp_gui.iwavpr,vasp_gui.calc.iwavpr,"%i","INIWAVPR=",4,5,1,2);
+	VASP_ENTRY_TABLE(vasp_gui.iwavpr,vasp_gui.calc.iwavpr,"%i","IWAVPR=",4,5,1,2);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.algo,"ALGO: Ch. 6.46 DEFAULT: Normal\nSelect the electronic minimization algorithm.\nIt is overrided by IALGO when specified.");
+	VASP_TOOLTIP(button,"LDIAG: Ch. 6.47 DEFAULT: TRUE\nSwitch on the sub-space rotation.");
+	VASP_TOOLTIP(vasp_gui.nsim,"NSIM: Ch. 6.48 DEFAULT: 4\nNumber of bands optimized at a time\nin blocked minimization algorithm.");
+	VASP_TOOLTIP(vasp_gui.vtime,"TIME: Ch. 6.51 DEFAULT: 0.4\nSelect the trial time or value step\nfor minimization algorithm IALGO=5X.");
+	VASP_TOOLTIP(vasp_gui.iwavpr,"IWAVPR: Ch. 6.26 DEFAULT: 2(IBRION=0-2)\nDetermine how charge density/orbitals are predicted\nfrom one ionic configuration to the next.\nDefault is 0 if IBRION is different from 0-2.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.ialgo,"IALGO=",0,1,2,3);
 	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"2:FIXED ORB/1E");
@@ -2905,12 +2916,20 @@ void gui_vasp_dialog(void){
 	VASP_ENTRY_TABLE(vasp_gui.nbands,vasp_gui.calc.nbands,"%i","NBANDS=",2,3,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.nelect,vasp_gui.calc.nelect,"%.2lf","NELECT=",3,4,2,3);
 	/*empty: col4*/
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.ialgo,"IALGO: Ch. 6.47 DEFAULT: 38\nSelect the minimization algorithm number.\nIt is advised to use ALGO instead of IALGO\ndue to instabilities in extra IALGO algorithms.");
+	VASP_TOOLTIP(vasp_gui.nbands,"NBANDS: Ch. 6.5 DEFAULT: NELEC/2+NIONS/2\nNumber of bands in the calculation.\nDefault for spin-polarized calcualtions is 0.6*NELECT+NMAG");
+	VASP_TOOLTIP(vasp_gui.nelect,"NELECT: Ch. 6.35 DEFAULT: valence electrons\nSets the number of electrons\nCan be use add an extra charge background\nas an homogeneous background-charge.");
 /* 4th line */
 	/*empty: col0*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.iniwav,NULL,"INIWAV",1,2,3,4);/*not calling anything*/
 	VASP_ENTRY_TABLE(vasp_gui.istart,vasp_gui.calc.istart,"%i","ISTART=",2,3,3,4);
 	VASP_ENTRY_TABLE(vasp_gui.icharg,vasp_gui.calc.icharg,"%i","ICHARG=",3,4,3,4);
 	/*empty: col4*/
+	/*help*/
+	VASP_TOOLTIP(button,"INIWAV: Ch. 6.16 DEFAULT: 1\nDetermine how initial wavefunctions are filled\nThe only option is the default random filling.\nOther option (INIWAV=0) is usually not available.");
+	VASP_TOOLTIP(vasp_gui.istart,"ISTART: Ch. 6.14 DEFAULT 1(is WAVCAR exists)\nDetermine if the WAVECAR should be read.\nDefault is 0 when no WAVECAR file is founded.");
+	VASP_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2(if ISTART=0)\nDetermine how the initial charge density is calculated\nDefault is 0 if ISTART is not 0.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.prec,0,vasp_prec_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.algo,0,vasp_algo_selected);
@@ -2935,6 +2954,11 @@ void gui_vasp_dialog(void){
 	VASP_ENTRY_TABLE(vasp_gui.nelm,vasp_gui.calc.nelm,"%i","NELM=",2,3,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.nelmdl,vasp_gui.calc.nelmdl,"%i","NELMDL=",3,4,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.nelmin,vasp_gui.calc.nelmin,"%i","NELMIN=",4,5,0,1);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.mixer,"IMIX: Ch. 6.49 DEFAULT: 4\nDetermine the type of mixing.");
+	VASP_TOOLTIP(vasp_gui.nelm,"NELM: Ch. 6.17 DEFAULT: 60\nMaximum number of electronic steps.");
+	VASP_TOOLTIP(vasp_gui.nelmdl,"NELMDL: Ch. 6.17 DEFAULT -5(if ISTART=0;IALGO=x8)\nSets the number of initial non-selfconsistent steps\ndefault is 0 if ISTART is not 0.");
+	VASP_TOOLTIP(vasp_gui.nelmin,"NELMIN: Ch. 6.17 DEFAULT: 2\nMinimum number of electronic steps.");
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.mixpre,"MIXPRE=",0,1,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"0:NONE");
@@ -2944,6 +2968,11 @@ void gui_vasp_dialog(void){
         VASP_ENTRY_TABLE(vasp_gui.amix,vasp_gui.calc.amix,"%.4lf","AMIX=",2,3,1,2);
         VASP_ENTRY_TABLE(vasp_gui.bmix,vasp_gui.calc.bmix,"%.4lf","BMIX=",3,4,1,2);
         VASP_ENTRY_TABLE(vasp_gui.amin,vasp_gui.calc.amin,"%.4lf","AMIN=",4,5,1,2);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.mixpre,"MIXPRE: Ch. 6.49 DEFAULT: 1\nSelect the preconditioning for Broyden mixing.");
+	VASP_TOOLTIP(vasp_gui.amix,"AMIX: Ch. 6.49 DEFAULT: 0.4\nlinear mixing parameter\nDefault is 0.8 for ultrasoft pseudopotentials.");
+	VASP_TOOLTIP(vasp_gui.bmix,"BMIX: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing.");
+	VASP_TOOLTIP(vasp_gui.amin,"AMIN: Ch. 6.49 DEFAULT: 0.1\nminimal mixing parameter.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.inimix,"INIMIX=",0,1,2,3);
 	VASP_COMBOBOX_ADD(vasp_gui.inimix,"0:LINEAR");
@@ -2952,6 +2981,12 @@ void gui_vasp_dialog(void){
 	VASP_ENTRY_TABLE(vasp_gui.amix_mag,vasp_gui.calc.amix_mag,"%.4lf","AMIX_MAG=",2,3,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.bmix_mag,vasp_gui.calc.bmix_mag,"%.4lf","BMIX_MAG=",3,4,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.wc,vasp_gui.calc.wc,"%.1lf","WC=",4,5,2,3);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.inimix,"INIMIX: Ch. 6.49 DEFAULT: 1\ntype of initial mixing in Broyden mixing.");
+	VASP_TOOLTIP(vasp_gui.maxmix,"MAXMIX: Ch. 6.49 DEFAULT: -45\nMaximum number of steps stored in Broyden mixer.");
+	VASP_TOOLTIP(vasp_gui.amix_mag,"AMIX_MAG: Ch. 6.49 DEFAULT: 1.6\nlinear mixing parameter for magnetization.");
+	VASP_TOOLTIP(vasp_gui.bmix_mag,"BMIX_MAG: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing with magnetization.");
+	VASP_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broyden mixing.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
@@ -2972,24 +3007,39 @@ void gui_vasp_dialog(void){
 	VASP_COMBOBOX_ADD(vasp_gui.lreal,"FALSE");
 	/*empty: col2*/
 	VASP_TEXT_TABLE(vasp_gui.ropt,vasp_gui.calc.ropt,"ROPT=",2,5,0,1);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.lreal,"LREAL: Ch. 6.39 DEFAULT: FALSE\nDetermine whether projection operators are evaluated in\nreal-space or reciprocal-space.");
+	VASP_TOOLTIP(vasp_gui.ropt,"ROPT: Ch. 6.39 DEFAULT: -\nROPT determine the precision of the real-space operator\nfor LREAL=AUTO and LREAL=On.");
 /* 2nd line */
 	/*empty: col1*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.addgrid,NULL,"ADDGRID",1,2,1,2);/*not calling anything*/
         VASP_ENTRY_TABLE(vasp_gui.lmaxmix,vasp_gui.calc.lmaxmix,"%i","LMAXMIX=",2,3,1,2);
 	/*empty: col4*/
         VASP_ENTRY_TABLE(vasp_gui.lmaxpaw,vasp_gui.calc.lmaxpaw,"%i","LMAXPAW=",4,5,1,2);
+	/*help*/
+	VASP_TOOLTIP(button,"ADDGRID: Ch. 6.63 DEFAULT: FALSE\nSelect the third fine grid for augmentation charge.");
+	VASP_TOOLTIP(vasp_gui.lmaxmix,"LMAXMIX: Ch. 6.63 DEFAULT: 2\nMaximum l-quantum number passed to charge density mixer.");
+	VASP_TOOLTIP(vasp_gui.lmaxpaw,"LMAXPAW: Ch. 6.63 DEFAULT: 2*lmax\nMaximum l-quantum number for the evaluation of the PAW\non-site terms on the radial grid.");
 /* 3rd line */
 	/*empty: col1*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_grid,grid_toggle,"AUTO GRID",1,2,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.ngx,vasp_gui.calc.ngx,"%i","NGX=",2,3,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.ngy,vasp_gui.calc.ngy,"%i","NGY=",3,4,2,3);
 	VASP_ENTRY_TABLE(vasp_gui.ngz,vasp_gui.calc.ngz,"%i","NGZ=",4,5,2,3);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.ngx,"NGX: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the x direction.");
+	VASP_TOOLTIP(vasp_gui.ngy,"NGY: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the y direction.");
+	VASP_TOOLTIP(vasp_gui.ngz,"NGZ: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the z direction.");
 /* 4th line */
 	/*empty: col1*/
 	/*empty: col2*/
 	VASP_ENTRY_TABLE(vasp_gui.ngxf,vasp_gui.calc.ngxf,"%i","NGXF=",2,3,3,4);
 	VASP_ENTRY_TABLE(vasp_gui.ngyf,vasp_gui.calc.ngyf,"%i","NGYF=",3,4,3,4);
 	VASP_ENTRY_TABLE(vasp_gui.ngzf,vasp_gui.calc.ngzf,"%i","NGZF=",4,5,3,4);
+	/*help*/
+	VASP_TOOLTIP(vasp_gui.ngxf,"NGXF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the x direction.");
+	VASP_TOOLTIP(vasp_gui.ngyf,"NGYF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the y direction.");
+	VASP_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the z direction.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
 	grid_toggle(NULL,NULL);/*initialize TODO: move to end*/

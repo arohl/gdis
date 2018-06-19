@@ -142,6 +142,7 @@ if(gtk_entry_get_text_length(GTK_ENTRY(vasp_gui.value))>0){\
 	VASP_NEW_SEPARATOR();\
 	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
 }while(0)
+#define VASP_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
 
 /*page numbers*/
 #define VASP_PAGE_SIMPLIFIED 0
