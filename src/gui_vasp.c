@@ -3216,7 +3216,6 @@ if(vasp_gui.calc.idipol!=VID_0) {
 /* create a table in the frame*/
         table = gtk_table_new(2, 5, FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.lorbit,"LORBIT=",0,1,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"0:PROCAR");
@@ -3226,15 +3225,22 @@ if(vasp_gui.calc.idipol!=VID_0) {
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"10:PROCAR");
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"11:lm-PROCAR");
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"12:phase+lm-PROCAR");
+VASP_TOOLTIP(vasp_gui.lorbit,"LORBIT: Ch. 6.34 DEFAULT: 0\nSets the spd- and site projected\nwavefunction character of each band\nand the local partial DOS.");
 	VASP_ENTRY_TABLE(vasp_gui.nedos,vasp_gui.calc.nedos,"%i","NEDOS=",1,2,0,1);
+VASP_TOOLTIP(vasp_gui.nedos,"NEDOS: Ch. 6.37 DEFAULT: 301\nNumber of points for which DOS is calculated.");
 	VASP_ENTRY_TABLE(vasp_gui.emin,vasp_gui.calc.emin,"%.2lf","EMIN=",2,3,0,1);
+VASP_TOOLTIP(vasp_gui.emin,"EMIN: Ch. 6.37 DEFAULT: low eig-eps\nSets the smallest energy for which DOS is calculated.\nDefault is lowest Kohn-Sham eigenvalue minus a small quantity.");
 	VASP_ENTRY_TABLE(vasp_gui.emax,vasp_gui.calc.emax,"%.2lf","EMAX=",3,4,0,1);
+VASP_TOOLTIP(vasp_gui.emax,"EMAX: Ch. 6.37 DEFAULT: high eig+eps\nSets the highest energy for which DOS is calculated.\nDefault is highest Kohn-Sham eigenvalue plus a small quantity.");
 	VASP_ENTRY_TABLE(vasp_gui.efermi,vasp_gui.calc.efermi,"%.2lf","EFERMI=",4,5,0,1);
+VASP_TOOLTIP(vasp_gui.efermi,"EFERMI: (secret) DEFAULT: EREF\nSets initial Fermi energy before it is calculated.\nUsually there is no use to change this setting.\nEREF is actually another \"secret\" parameter.");
 /* 2nd line */
 	VASP_LABEL_TABLE("(LORBIT>5) => Req. PAW",0,1,1,2);
 	VASP_CHECK_TABLE(vasp_gui.have_paw,vasp_gui.calc.have_paw,NULL,"HAVE PAW",1,2,1,2);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
 	gtk_widget_set_sensitive(vasp_gui.have_paw,FALSE);/*just an indication*/
 	VASP_TEXT_TABLE(vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
+VASP_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
 /* initialize */
 if(vasp_gui.calc.have_paw) VASP_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
 else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
@@ -3247,10 +3253,15 @@ else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
 	VASP_CHECK_TABLE(vasp_gui.loptics,vasp_gui.calc.loptics,NULL,"LOPTICS",0,1,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.loptics,"LOPTICS: Ch. 6.72.1 DEFAULT: FALSE\nSwitch frequency dependent dielectric matrix calculation\nover a grid determined by NEDOS.\nIt is advised to increase NEDOS & NBANDS.");
 	VASP_CHECK_TABLE(vasp_gui.lepsilon,vasp_gui.calc.lepsilon,NULL,"LEPSILON",1,2,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.lepsilon,"LEPSILON: Ch. 6.72.4 DEFAULT: FALSE\nSwitch dielectric matrix calculation using\ndensity functional perturbation theory.\nConcurrent to LOPTICS, it is not recommended\nto run both at the same time.");
 	VASP_CHECK_TABLE(vasp_gui.lrpa,vasp_gui.calc.lrpa,NULL,"LRPA",2,3,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.lrpa,"LRPA: Ch. 6.72.5 DEFAULT: FALSE\nSwitch local field effects calculation\non the Hartree level only (no XC).");
 	VASP_CHECK_TABLE(vasp_gui.lnabla,vasp_gui.calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.lnabla,"LNABLA: Ch. 6.72.3 DEFAULT: FALSE\nSwitch to the simple transversal expressions\nof the frequency dependent dielectric matrix.\nUsually there is no use to change this setting.");
 	VASP_ENTRY_TABLE(vasp_gui.cshift,vasp_gui.calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
+VASP_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift \%nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
 /* --- end frame */
 
 
