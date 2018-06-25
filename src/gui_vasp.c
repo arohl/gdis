@@ -2730,6 +2730,7 @@ void gui_vasp_dialog(void){
 	label = gtk_label_new(g_strdup_printf("MODEL NAME"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 	VASP_TEXT_ENTRY(vasp_gui.name,g_strdup_printf("%s",data->basename),TRUE);
+VASP_TOOLTIP(vasp_gui.name,"The model name will be used in VASP files\nas well as GDIS display.");
 /* --- CONNECTED XML */
 	hbox = gtk_hbox_new(FALSE, 0);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
@@ -2737,6 +2738,7 @@ void gui_vasp_dialog(void){
         gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 	VASP_TEXT_ENTRY(vasp_gui.file_entry,data->filename,TRUE);
 	if(data->id!=VASP) gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),"");
+VASP_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\nas a model to fill up settings of the current one.\nNOTE: important settings (such as NELM) will be wrong\nand all settings should be checked again. Carefully.");
 	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
 	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_vasprun_dialog),NULL);
@@ -2769,8 +2771,11 @@ void gui_vasp_dialog(void){
 	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Lattice Dynamics (opt.)");
 	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Geometry (opt.)");
 	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Molecular Dynamics (opt.)");
+VASP_TOOLTIP(vasp_gui.simple_calcul,"What is the intended calculation type?");
 	VASP_CHECK_TABLE(button,vasp_gui.simple_rgeom,NULL,"ROUGH GEOM.",2,3,0,1);/*not calling anything*/
+VASP_TOOLTIP(button,"Is the current geometry:\nFAR from groundstate geometry\nor NOT-SO-FAR from it?");
 	VASP_SPIN_TABLE(vasp_gui.simple_dim,vasp_gui.dimension,NULL,"DIM:",3,4,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.simple_dim,"What is the dimension of system?\nThe DIM (0D, 1D, 2D, or 3D) will be used\nto determine some parameters in INCAR and KPOINTS\nNO CHANGE will be made to the current geometry!");
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_dim),0.0,3.0);/*0D~3D*/
 /* 2nd line */
         VASP_COMBOBOX_TABLE(vasp_gui.simple_system,"SYSTEM:",0,1,1,2);
@@ -2778,7 +2783,9 @@ void gui_vasp_dialog(void){
         VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Semi-conducting");
         VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Insulator");
         VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Unknown");
+VASP_TOOLTIP(vasp_gui.simple_system,"What is the electronic properties of the intended material?");
         VASP_TEXT_TABLE(vasp_gui.simple_poscar,vasp_gui.calc.species_symbols,"POSCAR:",1,4,1,2);
+VASP_TOOLTIP(vasp_gui.simple_poscar,"Atomic symbols of the species\ndetected from the model geometry.");
         gtk_widget_set_sensitive(vasp_gui.simple_poscar,FALSE);
 /* 3rd line */
         VASP_COMBOBOX_TABLE(vasp_gui.simple_kgrid,"KPT GRID:",0,1,2,3);
@@ -2786,16 +2793,22 @@ void gui_vasp_dialog(void){
         VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"MEDIUM");
         VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"FINE");
         VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"ULTRA-FINE");
+VASP_TOOLTIP(vasp_gui.simple_kgrid,"What is the intended k-point grid density?");
 	VASP_TEXT_TABLE(vasp_gui.simple_species,vasp_gui.calc.potcar_species,"POTCAR:",1,4,2,3);
+VASP_TOOLTIP(vasp_gui.simple_species,"From POTCAR file, the following species are detected.\nThis should match the POSCAR definition above.");
 	gtk_widget_set_sensitive(vasp_gui.simple_species,FALSE);
 /* 4th line */
 	VASP_TEXT_TABLE(vasp_gui.simple_potcar,vasp_gui.calc.potcar_file,"POTCAR FILE:",0,3,3,4);
+VASP_TOOLTIP(vasp_gui.simple_potcar,"Where is the POTCAR file for this calculation?");
 	VASP_BUTTON_TABLE(vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,3,4);
 /* 5th line */
 	VASP_LABEL_TABLE("EXEC:",0,1,4,5);
         VASP_SPIN_TABLE(vasp_gui.simple_np,vasp_gui.calc.job_nproc,parallel_eq,"NP=",1,2,4,5);
+VASP_TOOLTIP(vasp_gui.simple_np,"How many CPU(s) should be used for calculation?");
         VASP_SPIN_TABLE(vasp_gui.simple_ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",2,3,4,5);
+VASP_TOOLTIP(vasp_gui.simple_ncore,"How many CPU(s) should work on one band?");
         VASP_SPIN_TABLE(vasp_gui.simple_kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",3,4,4,5);
+VASP_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a time?\nNote: each k-point is worked on by NCORE CPU(s).");
 /* initialize */
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_calcul),0);/*not calling anything*/
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_system),0);/*not calling anything*/
@@ -2807,7 +2820,6 @@ void gui_vasp_dialog(void){
 /* create a table in the frame*/
         table = gtk_table_new(4, 3,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	label = gtk_label_new("This simplified interface is aimed at pre-loading parameters with default values");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
@@ -2818,6 +2830,7 @@ void gui_vasp_dialog(void){
 	label = gtk_label_new("GENERATE ==>");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,3,4);
 	VASP_BUTTON_TABLE(vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
+VASP_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf calculation is already set using this will\noverwrite settings resulting in an unpredictable state.");
 	label = gtk_label_new("<== (and check...)");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,3,4);
 /* --- end frame */
