@@ -1650,7 +1650,7 @@ void vasp_kpoints_kpts_selected(GtkWidget *w, struct model_pak *model){
         gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
         gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
         gdouble x,y,z,wt;
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_i),g_strdup_printf("%i",index));
+	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_i),g_strdup_printf("%i",index+1));
 	if (g_ascii_strcasecmp(text,"ADD kpoint") == 0) {
                 /*no need to update anything but index*/
 	} else {
@@ -1683,21 +1683,21 @@ void vasp_kpoint_modified(){
 		if(vasp_gui.calc.kpoints_mode==VKP_LINE)
 			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),index,
                         	g_strdup_printf("%.8lf %.8lf %.8lf ! kpoint: %i",
-                        	vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,index));
+                        	vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,index+1));
 		else
 			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),index,
 				g_strdup_printf("%.8lf %.8lf %.8lf %.8lf ! kpoint: %i",
-				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,vasp_gui.calc.kpoints_w,index));
+				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,vasp_gui.calc.kpoints_w,index+1));
         }else{
                 /*we are goign to modify some data*/
 		if(vasp_gui.calc.kpoints_mode==VKP_LINE)
 			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),index,
 				g_strdup_printf("%.8lf %.8lf %.8lf ! kpoint: %i",
-				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,index));
+				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,index+1));
 		else
 			gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),index,
 				g_strdup_printf("%.8lf %.8lf %.8lf %.8lf ! kpoint: %i",
-				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,vasp_gui.calc.kpoints_w,index));
+				vasp_gui.calc.kpoints_x,vasp_gui.calc.kpoints_y,vasp_gui.calc.kpoints_z,vasp_gui.calc.kpoints_w,index+1));
                 gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.kpoints_kpts),index+1);
         }
         /*re-select current entry (to refresh content)*/
@@ -2429,10 +2429,10 @@ void calc_to_kpoints(FILE *output,vasp_calc_struct calc){
         while(g_ascii_strcasecmp(text,"ADD kpoint")!=0){
 		if(vasp_gui.calc.kpoints_mode==VKP_MAN) {
 			sscanf(text,"%lf %lf %lf %lf ! kpoint: %*i",&x,&y,&z,&wt);
-			fprintf(output,"%lf %lf %lf %lf\n",x,y,z,wt);
+			fprintf(output,"%lf %lf %lf %lf ! kpoint: %i\n",x,y,z,wt,idx+1);
 		} else {
 			sscanf(text,"%lf %lf %lf ! kpoint: %*i",&x,&y,&z);
-			fprintf(output,"%lf %lf %lf\n",x,y,z);
+			fprintf(output,"%lf %lf %lf ! kpoint: %i\n",x,y,z,idx+1);
 		}
 		idx++;
 		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_kpts),idx);
@@ -2450,7 +2450,7 @@ void calc_to_kpoints(FILE *output,vasp_calc_struct calc){
 	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.tetra));
 	while(g_ascii_strcasecmp(text,"ADD tetrahedron")!=0){
 		sscanf(text,"%lf %i %i %i %i ! tetrahedron: %*i",&wt,&a,&b,&c,&d);
-		fprintf(output,"%lf %i %i %i %i\n",wt,a,b,c,d);
+		fprintf(output,"%lf %i %i %i %i ! tetrahedron: %i\n",wt,a,b,c,d,idx+1);
 		idx++;
 		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.tetra),idx);
 		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.tetra));
@@ -3506,11 +3506,13 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(1, 5,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.ismear_3,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
+VASP_TOOLTIP(vasp_gui.ismear_3,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
 	VASP_CHECK_TABLE(vasp_gui.kgamma_3,vasp_gui.calc.kgamma,NULL,"KGAMMA",1,2,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.kgamma_3,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
 	VASP_ENTRY_TABLE(vasp_gui.kspacing_3,vasp_gui.calc.kspacing,"%.4f","KSPACING=",2,3,0,1);
+VASP_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
 	/*empty: col3*/
 	/*empty: col4*/
 /* --- end frame */
@@ -3520,7 +3522,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(2, 5,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_mode,"GEN:",0,1,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Manual Entry");
@@ -3529,16 +3530,26 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Gamma (M&P)");
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Monkhorst-Pack classic");
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Basis set definition");
+VASP_TOOLTIP(vasp_gui.kpoints_mode,"Sets how the k-points are generated/entered as defined in Ch. 5.5.");
 	VASP_CHECK_TABLE(vasp_gui.kpoints_cart,vasp_gui.calc.kpoints_cart,NULL,"Cartesian",1,2,0,1);/*not calling anything*/
+VASP_TOOLTIP(vasp_gui.kpoints_cart,"Switch cartesian/reciprocal lattice coordinate mode.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx,NULL,"KX",2,3,0,1);
+VASP_TOOLTIP(vasp_gui.kpoints_kx,"Grid size for automated generation\n1st component only for M&P.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky,NULL,"KY",3,4,0,1);
+VASP_TOOLTIP(vasp_gui.kpoints_ky,"2nd Component of the M&P grid size.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz,NULL,"KZ",4,5,0,1);
+VASP_TOOLTIP(vasp_gui.kpoints_kz,"3rd Component of the M&P grid size.");
 /* 2nd line */
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_nkpts,vasp_gui.calc.kpoints_nkpts,"%i","NKPTS=",0,1,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_nkpts,"Total number of k-points (0 for automated methods).");
 	VASP_CHECK_TABLE(vasp_gui.have_tetra,vasp_gui.calc.kpoints_tetra,toogle_tetra,"Tetrahedron",1,2,1,2);
+VASP_TOOLTIP(vasp_gui.have_tetra,"Switch on the tetrahedron method for entering k-points.\nISMEAR must be set to -5 for this method!");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sx,vasp_gui.calc.kpoints_sx,"%.4lf","SX=",2,3,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_sx,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 1st reciprocal lattice component.");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sy,vasp_gui.calc.kpoints_sy,"%.4lf","SY=",3,4,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_sy,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 2nd reciprocal lattice component.");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sz,vasp_gui.calc.kpoints_sz,"%.4lf","SZ=",4,5,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 3rd reciprocal lattice component.");
 /* --- end frame */
 /* --- Coordinate */
         vasp_gui.kpoints_coord = gtk_frame_new("Coordinate");
@@ -3546,10 +3557,10 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(2, 5,FALSE);
         gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_coord), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
+VASP_TOOLTIP(vasp_gui.kpoints_kpts,"List of the k-points coordinates.\nThe index after comment sign \"! kpoint:\" can be used\nfor entering tetrahedron edge definition.");
         /*2 buttons*/
         hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
@@ -3559,10 +3570,15 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* 2nd line */
         VASP_ENTRY_TABLE(vasp_gui.kpoints_i,vasp_gui.calc.kpoints_i,"%i","INDEX:",0,1,1,2);
         gtk_widget_set_sensitive(vasp_gui.kpoints_i,FALSE);/*<- is changed only by selecting kpoints_kpts*/
+VASP_TOOLTIP(vasp_gui.kpoints_i,"The index of current k-point.\n(can be changed by deletion/addition only)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_x,vasp_gui.calc.kpoints_x,"%.4lf","X=",1,2,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_x,"Coordinate of k-point in 1st component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_y,vasp_gui.calc.kpoints_y,"%.4lf","Y=",2,3,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_y,"Coordinate of k-point in 2nd component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_z,vasp_gui.calc.kpoints_z,"%.4lf","Z=",3,4,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_z,"Coordinate of k-point in 3rd component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_w,vasp_gui.calc.kpoints_w,"%.4lf","W=",4,5,1,2);
+VASP_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of all weight does not have to be 1\nbut relative ratio should be respected.");
 /* --- end frame */
 /* --- Tetrahedron */
         vasp_gui.kpoints_tetra = gtk_frame_new("Tetrahedron");
@@ -3570,17 +3586,19 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
         table = gtk_table_new(3, 6,FALSE);
         gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_tetra), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(vasp_gui.kpoints_coord), PANEL_SPACING);/*useful?*/
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.tetra_total,vasp_gui.calc.tetra_total,"%i","TOTAL=",0,1,0,1);
+VASP_TOOLTIP(vasp_gui.tetra_total,"Total number of tetrahedrons.");
 	label = gtk_label_new("EXACT VOLUME:");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.tetra_volume,vasp_gui.calc.tetra_volume,"%.6lf","V=",2,3,0,1);
+VASP_TOOLTIP(vasp_gui.tetra_volume,"Volume weight for a single tetrahedron.\nAll have a volume defined by the ratio of\ntetrahedron volume / Brillouin zone Volume.");
 	label = gtk_label_new("for (A,B,C,D) tetrahedron");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,3,6,0,1);
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.tetra,"TETRAHEDRON:",0,5,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.tetra,"ADD tetrahedron");
+VASP_TOOLTIP(vasp_gui.tetra,"Tetrahedron list, consisting of\nsymmetry degeneration weight followed by\nfour corner points of each tetrahedron\nin k-point indices given above.");
 	/*2 buttons*/
 	hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
@@ -3590,11 +3608,17 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* 3rd line */
 	VASP_ENTRY_TABLE(vasp_gui.tetra_i,vasp_gui.calc.tetra_i,"%i","INDEX:",0,1,2,3);
 	gtk_widget_set_sensitive(vasp_gui.tetra_i,FALSE);/*<- is changed only by selecting tetra*/
+VASP_TOOLTIP(vasp_gui.tetra_i,"The index of current tetrahedron.\n(can be changed by deletion/addition only)");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_w,vasp_gui.calc.tetra_w,"%.4lf","Degen. W=",1,2,2,3);
+VASP_TOOLTIP(vasp_gui.tetra_w,"Symmetry degeneration weight.\nUnlike k-points, weight must be normalized\nie. total Brillouin zone Volume should be recovered\nby summing all degeneration * V");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_a,vasp_gui.calc.tetra_a,"%i","PtA:",2,3,2,3);
+VASP_TOOLTIP(vasp_gui.tetra_a,"1st corner of the tetrahedron (A) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_b,vasp_gui.calc.tetra_b,"%i","PtB:",3,4,2,3);
+VASP_TOOLTIP(vasp_gui.tetra_b,"2nd corner of the tetrahedron (B) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_c,vasp_gui.calc.tetra_c,"%i","PtC:",4,5,2,3);
+VASP_TOOLTIP(vasp_gui.tetra_c,"3rd corner of the tetrahedron (C) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_d,vasp_gui.calc.tetra_d,"%i","PtD:",5,6,2,3);
+VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index.");
 /* initialize */
         g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear_3)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
         g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing_3)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
