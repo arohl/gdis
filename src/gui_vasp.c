@@ -3712,18 +3712,25 @@ VASP_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors
 /* 1st line */
 	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
+VASP_TOOLTIP(vasp_gui.job_vasp_exe,"Location (full path) of the vasp executable.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_vasp_exe_dialog,5,6,0,1);
 /* 2nd line */
 	VASP_LABEL_TABLE("CALCUL PATH:",0,1,1,2);
 	VASP_TEXT_TABLE(vasp_gui.job_path,vasp_gui.calc.job_path,"PATH=",1,5,1,2);
+VASP_TOOLTIP(vasp_gui.job_path,"Location (full path) of the calculation directory.\nit is IMPORTANT to check this parameter so that\n* no other calculation is overwritten\n* calculation will not start in an unexpected directory.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_path_dialog,5,6,1,2);
 /* 3rd line */
 	VASP_LABEL_TABLE("OUTPUT:",0,1,2,3);
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lwave,NULL,"LWAVE",1,2,2,3);/*not calling anything*/
+VASP_TOOLTIP(button,"LWAVE: Ch. 6.52 DEFAULT: TRUE\nIf set the WAVECAR (wavefunctions) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lcharg,NULL,"LCHARG",2,3,2,3);/*not calling anything*/
+VASP_TOOLTIP(button,"LCHARG: Ch. 6.52 DEFAULT: TRUE\nIf set the CHGCAR (charge density) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lvtot,NULL,"LVTOT",3,4,2,3);/*not calling anything*/
+VASP_TOOLTIP(button,"LVTOT: Ch. 6.53 DEFAULT: FALSE\nIf set the LOCPOT (local potential) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lvhar,NULL,"LVHAR",4,5,2,3);/*not calling anything*/
+VASP_TOOLTIP(button,"LVHAR: Ch. 6.54 DEFAULT: FALSE\nIf set the full local potential is written to LOCPOT\n(ie. ionic+Hartree+XC) otherwise only electrostatic\n(ie. ionic+Hartree) is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lelf,NULL,"LELF",5,6,2,3);/*not calling anything*/
+VASP_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron localization function)\nfile is written.");
 /* --- end frame */
 /* --- PARALLEL */
         frame = gtk_frame_new("Parallel Optimization");
@@ -3734,14 +3741,21 @@ VASP_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors
 /* 1st line */
 	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
+VASP_TOOLTIP(vasp_gui.job_mpirun,"Location (full path) of mpirun executable.\nRequired for parallel calculation only.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_mpirun_dialog,5,6,0,1);
 /* 2nd line */
 	VASP_SPIN_TABLE(vasp_gui.job_nproc,vasp_gui.calc.job_nproc,parallel_eq,"NP=",0,1,1,2);
+VASP_TOOLTIP(vasp_gui.job_nproc,"Total number of CPU used for calculation.\nwill be used as N in \"mpirun -np N vasp\"\nto start vasp calculation.");
 	VASP_SPIN_TABLE(vasp_gui.ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",1,2,1,2);
+VASP_TOOLTIP(vasp_gui.ncore,"NCORE: Ch. 6.57 DEFAULT: 1\nSets how many cores works on one orbital.\nNote that NCORE is limited by KPAR.");
 	VASP_SPIN_TABLE(vasp_gui.kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",2,3,1,2);
+VASP_TOOLTIP(vasp_gui.kpar,"KPAR: Ch. 6.57 DEFAULT: 1\nSets the number of k-points treated in parallel.\nEach k-point is worked on by NCORE CPUs.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lplane,NULL,"LPLANE",3,4,1,2);/*not calling anything*/
+VASP_TOOLTIP(button,"LPLANE: Ch. 6.57 DEFAULT: TRUE\nIf set the real-space data distribution is done plane wise.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalu,NULL,"LSCALU",4,5,1,2);/*not calling anything*/
+VASP_TOOLTIP(button,"LSCALU: Ch. 6.59 DEFAULT: FALSE\nIf set parallel LU decomposition will be used.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalapack,NULL,"LSCALAPACK",5,6,1,2);/*not calling anything*/
+VASP_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routines will be used.");
 /* --- end frame */
 /* --- DISTANT */
         frame = gtk_frame_new("Distant calculation");
