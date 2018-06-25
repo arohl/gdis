@@ -3644,6 +3644,7 @@ VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point inde
 /* 1st line */
 	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
 	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
+VASP_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetected in the POSCAR ionic information.");
 /* 2nd line */
 	label = gtk_label_new("(each species will require a separate POTCAR information)");
         gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
@@ -3661,14 +3662,19 @@ VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point inde
 	vasp_gui.potcar_select_file = add_radio_button("Use POTCAR file",(gpointer)toggle_potcar_file,NULL);
 	vasp_gui.potcar_select_folder = add_radio_button("Use POTCAR path",(gpointer)toggle_potcar_folder,NULL);
 	gtk_table_attach_defaults(GTK_TABLE(table),vbox,0,1,0,2);
+VASP_TOOLTIP(vasp_gui.potcar_select_file,"Load a previously prepared POTCAR file.\nThe species (and species order) should match\nEXACTLY those of the POSCAR ion information.");
+VASP_TOOLTIP(vasp_gui.potcar_select_folder,"Use the directory where all POTCAR information are available.\nUsually a directory containing atomic symbols sub-directories.");
 	VASP_TEXT_TABLE(vasp_gui.potcar_file,vasp_gui.calc.potcar_file,"FILE:",1,3,0,1);
 	VASP_BUTTON_TABLE(vasp_gui.potcar_file_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,0,1);
+VASP_TOOLTIP(vasp_gui.potcar_file,"POTCAR file, including its full path.");
 /* 2nd line */
 	VASP_TEXT_TABLE(vasp_gui.potcar_folder,vasp_gui.calc.potcar_folder,"PATH:",1,3,1,2);
 	VASP_BUTTON_TABLE(vasp_gui.potcar_folder_button,GTK_STOCK_OPEN,load_potcar_folder_dialog,3,4,1,2);
+VASP_TOOLTIP(vasp_gui.potcar_folder,"Full PATH to the POTCAR sub-directories.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
 	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,apply_species_flavor,3,4,2,3);
+VASP_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a choice\nbetween different pseudopotential setting (flavors) exists\nEx: _h hard, _s soft _pv include pseudo-core valence, etc.");
 /* initialize */
 	toggle_potcar_file(NULL,NULL);
 /* --- end frame */
@@ -3683,10 +3689,12 @@ VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point inde
         label = gtk_label_new("DETECTED");
         gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
 	VASP_TEXT_TABLE(vasp_gui.potcar_species,vasp_gui.calc.potcar_species,"SPECIES:",1,2,0,1);
+VASP_TOOLTIP(vasp_gui.potcar_species,"List of atomic symbol of the species\ndetected from the POTCAR setting.");
 	gtk_widget_set_sensitive(vasp_gui.potcar_species,FALSE);
 /* 2nd line */
 	/*occ: col0*/
 	VASP_TEXT_TABLE(vasp_gui.potcar_species_flavor,vasp_gui.calc.potcar_species_flavor,"FLAVOR:",1,2,1,2);
+VASP_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors (PATH method)\ndetected from the POTCAR setting.");
 	gtk_widget_set_sensitive(vasp_gui.potcar_species_flavor,FALSE);
 
 /*----------------*/
