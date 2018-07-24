@@ -189,7 +189,7 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
         /* specific */
 	gint idx=0;
 	gchar *ptr;
-	gint max_struct;
+	gint max_struct=0;
 	gint red_index;
 	/*since energy is sometimes eV, and sometimes eV/atom ?*/
 	gboolean e_red=FALSE;
@@ -303,7 +303,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gint natoms;
 	gint species_index;
 	gdouble min_E;
-	gdouble min_F;
+	gdouble min_F=0.;
 	gdouble max_E;
 	gchar *atoms;
 	uspex_calc_struct *uspex_calc;

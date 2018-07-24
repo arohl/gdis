@@ -205,9 +205,10 @@ return(FALSE);
 /* NB: assumes fp is at a line before !DATE line */
 void read_arc_block(FILE *fp, struct model_pak *data)
 {
-gint region, core_flag, end_count;
+gint region=0;
+gint core_flag, end_count;
 GSList *clist, *slist;
-struct core_pak *core;
+struct core_pak *core=NULL;
 struct shel_pak *shel;
 gchar *line;
 gdouble energy;
@@ -390,7 +391,8 @@ gint read_arc(gchar *filename, struct model_pak *data)
 gint frame=0;
 gchar *line;
 FILE *fp;
-long int fp_pos,old_fp_pos;
+long int fp_pos;
+long int old_fp_pos=0;
 
 /* checks */
 g_return_val_if_fail(data != NULL, 1);

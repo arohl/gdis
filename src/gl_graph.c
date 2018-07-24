@@ -578,8 +578,9 @@ gint size;
 gint shift;
 gint nkpoints;
 gdouble sz;
-gdouble *xval;
-gdouble xmin,xmax;
+gdouble *xval=NULL;
+gdouble xmin=0.;
+gdouble xmax=0.;
 /* compute origin */
 ox = canvas->x + 4*gl_fontsize;
 if (graph->ylabel) ox += 4*gl_fontsize;
@@ -1278,7 +1279,8 @@ void graph_read(gchar *filename)
 {
 gint i, j, n, num_tokens;
 gchar *fullpath, *line, **buff;
-gdouble xstart, xstop, x[GRAPH_SIZE_MAX], *y;
+gdouble xstart=0.;
+gdouble xstop, x[GRAPH_SIZE_MAX], *y;
 GArray *garray;
 gpointer graph;
 struct model_pak *model;

@@ -48,6 +48,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "dialog.h"
 #include "gui_shorts.h"
 #include "file_vasp.h"
+#include "gui_defs.h"
 #include "gui_vasp.h"
 
 extern struct sysenv_pak sysenv;
@@ -2729,16 +2730,16 @@ void gui_vasp_dialog(void){
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
 	label = gtk_label_new(g_strdup_printf("MODEL NAME"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	VASP_TEXT_ENTRY(vasp_gui.name,g_strdup_printf("%s",data->basename),TRUE);
-VASP_TOOLTIP(vasp_gui.name,"The model name will be used in VASP files\nas well as GDIS display.");
+	GUI_TEXT_ENTRY(hbox,vasp_gui.name,data->basename,TRUE);
+GUI_TOOLTIP(vasp_gui.name,"The model name will be used in VASP files\nas well as GDIS display.");
 /* --- CONNECTED XML */
 	hbox = gtk_hbox_new(FALSE, 0);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
         label = gtk_label_new(g_strdup_printf("CONNECTED XML"));
         gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	VASP_TEXT_ENTRY(vasp_gui.file_entry,data->filename,TRUE);
+	GUI_TEXT_ENTRY(hbox,vasp_gui.file_entry,data->filename,TRUE);
 	if(data->id!=VASP) gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),"");
-VASP_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\nas a model to fill up settings of the current one.\nNOTE: important settings (such as NELM) will be wrong\nand all settings should be checked again. Carefully.");
+GUI_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\nas a model to fill up settings of the current one.\nNOTE: important settings (such as NELM) will be wrong\nand all settings should be checked again. Carefully.");
 	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
 	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_vasprun_dialog),NULL);
@@ -2765,54 +2766,54 @@ VASP_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\
         table = gtk_table_new(5, 4, FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-        VASP_COMBOBOX_TABLE(vasp_gui.simple_calcul,"CALCUL:",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Energy (single point)");
-	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"DOS/BANDS (single point)");
-	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Lattice Dynamics (opt.)");
-	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Geometry (opt.)");
-	VASP_COMBOBOX_ADD(vasp_gui.simple_calcul,"Molecular Dynamics (opt.)");
-VASP_TOOLTIP(vasp_gui.simple_calcul,"What is the intended calculation type?");
-	VASP_CHECK_TABLE(button,vasp_gui.simple_rgeom,NULL,"ROUGH GEOM.",2,3,0,1);/*not calling anything*/
-VASP_TOOLTIP(button,"Is the current geometry:\nFAR from groundstate geometry\nor NOT-SO-FAR from it?");
-	VASP_SPIN_TABLE(vasp_gui.simple_dim,vasp_gui.dimension,NULL,"DIM:",3,4,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.simple_dim,"What is the dimension of system?\nThe DIM (0D, 1D, 2D, or 3D) will be used\nto determine some parameters in INCAR and KPOINTS\nNO CHANGE will be made to the current geometry!");
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_dim),0.0,3.0);/*0D~3D*/
+	GUI_COMBOBOX_TABLE(table,vasp_gui.simple_calcul,"CALCUL:",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"Energy (single point)");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"DOS/BANDS (single point)");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"Lattice Dynamics (opt.)");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"Geometry (opt.)");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"Molecular Dynamics (opt.)");
+GUI_TOOLTIP(vasp_gui.simple_calcul,"What is the intended calculation type?");
+	GUI_CHECK_TABLE(table,button,vasp_gui.simple_rgeom,NULL,"ROUGH GEOM.",2,3,0,1);/*not calling anything*/
+GUI_TOOLTIP(button,"Is the current geometry:\nFAR from groundstate geometry\nor NOT-SO-FAR from it?");
+	GUI_SPIN_TABLE(table,vasp_gui.simple_dim,vasp_gui.dimension,NULL,"DIM:",3,4,0,1);/*not calling anything*/
+GUI_TOOLTIP(vasp_gui.simple_dim,"What is the dimension of system?\nThe DIM (0D, 1D, 2D, or 3D) will be used\nto determine some parameters in INCAR and KPOINTS\nNO CHANGE will be made to the current geometry!");
+	GUI_SPIN_RANGE(vasp_gui.simple_dim,0.0,3.0);/*0D~3D*/
 /* 2nd line */
-        VASP_COMBOBOX_TABLE(vasp_gui.simple_system,"SYSTEM:",0,1,1,2);
-        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Metal");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Semi-conducting");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Insulator");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_system,"Unknown");
-VASP_TOOLTIP(vasp_gui.simple_system,"What is the electronic properties of the intended material?");
-        VASP_TEXT_TABLE(vasp_gui.simple_poscar,vasp_gui.calc.species_symbols,"POSCAR:",1,4,1,2);
-VASP_TOOLTIP(vasp_gui.simple_poscar,"Atomic symbols of the species\ndetected from the model geometry.");
-        gtk_widget_set_sensitive(vasp_gui.simple_poscar,FALSE);
+	GUI_COMBOBOX_TABLE(table,vasp_gui.simple_system,"SYSTEM:",0,1,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.simple_system,"Metal");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_system,"Semi-conducting");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_system,"Insulator");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_system,"Unknown");
+GUI_TOOLTIP(vasp_gui.simple_system,"What is the electronic properties of the intended material?");
+	GUI_TEXT_TABLE(table,vasp_gui.simple_poscar,vasp_gui.calc.species_symbols,"POSCAR:",1,4,1,2);
+GUI_TOOLTIP(vasp_gui.simple_poscar,"Atomic symbols of the species\ndetected from the model geometry.");
+	GUI_LOCK(vasp_gui.simple_poscar);
 /* 3rd line */
-        VASP_COMBOBOX_TABLE(vasp_gui.simple_kgrid,"KPT GRID:",0,1,2,3);
-        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"COARSE");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"MEDIUM");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"FINE");
-        VASP_COMBOBOX_ADD(vasp_gui.simple_kgrid,"ULTRA-FINE");
-VASP_TOOLTIP(vasp_gui.simple_kgrid,"What is the intended k-point grid density?");
-	VASP_TEXT_TABLE(vasp_gui.simple_species,vasp_gui.calc.potcar_species,"POTCAR:",1,4,2,3);
-VASP_TOOLTIP(vasp_gui.simple_species,"From POTCAR file, the following species are detected.\nThis should match the POSCAR definition above.");
-	gtk_widget_set_sensitive(vasp_gui.simple_species,FALSE);
+	GUI_COMBOBOX_TABLE(table,vasp_gui.simple_kgrid,"KPT GRID:",0,1,2,3);
+	GUI_COMBOBOX_ADD(vasp_gui.simple_kgrid,"COARSE");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_kgrid,"MEDIUM");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_kgrid,"FINE");
+	GUI_COMBOBOX_ADD(vasp_gui.simple_kgrid,"ULTRA-FINE");
+GUI_TOOLTIP(vasp_gui.simple_kgrid,"What is the intended k-point grid density?");
+	GUI_TEXT_TABLE(table,vasp_gui.simple_species,vasp_gui.calc.potcar_species,"POTCAR:",1,4,2,3);
+GUI_TOOLTIP(vasp_gui.simple_species,"From POTCAR file, the following species are detected.\nThis should match the POSCAR definition above.");
+	GUI_LOCK(vasp_gui.simple_species);
 /* 4th line */
-	VASP_TEXT_TABLE(vasp_gui.simple_potcar,vasp_gui.calc.potcar_file,"POTCAR FILE:",0,3,3,4);
-VASP_TOOLTIP(vasp_gui.simple_potcar,"Where is the POTCAR file for this calculation?");
-	VASP_BUTTON_TABLE(vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,3,4);
+	GUI_TEXT_TABLE(table,vasp_gui.simple_potcar,vasp_gui.calc.potcar_file,"POTCAR FILE:",0,3,3,4);
+GUI_TOOLTIP(vasp_gui.simple_potcar,"Where is the POTCAR file for this calculation?");
+	GUI_BUTTON_TABLE(table,vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,3,4);
 /* 5th line */
-	VASP_LABEL_TABLE("EXEC:",0,1,4,5);
-        VASP_SPIN_TABLE(vasp_gui.simple_np,vasp_gui.calc.job_nproc,parallel_eq,"NP=",1,2,4,5);
-VASP_TOOLTIP(vasp_gui.simple_np,"How many CPU(s) should be used for calculation?");
-        VASP_SPIN_TABLE(vasp_gui.simple_ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",2,3,4,5);
-VASP_TOOLTIP(vasp_gui.simple_ncore,"How many CPU(s) should work on one band?");
-        VASP_SPIN_TABLE(vasp_gui.simple_kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",3,4,4,5);
-VASP_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a time?\nNote: each k-point is worked on by NCORE CPU(s).");
+	GUI_LABEL_TABLE(table,"EXEC:",0,1,4,5);
+	GUI_SPIN_TABLE(table,vasp_gui.simple_np,vasp_gui.calc.job_nproc,parallel_eq,"NP=",1,2,4,5);
+GUI_TOOLTIP(vasp_gui.simple_np,"How many CPU(s) should be used for calculation?");
+	GUI_SPIN_TABLE(table,vasp_gui.simple_ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",2,3,4,5);
+GUI_TOOLTIP(vasp_gui.simple_ncore,"How many CPU(s) should work on one band?");
+	GUI_SPIN_TABLE(table,vasp_gui.simple_kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",3,4,4,5);
+GUI_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a time?\nNote: each k-point is worked on by NCORE CPU(s).");
 /* initialize */
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_calcul),0);/*not calling anything*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_system),0);/*not calling anything*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.simple_kgrid),0);/*not calling anything*/
+	GUI_COMBOBOX_SETUP(vasp_gui.simple_calcul,0,NULL);/*not calling anything*/
+	GUI_COMBOBOX_SETUP(vasp_gui.simple_system,0,NULL);/*not calling anything*/
+	GUI_COMBOBOX_SETUP(vasp_gui.simple_kgrid,0,NULL);/*not calling anything*/
 /* --- end frame */
 /* --- DISCLAMER */
         frame = gtk_frame_new("DISCLAMER");
@@ -2829,8 +2830,8 @@ VASP_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a ti
 /* 3th line */
 	label = gtk_label_new("GENERATE ==>");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,3,4);
-	VASP_BUTTON_TABLE(vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
-VASP_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf calculation is already set using this will\noverwrite settings resulting in an unpredictable state.");
+	GUI_BUTTON_TABLE(table,vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
+GUI_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf calculation is already set using this will\noverwrite settings resulting in an unpredictable state.");
 	label = gtk_label_new("<== (and check...)");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,3,4);
 /* --- end frame */
@@ -2874,15 +2875,15 @@ VASP_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf 
         VASP_COMBOBOX_ADD(vasp_gui.prec,"High");
         VASP_COMBOBOX_ADD(vasp_gui.prec,"Medium");
 	VASP_COMBOBOX_ADD(vasp_gui.prec,"Low");
-VASP_TOOLTIP(vasp_gui.prec,"PREC: Ch. 6.11 DEFAULT: Normal\nSets numerical accuracy by changing\nENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.\n(can be override manually)");
+GUI_TOOLTIP(vasp_gui.prec,"PREC: Ch. 6.11 DEFAULT: Normal\nSets numerical accuracy by changing\nENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.\n(can be override manually)");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.use_prec,prec_toggle,"USE PREC",1,2,0,1);
-VASP_TOOLTIP(button,"Let PREC decides on ENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.");
+GUI_TOOLTIP(button,"Let PREC decides on ENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.");
 	VASP_ENTRY_TABLE(vasp_gui.encut,vasp_gui.calc.encut,"%.2lf","ENCUT=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.encut,"ENCUT: Ch. 6.9 DEFAULT: MAX(ENMAX)\nPlane-wave basis cutoff energy (eV).\nDefault MAX(ENMAX) is taken from POTCAR file.");
+GUI_TOOLTIP(vasp_gui.encut,"ENCUT: Ch. 6.9 DEFAULT: MAX(ENMAX)\nPlane-wave basis cutoff energy (eV).\nDefault MAX(ENMAX) is taken from POTCAR file.");
 	VASP_ENTRY_TABLE(vasp_gui.enaug,vasp_gui.calc.enaug,"%.2lf","ENAUG=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.enaug,"ENAUG: Ch. 6.10 DEFAULT: EAUG\nKinetic cutoff for augmentation charges.\nDefault EAUG is taken from POTCAR file.");
+GUI_TOOLTIP(vasp_gui.enaug,"ENAUG: Ch. 6.10 DEFAULT: EAUG\nKinetic cutoff for augmentation charges.\nDefault EAUG is taken from POTCAR file.");
 	VASP_ENTRY_TABLE(vasp_gui.ediff,vasp_gui.calc.ediff,"%.2lE","EDIFF=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.ediff,"EDIFF: Ch. 6.18 DEFAULT: 10^{-4}\nSet the criterion (eV) for electronic convergence.");
+GUI_TOOLTIP(vasp_gui.ediff,"EDIFF: Ch. 6.18 DEFAULT: 10^{-4}\nSet the criterion (eV) for electronic convergence.");
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.algo,"ALGO=",0,1,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.algo,"NORMAL");
@@ -2898,15 +2899,15 @@ VASP_TOOLTIP(vasp_gui.ediff,"EDIFF: Ch. 6.18 DEFAULT: 10^{-4}\nSet the criterion
 	VASP_COMBOBOX_ADD(vasp_gui.algo,"NOTHING");
 	VASP_COMBOBOX_ADD(vasp_gui.algo,"EXACT");
 	VASP_COMBOBOX_ADD(vasp_gui.algo,"DIAG");
-VASP_TOOLTIP(vasp_gui.algo,"ALGO: Ch. 6.46 DEFAULT: Normal\nSelect the electronic minimization algorithm.\nIt is overrided by IALGO when specified.");
+GUI_TOOLTIP(vasp_gui.algo,"ALGO: Ch. 6.46 DEFAULT: Normal\nSelect the electronic minimization algorithm.\nIt is overrided by IALGO when specified.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.ldiag,NULL,"LDIAG",1,2,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LDIAG: Ch. 6.47 DEFAULT: TRUE\nSwitch on the sub-space rotation.");
+GUI_TOOLTIP(button,"LDIAG: Ch. 6.47 DEFAULT: TRUE\nSwitch on the sub-space rotation.");
 	VASP_ENTRY_TABLE(vasp_gui.nsim,vasp_gui.calc.nsim,"%i","NSIM=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.nsim,"NSIM: Ch. 6.48 DEFAULT: 4\nNumber of bands optimized at a time\nin blocked minimization algorithm.");
+GUI_TOOLTIP(vasp_gui.nsim,"NSIM: Ch. 6.48 DEFAULT: 4\nNumber of bands optimized at a time\nin blocked minimization algorithm.");
 	VASP_ENTRY_TABLE(vasp_gui.vtime,vasp_gui.calc.vtime,"%.4lf","TIME=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.vtime,"TIME: Ch. 6.51 DEFAULT: 0.4\nSelect the trial time or value step\nfor minimization algorithm IALGO=5X.");
+GUI_TOOLTIP(vasp_gui.vtime,"TIME: Ch. 6.51 DEFAULT: 0.4\nSelect the trial time or value step\nfor minimization algorithm IALGO=5X.");
 	VASP_ENTRY_TABLE(vasp_gui.iwavpr,vasp_gui.calc.iwavpr,"%i","IWAVPR=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.iwavpr,"IWAVPR: Ch. 6.26 DEFAULT: 2(IBRION=0-2)\nDetermine how charge density/orbitals are predicted\nfrom one ionic configuration to the next.\nDefault is 0 if IBRION is different from 0-2.");
+GUI_TOOLTIP(vasp_gui.iwavpr,"IWAVPR: Ch. 6.26 DEFAULT: 2(IBRION=0-2)\nDetermine how charge density/orbitals are predicted\nfrom one ionic configuration to the next.\nDefault is 0 if IBRION is different from 0-2.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.ialgo,"IALGO=",0,1,2,3);
 	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"2:FIXED ORB/1E");
@@ -2924,22 +2925,22 @@ VASP_TOOLTIP(vasp_gui.iwavpr,"IWAVPR: Ch. 6.26 DEFAULT: 2(IBRION=0-2)\nDetermine
 	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"54:VAR DAMPED QUENCH MD");
 	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"58:VAR PRECOND. CG");
 	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"90:EXACT");
-VASP_TOOLTIP(vasp_gui.ialgo,"IALGO: Ch. 6.47 DEFAULT: 38\nSets the minimization algorithm number.\nIt is advised to use ALGO instead of IALGO\ndue to instabilities in extra IALGO algorithms.");
+GUI_TOOLTIP(vasp_gui.ialgo,"IALGO: Ch. 6.47 DEFAULT: 38\nSets the minimization algorithm number.\nIt is advised to use ALGO instead of IALGO\ndue to instabilities in extra IALGO algorithms.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_elec,elec_toggle,"AUTO",1,2,2,3);
-VASP_TOOLTIP(button,"Automatically sets NSIM, TIME, IWAVPR, NBANDS, and NELECT");
+GUI_TOOLTIP(button,"Automatically sets NSIM, TIME, IWAVPR, NBANDS, and NELECT");
 	VASP_ENTRY_TABLE(vasp_gui.nbands,vasp_gui.calc.nbands,"%i","NBANDS=",2,3,2,3);
-VASP_TOOLTIP(vasp_gui.nbands,"NBANDS: Ch. 6.5 DEFAULT: NELEC/2+NIONS/2\nNumber of bands in the calculation.\nDefault for spin-polarized calcualtions is 0.6*NELECT+NMAG");
+GUI_TOOLTIP(vasp_gui.nbands,"NBANDS: Ch. 6.5 DEFAULT: NELEC/2+NIONS/2\nNumber of bands in the calculation.\nDefault for spin-polarized calcualtions is 0.6*NELECT+NMAG");
 	VASP_ENTRY_TABLE(vasp_gui.nelect,vasp_gui.calc.nelect,"%.2lf","NELECT=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.nelect,"NELECT: Ch. 6.35 DEFAULT: Ne valence\nSets the number of electrons\nCan be use add an extra charge background\nas an homogeneous background-charge.");
+GUI_TOOLTIP(vasp_gui.nelect,"NELECT: Ch. 6.35 DEFAULT: Ne valence\nSets the number of electrons\nCan be use add an extra charge background\nas an homogeneous background-charge.");
 	/*empty: col4*/
 /* 4th line */
 	/*empty: col0*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.iniwav,NULL,"INIWAV",1,2,3,4);/*not calling anything*/
-VASP_TOOLTIP(button,"INIWAV: Ch. 6.16 DEFAULT: 1\nDetermine how initial wavefunctions are filled\nThe only option is the default random filling.\nOther option (INIWAV=0) is usually not available.");
+GUI_TOOLTIP(button,"INIWAV: Ch. 6.16 DEFAULT: 1\nDetermine how initial wavefunctions are filled\nThe only option is the default random filling.\nOther option (INIWAV=0) is usually not available.");
 	VASP_ENTRY_TABLE(vasp_gui.istart,vasp_gui.calc.istart,"%i","ISTART=",2,3,3,4);
-VASP_TOOLTIP(vasp_gui.istart,"ISTART: Ch. 6.14 DEFAULT 1\nDetermine whether WAVECAR should be read.\nDefault is 0 when no WAVECAR file is found.");
+GUI_TOOLTIP(vasp_gui.istart,"ISTART: Ch. 6.14 DEFAULT 1\nDetermine whether WAVECAR should be read.\nDefault is 0 when no WAVECAR file is found.");
 	VASP_ENTRY_TABLE(vasp_gui.icharg,vasp_gui.calc.icharg,"%i","ICHARG=",3,4,3,4);
-VASP_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initial charge density is calculated\nDefault is 0 if ISTART is not 0.");
+GUI_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initial charge density is calculated\nDefault is 0 if ISTART is not 0.");
 	/*empty: col4*/
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.prec,0,vasp_prec_selected);
@@ -2961,41 +2962,41 @@ VASP_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the init
 	VASP_COMBOBOX_ADD(vasp_gui.mixer,"1:KERKER");
 	VASP_COMBOBOX_ADD(vasp_gui.mixer,"2:TCHEBYCHEV");
 	VASP_COMBOBOX_ADD(vasp_gui.mixer,"4:BROYDEN");
-VASP_TOOLTIP(vasp_gui.mixer,"IMIX: Ch. 6.49 DEFAULT: 4\nDetermine the type of mixing.");
+GUI_TOOLTIP(vasp_gui.mixer,"IMIX: Ch. 6.49 DEFAULT: 4\nDetermine the type of mixing.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_mixer,mixer_toggle,"AUTO MIXER",1,2,0,1);
-VASP_TOOLTIP(button,"Use automatic mixing settings.");
+GUI_TOOLTIP(button,"Use automatic mixing settings.");
 	VASP_ENTRY_TABLE(vasp_gui.nelm,vasp_gui.calc.nelm,"%i","NELM=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.nelm,"NELM: Ch. 6.17 DEFAULT: 60\nMaximum number of electronic steps.");
+GUI_TOOLTIP(vasp_gui.nelm,"NELM: Ch. 6.17 DEFAULT: 60\nMaximum number of electronic steps.");
 	VASP_ENTRY_TABLE(vasp_gui.nelmdl,vasp_gui.calc.nelmdl,"%i","NELMDL=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.nelmdl,"NELMDL: Ch. 6.17 DEFAULT -5(if IALGO=x8)\nSets the number of initial non-selfconsistent steps\ndefault is 0 if ISTART is not 0.");
+GUI_TOOLTIP(vasp_gui.nelmdl,"NELMDL: Ch. 6.17 DEFAULT -5(if IALGO=x8)\nSets the number of initial non-selfconsistent steps\ndefault is 0 if ISTART is not 0.");
 	VASP_ENTRY_TABLE(vasp_gui.nelmin,vasp_gui.calc.nelmin,"%i","NELMIN=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.nelmin,"NELMIN: Ch. 6.17 DEFAULT: 2\nMinimum number of electronic steps.");
+GUI_TOOLTIP(vasp_gui.nelmin,"NELMIN: Ch. 6.17 DEFAULT: 2\nMinimum number of electronic steps.");
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.mixpre,"MIXPRE=",0,1,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"0:NONE");
 	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"1:F=20 INVERSE KERKER");
 	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"2:F=200 INVERSE KERKER");
-VASP_TOOLTIP(vasp_gui.mixpre,"MIXPRE: Ch. 6.49 DEFAULT: 1\nSelect the preconditioning for Broyden mixing.");
+GUI_TOOLTIP(vasp_gui.mixpre,"MIXPRE: Ch. 6.49 DEFAULT: 1\nSelect the preconditioning for Broyden mixing.");
 	/*empty: col1*/
         VASP_ENTRY_TABLE(vasp_gui.amix,vasp_gui.calc.amix,"%.4lf","AMIX=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.amix,"AMIX: Ch. 6.49 DEFAULT: 0.4\nlinear mixing parameter\nDefault is 0.8 for ultrasoft pseudopotentials.");
+GUI_TOOLTIP(vasp_gui.amix,"AMIX: Ch. 6.49 DEFAULT: 0.4\nlinear mixing parameter\nDefault is 0.8 for ultrasoft pseudopotentials.");
         VASP_ENTRY_TABLE(vasp_gui.bmix,vasp_gui.calc.bmix,"%.4lf","BMIX=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.bmix,"BMIX: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing.");
+GUI_TOOLTIP(vasp_gui.bmix,"BMIX: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing.");
         VASP_ENTRY_TABLE(vasp_gui.amin,vasp_gui.calc.amin,"%.4lf","AMIN=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.amin,"AMIN: Ch. 6.49 DEFAULT: 0.1\nminimal mixing parameter.");
+GUI_TOOLTIP(vasp_gui.amin,"AMIN: Ch. 6.49 DEFAULT: 0.1\nminimal mixing parameter.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.inimix,"INIMIX=",0,1,2,3);
 	VASP_COMBOBOX_ADD(vasp_gui.inimix,"0:LINEAR");
 	VASP_COMBOBOX_ADD(vasp_gui.inimix,"1:KERKER");
-VASP_TOOLTIP(vasp_gui.inimix,"INIMIX: Ch. 6.49 DEFAULT: 1\ntype of initial mixing in Broyden mixing.");
+GUI_TOOLTIP(vasp_gui.inimix,"INIMIX: Ch. 6.49 DEFAULT: 1\ntype of initial mixing in Broyden mixing.");
 	VASP_ENTRY_TABLE(vasp_gui.maxmix,vasp_gui.calc.maxmix,"%i","MAXMIX=",1,2,2,3);
-VASP_TOOLTIP(vasp_gui.maxmix,"MAXMIX: Ch. 6.49 DEFAULT: -45\nMaximum number of steps stored in Broyden mixer.");
+GUI_TOOLTIP(vasp_gui.maxmix,"MAXMIX: Ch. 6.49 DEFAULT: -45\nMaximum number of steps stored in Broyden mixer.");
 	VASP_ENTRY_TABLE(vasp_gui.amix_mag,vasp_gui.calc.amix_mag,"%.4lf","AMIX_MAG=",2,3,2,3);
-VASP_TOOLTIP(vasp_gui.amix_mag,"AMIX_MAG: Ch. 6.49 DEFAULT: 1.6\nlinear mixing parameter for magnetization.");
+GUI_TOOLTIP(vasp_gui.amix_mag,"AMIX_MAG: Ch. 6.49 DEFAULT: 1.6\nlinear mixing parameter for magnetization.");
 	VASP_ENTRY_TABLE(vasp_gui.bmix_mag,vasp_gui.calc.bmix_mag,"%.4lf","BMIX_MAG=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.bmix_mag,"BMIX_MAG: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing with magnetization.");
+GUI_TOOLTIP(vasp_gui.bmix_mag,"BMIX_MAG: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing with magnetization.");
 	VASP_ENTRY_TABLE(vasp_gui.wc,vasp_gui.calc.wc,"%.1lf","WC=",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broyden mixing.");
+GUI_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broyden mixing.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
@@ -3014,38 +3015,38 @@ VASP_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Bro
 	VASP_COMBOBOX_ADD(vasp_gui.lreal,"On");
 	VASP_COMBOBOX_ADD(vasp_gui.lreal,"TRUE");
 	VASP_COMBOBOX_ADD(vasp_gui.lreal,"FALSE");
-VASP_TOOLTIP(vasp_gui.lreal,"LREAL: Ch. 6.39 DEFAULT: FALSE\nDetermine whether projection operators are evaluated in\nreal-space or reciprocal-space.");
+GUI_TOOLTIP(vasp_gui.lreal,"LREAL: Ch. 6.39 DEFAULT: FALSE\nDetermine whether projection operators are evaluated in\nreal-space or reciprocal-space.");
 	/*empty: col2*/
 	VASP_TEXT_TABLE(vasp_gui.ropt,vasp_gui.calc.ropt,"ROPT=",2,5,0,1);
-VASP_TOOLTIP(vasp_gui.ropt,"ROPT: Ch. 6.39 DEFAULT: -\nROPT determine the precision of the real-space operator\nfor LREAL=AUTO and LREAL=On.");
+GUI_TOOLTIP(vasp_gui.ropt,"ROPT: Ch. 6.39 DEFAULT: -\nROPT determine the precision of the real-space operator\nfor LREAL=AUTO and LREAL=On.");
 /* 2nd line */
 	/*empty: col1*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.addgrid,NULL,"ADDGRID",1,2,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"ADDGRID: Ch. 6.63 DEFAULT: FALSE\nSelect the third fine grid for augmentation charge.");
+GUI_TOOLTIP(button,"ADDGRID: Ch. 6.63 DEFAULT: FALSE\nSelect the third fine grid for augmentation charge.");
         VASP_ENTRY_TABLE(vasp_gui.lmaxmix,vasp_gui.calc.lmaxmix,"%i","LMAXMIX=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.lmaxmix,"LMAXMIX: Ch. 6.63 DEFAULT: 2\nMaximum l-quantum number passed to charge density mixer.");
+GUI_TOOLTIP(vasp_gui.lmaxmix,"LMAXMIX: Ch. 6.63 DEFAULT: 2\nMaximum l-quantum number passed to charge density mixer.");
 	/*empty: col4*/
         VASP_ENTRY_TABLE(vasp_gui.lmaxpaw,vasp_gui.calc.lmaxpaw,"%i","LMAXPAW=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.lmaxpaw,"LMAXPAW: Ch. 6.63 DEFAULT: 2*lmax\nMaximum l-quantum number for the evaluation of the PAW\non-site terms on the radial grid.");
+GUI_TOOLTIP(vasp_gui.lmaxpaw,"LMAXPAW: Ch. 6.63 DEFAULT: 2*lmax\nMaximum l-quantum number for the evaluation of the PAW\non-site terms on the radial grid.");
 /* 3rd line */
 	/*empty: col1*/
 	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_grid,grid_toggle,"AUTO GRID",1,2,2,3);
-VASP_TOOLTIP(button,"Automatically sets NG{X,Y,Z}, and NG{X,Y,Z}F.");
+GUI_TOOLTIP(button,"Automatically sets NG{X,Y,Z}, and NG{X,Y,Z}F.");
 	VASP_ENTRY_TABLE(vasp_gui.ngx,vasp_gui.calc.ngx,"%i","NGX=",2,3,2,3);
-VASP_TOOLTIP(vasp_gui.ngx,"NGX: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the x direction.");
+GUI_TOOLTIP(vasp_gui.ngx,"NGX: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the x direction.");
 	VASP_ENTRY_TABLE(vasp_gui.ngy,vasp_gui.calc.ngy,"%i","NGY=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.ngy,"NGY: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the y direction.");
+GUI_TOOLTIP(vasp_gui.ngy,"NGY: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the y direction.");
 	VASP_ENTRY_TABLE(vasp_gui.ngz,vasp_gui.calc.ngz,"%i","NGZ=",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.ngz,"NGZ: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the z direction.");
+GUI_TOOLTIP(vasp_gui.ngz,"NGZ: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the z direction.");
 /* 4th line */
 	/*empty: col1*/
 	/*empty: col2*/
 	VASP_ENTRY_TABLE(vasp_gui.ngxf,vasp_gui.calc.ngxf,"%i","NGXF=",2,3,3,4);
-VASP_TOOLTIP(vasp_gui.ngxf,"NGXF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the x direction.");
+GUI_TOOLTIP(vasp_gui.ngxf,"NGXF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the x direction.");
 	VASP_ENTRY_TABLE(vasp_gui.ngyf,vasp_gui.calc.ngyf,"%i","NGYF=",3,4,3,4);
-VASP_TOOLTIP(vasp_gui.ngyf,"NGYF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the y direction.");
+GUI_TOOLTIP(vasp_gui.ngyf,"NGYF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the y direction.");
 	VASP_ENTRY_TABLE(vasp_gui.ngzf,vasp_gui.calc.ngzf,"%i","NGZF=",4,5,3,4);
-VASP_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the z direction.");
+GUI_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the z direction.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
 	grid_toggle(NULL,NULL);
@@ -3065,18 +3066,18 @@ VASP_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh gr
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.ismear,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
-VASP_TOOLTIP(vasp_gui.ismear,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
+GUI_TOOLTIP(vasp_gui.ismear,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
 	VASP_ENTRY_TABLE(vasp_gui.sigma,vasp_gui.calc.sigma,"%.4lf","SIGMA=",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.sigma,"SIGMA: Ch. 6.38 DEFAULT: 0.2\nDetermine the width of the smearing (eV)\nFor ISMEAR=0 (semiconductors or insulators)\na small SIGMA=0.05 can be chosen.");
+GUI_TOOLTIP(vasp_gui.sigma,"SIGMA: Ch. 6.38 DEFAULT: 0.2\nDetermine the width of the smearing (eV)\nFor ISMEAR=0 (semiconductors or insulators)\na small SIGMA=0.05 can be chosen.");
 	VASP_CHECK_TABLE(vasp_gui.kgamma,vasp_gui.calc.kgamma,NULL,"KGAMMA",2,3,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.kgamma,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
+GUI_TOOLTIP(vasp_gui.kgamma,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
 	VASP_ENTRY_TABLE(vasp_gui.kspacing,vasp_gui.calc.kspacing,"%.4lf","KSPACING=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.kspacing,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
+GUI_TOOLTIP(vasp_gui.kspacing,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
 /* 2nd line */
 	VASP_TEXT_TABLE(vasp_gui.fermwe,vasp_gui.calc.fermwe,"FERMWE=",0,2,1,2);
-VASP_TOOLTIP(vasp_gui.fermwe,"FERMWE: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 explicitly sets\noccupancy for each band.");
+GUI_TOOLTIP(vasp_gui.fermwe,"FERMWE: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 explicitly sets\noccupancy for each band.");
 	VASP_TEXT_TABLE(vasp_gui.fermdo,vasp_gui.calc.fermdo,"FERMDO=",2,4,1,2);
-VASP_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=2 sets\noccupancy for down spin of each band.");
+GUI_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=2 sets\noccupancy for down spin of each band.");
 /* --- end frame */
 /* --- spin */
         frame = gtk_frame_new("Spin");
@@ -3086,20 +3087,20 @@ VASP_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN
 	gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
 	VASP_CHECK_TABLE(button,vasp_gui.calc.ispin,NULL,"SPIN POLARIZED",0,1,0,1);/*not calling anything*/
-VASP_TOOLTIP(button,"ISPIN: Ch. 6.12 DEFAULT 1\nSpin polarized calculation sets ISPIN=2.");
+GUI_TOOLTIP(button,"ISPIN: Ch. 6.12 DEFAULT 1\nSpin polarized calculation sets ISPIN=2.");
 	VASP_CHECK_TABLE(vasp_gui.lnoncoll,vasp_gui.calc.non_collinear,lnoncoll_toggle,"NON COLLINEAR",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.lnoncoll,"LNONCOLLINEAR: Ch. 6.68.1 DEFAULT FALSE\nAllow to perform fully, non-collinear\nmagnetic structure calculations.");
+GUI_TOOLTIP(vasp_gui.lnoncoll,"LNONCOLLINEAR: Ch. 6.68.1 DEFAULT FALSE\nAllow to perform fully, non-collinear\nmagnetic structure calculations.");
 	VASP_CHECK_TABLE(vasp_gui.lsorbit,vasp_gui.calc.lsorbit,lsorbit_toggle,"LSORBIT",2,3,0,1);
- VASP_TOOLTIP(vasp_gui.lsorbit,"LSORBIT: Ch. 6.68.2 DEFAULT: FALSE\nSwitch on spin-orbit coupling (for PAW)\nautomatically sets LNONCOLLINEAR when TRUE.");
+ GUI_TOOLTIP(vasp_gui.lsorbit,"LSORBIT: Ch. 6.68.2 DEFAULT: FALSE\nSwitch on spin-orbit coupling (for PAW)\nautomatically sets LNONCOLLINEAR when TRUE.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.gga_compat,NULL,"GGA_COMPAT",3,4,0,1);/*not calling anything*/
-VASP_TOOLTIP(button,"GGA_COMPAT: Ch. 6.42 DEFAULT: TRUE\nRestores the lattice symmetry\nfor gradient corrected functionals.");
+GUI_TOOLTIP(button,"GGA_COMPAT: Ch. 6.42 DEFAULT: TRUE\nRestores the lattice symmetry\nfor gradient corrected functionals.");
 	VASP_ENTRY_TABLE(vasp_gui.nupdown,vasp_gui.calc.nupdown,"%.1f","NUPDOWN=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.nupdown,"NUPDOWN: Ch. 6.36 DEFAULT -1\nSets the difference between number\nof electrons in up and down spin component.");
+GUI_TOOLTIP(vasp_gui.nupdown,"NUPDOWN: Ch. 6.36 DEFAULT -1\nSets the difference between number\nof electrons in up and down spin component.");
 /* 2nd line */
 	VASP_TEXT_TABLE(vasp_gui.magmom,vasp_gui.calc.magmom,"MAGMOM=",0,3,1,2);
-VASP_TOOLTIP(vasp_gui.magmom,"MAGMOM: Ch. 6.13 DEFAULT: NIONS\nSets the initial magnetic moment for each atom\nuseful only for calculation with no WAVECAR or CHGCAR\nor magnetic calculations from a non-magnetic start.\nFor non-collinear calculations default value is 3*NIONS.");
+GUI_TOOLTIP(vasp_gui.magmom,"MAGMOM: Ch. 6.13 DEFAULT: NIONS\nSets the initial magnetic moment for each atom\nuseful only for calculation with no WAVECAR or CHGCAR\nor magnetic calculations from a non-magnetic start.\nFor non-collinear calculations default value is 3*NIONS.");
 	VASP_TEXT_TABLE(vasp_gui.saxis,vasp_gui.calc.saxis,"SAXIS=",3,5,1,2);
-VASP_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation axis for spin.\nThe default is SAXIS = eps 0 1\nwhere eps is a small quantity.");
+GUI_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation axis for spin.\nThe default is SAXIS = eps 0 1\nwhere eps is a small quantity.");
 /* --- end frame */
 /* --- exchange correlation */
         frame = gtk_frame_new("Exchange Correlation");
@@ -3115,9 +3116,9 @@ VASP_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation 
 	VASP_COMBOBOX_ADD(vasp_gui.gga,"RP:rPBE");
 	VASP_COMBOBOX_ADD(vasp_gui.gga,"AM:AM05");
 	VASP_COMBOBOX_ADD(vasp_gui.gga,"PS:PBEsol");
-VASP_TOOLTIP(vasp_gui.gga,"GGA: Ch. 6.40 DEFAULT -\nSets the gradient corrected functional.\nThe default is selected according to the POTCAR file.");
+GUI_TOOLTIP(vasp_gui.gga,"GGA: Ch. 6.40 DEFAULT -\nSets the gradient corrected functional.\nThe default is selected according to the POTCAR file.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.voskown,NULL,"VOSKOWN",1,2,0,1);/*not calling anything*/
-VASP_TOOLTIP(button,"VOSKOWN: Ch. 6.41 DEFAULT 0\nSets the Vosko, Wilk and Nusair method\nfor interpolation of correlation functional).\nUseful only if GGA=91 (PW91).");
+GUI_TOOLTIP(button,"VOSKOWN: Ch. 6.41 DEFAULT 0\nSets the Vosko, Wilk and Nusair method\nfor interpolation of correlation functional).\nUseful only if GGA=91 (PW91).");
 	/*empty: col2*/
 	/*empty: col3*/
 	/*empty: col4*/
@@ -3127,42 +3128,42 @@ VASP_TOOLTIP(button,"VOSKOWN: Ch. 6.41 DEFAULT 0\nSets the Vosko, Wilk and Nusai
 	VASP_COMBOBOX_ADD(vasp_gui.metagga,"rTPSS");
 	VASP_COMBOBOX_ADD(vasp_gui.metagga,"M06L");
 	VASP_COMBOBOX_ADD(vasp_gui.metagga,"MBJ");
-VASP_TOOLTIP(vasp_gui.metagga,"METAGGA: Ch. 6.43 DEFAULT none\nSets the meta-GGA functional.");
+GUI_TOOLTIP(vasp_gui.metagga,"METAGGA: Ch. 6.43 DEFAULT none\nSets the meta-GGA functional.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lmetagga,metagga_toggle,"LMETAGGA",1,2,1,2);
-VASP_TOOLTIP(button,"LMETAGGA (secret) DEFAULT FALSE\nIgnored (but recognized and read) by VASP.\nUsed (here) to enable a METAGGA calculation.");
+GUI_TOOLTIP(button,"LMETAGGA (secret) DEFAULT FALSE\nIgnored (but recognized and read) by VASP.\nUsed (here) to enable a METAGGA calculation.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lasph,NULL,"LASPH",2,3,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LASPH: Ch. 6.44 DEFAULT FALSE\nSets calculation of non-spherical contributions\nfrom the gradient corrections in PAW spheres.");
+GUI_TOOLTIP(button,"LASPH: Ch. 6.44 DEFAULT FALSE\nSets calculation of non-spherical contributions\nfrom the gradient corrections in PAW spheres.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lmixtau,NULL,"LMIXTAU",3,4,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LMIXTAU: Ch. 6.43.2 DEFAULT FALSE\nSets inclusion of kinetic energy density\nto the mixer (useful to converge METAGGA).");
+GUI_TOOLTIP(button,"LMIXTAU: Ch. 6.43.2 DEFAULT FALSE\nSets inclusion of kinetic energy density\nto the mixer (useful to converge METAGGA).");
 	VASP_ENTRY_TABLE(vasp_gui.lmaxtau,vasp_gui.calc.lmaxtau,"%i","LMAXTAU=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.lmaxtau,"LMAXTAU: Ch. 6.43.1 DEFAULT 0\nSets maximum l-quantum number\nto calculate PAW one-center expansion\nof the kinetic energy density.\nDefault is 6 if LASPH is set to TRUE.");
+GUI_TOOLTIP(vasp_gui.lmaxtau,"LMAXTAU: Ch. 6.43.1 DEFAULT 0\nSets maximum l-quantum number\nto calculate PAW one-center expansion\nof the kinetic energy density.\nDefault is 6 if LASPH is set to TRUE.");
 /* 3rd line */
 	VASP_TEXT_TABLE(vasp_gui.cmbj,vasp_gui.calc.cmbj,"CMBJ=",0,3,2,3);
-VASP_TOOLTIP(vasp_gui.cmbj,"CMBJ: Ch 6.43 DEFAULT: -\nFor MBJ meta-GGA calculations CMBJ\nsets the mixing coefficient for Becke-Roussel potential\nfor each species or constant if CMBJ has only one value.");
+GUI_TOOLTIP(vasp_gui.cmbj,"CMBJ: Ch 6.43 DEFAULT: -\nFor MBJ meta-GGA calculations CMBJ\nsets the mixing coefficient for Becke-Roussel potential\nfor each species or constant if CMBJ has only one value.");
 	VASP_ENTRY_TABLE(vasp_gui.cmbja,vasp_gui.calc.cmbja,"%.4lf","CMBJA=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.cmbja,"CMBJA: Ch. 6.43 DEFAULT -0.012\nAlpha parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
+GUI_TOOLTIP(vasp_gui.cmbja,"CMBJA: Ch. 6.43 DEFAULT -0.012\nAlpha parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
 	VASP_ENTRY_TABLE(vasp_gui.cmbjb,vasp_gui.calc.cmbjb,"%.4lf","CMBJB=",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.cmbjb,"CMBJB: Ch. 6.43 DEFAULT 1.023\nBeta parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
+GUI_TOOLTIP(vasp_gui.cmbjb,"CMBJB: Ch. 6.43 DEFAULT 1.023\nBeta parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
 /* 4th line */
 	VASP_COMBOBOX_TABLE(vasp_gui.ldau,"LDAUTYPE=",0,1,3,4);
 	VASP_COMBOBOX_ADD(vasp_gui.ldau,"1:LSDA+U Liechtenstein");
 	VASP_COMBOBOX_ADD(vasp_gui.ldau,"2:LSDA+U Dudarev");
 	VASP_COMBOBOX_ADD(vasp_gui.ldau,"4:LDA+U Liechtenstein");
-VASP_TOOLTIP(vasp_gui.ldau,"LDAUTYPE: Ch. 6.70 DEFAULT: 2\nSets the type of L(S)DA+U calculation.");
+GUI_TOOLTIP(vasp_gui.ldau,"LDAUTYPE: Ch. 6.70 DEFAULT: 2\nSets the type of L(S)DA+U calculation.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.ldau,ldau_toggle,"LDAU",1,2,3,4);
-VASP_TOOLTIP(button,"LDAU: Ch. 6.70 DEFAULT: FALSE\nSwitches on L(S)DA+U calculation.");
+GUI_TOOLTIP(button,"LDAU: Ch. 6.70 DEFAULT: FALSE\nSwitches on L(S)DA+U calculation.");
 	VASP_TEXT_TABLE(vasp_gui.ldaul,vasp_gui.calc.ldaul,"LDAUL=",2,5,3,4);
-VASP_TOOLTIP(vasp_gui.ldaul,"LDAUL: Ch. 6.70 DEFAULT: 2\nSets the l-quantum number (for each species)\nfor which the on-site interaction is added.");
+GUI_TOOLTIP(vasp_gui.ldaul,"LDAUL: Ch. 6.70 DEFAULT: 2\nSets the l-quantum number (for each species)\nfor which the on-site interaction is added.");
 /* 5th line */
 	VASP_COMBOBOX_TABLE(vasp_gui.ldau_print,"LDAUPRINT=",0,1,4,5);
 	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"0:Silent");
 	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"1:Occupancy matrix");
 	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"2:Full output");
-VASP_TOOLTIP(vasp_gui.ldau_print,"LDAUPRINT: Ch. 6.70 DEFAULT 0\nSets the level of verbosity of L(S)DA+U.");
+GUI_TOOLTIP(vasp_gui.ldau_print,"LDAUPRINT: Ch. 6.70 DEFAULT 0\nSets the level of verbosity of L(S)DA+U.");
 	VASP_TEXT_TABLE(vasp_gui.ldauu,vasp_gui.calc.ldauu,"LDAUU=",1,3,4,5);
-VASP_TOOLTIP(vasp_gui.ldauu,"LDAUU: Ch. 6.70 DEFAULT: -\nSets effective on-site Coulomb interaction (for each species).");
+GUI_TOOLTIP(vasp_gui.ldauu,"LDAUU: Ch. 6.70 DEFAULT: -\nSets effective on-site Coulomb interaction (for each species).");
 	VASP_TEXT_TABLE(vasp_gui.ldauj,vasp_gui.calc.ldauj,"LDAUJ=",3,5,4,5);
-VASP_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site Exchange interaction (for each species).");
+GUI_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site Exchange interaction (for each species).");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.gga,1,vasp_gga_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.metagga,3,vasp_metagga_selected);
@@ -3185,21 +3186,21 @@ VASP_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site 
 	VASP_COMBOBOX_ADD(vasp_gui.idipol,"2:v axis");
 	VASP_COMBOBOX_ADD(vasp_gui.idipol,"3:w axis");
 	VASP_COMBOBOX_ADD(vasp_gui.idipol,"4:all axis");
-VASP_TOOLTIP(vasp_gui.idipol,"IDIPOL: Ch. 6.64 DEFAULT: -\nSets the direction of the calculated dipole moment\nparallel to the 1st (1), 2nd (2) or 3rd (3) lattice vector.\nIDIPOL=4 trigger full dipole calculation\n0 switches off dipole calculation (remove IDIPOL).");
+GUI_TOOLTIP(vasp_gui.idipol,"IDIPOL: Ch. 6.64 DEFAULT: -\nSets the direction of the calculated dipole moment\nparallel to the 1st (1), 2nd (2) or 3rd (3) lattice vector.\nIDIPOL=4 trigger full dipole calculation\n0 switches off dipole calculation (remove IDIPOL).");
 	VASP_CHECK_TABLE(vasp_gui.ldipol,vasp_gui.calc.ldipol,NULL,"LDIPOL",1,2,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.ldipol,"LDIPOL: Ch. 6.64 DEFAULT: FALSE\nSets potential dipole correction of the\nslab/molecule periodic-boundary induced errors.");
+GUI_TOOLTIP(vasp_gui.ldipol,"LDIPOL: Ch. 6.64 DEFAULT: FALSE\nSets potential dipole correction of the\nslab/molecule periodic-boundary induced errors.");
 	VASP_CHECK_TABLE(vasp_gui.lmono,vasp_gui.calc.lmono,NULL,"LMONO",2,3,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.lmono,"LMONO: Ch. 6.64 DEFAULT: FALSE\nSets potential monopole correction of the\nslab/molecule periodic-boundary induced errors.");
+GUI_TOOLTIP(vasp_gui.lmono,"LMONO: Ch. 6.64 DEFAULT: FALSE\nSets potential monopole correction of the\nslab/molecule periodic-boundary induced errors.");
 	VASP_TEXT_TABLE(vasp_gui.dipol,vasp_gui.calc.dipol,"DIPOL=",3,5,0,1);
-VASP_TOOLTIP(vasp_gui.dipol,"DIPOL: Ch. 6.64 DEFAULT: -\nSets the center of the net charge distribution.\nIf left blank a guess value is sets at runtime.");
+GUI_TOOLTIP(vasp_gui.dipol,"DIPOL: Ch. 6.64 DEFAULT: -\nSets the center of the net charge distribution.\nIf left blank a guess value is sets at runtime.");
 /* 2nd line */
 	/*empty: col0*/
 	/*empty: col1*/
 	/*empty: col2*/
 	VASP_ENTRY_TABLE(vasp_gui.epsilon,vasp_gui.calc.epsilon,"%.4lf","EPSILON=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.epsilon,"EPSILON: Ch. 6.64 DEFAULT: 1\nSets the dielectric constant of the medium.");
+GUI_TOOLTIP(vasp_gui.epsilon,"EPSILON: Ch. 6.64 DEFAULT: 1\nSets the dielectric constant of the medium.");
 	VASP_ENTRY_TABLE(vasp_gui.efield,vasp_gui.calc.efield,"%.4lf","EFIELD=",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.efield,"EFIELD: Ch. 6.64 DEFAULT:  0\nApply an external electrostatic field\nin a slab, or molecule calculation.\nOnly a single component can be given\nparallel to IDIPOL direction (1-3).");
+GUI_TOOLTIP(vasp_gui.efield,"EFIELD: Ch. 6.64 DEFAULT:  0\nApply an external electrostatic field\nin a slab, or molecule calculation.\nOnly a single component can be given\nparallel to IDIPOL direction (1-3).");
 /*initialize sensitive widget*/
 	VASP_COMBOBOX_SETUP(vasp_gui.idipol,0,vasp_idipol_selected);
 if(vasp_gui.calc.idipol!=VID_0) {
@@ -3238,22 +3239,22 @@ if(vasp_gui.calc.idipol!=VID_0) {
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"10:PROCAR");
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"11:lm-PROCAR");
 	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"12:phase+lm-PROCAR");
-VASP_TOOLTIP(vasp_gui.lorbit,"LORBIT: Ch. 6.34 DEFAULT: 0\nSets the spd- and site projected\nwavefunction character of each band\nand the local partial DOS.");
+GUI_TOOLTIP(vasp_gui.lorbit,"LORBIT: Ch. 6.34 DEFAULT: 0\nSets the spd- and site projected\nwavefunction character of each band\nand the local partial DOS.");
 	VASP_ENTRY_TABLE(vasp_gui.nedos,vasp_gui.calc.nedos,"%i","NEDOS=",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.nedos,"NEDOS: Ch. 6.37 DEFAULT: 301\nNumber of points for which DOS is calculated.");
+GUI_TOOLTIP(vasp_gui.nedos,"NEDOS: Ch. 6.37 DEFAULT: 301\nNumber of points for which DOS is calculated.");
 	VASP_ENTRY_TABLE(vasp_gui.emin,vasp_gui.calc.emin,"%.2lf","EMIN=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.emin,"EMIN: Ch. 6.37 DEFAULT: low eig-eps\nSets the smallest energy for which DOS is calculated.\nDefault is lowest Kohn-Sham eigenvalue minus a small quantity.");
+GUI_TOOLTIP(vasp_gui.emin,"EMIN: Ch. 6.37 DEFAULT: low eig-eps\nSets the smallest energy for which DOS is calculated.\nDefault is lowest Kohn-Sham eigenvalue minus a small quantity.");
 	VASP_ENTRY_TABLE(vasp_gui.emax,vasp_gui.calc.emax,"%.2lf","EMAX=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.emax,"EMAX: Ch. 6.37 DEFAULT: high eig+eps\nSets the highest energy for which DOS is calculated.\nDefault is highest Kohn-Sham eigenvalue plus a small quantity.");
+GUI_TOOLTIP(vasp_gui.emax,"EMAX: Ch. 6.37 DEFAULT: high eig+eps\nSets the highest energy for which DOS is calculated.\nDefault is highest Kohn-Sham eigenvalue plus a small quantity.");
 	VASP_ENTRY_TABLE(vasp_gui.efermi,vasp_gui.calc.efermi,"%.2lf","EFERMI=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.efermi,"EFERMI: (secret) DEFAULT: EREF\nSets initial Fermi energy before it is calculated.\nUsually there is no use to change this setting.\nEREF is actually another \"secret\" parameter.");
+GUI_TOOLTIP(vasp_gui.efermi,"EFERMI: (secret) DEFAULT: EREF\nSets initial Fermi energy before it is calculated.\nUsually there is no use to change this setting.\nEREF is actually another \"secret\" parameter.");
 /* 2nd line */
 	VASP_LABEL_TABLE("(LORBIT>5) => Req. PAW",0,1,1,2);
 	VASP_CHECK_TABLE(vasp_gui.have_paw,vasp_gui.calc.have_paw,NULL,"HAVE PAW",1,2,1,2);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
+GUI_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
 	gtk_widget_set_sensitive(vasp_gui.have_paw,FALSE);/*just an indication*/
 	VASP_TEXT_TABLE(vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
-VASP_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
+GUI_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
 /* initialize */
 if(vasp_gui.calc.have_paw) VASP_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
 else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
@@ -3266,15 +3267,15 @@ else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
 	VASP_CHECK_TABLE(vasp_gui.loptics,vasp_gui.calc.loptics,NULL,"LOPTICS",0,1,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.loptics,"LOPTICS: Ch. 6.72.1 DEFAULT: FALSE\nSwitch frequency dependent dielectric matrix calculation\nover a grid determined by NEDOS.\nIt is advised to increase NEDOS & NBANDS.");
+GUI_TOOLTIP(vasp_gui.loptics,"LOPTICS: Ch. 6.72.1 DEFAULT: FALSE\nSwitch frequency dependent dielectric matrix calculation\nover a grid determined by NEDOS.\nIt is advised to increase NEDOS & NBANDS.");
 	VASP_CHECK_TABLE(vasp_gui.lepsilon,vasp_gui.calc.lepsilon,NULL,"LEPSILON",1,2,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.lepsilon,"LEPSILON: Ch. 6.72.4 DEFAULT: FALSE\nSwitch dielectric matrix calculation using\ndensity functional perturbation theory.\nConcurrent to LOPTICS, it is not recommended\nto run both at the same time.");
+GUI_TOOLTIP(vasp_gui.lepsilon,"LEPSILON: Ch. 6.72.4 DEFAULT: FALSE\nSwitch dielectric matrix calculation using\ndensity functional perturbation theory.\nConcurrent to LOPTICS, it is not recommended\nto run both at the same time.");
 	VASP_CHECK_TABLE(vasp_gui.lrpa,vasp_gui.calc.lrpa,NULL,"LRPA",2,3,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.lrpa,"LRPA: Ch. 6.72.5 DEFAULT: FALSE\nSwitch local field effects calculation\non the Hartree level only (no XC).");
+GUI_TOOLTIP(vasp_gui.lrpa,"LRPA: Ch. 6.72.5 DEFAULT: FALSE\nSwitch local field effects calculation\non the Hartree level only (no XC).");
 	VASP_CHECK_TABLE(vasp_gui.lnabla,vasp_gui.calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.lnabla,"LNABLA: Ch. 6.72.3 DEFAULT: FALSE\nSwitch to the simple transversal expressions\nof the frequency dependent dielectric matrix.\nUsually there is no use to change this setting.");
+GUI_TOOLTIP(vasp_gui.lnabla,"LNABLA: Ch. 6.72.3 DEFAULT: FALSE\nSwitch to the simple transversal expressions\nof the frequency dependent dielectric matrix.\nUsually there is no use to change this setting.");
 	VASP_ENTRY_TABLE(vasp_gui.cshift,vasp_gui.calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift \%nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
+GUI_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift \%nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
 /* --- end frame */
 
 
@@ -3303,15 +3304,15 @@ VASP_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex 
 	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"7:Perturbation Theory");
 	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"8:Pert. Theory with SYM");
 	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"44:Transition State");
-VASP_TOOLTIP(vasp_gui.ibrion,"IBRION: Ch. 6.22 DEFAULT -1\nSets the algorithm for the ions motion.\nDefault is IBRION=0 if NSW>1.");
+GUI_TOOLTIP(vasp_gui.ibrion,"IBRION: Ch. 6.22 DEFAULT -1\nSets the algorithm for the ions motion.\nDefault is IBRION=0 if NSW>1.");
 	VASP_ENTRY_TABLE(vasp_gui.nsw,vasp_gui.calc.nsw,"%i","NSW=",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.nsw,"NSW: Ch. 6.20 DEFAULT 0\nSet the maximum number of ionic steps.");
+GUI_TOOLTIP(vasp_gui.nsw,"NSW: Ch. 6.20 DEFAULT 0\nSet the maximum number of ionic steps.");
 	VASP_ENTRY_TABLE(vasp_gui.ediffg,vasp_gui.calc.ediffg,"%.2E","EDIFFG=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.ediffg,"EDIFFG: Ch. 6.19 DEFAULT EDIFF*10\nSets the energy criterion for ending ionic relaxation\n>0 value are for energy difference (eV)\n<0 values are for absolute forces value (eV/Ang).");
+GUI_TOOLTIP(vasp_gui.ediffg,"EDIFFG: Ch. 6.19 DEFAULT EDIFF*10\nSets the energy criterion for ending ionic relaxation\n>0 value are for energy difference (eV)\n<0 values are for absolute forces value (eV/Ang).");
 	VASP_ENTRY_TABLE(vasp_gui.potim,vasp_gui.calc.potim,"%.4lf","POTIM=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.potim,"POTIM: Ch. 6.23 DEFAULT 0.5\nFor IBRION=0 (MD) sets time step (fs)\nfor IBRION=1-3 sets force scaling constant.");
+GUI_TOOLTIP(vasp_gui.potim,"POTIM: Ch. 6.23 DEFAULT 0.5\nFor IBRION=0 (MD) sets time step (fs)\nfor IBRION=1-3 sets force scaling constant.");
 	VASP_ENTRY_TABLE(vasp_gui.pstress,vasp_gui.calc.pstress,"%.4lf","PSTRESS=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.pstress,"PSTRESS: Ch. 6.25 DEFAULT 0\nSets the Pulay stress correction (kBar)\nalso used to set an external pressure.");
+GUI_TOOLTIP(vasp_gui.pstress,"PSTRESS: Ch. 6.25 DEFAULT 0\nSets the Pulay stress correction (kBar)\nalso used to set an external pressure.");
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.isif,"ISIF=",0,1,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.isif,"0:F_0_I_0_0");
@@ -3322,15 +3323,15 @@ VASP_TOOLTIP(vasp_gui.pstress,"PSTRESS: Ch. 6.25 DEFAULT 0\nSets the Pulay stres
 	VASP_COMBOBOX_ADD(vasp_gui.isif,"5:F_S_0_S_0");
 	VASP_COMBOBOX_ADD(vasp_gui.isif,"6:F_S_0_S_V");
 	VASP_COMBOBOX_ADD(vasp_gui.isif,"7:F_S_0_0_V");
-VASP_TOOLTIP(vasp_gui.isif,"ISIF: Ch. 6.24 DEFAULT 2\nSwitch to calculate F(force) and S(stress)\nand to relax I(ion) S(cell shape) and V(cell voume)\n0 = no calcul/no relaxation P = only total Pressure\nDefault is 0(F_0_I_0_0) if IBRION=0.");
+GUI_TOOLTIP(vasp_gui.isif,"ISIF: Ch. 6.24 DEFAULT 2\nSwitch to calculate F(force) and S(stress)\nand to relax I(ion) S(cell shape) and V(cell voume)\n0 = no calcul/no relaxation P = only total Pressure\nDefault is 0(F_0_I_0_0) if IBRION=0.");
 	VASP_CHECK_TABLE(vasp_gui.relax_ions,vasp_gui.rions,isif_toggle,"atom positions",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.relax_ions,"Switches atomic relaxation.\nUpdates ISIF accordingly (but not IBRION).");
+GUI_TOOLTIP(vasp_gui.relax_ions,"Switches atomic relaxation.\nUpdates ISIF accordingly (but not IBRION).");
 	VASP_CHECK_TABLE(vasp_gui.relax_shape,vasp_gui.rshape,isif_toggle,"cell shape",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.relax_ions,"Switches cell shape relaxation.\nUpdates ISIF accordingly (but not IBRION).");
+GUI_TOOLTIP(vasp_gui.relax_ions,"Switches cell shape relaxation.\nUpdates ISIF accordingly (but not IBRION).");
 	VASP_CHECK_TABLE(vasp_gui.relax_volume,vasp_gui.rvolume,isif_toggle,"cell volume",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.relax_ions,"Switches cell volume relaxation.\nUpdates ISIF accordingly (but not IBRION).");
+GUI_TOOLTIP(vasp_gui.relax_ions,"Switches cell volume relaxation.\nUpdates ISIF accordingly (but not IBRION).");
 	VASP_ENTRY_TABLE(vasp_gui.nfree,vasp_gui.calc.nfree,"%i","NFREE=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ionic steps kept in history\nfor IBRION=1 Quasi-Newton algorithm.\nFor finite difference IBRION=5-6 NFREE\nsets the number of displacement/direction/atom.");
+GUI_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ionic steps kept in history\nfor IBRION=1 Quasi-Newton algorithm.\nFor finite difference IBRION=5-6 NFREE\nsets the number of displacement/direction/atom.");
 /* initialize */
 	VASP_COMBOBOX_SETUP(vasp_gui.ibrion,0,vasp_ibrion_selected);
 	VASP_COMBOBOX_SETUP(vasp_gui.isif,0,vasp_isif_selected);
@@ -3346,22 +3347,22 @@ VASP_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ioni
 	label = gtk_label_new("SET IBRION=0 FOR MD");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
 	VASP_ENTRY_TABLE(vasp_gui.tebeg,vasp_gui.calc.tebeg,"%.1lf","TEBEG=",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.tebeg,"TEBEG: Ch. 6.29 DEFAULT: 0\nSets the start temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
+GUI_TOOLTIP(vasp_gui.tebeg,"TEBEG: Ch. 6.29 DEFAULT: 0\nSets the start temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
 	VASP_ENTRY_TABLE(vasp_gui.teend,vasp_gui.calc.teend,"%.1lf","TEEND=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.teend,"TEEND: Ch. 6.29 DEFAULT: TEBEG\nSets the end temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
+GUI_TOOLTIP(vasp_gui.teend,"TEEND: Ch. 6.29 DEFAULT: TEBEG\nSets the end temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
 	VASP_ENTRY_TABLE(vasp_gui.smass,vasp_gui.calc.smass,"%.1lf","SMASS=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.smass,"SMASS: Ch. 6.30 DEFAULT 0\nControls the velocities during MD.\nFor IBRION=3 SMASS is used as a damping factor.");
+GUI_TOOLTIP(vasp_gui.smass,"SMASS: Ch. 6.30 DEFAULT 0\nControls the velocities during MD.\nFor IBRION=3 SMASS is used as a damping factor.");
 	/*empty: col4*/
 /* 2nd line */
 	/*occ: col0*/
 	VASP_ENTRY_TABLE(vasp_gui.nblock,vasp_gui.calc.nblock,"%i","NBLOCK=",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.nblock,"NBLOCK: Ch. 6.21 DEFAULT: 1\nSets number of steps after which DOS/pair correlation\nfunction are calculated, and XDATCAR updated.\nFor SMASS=-1 kinetic energy is scaled every NBLOCK.");
+GUI_TOOLTIP(vasp_gui.nblock,"NBLOCK: Ch. 6.21 DEFAULT: 1\nSets number of steps after which DOS/pair correlation\nfunction are calculated, and XDATCAR updated.\nFor SMASS=-1 kinetic energy is scaled every NBLOCK.");
 	VASP_ENTRY_TABLE(vasp_gui.kblock,vasp_gui.calc.kblock,"%i","KBLOCK=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.kblock,"KBLOCK: Ch. 6.21 DEFAULT: NSW\nAfter KBLOCK*NBLOCK iterations DOS and\naverage pair correlation function is written\nto DOSCAR and PCDAT, respectively.");
+GUI_TOOLTIP(vasp_gui.kblock,"KBLOCK: Ch. 6.21 DEFAULT: NSW\nAfter KBLOCK*NBLOCK iterations DOS and\naverage pair correlation function is written\nto DOSCAR and PCDAT, respectively.");
 	VASP_ENTRY_TABLE(vasp_gui.npaco,vasp_gui.calc.npaco,"%i","NPACO=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.npaco,"NPACO Ch. 6.31 DEFAULT: 256\nNumber of slots of pair correlation function.");
+GUI_TOOLTIP(vasp_gui.npaco,"NPACO Ch. 6.31 DEFAULT: 256\nNumber of slots of pair correlation function.");
 	VASP_ENTRY_TABLE(vasp_gui.apaco,vasp_gui.calc.apaco,"%.4lf","APACO=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for calculation\nof pair correlation function.");
+GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for calculation\nof pair correlation function.");
 /* initialize sensitive widget*/	
 	if (vasp_gui.calc.ibrion==0) {/*selecting MD enable molecular dynamics settings*/
 		gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
@@ -3392,52 +3393,52 @@ VASP_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for
 	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FIXED");
 	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FREE");
 	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"Manual selection");
-VASP_TOOLTIP(vasp_gui.poscar_free,"Set position tags to \"F F F\" (FIXED)\n\"T T T\" (FREE) or user modifications.");
+GUI_TOOLTIP(vasp_gui.poscar_free,"Set position tags to \"F F F\" (FIXED)\n\"T T T\" (FREE) or user modifications.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.poscar_sd,toggle_poscar_sd,"Sel. Dynamics",1,2,0,1);
-VASP_TOOLTIP(button,"Allow use of tags for ion motion (Ch. 5.7).");
+GUI_TOOLTIP(button,"Allow use of tags for ion motion (Ch. 5.7).");
 	VASP_ENTRY_TABLE(vasp_gui.isym,vasp_gui.calc.isym,"%i","ISYM=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.isym,"ISYM: Ch. 6.27 DEFAULT 2\nSwitch symmetry method (0=OFF)\nDefault is 1 for ultrasoft, 2 for PAW PP.");
+GUI_TOOLTIP(vasp_gui.isym,"ISYM: Ch. 6.27 DEFAULT 2\nSwitch symmetry method (0=OFF)\nDefault is 1 for ultrasoft, 2 for PAW PP.");
 	VASP_ENTRY_TABLE(vasp_gui.sym_prec,vasp_gui.calc.sym_prec,"%.2lE","_PREC=",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.sym_prec,"SYMPREC: Ch. 6.27 DEFAULT 10^-5\nSets the accuracy of ion positions\nin determining the system symmetry.");
+GUI_TOOLTIP(vasp_gui.sym_prec,"SYMPREC: Ch. 6.27 DEFAULT 10^-5\nSets the accuracy of ion positions\nin determining the system symmetry.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_a0,vasp_gui.calc.poscar_a0,"%.4lf","A0=",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.poscar_a0,"Lattice parameter (Ch. 5.7)\nSets the lattice constant (Ang.) parameter\nevery lattice vector will be scaled with.");
+GUI_TOOLTIP(vasp_gui.poscar_a0,"Lattice parameter (Ch. 5.7)\nSets the lattice constant (Ang.) parameter\nevery lattice vector will be scaled with.");
 /* 2nd line */
 	/*empty: col0 (TODO: SUPERCELL)*/
 	VASP_CHECK_TABLE(vasp_gui.poscar_direct,vasp_gui.calc.poscar_direct,toggle_poscar_direct,"Direct Coord.",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.poscar_direct,"Sets whether ions positions are given\nin direct lattice or cartesian coordinate.");
+GUI_TOOLTIP(vasp_gui.poscar_direct,"Sets whether ions positions are given\nin direct lattice or cartesian coordinate.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_ux,vasp_gui.calc.poscar_ux,"%.4lf","UX=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.poscar_ux,"First lattice vector x component.");
+GUI_TOOLTIP(vasp_gui.poscar_ux,"First lattice vector x component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_uy,vasp_gui.calc.poscar_uy,"%.4lf","UY=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.poscar_uy,"First lattice vector y component.");
+GUI_TOOLTIP(vasp_gui.poscar_uy,"First lattice vector y component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_uz,vasp_gui.calc.poscar_uz,"%.4lf","UZ=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.poscar_uz,"First lattice vector z component.");
+GUI_TOOLTIP(vasp_gui.poscar_uz,"First lattice vector z component.");
 /* 3rd line */
 	/*empty: col0 (TODO: -X)*/
 	/*empty: col1 (TODO: +X)*/
 	VASP_ENTRY_TABLE(vasp_gui.poscar_vx,vasp_gui.calc.poscar_vx,"%.4lf","VX=",2,3,2,3);
-VASP_TOOLTIP(vasp_gui.poscar_vx,"Second lattice vector x component.");
+GUI_TOOLTIP(vasp_gui.poscar_vx,"Second lattice vector x component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_vy,vasp_gui.calc.poscar_vy,"%.4lf","VY=",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.poscar_vy,"Second lattice vector y component.");
+GUI_TOOLTIP(vasp_gui.poscar_vy,"Second lattice vector y component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_vz,vasp_gui.calc.poscar_vz,"%.4lf","VZ=",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.poscar_vz,"Second lattice vector z component.");
+GUI_TOOLTIP(vasp_gui.poscar_vz,"Second lattice vector z component.");
 /* 4th line */
 	/*empty: col0 (TODO: -Y)*/
 	/*empty: col1 (TODO: +Y)*/
 	VASP_ENTRY_TABLE(vasp_gui.poscar_wx,vasp_gui.calc.poscar_wx,"%.4lf","WX=",2,3,3,4);
-VASP_TOOLTIP(vasp_gui.poscar_wx,"Third lattice vector x component.");
+GUI_TOOLTIP(vasp_gui.poscar_wx,"Third lattice vector x component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_wy,vasp_gui.calc.poscar_wy,"%.4lf","WY=",3,4,3,4);
-VASP_TOOLTIP(vasp_gui.poscar_wy,"Third lattice vector y component.");
+GUI_TOOLTIP(vasp_gui.poscar_wy,"Third lattice vector y component.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_wz,vasp_gui.calc.poscar_wz,"%.4lf","WZ=",4,5,3,4);
-VASP_TOOLTIP(vasp_gui.poscar_wz,"Third lattice vector z component.");
+GUI_TOOLTIP(vasp_gui.poscar_wz,"Third lattice vector z component.");
 /* 5th line */
 	/*empty: col0 (TODO: -Z)*/
 	/*empty: col1 (TODO: +Z)*/
 	VASP_CHECK_TABLE(vasp_gui.poscar_tx,vasp_gui.calc.poscar_tx,NULL,"TX",2,3,4,5);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin first lattice coordinate.");
+GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin first lattice coordinate.");
 	VASP_CHECK_TABLE(vasp_gui.poscar_ty,vasp_gui.calc.poscar_ty,NULL,"TY",3,4,4,5);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin second lattice coordinate.");
+GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin second lattice coordinate.");
 	VASP_CHECK_TABLE(vasp_gui.poscar_tz,vasp_gui.calc.poscar_tz,NULL,"TZ",4,5,4,5);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin third lattice coordinate.");
+GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin third lattice coordinate.");
 /* 6th line */
         /*this combo is special and should be explicitely defined*/
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -3466,7 +3467,7 @@ vasp_gui.calc.atoms_total=idx;
 	gtk_box_pack_start(GTK_BOX(hbox),vasp_gui.poscar_atoms,TRUE,TRUE,0);
         gtk_table_attach_defaults(GTK_TABLE(table),hbox,0,4,5,6);
         g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),"changed",GTK_SIGNAL_FUNC(vasp_poscar_atoms_selected),data);
-VASP_TOOLTIP(vasp_gui.poscar_atoms,"Atoms positions in POSCAR format.");
+GUI_TOOLTIP(vasp_gui.poscar_atoms,"Atoms positions in POSCAR format.");
 	/*2 buttons*/
 	hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
@@ -3476,15 +3477,15 @@ VASP_TOOLTIP(vasp_gui.poscar_atoms,"Atoms positions in POSCAR format.");
 /* 7th line */
 	VASP_ENTRY_TABLE(vasp_gui.poscar_index,vasp_gui.calc.poscar_index,"%i","INDEX:",0,1,6,7);
 	gtk_widget_set_sensitive(vasp_gui.poscar_index,FALSE);/*<- is changed only by selecting poscar_atoms*/
-VASP_TOOLTIP(vasp_gui.poscar_index,"Atom number (in POSCAR ORDER).");
+GUI_TOOLTIP(vasp_gui.poscar_index,"Atom number (in POSCAR ORDER).");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_symbol,vasp_gui.calc.poscar_symbol,"%s","SYMBOL:",1,2,6,7);
-VASP_TOOLTIP(vasp_gui.poscar_index,"Atom symbol (will correspond to POSCAR).\nChanging symbol will change index accordingly.");
+GUI_TOOLTIP(vasp_gui.poscar_index,"Atom symbol (will correspond to POSCAR).\nChanging symbol will change index accordingly.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_x,vasp_gui.calc.poscar_x,"%.6lf","X=",2,3,6,7);
-VASP_TOOLTIP(vasp_gui.poscar_x,"atom component X: x in cartesian mode\nand first lattice coordinate in direct mode.");
+GUI_TOOLTIP(vasp_gui.poscar_x,"atom component X: x in cartesian mode\nand first lattice coordinate in direct mode.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_y,vasp_gui.calc.poscar_y,"%.6lf","Y=",3,4,6,7);
-VASP_TOOLTIP(vasp_gui.poscar_y,"atom component Y: y in cartesian mode\nand second lattice coordinate in direct mode.");
+GUI_TOOLTIP(vasp_gui.poscar_y,"atom component Y: y in cartesian mode\nand second lattice coordinate in direct mode.");
 	VASP_ENTRY_TABLE(vasp_gui.poscar_z,vasp_gui.calc.poscar_z,"%.6lf","Z=",4,5,6,7);
-VASP_TOOLTIP(vasp_gui.poscar_z,"atom component Z: z in cartesian mode\nand third lattice coordinate in direct mode.");
+GUI_TOOLTIP(vasp_gui.poscar_z,"atom component Z: z in cartesian mode\nand third lattice coordinate in direct mode.");
 /* initialize sensitive widget*/
 	VASP_COMBOBOX_SETUP(vasp_gui.poscar_free,1,vasp_poscar_free_selected);
 if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)){
@@ -3521,11 +3522,11 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.ismear_3,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
-VASP_TOOLTIP(vasp_gui.ismear_3,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
+GUI_TOOLTIP(vasp_gui.ismear_3,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
 	VASP_CHECK_TABLE(vasp_gui.kgamma_3,vasp_gui.calc.kgamma,NULL,"KGAMMA",1,2,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.kgamma_3,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
+GUI_TOOLTIP(vasp_gui.kgamma_3,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
 	VASP_ENTRY_TABLE(vasp_gui.kspacing_3,vasp_gui.calc.kspacing,"%.4f","KSPACING=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
+GUI_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
 	/*empty: col3*/
 	/*empty: col4*/
 /* --- end frame */
@@ -3543,26 +3544,26 @@ VASP_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS f
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Gamma (M&P)");
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Monkhorst-Pack classic");
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Basis set definition");
-VASP_TOOLTIP(vasp_gui.kpoints_mode,"Sets how the k-points are generated/entered as defined in Ch. 5.5.");
+GUI_TOOLTIP(vasp_gui.kpoints_mode,"Sets how the k-points are generated/entered as defined in Ch. 5.5.");
 	VASP_CHECK_TABLE(vasp_gui.kpoints_cart,vasp_gui.calc.kpoints_cart,NULL,"Cartesian",1,2,0,1);/*not calling anything*/
-VASP_TOOLTIP(vasp_gui.kpoints_cart,"Switch cartesian/reciprocal lattice coordinate mode.");
+GUI_TOOLTIP(vasp_gui.kpoints_cart,"Switch cartesian/reciprocal lattice coordinate mode.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx,NULL,"KX",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.kpoints_kx,"Grid size for automated generation\n1st component only for M&P.");
+GUI_TOOLTIP(vasp_gui.kpoints_kx,"Grid size for automated generation\n1st component only for M&P.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky,NULL,"KY",3,4,0,1);
-VASP_TOOLTIP(vasp_gui.kpoints_ky,"2nd Component of the M&P grid size.");
+GUI_TOOLTIP(vasp_gui.kpoints_ky,"2nd Component of the M&P grid size.");
 	VASP_SPIN_TABLE(vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz,NULL,"KZ",4,5,0,1);
-VASP_TOOLTIP(vasp_gui.kpoints_kz,"3rd Component of the M&P grid size.");
+GUI_TOOLTIP(vasp_gui.kpoints_kz,"3rd Component of the M&P grid size.");
 /* 2nd line */
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_nkpts,vasp_gui.calc.kpoints_nkpts,"%i","NKPTS=",0,1,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_nkpts,"Total number of k-points (0 for automated methods).");
+GUI_TOOLTIP(vasp_gui.kpoints_nkpts,"Total number of k-points (0 for automated methods).");
 	VASP_CHECK_TABLE(vasp_gui.have_tetra,vasp_gui.calc.kpoints_tetra,toogle_tetra,"Tetrahedron",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.have_tetra,"Switch on the tetrahedron method for entering k-points.\nISMEAR must be set to -5 for this method!");
+GUI_TOOLTIP(vasp_gui.have_tetra,"Switch on the tetrahedron method for entering k-points.\nISMEAR must be set to -5 for this method!");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sx,vasp_gui.calc.kpoints_sx,"%.4lf","SX=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_sx,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 1st reciprocal lattice component.");
+GUI_TOOLTIP(vasp_gui.kpoints_sx,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 1st reciprocal lattice component.");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sy,vasp_gui.calc.kpoints_sy,"%.4lf","SY=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_sy,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 2nd reciprocal lattice component.");
+GUI_TOOLTIP(vasp_gui.kpoints_sy,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 2nd reciprocal lattice component.");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_sz,vasp_gui.calc.kpoints_sz,"%.4lf","SZ=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 3rd reciprocal lattice component.");
+GUI_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 3rd reciprocal lattice component.");
 /* --- end frame */
 /* --- Coordinate */
         vasp_gui.kpoints_coord = gtk_frame_new("Coordinate");
@@ -3573,7 +3574,7 @@ VASP_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nT
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
-VASP_TOOLTIP(vasp_gui.kpoints_kpts,"List of the k-points coordinates.\nThe index after comment sign \"! kpoint:\" can be used\nfor entering tetrahedron edge definition.");
+GUI_TOOLTIP(vasp_gui.kpoints_kpts,"List of the k-points coordinates.\nThe index after comment sign \"! kpoint:\" can be used\nfor entering tetrahedron edge definition.");
         /*2 buttons*/
         hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
@@ -3583,15 +3584,15 @@ VASP_TOOLTIP(vasp_gui.kpoints_kpts,"List of the k-points coordinates.\nThe index
 /* 2nd line */
         VASP_ENTRY_TABLE(vasp_gui.kpoints_i,vasp_gui.calc.kpoints_i,"%i","INDEX:",0,1,1,2);
         gtk_widget_set_sensitive(vasp_gui.kpoints_i,FALSE);/*<- is changed only by selecting kpoints_kpts*/
-VASP_TOOLTIP(vasp_gui.kpoints_i,"The index of current k-point.\n(can be changed by deletion/addition only)");
+GUI_TOOLTIP(vasp_gui.kpoints_i,"The index of current k-point.\n(can be changed by deletion/addition only)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_x,vasp_gui.calc.kpoints_x,"%.4lf","X=",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_x,"Coordinate of k-point in 1st component of selected mode.\n(cartesian or reciprocal)");
+GUI_TOOLTIP(vasp_gui.kpoints_x,"Coordinate of k-point in 1st component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_y,vasp_gui.calc.kpoints_y,"%.4lf","Y=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_y,"Coordinate of k-point in 2nd component of selected mode.\n(cartesian or reciprocal)");
+GUI_TOOLTIP(vasp_gui.kpoints_y,"Coordinate of k-point in 2nd component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_z,vasp_gui.calc.kpoints_z,"%.4lf","Z=",3,4,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_z,"Coordinate of k-point in 3rd component of selected mode.\n(cartesian or reciprocal)");
+GUI_TOOLTIP(vasp_gui.kpoints_z,"Coordinate of k-point in 3rd component of selected mode.\n(cartesian or reciprocal)");
 	VASP_ENTRY_TABLE(vasp_gui.kpoints_w,vasp_gui.calc.kpoints_w,"%.4lf","W=",4,5,1,2);
-VASP_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of all weight does not have to be 1\nbut relative ratio should be respected.");
+GUI_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of all weight does not have to be 1\nbut relative ratio should be respected.");
 /* --- end frame */
 /* --- Tetrahedron */
         vasp_gui.kpoints_tetra = gtk_frame_new("Tetrahedron");
@@ -3601,17 +3602,17 @@ VASP_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum o
         gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_tetra), table);
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.tetra_total,vasp_gui.calc.tetra_total,"%i","TOTAL=",0,1,0,1);
-VASP_TOOLTIP(vasp_gui.tetra_total,"Total number of tetrahedrons.");
+GUI_TOOLTIP(vasp_gui.tetra_total,"Total number of tetrahedrons.");
 	label = gtk_label_new("EXACT VOLUME:");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
 	VASP_ENTRY_TABLE(vasp_gui.tetra_volume,vasp_gui.calc.tetra_volume,"%.6lf","V=",2,3,0,1);
-VASP_TOOLTIP(vasp_gui.tetra_volume,"Volume weight for a single tetrahedron.\nAll have a volume defined by the ratio of\ntetrahedron volume / Brillouin zone Volume.");
+GUI_TOOLTIP(vasp_gui.tetra_volume,"Volume weight for a single tetrahedron.\nAll have a volume defined by the ratio of\ntetrahedron volume / Brillouin zone Volume.");
 	label = gtk_label_new("for (A,B,C,D) tetrahedron");
 	gtk_table_attach_defaults(GTK_TABLE(table),label,3,6,0,1);
 /* 2nd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.tetra,"TETRAHEDRON:",0,5,1,2);
 	VASP_COMBOBOX_ADD(vasp_gui.tetra,"ADD tetrahedron");
-VASP_TOOLTIP(vasp_gui.tetra,"Tetrahedron list, consisting of\nsymmetry degeneration weight followed by\nfour corner points of each tetrahedron\nin k-point indices given above.");
+GUI_TOOLTIP(vasp_gui.tetra,"Tetrahedron list, consisting of\nsymmetry degeneration weight followed by\nfour corner points of each tetrahedron\nin k-point indices given above.");
 	/*2 buttons*/
 	hbox = gtk_hbox_new(FALSE, 0);
 	VASP_NEW_SEPARATOR();
@@ -3621,17 +3622,17 @@ VASP_TOOLTIP(vasp_gui.tetra,"Tetrahedron list, consisting of\nsymmetry degenerat
 /* 3rd line */
 	VASP_ENTRY_TABLE(vasp_gui.tetra_i,vasp_gui.calc.tetra_i,"%i","INDEX:",0,1,2,3);
 	gtk_widget_set_sensitive(vasp_gui.tetra_i,FALSE);/*<- is changed only by selecting tetra*/
-VASP_TOOLTIP(vasp_gui.tetra_i,"The index of current tetrahedron.\n(can be changed by deletion/addition only)");
+GUI_TOOLTIP(vasp_gui.tetra_i,"The index of current tetrahedron.\n(can be changed by deletion/addition only)");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_w,vasp_gui.calc.tetra_w,"%.4lf","Degen. W=",1,2,2,3);
-VASP_TOOLTIP(vasp_gui.tetra_w,"Symmetry degeneration weight.\nUnlike k-points, weight must be normalized\nie. total Brillouin zone Volume should be recovered\nby summing all degeneration * V");
+GUI_TOOLTIP(vasp_gui.tetra_w,"Symmetry degeneration weight.\nUnlike k-points, weight must be normalized\nie. total Brillouin zone Volume should be recovered\nby summing all degeneration * V");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_a,vasp_gui.calc.tetra_a,"%i","PtA:",2,3,2,3);
-VASP_TOOLTIP(vasp_gui.tetra_a,"1st corner of the tetrahedron (A) in k-point index.");
+GUI_TOOLTIP(vasp_gui.tetra_a,"1st corner of the tetrahedron (A) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_b,vasp_gui.calc.tetra_b,"%i","PtB:",3,4,2,3);
-VASP_TOOLTIP(vasp_gui.tetra_b,"2nd corner of the tetrahedron (B) in k-point index.");
+GUI_TOOLTIP(vasp_gui.tetra_b,"2nd corner of the tetrahedron (B) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_c,vasp_gui.calc.tetra_c,"%i","PtC:",4,5,2,3);
-VASP_TOOLTIP(vasp_gui.tetra_c,"3rd corner of the tetrahedron (C) in k-point index.");
+GUI_TOOLTIP(vasp_gui.tetra_c,"3rd corner of the tetrahedron (C) in k-point index.");
 	VASP_ENTRY_TABLE(vasp_gui.tetra_d,vasp_gui.calc.tetra_d,"%i","PtD:",5,6,2,3);
-VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index.");
+GUI_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index.");
 /* initialize */
         g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear_3)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
         g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing_3)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
@@ -3657,7 +3658,7 @@ VASP_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point inde
 /* 1st line */
 	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
 	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
-VASP_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetected in the POSCAR ionic information.");
+GUI_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetected in the POSCAR ionic information.");
 /* 2nd line */
 	label = gtk_label_new("(each species will require a separate POTCAR information)");
         gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
@@ -3675,19 +3676,19 @@ VASP_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndete
 	vasp_gui.potcar_select_file = add_radio_button("Use POTCAR file",(gpointer)toggle_potcar_file,NULL);
 	vasp_gui.potcar_select_folder = add_radio_button("Use POTCAR path",(gpointer)toggle_potcar_folder,NULL);
 	gtk_table_attach_defaults(GTK_TABLE(table),vbox,0,1,0,2);
-VASP_TOOLTIP(vasp_gui.potcar_select_file,"Load a previously prepared POTCAR file.\nThe species (and species order) should match\nEXACTLY those of the POSCAR ion information.");
-VASP_TOOLTIP(vasp_gui.potcar_select_folder,"Use the directory where all POTCAR information are available.\nUsually a directory containing atomic symbols sub-directories.");
+GUI_TOOLTIP(vasp_gui.potcar_select_file,"Load a previously prepared POTCAR file.\nThe species (and species order) should match\nEXACTLY those of the POSCAR ion information.");
+GUI_TOOLTIP(vasp_gui.potcar_select_folder,"Use the directory where all POTCAR information are available.\nUsually a directory containing atomic symbols sub-directories.");
 	VASP_TEXT_TABLE(vasp_gui.potcar_file,vasp_gui.calc.potcar_file,"FILE:",1,3,0,1);
 	VASP_BUTTON_TABLE(vasp_gui.potcar_file_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,0,1);
-VASP_TOOLTIP(vasp_gui.potcar_file,"POTCAR file, including its full path.");
+GUI_TOOLTIP(vasp_gui.potcar_file,"POTCAR file, including its full path.");
 /* 2nd line */
 	VASP_TEXT_TABLE(vasp_gui.potcar_folder,vasp_gui.calc.potcar_folder,"PATH:",1,3,1,2);
 	VASP_BUTTON_TABLE(vasp_gui.potcar_folder_button,GTK_STOCK_OPEN,load_potcar_folder_dialog,3,4,1,2);
-VASP_TOOLTIP(vasp_gui.potcar_folder,"Full PATH to the POTCAR sub-directories.");
+GUI_TOOLTIP(vasp_gui.potcar_folder,"Full PATH to the POTCAR sub-directories.");
 /* 3rd line */
 	VASP_COMBOBOX_TABLE(vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
 	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,apply_species_flavor,3,4,2,3);
-VASP_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a choice\nbetween different pseudopotential setting (flavors) exists\nEx: _h hard, _s soft _pv include pseudo-core valence, etc.");
+GUI_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a choice\nbetween different pseudopotential setting (flavors) exists\nEx: _h hard, _s soft _pv include pseudo-core valence, etc.");
 /* initialize */
 	toggle_potcar_file(NULL,NULL);
 /* --- end frame */
@@ -3702,12 +3703,12 @@ VASP_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a
         label = gtk_label_new("DETECTED");
         gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
 	VASP_TEXT_TABLE(vasp_gui.potcar_species,vasp_gui.calc.potcar_species,"SPECIES:",1,2,0,1);
-VASP_TOOLTIP(vasp_gui.potcar_species,"List of atomic symbol of the species\ndetected from the POTCAR setting.");
+GUI_TOOLTIP(vasp_gui.potcar_species,"List of atomic symbol of the species\ndetected from the POTCAR setting.");
 	gtk_widget_set_sensitive(vasp_gui.potcar_species,FALSE);
 /* 2nd line */
 	/*occ: col0*/
 	VASP_TEXT_TABLE(vasp_gui.potcar_species_flavor,vasp_gui.calc.potcar_species_flavor,"FLAVOR:",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors (PATH method)\ndetected from the POTCAR setting.");
+GUI_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors (PATH method)\ndetected from the POTCAR setting.");
 	gtk_widget_set_sensitive(vasp_gui.potcar_species_flavor,FALSE);
 
 /*----------------*/
@@ -3725,25 +3726,25 @@ VASP_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors
 /* 1st line */
 	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
-VASP_TOOLTIP(vasp_gui.job_vasp_exe,"Location (full path) of the vasp executable.");
+GUI_TOOLTIP(vasp_gui.job_vasp_exe,"Location (full path) of the vasp executable.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_vasp_exe_dialog,5,6,0,1);
 /* 2nd line */
 	VASP_LABEL_TABLE("CALCUL PATH:",0,1,1,2);
 	VASP_TEXT_TABLE(vasp_gui.job_path,vasp_gui.calc.job_path,"PATH=",1,5,1,2);
-VASP_TOOLTIP(vasp_gui.job_path,"Location (full path) of the calculation directory.\nit is IMPORTANT to check this parameter so that\n* no other calculation is overwritten\n* calculation will not start in an unexpected directory.");
+GUI_TOOLTIP(vasp_gui.job_path,"Location (full path) of the calculation directory.\nit is IMPORTANT to check this parameter so that\n* no other calculation is overwritten\n* calculation will not start in an unexpected directory.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_path_dialog,5,6,1,2);
 /* 3rd line */
 	VASP_LABEL_TABLE("OUTPUT:",0,1,2,3);
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lwave,NULL,"LWAVE",1,2,2,3);/*not calling anything*/
-VASP_TOOLTIP(button,"LWAVE: Ch. 6.52 DEFAULT: TRUE\nIf set the WAVECAR (wavefunctions) file is written.");
+GUI_TOOLTIP(button,"LWAVE: Ch. 6.52 DEFAULT: TRUE\nIf set the WAVECAR (wavefunctions) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lcharg,NULL,"LCHARG",2,3,2,3);/*not calling anything*/
-VASP_TOOLTIP(button,"LCHARG: Ch. 6.52 DEFAULT: TRUE\nIf set the CHGCAR (charge density) file is written.");
+GUI_TOOLTIP(button,"LCHARG: Ch. 6.52 DEFAULT: TRUE\nIf set the CHGCAR (charge density) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lvtot,NULL,"LVTOT",3,4,2,3);/*not calling anything*/
-VASP_TOOLTIP(button,"LVTOT: Ch. 6.53 DEFAULT: FALSE\nIf set the LOCPOT (local potential) file is written.");
+GUI_TOOLTIP(button,"LVTOT: Ch. 6.53 DEFAULT: FALSE\nIf set the LOCPOT (local potential) file is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lvhar,NULL,"LVHAR",4,5,2,3);/*not calling anything*/
-VASP_TOOLTIP(button,"LVHAR: Ch. 6.54 DEFAULT: FALSE\nIf set the full local potential is written to LOCPOT\n(ie. ionic+Hartree+XC) otherwise only electrostatic\n(ie. ionic+Hartree) is written.");
+GUI_TOOLTIP(button,"LVHAR: Ch. 6.54 DEFAULT: FALSE\nIf set the full local potential is written to LOCPOT\n(ie. ionic+Hartree+XC) otherwise only electrostatic\n(ie. ionic+Hartree) is written.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lelf,NULL,"LELF",5,6,2,3);/*not calling anything*/
-VASP_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron localization function)\nfile is written.");
+GUI_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron localization function)\nfile is written.");
 /* --- end frame */
 /* --- PARALLEL */
         frame = gtk_frame_new("Parallel Optimization");
@@ -3754,21 +3755,21 @@ VASP_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron l
 /* 1st line */
 	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
-VASP_TOOLTIP(vasp_gui.job_mpirun,"Location (full path) of mpirun executable.\nRequired for parallel calculation only.");
+GUI_TOOLTIP(vasp_gui.job_mpirun,"Location (full path) of mpirun executable.\nRequired for parallel calculation only.");
 	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_mpirun_dialog,5,6,0,1);
 /* 2nd line */
 	VASP_SPIN_TABLE(vasp_gui.job_nproc,vasp_gui.calc.job_nproc,parallel_eq,"NP=",0,1,1,2);
-VASP_TOOLTIP(vasp_gui.job_nproc,"Total number of CPU used for calculation.\nwill be used as N in \"mpirun -np N vasp\"\nto start vasp calculation.");
+GUI_TOOLTIP(vasp_gui.job_nproc,"Total number of CPU used for calculation.\nwill be used as N in \"mpirun -np N vasp\"\nto start vasp calculation.");
 	VASP_SPIN_TABLE(vasp_gui.ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",1,2,1,2);
-VASP_TOOLTIP(vasp_gui.ncore,"NCORE: Ch. 6.57 DEFAULT: 1\nSets how many cores works on one orbital.\nNote that NCORE is limited by KPAR.");
+GUI_TOOLTIP(vasp_gui.ncore,"NCORE: Ch. 6.57 DEFAULT: 1\nSets how many cores works on one orbital.\nNote that NCORE is limited by KPAR.");
 	VASP_SPIN_TABLE(vasp_gui.kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",2,3,1,2);
-VASP_TOOLTIP(vasp_gui.kpar,"KPAR: Ch. 6.57 DEFAULT: 1\nSets the number of k-points treated in parallel.\nEach k-point is worked on by NCORE CPUs.");
+GUI_TOOLTIP(vasp_gui.kpar,"KPAR: Ch. 6.57 DEFAULT: 1\nSets the number of k-points treated in parallel.\nEach k-point is worked on by NCORE CPUs.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lplane,NULL,"LPLANE",3,4,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LPLANE: Ch. 6.57 DEFAULT: TRUE\nIf set the real-space data distribution is done plane wise.");
+GUI_TOOLTIP(button,"LPLANE: Ch. 6.57 DEFAULT: TRUE\nIf set the real-space data distribution is done plane wise.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalu,NULL,"LSCALU",4,5,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LSCALU: Ch. 6.59 DEFAULT: FALSE\nIf set parallel LU decomposition will be used.");
+GUI_TOOLTIP(button,"LSCALU: Ch. 6.59 DEFAULT: FALSE\nIf set parallel LU decomposition will be used.");
 	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalapack,NULL,"LSCALAPACK",5,6,1,2);/*not calling anything*/
-VASP_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routines will be used.");
+GUI_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routines will be used.");
 /* --- end frame */
 /* --- DISTANT */
         frame = gtk_frame_new("Distant calculation");

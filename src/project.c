@@ -293,6 +293,9 @@ fullname = g_build_filename(sysenv.cwd, filename, NULL);
 model_init(&temp_model);
 temp_model.grafted = TRUE;
 
+grid[0]=0;
+grid[1]=0;
+
 /* CURRENT */
 project = project_new("solvent");
 project_model_add(model, project);

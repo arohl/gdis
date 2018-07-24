@@ -1,0 +1,206 @@
+/*
+Copyright (C) 2018 by Okadome Valencia
+
+hubert.valencia _at_ imass.nagoya-u.ac.jp
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+The GNU GPL can also be found at http://www.gnu.org
+*/
+
+/* graphic define interface */
+/**************************************************** 
+ * By using compiler defines,  this is aimed to be an
+ * easy to upgrade interface design: by just changing
+ * the content here will upgrade all files gui_* that
+ * use a specific GTK interface...            --OVHPA
+ ****************************************************/
+
+/* DEFINES: interface */
+#define GUI_SPACE 0
+/*****************/
+/* BOX INTERFACE */
+/*****************/
+/*Set a new horizontal box (hbox) in a vertical box (vbox).*/
+#define GUI_NEW_LINE(vbox,hbox) do{\
+        hbox = gtk_hbox_new(FALSE, 0);\
+        gtk_container_set_border_width(GTK_CONTAINER(hbox), GUI_SPACE);\
+        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);\
+}while(0)
+/*Set a new label (label) with text ("text") in an horizontal box (hbox).*/
+#define GUI_NEW_LABEL(hbox,label,text) do{\
+        label = gtk_label_new(text);\
+        gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);\
+}while(0)
+/*Set a new text entry (entry) with initial value ("value") expanding (wilde=TRUE) or not (wilde=FALSE) in an horizontal box (hbox).*/
+#define GUI_TEXT_ENTRY(hbox,entry,value,wilde) do{\
+        entry=gtk_entry_new();\
+        if(value!=NULL) gtk_entry_set_text(GTK_ENTRY(entry),g_strdup_printf("%s",value));\
+        gtk_box_pack_start(GTK_BOX(hbox), entry, wilde, wilde, 0);\
+}while(0)
+/*Set a new entry (entry) with initial value (value) of format ("format") with a width of (size) characters, in an horizontal box (hbox).*/
+#define GUI_ENTRY(hbox,entry,value,format,size) do{\
+        entry=gtk_entry_new();\
+        gtk_entry_set_text(GTK_ENTRY(entry),g_strdup_printf(format,value));\
+        gtk_entry_set_width_chars (GTK_ENTRY(entry),size);\
+        gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);\
+}while(0)
+/*Set a new separator (separator) in an horizontal box (hbox).*/
+#define GUI_NEW_SEPARATOR(hbox,separator) do{\
+        separator=gtk_hseparator_new();\
+        gtk_box_pack_start(GTK_BOX(hbox), separator, TRUE, FALSE, 0);\
+}while(0)
+/*Set a new combo (combo), with an uneditable link to GLIST (list) which is FREED after link, with an initial value ("default_text"), and connected to function (function), in an horizontal box (hbox).*/
+/* THIS GTK COMBO USE IS DEPRECATED! */
+#define GUI_REG_COMBO(hbox,combo,list,default_text,function) do{\
+        combo = gtk_combo_new();\
+_Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
+        gtk_entry_set_editable(GTK_ENTRY(GTK_COMBO(combo)->entry), FALSE);\
+        gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);\
+        g_list_free(list);\
+        gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);\
+        gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry),default_text);\
+        g_signal_connect(GTK_OBJECT(GTK_COMBO(combo)->entry), "changed",GTK_SIGNAL_FUNC(function),data);\
+}while(0)
+/************************************************************************************/
+/* TABLE INTERFACE:                                                                 */
+/* 	all of the *_TABLE() defines set a new table cell @l,r,t,b in table (table).*/
+/************************************************************************************/
+/*Create a new cell with:
+ *	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ *	 an expanded text entry (entry, created with GUI_TEXT_ENTRY) with a default value ("value").*/
+#define GUI_TEXT_TABLE(table,entry,value,caption,l,r,t,b) do{\
+	GtkWidget *_label;\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+        GUI_NEW_LABEL(_hbox,_label,caption);\
+	GUI_TEXT_ENTRY(_hbox,entry,value,TRUE);\
+        gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ * 	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ * 	 a boxed separator,
+ * 	 a sized-8 boxed entry (entry, created with GUI_ENTRY) with an initial value (value) of format ("format").*/
+#define GUI_ENTRY_TABLE(table,entry,value,format,caption,l,r,t,b) do{\
+	GtkWidget *_separator;\
+	GtkWidget *_label;\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	GUI_NEW_LABEL(_hbox,_label,caption);\
+	GUI_NEW_SEPARATOR(_hbox,_separator);\
+	GUI_ENTRY(_hbox,entry,value,format,8);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ * 	 a new check button (check) with an initial value (value) connected to function (function) with text ("caption").*/
+#define GUI_CHECK_TABLE(table,check,value,function,caption,l,r,t,b) do{\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	check = gui_direct_check(caption,&(value),function,NULL,_hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ * 	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ * 	 a boxed separator,
+ * 	 a boxed combo (combo,created with GUI_REG_COMBO) linked to GLIST (list) which is FREED after GUI_REG_COMBO.
+ * 	 */
+/* THIS GTK COMBO USE IS DEPRECATED! */
+#define GUI_COMBO_TABLE(table,combo,default_text,function,caption,l,r,t,b) do{\
+	GtkWidget *_separator;\
+	GtkWidget *_label;\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+_Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
+	GUI_NEW_LABEL(_hbox,_label,caption);\
+	GUI_NEW_SEPARATOR(_hbox,_separator);\
+	GUI_REG_COMBO(hbox,combo,list,default_text,function);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ * 	 a separator (not boxed!).
+ * a.k.a. an empty cell.*/
+#define GUI_SEPARATOR_TABLE(l,r,t,b) do{\
+	GtkWidget *_separator = gtk_hseparator_new();\
+	gtk_table_attach_defaults(GTK_TABLE(table),_separator,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ * 	 a boxed label with text ("caption"),
+ * 	 an extended boxed combobox which is set as uneditable.*/
+/* THIS IS THE PROPER (but not simplier) REPLACEMENT FOR GTK COMBO DEPRECATED INTERFACE! */
+#define GUI_COMBOBOX_TABLE(table,combobox,caption,l,r,t,b) do{\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	GtkWidget *_label = gtk_label_new(caption);\
+        gtk_box_pack_start(GTK_BOX(_hbox),_label,FALSE,FALSE,0);\
+        combobox=gtk_combo_box_text_new_with_entry();\
+        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combobox))),FALSE);\
+        gtk_box_pack_start(GTK_BOX(_hbox),combobox,TRUE,TRUE,0);\
+        gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*Add a new element with text ("text") in the combobox (combobox).
+ * This have to be called AFTER GUI_COMBOBOX.*/
+#define GUI_COMBOBOX_ADD(combobox,text) do{\
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combobox),text);\
+}while(0)
+/*Set a default value (default_value) of the combobox (combobox), and register the function (function) for a changed value in combobox.
+ * This have to be called AFTER GUI_COMBOBOX and preferentially after GUI_COMBOBOX_ADD added some elements to combobox.
+ * If GUI_COMBOBOX_ADD is called after, it may trigger the function (function) each time.*/
+#define GUI_COMBOBOX_SETUP(combobox,default_value,function) do{\
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
+	if((function)!=NULL) g_signal_connect(GTK_COMBO_BOX_TEXT(combobox),"changed",GTK_SIGNAL_FUNC(function),data);\
+}while(0)
+/*Create a new cell with:
+ * 	 a boxed spin button, which default value is 1 and interval is [1,100], and labeled with text ("caption").
+ * Due to limitation of GTK, value has to be of double type and not integer (event though it make little sense).*/
+#define GUI_SPIN_TABLE(table,spin,value,function,caption,l,r,t,b) do{\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	spin = gui_direct_spin(caption,&(value),1.0,100.0,1.0,function,NULL,_hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+#define GUI_SPIN_RANGE(spin,min,max) do{\
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin),min,max);\
+}while(0)
+/*Create a new cell with:
+ * 	 a button (not boxed!) of type (type) connected on click to function (function).*/
+#define GUI_BUTTON_TABLE(table,button,type,function,l,r,t,b) do{\
+        button=gtk_button_new_from_stock(type);\
+	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+        g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+/*Create a new cell with:
+ * 	 a boxed button (button_1) of type APPLY connected on click to function (function_1),
+ * 	 a boxed button (button_2) of type DELETE connected on click to function (function_2).*/
+#define GUI_2BUTTONS_TABLE(table,button_1,button_2,function_1,function_2,l,r,t,b) do{\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	button_1 = gui_stock_button(GTK_STOCK_APPLY,function_1,NULL,_hbox);\
+	button_2 = gui_stock_button(GTK_STOCK_DELETE,function_2,NULL,_hbox);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/*left aligned labels*/
+/*Create a new cell with:
+ * 	 a boxed label with text ("caption"),
+ * 	 a separator.
+ * a.k.a. a left aligned label.*/
+#define GUI_LABEL_TABLE(table,caption,l,r,t,b) do{\
+	GtkWidget *_separator;\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
+	GtkWidget *_label = gtk_label_new(caption);\
+	gtk_box_pack_start(GTK_BOX(_hbox),_label,FALSE,FALSE,0);\
+	GUI_NEW_SEPARATOR(_hbox,_separator);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+}while(0)
+/************************/
+/* GENERAL GTK COMMANDS */
+/************************/
+/*create a tooltip with text ("text") for the widget (widget).*/
+#define GUI_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
+/*set sensitivity of a widget*/
+#define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
+#define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)
