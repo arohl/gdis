@@ -2868,85 +2868,85 @@ GUI_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf c
 	table = gtk_table_new(5, 4, FALSE);
 	gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-        VASP_COMBOBOX_TABLE(vasp_gui.prec,"PREC=",0,1,0,1);
-        VASP_COMBOBOX_ADD(vasp_gui.prec,"Normal");
-        VASP_COMBOBOX_ADD(vasp_gui.prec,"Single");
-        VASP_COMBOBOX_ADD(vasp_gui.prec,"Accurate");
-        VASP_COMBOBOX_ADD(vasp_gui.prec,"High");
-        VASP_COMBOBOX_ADD(vasp_gui.prec,"Medium");
-	VASP_COMBOBOX_ADD(vasp_gui.prec,"Low");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.prec,"PREC=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"Normal");
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"Single");
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"Accurate");
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"High");
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"Medium");
+	GUI_COMBOBOX_ADD(vasp_gui.prec,"Low");
 GUI_TOOLTIP(vasp_gui.prec,"PREC: Ch. 6.11 DEFAULT: Normal\nSets numerical accuracy by changing\nENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.\n(can be override manually)");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.use_prec,prec_toggle,"USE PREC",1,2,0,1);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.use_prec,prec_toggle,"USE PREC",1,2,0,1);
 GUI_TOOLTIP(button,"Let PREC decides on ENCUT, NG{X,Y,Z}, NG{X,Y,Z}F, and ROPT.");
-	VASP_ENTRY_TABLE(vasp_gui.encut,vasp_gui.calc.encut,"%.2lf","ENCUT=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.encut,vasp_gui.calc.encut,"%.2lf","ENCUT=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.encut,"ENCUT: Ch. 6.9 DEFAULT: MAX(ENMAX)\nPlane-wave basis cutoff energy (eV).\nDefault MAX(ENMAX) is taken from POTCAR file.");
-	VASP_ENTRY_TABLE(vasp_gui.enaug,vasp_gui.calc.enaug,"%.2lf","ENAUG=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.enaug,vasp_gui.calc.enaug,"%.2lf","ENAUG=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.enaug,"ENAUG: Ch. 6.10 DEFAULT: EAUG\nKinetic cutoff for augmentation charges.\nDefault EAUG is taken from POTCAR file.");
-	VASP_ENTRY_TABLE(vasp_gui.ediff,vasp_gui.calc.ediff,"%.2lE","EDIFF=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.ediff,vasp_gui.calc.ediff,"%.2lE","EDIFF=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.ediff,"EDIFF: Ch. 6.18 DEFAULT: 10^{-4}\nSet the criterion (eV) for electronic convergence.");
 /* 2nd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.algo,"ALGO=",0,1,1,2);
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"NORMAL");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"USE_IALGO");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"VERYFAST");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"FAST");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"CONJUGATE");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"ALL");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"DAMPED");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"SUBROT");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"EIGENVAL");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"NONE");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"NOTHING");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"EXACT");
-	VASP_COMBOBOX_ADD(vasp_gui.algo,"DIAG");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.algo,"ALGO=",0,1,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"NORMAL");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"USE_IALGO");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"VERYFAST");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"FAST");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"CONJUGATE");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"ALL");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"DAMPED");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"SUBROT");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"EIGENVAL");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"NONE");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"NOTHING");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"EXACT");
+	GUI_COMBOBOX_ADD(vasp_gui.algo,"DIAG");
 GUI_TOOLTIP(vasp_gui.algo,"ALGO: Ch. 6.46 DEFAULT: Normal\nSelect the electronic minimization algorithm.\nIt is overrided by IALGO when specified.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.ldiag,NULL,"LDIAG",1,2,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.ldiag,NULL,"LDIAG",1,2,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LDIAG: Ch. 6.47 DEFAULT: TRUE\nSwitch on the sub-space rotation.");
-	VASP_ENTRY_TABLE(vasp_gui.nsim,vasp_gui.calc.nsim,"%i","NSIM=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.nsim,vasp_gui.calc.nsim,"%i","NSIM=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.nsim,"NSIM: Ch. 6.48 DEFAULT: 4\nNumber of bands optimized at a time\nin blocked minimization algorithm.");
-	VASP_ENTRY_TABLE(vasp_gui.vtime,vasp_gui.calc.vtime,"%.4lf","TIME=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.vtime,vasp_gui.calc.vtime,"%.4lf","TIME=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.vtime,"TIME: Ch. 6.51 DEFAULT: 0.4\nSelect the trial time or value step\nfor minimization algorithm IALGO=5X.");
-	VASP_ENTRY_TABLE(vasp_gui.iwavpr,vasp_gui.calc.iwavpr,"%i","IWAVPR=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.iwavpr,vasp_gui.calc.iwavpr,"%i","IWAVPR=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.iwavpr,"IWAVPR: Ch. 6.26 DEFAULT: 2(IBRION=0-2)\nDetermine how charge density/orbitals are predicted\nfrom one ionic configuration to the next.\nDefault is 0 if IBRION is different from 0-2.");
 /* 3rd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.ialgo,"IALGO=",0,1,2,3);
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"2:FIXED ORB/1E");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"3:FIXED ORB");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"4:SUBROT ONLY");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"5:STEEPEST");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"6:CONJUGUATE GRADIENTS");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"7:PRECOND. STEEPEST");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"8:PRECOND. CG");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"38:KOSUGI");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"44:RMM STEEPEST");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"46:RMM PRECOND.");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"48:PRECOND. RMM");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"53:VAR DAMPED MD");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"54:VAR DAMPED QUENCH MD");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"58:VAR PRECOND. CG");
-	VASP_COMBOBOX_ADD(vasp_gui.ialgo,"90:EXACT");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.ialgo,"IALGO=",0,1,2,3);
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"2:FIXED ORB/1E");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"3:FIXED ORB");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"4:SUBROT ONLY");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"5:STEEPEST");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"6:CONJUGUATE GRADIENTS");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"7:PRECOND. STEEPEST");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"8:PRECOND. CG");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"38:KOSUGI");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"44:RMM STEEPEST");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"46:RMM PRECOND.");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"48:PRECOND. RMM");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"53:VAR DAMPED MD");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"54:VAR DAMPED QUENCH MD");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"58:VAR PRECOND. CG");
+	GUI_COMBOBOX_ADD(vasp_gui.ialgo,"90:EXACT");
 GUI_TOOLTIP(vasp_gui.ialgo,"IALGO: Ch. 6.47 DEFAULT: 38\nSets the minimization algorithm number.\nIt is advised to use ALGO instead of IALGO\ndue to instabilities in extra IALGO algorithms.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_elec,elec_toggle,"AUTO",1,2,2,3);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.auto_elec,elec_toggle,"AUTO",1,2,2,3);
 GUI_TOOLTIP(button,"Automatically sets NSIM, TIME, IWAVPR, NBANDS, and NELECT");
-	VASP_ENTRY_TABLE(vasp_gui.nbands,vasp_gui.calc.nbands,"%i","NBANDS=",2,3,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.nbands,vasp_gui.calc.nbands,"%i","NBANDS=",2,3,2,3);
 GUI_TOOLTIP(vasp_gui.nbands,"NBANDS: Ch. 6.5 DEFAULT: NELEC/2+NIONS/2\nNumber of bands in the calculation.\nDefault for spin-polarized calcualtions is 0.6*NELECT+NMAG");
-	VASP_ENTRY_TABLE(vasp_gui.nelect,vasp_gui.calc.nelect,"%.2lf","NELECT=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.nelect,vasp_gui.calc.nelect,"%.2lf","NELECT=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.nelect,"NELECT: Ch. 6.35 DEFAULT: Ne valence\nSets the number of electrons\nCan be use add an extra charge background\nas an homogeneous background-charge.");
 	/*empty: col4*/
 /* 4th line */
 	/*empty: col0*/
-	VASP_CHECK_TABLE(button,vasp_gui.calc.iniwav,NULL,"INIWAV",1,2,3,4);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.iniwav,NULL,"INIWAV",1,2,3,4);/*not calling anything*/
 GUI_TOOLTIP(button,"INIWAV: Ch. 6.16 DEFAULT: 1\nDetermine how initial wavefunctions are filled\nThe only option is the default random filling.\nOther option (INIWAV=0) is usually not available.");
-	VASP_ENTRY_TABLE(vasp_gui.istart,vasp_gui.calc.istart,"%i","ISTART=",2,3,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.istart,vasp_gui.calc.istart,"%i","ISTART=",2,3,3,4);
 GUI_TOOLTIP(vasp_gui.istart,"ISTART: Ch. 6.14 DEFAULT 1\nDetermine whether WAVECAR should be read.\nDefault is 0 when no WAVECAR file is found.");
-	VASP_ENTRY_TABLE(vasp_gui.icharg,vasp_gui.calc.icharg,"%i","ICHARG=",3,4,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.icharg,vasp_gui.calc.icharg,"%i","ICHARG=",3,4,3,4);
 GUI_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initial charge density is calculated\nDefault is 0 if ISTART is not 0.");
 	/*empty: col4*/
 /* initialize */
-	VASP_COMBOBOX_SETUP(vasp_gui.prec,0,vasp_prec_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.algo,0,vasp_algo_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.ialgo,7,vasp_ialgo_selected);
-	gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
+	GUI_COMBOBOX_SETUP(vasp_gui.prec,0,vasp_prec_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.algo,0,vasp_algo_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.ialgo,7,vasp_ialgo_selected);
+	GUI_LOCK(vasp_gui.ialgo);
 	prec_toggle(NULL,NULL);
 	elec_toggle(NULL,NULL);
 /* --- end frame */
@@ -2957,50 +2957,50 @@ GUI_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initi
         table = gtk_table_new(5, 3, FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.mixer,"IMIX=",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.mixer,"0:NONE");
-	VASP_COMBOBOX_ADD(vasp_gui.mixer,"1:KERKER");
-	VASP_COMBOBOX_ADD(vasp_gui.mixer,"2:TCHEBYCHEV");
-	VASP_COMBOBOX_ADD(vasp_gui.mixer,"4:BROYDEN");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.mixer,"IMIX=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.mixer,"0:NONE");
+	GUI_COMBOBOX_ADD(vasp_gui.mixer,"1:KERKER");
+	GUI_COMBOBOX_ADD(vasp_gui.mixer,"2:TCHEBYCHEV");
+	GUI_COMBOBOX_ADD(vasp_gui.mixer,"4:BROYDEN");
 GUI_TOOLTIP(vasp_gui.mixer,"IMIX: Ch. 6.49 DEFAULT: 4\nDetermine the type of mixing.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_mixer,mixer_toggle,"AUTO MIXER",1,2,0,1);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.auto_mixer,mixer_toggle,"AUTO MIXER",1,2,0,1);
 GUI_TOOLTIP(button,"Use automatic mixing settings.");
-	VASP_ENTRY_TABLE(vasp_gui.nelm,vasp_gui.calc.nelm,"%i","NELM=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nelm,vasp_gui.calc.nelm,"%i","NELM=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.nelm,"NELM: Ch. 6.17 DEFAULT: 60\nMaximum number of electronic steps.");
-	VASP_ENTRY_TABLE(vasp_gui.nelmdl,vasp_gui.calc.nelmdl,"%i","NELMDL=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nelmdl,vasp_gui.calc.nelmdl,"%i","NELMDL=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.nelmdl,"NELMDL: Ch. 6.17 DEFAULT -5(if IALGO=x8)\nSets the number of initial non-selfconsistent steps\ndefault is 0 if ISTART is not 0.");
-	VASP_ENTRY_TABLE(vasp_gui.nelmin,vasp_gui.calc.nelmin,"%i","NELMIN=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nelmin,vasp_gui.calc.nelmin,"%i","NELMIN=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.nelmin,"NELMIN: Ch. 6.17 DEFAULT: 2\nMinimum number of electronic steps.");
 /* 2nd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.mixpre,"MIXPRE=",0,1,1,2);
-	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"0:NONE");
-	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"1:F=20 INVERSE KERKER");
-	VASP_COMBOBOX_ADD(vasp_gui.mixpre,"2:F=200 INVERSE KERKER");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.mixpre,"MIXPRE=",0,1,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.mixpre,"0:NONE");
+	GUI_COMBOBOX_ADD(vasp_gui.mixpre,"1:F=20 INVERSE KERKER");
+	GUI_COMBOBOX_ADD(vasp_gui.mixpre,"2:F=200 INVERSE KERKER");
 GUI_TOOLTIP(vasp_gui.mixpre,"MIXPRE: Ch. 6.49 DEFAULT: 1\nSelect the preconditioning for Broyden mixing.");
 	/*empty: col1*/
-        VASP_ENTRY_TABLE(vasp_gui.amix,vasp_gui.calc.amix,"%.4lf","AMIX=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.amix,vasp_gui.calc.amix,"%.4lf","AMIX=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.amix,"AMIX: Ch. 6.49 DEFAULT: 0.4\nlinear mixing parameter\nDefault is 0.8 for ultrasoft pseudopotentials.");
-        VASP_ENTRY_TABLE(vasp_gui.bmix,vasp_gui.calc.bmix,"%.4lf","BMIX=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.bmix,vasp_gui.calc.bmix,"%.4lf","BMIX=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.bmix,"BMIX: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing.");
-        VASP_ENTRY_TABLE(vasp_gui.amin,vasp_gui.calc.amin,"%.4lf","AMIN=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.amin,vasp_gui.calc.amin,"%.4lf","AMIN=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.amin,"AMIN: Ch. 6.49 DEFAULT: 0.1\nminimal mixing parameter.");
 /* 3rd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.inimix,"INIMIX=",0,1,2,3);
-	VASP_COMBOBOX_ADD(vasp_gui.inimix,"0:LINEAR");
-	VASP_COMBOBOX_ADD(vasp_gui.inimix,"1:KERKER");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.inimix,"INIMIX=",0,1,2,3);
+	GUI_COMBOBOX_ADD(vasp_gui.inimix,"0:LINEAR");
+	GUI_COMBOBOX_ADD(vasp_gui.inimix,"1:KERKER");
 GUI_TOOLTIP(vasp_gui.inimix,"INIMIX: Ch. 6.49 DEFAULT: 1\ntype of initial mixing in Broyden mixing.");
-	VASP_ENTRY_TABLE(vasp_gui.maxmix,vasp_gui.calc.maxmix,"%i","MAXMIX=",1,2,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.maxmix,vasp_gui.calc.maxmix,"%i","MAXMIX=",1,2,2,3);
 GUI_TOOLTIP(vasp_gui.maxmix,"MAXMIX: Ch. 6.49 DEFAULT: -45\nMaximum number of steps stored in Broyden mixer.");
-	VASP_ENTRY_TABLE(vasp_gui.amix_mag,vasp_gui.calc.amix_mag,"%.4lf","AMIX_MAG=",2,3,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.amix_mag,vasp_gui.calc.amix_mag,"%.4lf","AMIX_MAG=",2,3,2,3);
 GUI_TOOLTIP(vasp_gui.amix_mag,"AMIX_MAG: Ch. 6.49 DEFAULT: 1.6\nlinear mixing parameter for magnetization.");
-	VASP_ENTRY_TABLE(vasp_gui.bmix_mag,vasp_gui.calc.bmix_mag,"%.4lf","BMIX_MAG=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.bmix_mag,vasp_gui.calc.bmix_mag,"%.4lf","BMIX_MAG=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.bmix_mag,"BMIX_MAG: Ch. 6.49 DEFAULT: 1.0\ncutoff wavevector for Kerker mixing with magnetization.");
-	VASP_ENTRY_TABLE(vasp_gui.wc,vasp_gui.calc.wc,"%.1lf","WC=",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.wc,vasp_gui.calc.wc,"%.1lf","WC=",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broyden mixing.");
 /* initialize */
-	VASP_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.inimix,1,vasp_inimix_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.inimix,1,vasp_inimix_selected);
 	mixer_toggle(NULL,NULL);
 /* --- end frame */
 /* --- projector */
@@ -3010,45 +3010,45 @@ GUI_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broy
         table = gtk_table_new(5, 4, FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.lreal,"LREAL=",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.lreal,"Auto");
-	VASP_COMBOBOX_ADD(vasp_gui.lreal,"On");
-	VASP_COMBOBOX_ADD(vasp_gui.lreal,"TRUE");
-	VASP_COMBOBOX_ADD(vasp_gui.lreal,"FALSE");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.lreal,"LREAL=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.lreal,"Auto");
+	GUI_COMBOBOX_ADD(vasp_gui.lreal,"On");
+	GUI_COMBOBOX_ADD(vasp_gui.lreal,"TRUE");
+	GUI_COMBOBOX_ADD(vasp_gui.lreal,"FALSE");
 GUI_TOOLTIP(vasp_gui.lreal,"LREAL: Ch. 6.39 DEFAULT: FALSE\nDetermine whether projection operators are evaluated in\nreal-space or reciprocal-space.");
 	/*empty: col2*/
-	VASP_TEXT_TABLE(vasp_gui.ropt,vasp_gui.calc.ropt,"ROPT=",2,5,0,1);
+	GUI_TEXT_TABLE(table,vasp_gui.ropt,vasp_gui.calc.ropt,"ROPT=",2,5,0,1);
 GUI_TOOLTIP(vasp_gui.ropt,"ROPT: Ch. 6.39 DEFAULT: -\nROPT determine the precision of the real-space operator\nfor LREAL=AUTO and LREAL=On.");
 /* 2nd line */
 	/*empty: col1*/
-	VASP_CHECK_TABLE(button,vasp_gui.calc.addgrid,NULL,"ADDGRID",1,2,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.addgrid,NULL,"ADDGRID",1,2,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"ADDGRID: Ch. 6.63 DEFAULT: FALSE\nSelect the third fine grid for augmentation charge.");
-        VASP_ENTRY_TABLE(vasp_gui.lmaxmix,vasp_gui.calc.lmaxmix,"%i","LMAXMIX=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.lmaxmix,vasp_gui.calc.lmaxmix,"%i","LMAXMIX=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.lmaxmix,"LMAXMIX: Ch. 6.63 DEFAULT: 2\nMaximum l-quantum number passed to charge density mixer.");
 	/*empty: col4*/
-        VASP_ENTRY_TABLE(vasp_gui.lmaxpaw,vasp_gui.calc.lmaxpaw,"%i","LMAXPAW=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.lmaxpaw,vasp_gui.calc.lmaxpaw,"%i","LMAXPAW=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.lmaxpaw,"LMAXPAW: Ch. 6.63 DEFAULT: 2*lmax\nMaximum l-quantum number for the evaluation of the PAW\non-site terms on the radial grid.");
 /* 3rd line */
 	/*empty: col1*/
-	VASP_CHECK_TABLE(button,vasp_gui.calc.auto_grid,grid_toggle,"AUTO GRID",1,2,2,3);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.auto_grid,grid_toggle,"AUTO GRID",1,2,2,3);
 GUI_TOOLTIP(button,"Automatically sets NG{X,Y,Z}, and NG{X,Y,Z}F.");
-	VASP_ENTRY_TABLE(vasp_gui.ngx,vasp_gui.calc.ngx,"%i","NGX=",2,3,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngx,vasp_gui.calc.ngx,"%i","NGX=",2,3,2,3);
 GUI_TOOLTIP(vasp_gui.ngx,"NGX: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the x direction.");
-	VASP_ENTRY_TABLE(vasp_gui.ngy,vasp_gui.calc.ngy,"%i","NGY=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngy,vasp_gui.calc.ngy,"%i","NGY=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.ngy,"NGY: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the y direction.");
-	VASP_ENTRY_TABLE(vasp_gui.ngz,vasp_gui.calc.ngz,"%i","NGZ=",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngz,vasp_gui.calc.ngz,"%i","NGZ=",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.ngz,"NGZ: Ch. 6.3 DEFAULT: -\nnumber of FFT-mesh grid-points along the z direction.");
 /* 4th line */
 	/*empty: col1*/
 	/*empty: col2*/
-	VASP_ENTRY_TABLE(vasp_gui.ngxf,vasp_gui.calc.ngxf,"%i","NGXF=",2,3,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngxf,vasp_gui.calc.ngxf,"%i","NGXF=",2,3,3,4);
 GUI_TOOLTIP(vasp_gui.ngxf,"NGXF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the x direction.");
-	VASP_ENTRY_TABLE(vasp_gui.ngyf,vasp_gui.calc.ngyf,"%i","NGYF=",3,4,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngyf,vasp_gui.calc.ngyf,"%i","NGYF=",3,4,3,4);
 GUI_TOOLTIP(vasp_gui.ngyf,"NGYF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the y direction.");
-	VASP_ENTRY_TABLE(vasp_gui.ngzf,vasp_gui.calc.ngzf,"%i","NGZF=",4,5,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.ngzf,vasp_gui.calc.ngzf,"%i","NGZF=",4,5,3,4);
 GUI_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the z direction.");
 /* initialize */
-	VASP_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
 	grid_toggle(NULL,NULL);
 /* --- end frame */
 
