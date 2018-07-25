@@ -33,16 +33,22 @@ The GNU GPL can also be found at http://www.gnu.org
 /*****************/
 /* BOX INTERFACE */
 /*****************/
-/*Set a new horizontal box (hbox) in a vertical box (vbox).*/
-#define GUI_NEW_LINE(vbox,hbox) do{\
+/*Create a new frame (frame) in box (box)*/
+/*Q: add? gtk_container_set_border_width(GTK_CONTAINER(frame), GUI_SPACE);*/
+#define GUI_FRAME_BOX(box,frame) do{\
+	frame = gtk_frame_new(NULL);\
+	gtk_box_pack_start(GTK_BOX(box),frame,FALSE,FALSE,0);\
+}while(0)
+/*Set a new horizontal box (hbox) in a box (box).*/
+#define GUI_LINE_BOX(box,hbox) do{\
         hbox = gtk_hbox_new(FALSE, 0);\
         gtk_container_set_border_width(GTK_CONTAINER(hbox), GUI_SPACE);\
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);\
+        gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);\
 }while(0)
-/*Set a new label (label) with text ("text") in an horizontal box (hbox).*/
-#define GUI_NEW_LABEL(hbox,label,text) do{\
+/*Set a new label (label) with text ("text") in a box (box).*/
+#define GUI_LABEL_BOX(box,label,text) do{\
         label = gtk_label_new(text);\
-        gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);\
+        gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 0);\
 }while(0)
 /*Set a new text entry (entry) with initial value ("value") expanding (wilde=TRUE) or not (wilde=FALSE) in an horizontal box (hbox).*/
 #define GUI_TEXT_ENTRY(hbox,entry,value,wilde) do{\
@@ -74,29 +80,87 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry),default_text);\
         g_signal_connect(GTK_OBJECT(GTK_COMBO(combo)->entry), "changed",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
+/*Create can open button (button) connected on click to function (function) in box (box).*/
+#define GUI_OPEN_BUTTON_BOX(box,button,function) do{\
+	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);\
+	gtk_box_pack_end(GTK_BOX(box), button, FALSE, FALSE, 0);\
+	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+/*Create an gtk-absurdly complex uneditable, scrollable textview (tv) with textbuffer (tv_buffer), in a box (box).*/
+#define GUI_TEXTVIEW_BOX(box,tv,tv_buffer) do{\
+	GtkWidget *_absurd = gtk_scrolled_window_new(NULL, NULL);\
+        tv = gtk_text_view_new();\
+        tv_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));\
+        gtk_text_view_set_editable(GTK_TEXT_VIEW(tv),FALSE);\
+        GUI_LOCK(tv);\
+        gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(_absurd),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);\
+        gtk_container_add(GTK_CONTAINER(_absurd),tv);\
+        gtk_container_set_border_width(GTK_CONTAINER(_absurd),1);\
+        gtk_box_pack_start(GTK_BOX(box),_absurd,TRUE,TRUE,0);\
+}while(0)
+/**********************/
+/* NOTEBOOK INTERFACE */
+/**********************/
+/*create a new page (page) with label ("caption") in notebook (notebook).*/
+#define GUI_PAGE_NOTE(notebook,page,caption) do{\
+	GtkWidget *_label = gtk_label_new(caption);\
+	page = gtk_vbox_new(FALSE, GUI_SPACE);\
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,_label);\
+}while(0)
+/*Create a new frame (frame) with label ("caption") in a notebook page (page).*/
+#define GUI_FRAME_NOTE(page,frame,caption) do{\
+	frame = gtk_frame_new(caption);\
+	gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);\
+}while(0)
+/*******************/
+/* FRAME INTERFACE */
+/*******************/
+/*Create a new vertical box (vbox) in a frame (frame).*/
+#define GUI_VBOX_FRAME(frame,vbox) do{\
+        vbox = gtk_vbox_new(FALSE, GUI_SPACE);\
+        gtk_container_add(GTK_CONTAINER(frame), vbox);\
+}while(0)
+/*Create a new unexpanded (row) x (col) table (table) in a frame (frame).*/
+#define GUI_TABLE_FRAME(frame,table,row,col) do{\
+	table = gtk_table_new(row, col, FALSE);\
+	gtk_container_add(GTK_CONTAINER(frame), table);\
+}while(0)
+/*Create a new toptab notebook (notebook) with border in a frame (frame).*/
+#define GUI_NOTE_FRAME(frame,notebook) do{\
+	notebook = gtk_notebook_new();\
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);\
+	gtk_container_add(GTK_CONTAINER(frame), notebook);\
+	gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);\
+}while(0)
 /************************************************************************************/
 /* TABLE INTERFACE:                                                                 */
 /* 	all of the *_TABLE() defines set a new table cell @l,r,t,b in table (table).*/
 /************************************************************************************/
 /*Create a new cell with:
- *	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ * 	 a label with text ("text")*/
+#define GUI_LABEL_TABLE(table,text,l,r,t,b) do{\
+	GtkWidget *_label = gtk_label_new(text);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_label,l,r,t,b);\
+}while(0)
+/*Create a new cell with:
+ *	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
  *	 an expanded text entry (entry, created with GUI_TEXT_ENTRY) with a default value ("value").*/
 #define GUI_TEXT_TABLE(table,entry,value,caption,l,r,t,b) do{\
 	GtkWidget *_label;\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
-        GUI_NEW_LABEL(_hbox,_label,caption);\
+        GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_TEXT_ENTRY(_hbox,entry,value,TRUE);\
         gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
- * 	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ * 	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
  * 	 a boxed separator,
  * 	 a sized-8 boxed entry (entry, created with GUI_ENTRY) with an initial value (value) of format ("format").*/
 #define GUI_ENTRY_TABLE(table,entry,value,format,caption,l,r,t,b) do{\
 	GtkWidget *_separator;\
 	GtkWidget *_label;\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
-	GUI_NEW_LABEL(_hbox,_label,caption);\
+	GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	GUI_ENTRY(_hbox,entry,value,format,8);\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
@@ -109,7 +173,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
- * 	 a boxed label (created with GUI_NEW_LABEL) with text ("caption"),
+ * 	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
  * 	 a boxed separator,
  * 	 a boxed combo (combo,created with GUI_REG_COMBO) linked to GLIST (list) which is FREED after GUI_REG_COMBO.
  * 	 */
@@ -119,7 +183,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GtkWidget *_label;\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
 _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
-	GUI_NEW_LABEL(_hbox,_label,caption);\
+	GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	GUI_REG_COMBO(hbox,combo,list,default_text,function);\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
@@ -188,7 +252,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
  * 	 a boxed label with text ("caption"),
  * 	 a separator.
  * a.k.a. a left aligned label.*/
-#define GUI_LABEL_TABLE(table,caption,l,r,t,b) do{\
+#define GUI_LEFT_LABEL_TABLE(table,caption,l,r,t,b) do{\
 	GtkWidget *_separator;\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
 	GtkWidget *_label = gtk_label_new(caption);\
@@ -196,11 +260,17 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
 }while(0)
-/************************/
-/* GENERAL GTK COMMANDS */
-/************************/
+/********************/
+/* GENERAL COMMANDS */
+/********************/
 /*create a tooltip with text ("text") for the widget (widget).*/
 #define GUI_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
+/*set the entry (entry) text ("text")*/
+#define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
 #define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)
+
+
+
+

@@ -2721,50 +2721,33 @@ void gui_vasp_dialog(void){
 	g_free(title);
 	vasp_gui.window = dialog_window(dialog);
 /* --- Outside of notebook */
-	frame = gtk_frame_new(NULL);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vasp_gui.window)->vbox), frame, FALSE, FALSE, 0);
-	vbox = gtk_vbox_new(FALSE, _SPACE);
-	gtk_container_add(GTK_CONTAINER(frame), vbox);
+	GUI_FRAME_BOX(GTK_DIALOG(vasp_gui.window)->vbox,frame);
+	GUI_VBOX_FRAME(frame,vbox);
 /* --- MODEL NAME */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
-	label = gtk_label_new(g_strdup_printf("MODEL NAME"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"MODEL NAME");
 	GUI_TEXT_ENTRY(hbox,vasp_gui.name,data->basename,TRUE);
 GUI_TOOLTIP(vasp_gui.name,"The model name will be used in VASP files\nas well as GDIS display.");
 /* --- CONNECTED XML */
-	hbox = gtk_hbox_new(FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, _SPACE);
-        label = gtk_label_new(g_strdup_printf("CONNECTED XML"));
-        gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"CONNECTED XML");
 	GUI_TEXT_ENTRY(hbox,vasp_gui.file_entry,data->filename,TRUE);
-	if(data->id!=VASP) gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),"");
+	if(data->id!=VASP) GUI_ENTRY_TEXT(vasp_gui.file_entry,"");
 GUI_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\nas a model to fill up settings of the current one.\nNOTE: important settings (such as NELM) will be wrong\nand all settings should be checked again. Carefully.");
-	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);
-	gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(load_vasprun_dialog),NULL);
-/* notebook frame */
-	frame = gtk_frame_new(NULL);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vasp_gui.window)->vbox), frame, FALSE, FALSE, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(frame), _SPACE);
-/* create notebook */
-	notebook = gtk_notebook_new();
-	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
-	gtk_container_add(GTK_CONTAINER(frame), notebook);
-	gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
+	GUI_OPEN_BUTTON_BOX(hbox,button,load_vasprun_dialog);
+/* create frame in box */
+	GUI_FRAME_BOX(GTK_DIALOG(vasp_gui.window)->vbox,frame);
+/* create notebook in frame */
+	GUI_NOTE_FRAME(frame,notebook);
 
 /*------------------*/
 /* page 0 -> PRESET */
 /*------------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("PRESET");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"PRESET");
 /* --- general */
-        frame = gtk_frame_new("General");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-        table = gtk_table_new(5, 4, FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,4);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.simple_calcul,"CALCUL:",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.simple_calcul,"Energy (single point)");
@@ -2803,7 +2786,7 @@ GUI_TOOLTIP(vasp_gui.simple_species,"From POTCAR file, the following species are
 GUI_TOOLTIP(vasp_gui.simple_potcar,"Where is the POTCAR file for this calculation?");
 	GUI_BUTTON_TABLE(table,vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,3,4);
 /* 5th line */
-	GUI_LABEL_TABLE(table,"EXEC:",0,1,4,5);
+	GUI_LEFT_LABEL_TABLE(table,"EXEC:",0,1,4,5);
 	GUI_SPIN_TABLE(table,vasp_gui.simple_np,vasp_gui.calc.job_nproc,parallel_eq,"NP=",1,2,4,5);
 GUI_TOOLTIP(vasp_gui.simple_np,"How many CPU(s) should be used for calculation?");
 	GUI_SPIN_TABLE(table,vasp_gui.simple_ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",2,3,4,5);
@@ -2816,57 +2799,36 @@ GUI_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a tim
 	GUI_COMBOBOX_SETUP(vasp_gui.simple_kgrid,0,NULL);/*not calling anything*/
 /* --- end frame */
 /* --- DISCLAMER */
-        frame = gtk_frame_new("DISCLAMER");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"DISCLAMER");
 /* create a table in the frame*/
-        table = gtk_table_new(4, 3,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,4,3);
 /* 1st line */
-	label = gtk_label_new("This simplified interface is aimed at pre-loading parameters with default values");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
+	GUI_LABEL_TABLE(table,"This simplified interface is aimed at pre-loading parameters with default values",1,2,0,1);
 /* 2nd line */
-	label = gtk_label_new("for a given calculation type. User should then check said defaults extremely carefuly...");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,1,2);
+	GUI_LABEL_TABLE(table,"for a given calculation type. User should then check said defaults extremely carefuly...",1,2,1,2);
 /* 3th line */
-	label = gtk_label_new("GENERATE ==>");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,3,4);
+	GUI_LABEL_TABLE(table,"GENERATE ==>",0,1,3,4);
 	GUI_BUTTON_TABLE(table,vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
 GUI_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf calculation is already set using this will\noverwrite settings resulting in an unpredictable state.");
-	label = gtk_label_new("<== (and check...)");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,3,4);
+	GUI_LABEL_TABLE(table,"<== (and check...)",2,3,3,4);
 /* --- end frame */
 /* --- MESSAGE */
-        frame = gtk_frame_new("MESSAGE");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
-/*create a vbox in frame*/
-	vbox=gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame),vbox);
-/* num frames */
-	vasp_gui.simple_message=gtk_text_view_new();
-	vasp_gui.simple_message_buff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(vasp_gui.simple_message));
-	gtk_text_view_set_editable(GTK_TEXT_VIEW(vasp_gui.simple_message),FALSE);
-	gtk_widget_set_sensitive(vasp_gui.simple_message,FALSE);
-	button=gtk_scrolled_window_new(NULL, NULL);/*GTK-ABSURD*/
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(button),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(button),vasp_gui.simple_message);
-	gtk_container_set_border_width(GTK_CONTAINER(button),1);
-	gtk_box_pack_start(GTK_BOX(vbox),button,TRUE,TRUE,0);
+	GUI_FRAME_NOTE(page,frame,"MESSAGE");
+/* create a vbox in frame*/
+	GUI_VBOX_FRAME(frame,vbox);
+/* create a textview in a frame */
+	GUI_TEXTVIEW_BOX(vbox,vasp_gui.simple_message,vasp_gui.simple_message_buff);
 /* --- end frame */
-
 
 
 /*-----------------------*/
 /* page 1 -> CONVERGENCE */
 /*-----------------------*/
-	page = gtk_vbox_new(FALSE, _SPACE);
-	label = gtk_label_new("CONVERGENCE");
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"CONVERGENCE");
 /* --- general */
-	frame = gtk_frame_new("General");
-	gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-	table = gtk_table_new(5, 4, FALSE);
-	gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,4);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.prec,"PREC=",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.prec,"Normal");
@@ -2951,11 +2913,9 @@ GUI_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initi
 	elec_toggle(NULL,NULL);
 /* --- end frame */
 /* --- mixing */
-        frame = gtk_frame_new("Mixing");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Mixing");
 /* create a table in the frame*/
-        table = gtk_table_new(5, 3, FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,3);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.mixer,"IMIX=",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.mixer,"0:NONE");
@@ -3004,11 +2964,9 @@ GUI_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broy
 	mixer_toggle(NULL,NULL);
 /* --- end frame */
 /* --- projector */
-        frame = gtk_frame_new("Projector");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Projector");
 /* create a table in the frame*/
-        table = gtk_table_new(5, 4, FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,4);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.lreal,"LREAL=",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.lreal,"Auto");
@@ -3055,15 +3013,11 @@ GUI_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh gri
 /*-------------------*/
 /* page 2 -> ELECT-I */
 /*-------------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("ELECT-I");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"ELECT-I");
 /* --- smearing */
-        frame = gtk_frame_new("Smearing");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Smearing");
 /* create a table in the frame*/
-        table = gtk_table_new(4, 2, FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,4,2);
 /* 1st line */
 	GUI_ENTRY_TABLE(table,vasp_gui.ismear,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.ismear,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
@@ -3080,11 +3034,9 @@ GUI_TOOLTIP(vasp_gui.fermwe,"FERMWE: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 explicitl
 GUI_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=2 sets\noccupancy for down spin of each band.");
 /* --- end frame */
 /* --- spin */
-        frame = gtk_frame_new("Spin");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Spin");
 /* create a table in the frame*/
-	table = gtk_table_new(5, 2,FALSE);
-	gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,2);
 /* 1st line */
 	GUI_CHECK_TABLE(table,button,vasp_gui.calc.ispin,NULL,"SPIN POLARIZED",0,1,0,1);/*not calling anything*/
 GUI_TOOLTIP(button,"ISPIN: Ch. 6.12 DEFAULT 1\nSpin polarized calculation sets ISPIN=2.");
@@ -3103,11 +3055,9 @@ GUI_TOOLTIP(vasp_gui.magmom,"MAGMOM: Ch. 6.13 DEFAULT: NIONS\nSets the initial m
 GUI_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation axis for spin.\nThe default is SAXIS = eps 0 1\nwhere eps is a small quantity.");
 /* --- end frame */
 /* --- exchange correlation */
-        frame = gtk_frame_new("Exchange Correlation");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Exchange Correlation");
 /* create a table in the frame*/
-	table = gtk_table_new(5, 5,FALSE);
-	gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,5,5);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.gga,"GGA=",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.gga,"91:PW91");
@@ -3172,11 +3122,9 @@ GUI_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site E
 	ldau_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
 /* --- dipole */
-        frame = gtk_frame_new("Dipole");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Dipole");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.idipol,"IDIPOL=",0,1,0,1);
 	GUI_COMBOBOX_ADD(vasp_gui.idipol,"0:no calcul");
@@ -3219,77 +3167,66 @@ if(vasp_gui.calc.idipol!=VID_0) {
 /*---------------------*/
 /* page 2b -> ELECT-II */
 /*---------------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("ELECT-II");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"ELECT-II");
 /* --- DOS */
-        frame = gtk_frame_new("Density of States");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Density of States");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5, FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.lorbit,"LORBIT=",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"0:PROCAR");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"1:lm-PROCAR");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"2:phase+lm-PROCAR");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"5:PROOUT");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"10:PROCAR");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"11:lm-PROCAR");
-	VASP_COMBOBOX_ADD(vasp_gui.lorbit,"12:phase+lm-PROCAR");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.lorbit,"LORBIT=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"0:PROCAR");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"1:lm-PROCAR");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"2:phase+lm-PROCAR");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"5:PROOUT");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"10:PROCAR");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"11:lm-PROCAR");
+	GUI_COMBOBOX_ADD(vasp_gui.lorbit,"12:phase+lm-PROCAR");
 GUI_TOOLTIP(vasp_gui.lorbit,"LORBIT: Ch. 6.34 DEFAULT: 0\nSets the spd- and site projected\nwavefunction character of each band\nand the local partial DOS.");
-	VASP_ENTRY_TABLE(vasp_gui.nedos,vasp_gui.calc.nedos,"%i","NEDOS=",1,2,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nedos,vasp_gui.calc.nedos,"%i","NEDOS=",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.nedos,"NEDOS: Ch. 6.37 DEFAULT: 301\nNumber of points for which DOS is calculated.");
-	VASP_ENTRY_TABLE(vasp_gui.emin,vasp_gui.calc.emin,"%.2lf","EMIN=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.emin,vasp_gui.calc.emin,"%.2lf","EMIN=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.emin,"EMIN: Ch. 6.37 DEFAULT: low eig-eps\nSets the smallest energy for which DOS is calculated.\nDefault is lowest Kohn-Sham eigenvalue minus a small quantity.");
-	VASP_ENTRY_TABLE(vasp_gui.emax,vasp_gui.calc.emax,"%.2lf","EMAX=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.emax,vasp_gui.calc.emax,"%.2lf","EMAX=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.emax,"EMAX: Ch. 6.37 DEFAULT: high eig+eps\nSets the highest energy for which DOS is calculated.\nDefault is highest Kohn-Sham eigenvalue plus a small quantity.");
-	VASP_ENTRY_TABLE(vasp_gui.efermi,vasp_gui.calc.efermi,"%.2lf","EFERMI=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.efermi,vasp_gui.calc.efermi,"%.2lf","EFERMI=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.efermi,"EFERMI: (secret) DEFAULT: EREF\nSets initial Fermi energy before it is calculated.\nUsually there is no use to change this setting.\nEREF is actually another \"secret\" parameter.");
 /* 2nd line */
-	VASP_LABEL_TABLE("(LORBIT>5) => Req. PAW",0,1,1,2);
-	VASP_CHECK_TABLE(vasp_gui.have_paw,vasp_gui.calc.have_paw,NULL,"HAVE PAW",1,2,1,2);/*not calling anything*/
+	GUI_LEFT_LABEL_TABLE(table,"(LORBIT>5) => Req. PAW",0,1,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.have_paw,vasp_gui.calc.have_paw,NULL,"HAVE PAW",1,2,1,2);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
-	gtk_widget_set_sensitive(vasp_gui.have_paw,FALSE);/*just an indication*/
-	VASP_TEXT_TABLE(vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
+	GUI_LOCK(vasp_gui.have_paw);/*just an indication*/
+	GUI_TEXT_TABLE(table,vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
 GUI_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
 /* initialize */
-if(vasp_gui.calc.have_paw) VASP_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
-else VASP_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+if(vasp_gui.calc.have_paw) GUI_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
+else GUI_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
 /* --- end frame */
 /* --- Linear Response */
-        frame = gtk_frame_new("Linear Response");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Linear Response");
 /* create a table in the frame*/
-        table = gtk_table_new(1, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,1,5);
 /* 1st line */
-	VASP_CHECK_TABLE(vasp_gui.loptics,vasp_gui.calc.loptics,NULL,"LOPTICS",0,1,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.loptics,vasp_gui.calc.loptics,NULL,"LOPTICS",0,1,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.loptics,"LOPTICS: Ch. 6.72.1 DEFAULT: FALSE\nSwitch frequency dependent dielectric matrix calculation\nover a grid determined by NEDOS.\nIt is advised to increase NEDOS & NBANDS.");
-	VASP_CHECK_TABLE(vasp_gui.lepsilon,vasp_gui.calc.lepsilon,NULL,"LEPSILON",1,2,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.lepsilon,vasp_gui.calc.lepsilon,NULL,"LEPSILON",1,2,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.lepsilon,"LEPSILON: Ch. 6.72.4 DEFAULT: FALSE\nSwitch dielectric matrix calculation using\ndensity functional perturbation theory.\nConcurrent to LOPTICS, it is not recommended\nto run both at the same time.");
-	VASP_CHECK_TABLE(vasp_gui.lrpa,vasp_gui.calc.lrpa,NULL,"LRPA",2,3,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.lrpa,vasp_gui.calc.lrpa,NULL,"LRPA",2,3,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.lrpa,"LRPA: Ch. 6.72.5 DEFAULT: FALSE\nSwitch local field effects calculation\non the Hartree level only (no XC).");
-	VASP_CHECK_TABLE(vasp_gui.lnabla,vasp_gui.calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.lnabla,vasp_gui.calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.lnabla,"LNABLA: Ch. 6.72.3 DEFAULT: FALSE\nSwitch to the simple transversal expressions\nof the frequency dependent dielectric matrix.\nUsually there is no use to change this setting.");
-	VASP_ENTRY_TABLE(vasp_gui.cshift,vasp_gui.calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.cshift,vasp_gui.calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift \%nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
 /* --- end frame */
-
 
 
 /*-----------------*/
 /* page 3 -> IONIC */
 /*-----------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("IONIC");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"IONIC");
 /* --- general */
-        frame = gtk_frame_new("General");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.ibrion,"IBRION=",0,1,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"-1:Nothing");
@@ -3335,11 +3272,9 @@ GUI_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ionic
 	VASP_COMBOBOX_SETUP(vasp_gui.isif,0,vasp_isif_selected);
 /* --- end frame */
 /* --- MD */
-        frame = gtk_frame_new("Molecular Dynamics");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Molecular Dynamics");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
 	//multicolumn label
 	label = gtk_label_new("SET IBRION=0 FOR MD");
@@ -3381,11 +3316,9 @@ GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for 
 	}
 /* --- end frame */
 /* --- POSCAR */
-        frame = gtk_frame_new("POSCAR & SYMMTERY");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"POSCAR & SYMMTERY");
 /* create a table in the frame*/
-        table = gtk_table_new(7, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,7,5);
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.poscar_free,"DYN:",0,1,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FIXED");
@@ -3509,15 +3442,11 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /*-------------------*/
 /* page 4 -> KPOINTS */
 /*-------------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("KPOINTS");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"KPOINTS");
 /* --- from INCAR */
-        frame = gtk_frame_new("from INCAR");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"from INCAR");
 /* create a table in the frame*/
-        table = gtk_table_new(1, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,1,5);
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.ismear_3,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.ismear_3,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
@@ -3529,11 +3458,9 @@ GUI_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS fi
 	/*empty: col4*/
 /* --- end frame */
 /* --- General */
-        frame = gtk_frame_new("General");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_mode,"GEN:",0,1,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Manual Entry");
@@ -3564,11 +3491,9 @@ GUI_TOOLTIP(vasp_gui.kpoints_sy,"In case a grid is used to generate k-points\nTh
 GUI_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 3rd reciprocal lattice component.");
 /* --- end frame */
 /* --- Coordinate */
-        vasp_gui.kpoints_coord = gtk_frame_new("Coordinate");
-        gtk_box_pack_start(GTK_BOX(page),vasp_gui.kpoints_coord,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,vasp_gui.kpoints_coord,"Coordinate");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 5,FALSE);
-        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_coord), table);
+	GUI_TABLE_FRAME(vasp_gui.kpoints_coord,table,2,5);
 /* 1st line */
 	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
 	VASP_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
@@ -3593,11 +3518,9 @@ GUI_TOOLTIP(vasp_gui.kpoints_z,"Coordinate of k-point in 3rd component of select
 GUI_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of all weight does not have to be 1\nbut relative ratio should be respected.");
 /* --- end frame */
 /* --- Tetrahedron */
-        vasp_gui.kpoints_tetra = gtk_frame_new("Tetrahedron");
-        gtk_box_pack_start(GTK_BOX(page),vasp_gui.kpoints_tetra,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,vasp_gui.kpoints_tetra,"Tetrahedron");
 /* create a table in the frame*/
-        table = gtk_table_new(3, 6,FALSE);
-        gtk_container_add(GTK_CONTAINER(vasp_gui.kpoints_tetra), table);
+	GUI_TABLE_FRAME(vasp_gui.kpoints_tetra,table,3,6);
 /* 1st line */
 	VASP_ENTRY_TABLE(vasp_gui.tetra_total,vasp_gui.calc.tetra_total,"%i","TOTAL=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.tetra_total,"Total number of tetrahedrons.");
@@ -3644,15 +3567,11 @@ GUI_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index
 /*------------------*/
 /* page 5 -> POTCAR */
 /*------------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("POTCAR");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"POTCAR");
 /* --- general */
-        frame = gtk_frame_new("General");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 1,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,1);
 /* 1st line */
 	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
 	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
@@ -3662,11 +3581,9 @@ GUI_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetec
         gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
 /* --- end frame */
 /* --- get POTCAR information */
-        frame = gtk_frame_new("get POTCAR information");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"get POTCAR information");
 /* create a table in the frame*/
-        table = gtk_table_new(3, 4,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,3,4);
 /* 1st line */
 	/* 2 lines radiobutton */
 	vbox = gtk_vbox_new(FALSE,0);
@@ -3691,11 +3608,9 @@ GUI_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a 
 	toggle_potcar_file(NULL,NULL);
 /* --- end frame */
 /* --- POTCAR results */
-        frame = gtk_frame_new("POTCAR results");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"POTCAR results");
 /* create a table in the frame*/
-        table = gtk_table_new(2, 2,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,2);
 /* 1st line */
 	//multicolumn label
         label = gtk_label_new("DETECTED");
@@ -3712,15 +3627,11 @@ GUI_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors 
 /*----------------*/
 /* page 6 -> EXEC */
 /*----------------*/
-        page = gtk_vbox_new(FALSE, _SPACE);
-        label = gtk_label_new("EXEC");
-        gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	GUI_PAGE_NOTE(notebook,page,"EXEC");
 /* --- general */
-        frame = gtk_frame_new("General");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"General");
 /* create a table in the frame*/
-        table = gtk_table_new(3, 6,FALSE);
-        gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,3,6);
 /* 1st line */
 	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
@@ -3745,11 +3656,9 @@ GUI_TOOLTIP(button,"LVHAR: Ch. 6.54 DEFAULT: FALSE\nIf set the full local potent
 GUI_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron localization function)\nfile is written.");
 /* --- end frame */
 /* --- PARALLEL */
-        frame = gtk_frame_new("Parallel Optimization");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Parallel Optimization");
 /* create a table in the frame*/
-	table = gtk_table_new(2, 6,FALSE);
-	gtk_container_add(GTK_CONTAINER(frame), table);
+	GUI_TABLE_FRAME(frame,table,2,6);
 /* 1st line */
 	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
 	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
@@ -3770,11 +3679,9 @@ GUI_TOOLTIP(button,"LSCALU: Ch. 6.59 DEFAULT: FALSE\nIf set parallel LU decompos
 GUI_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routines will be used.");
 /* --- end frame */
 /* --- DISTANT */
-        frame = gtk_frame_new("Distant calculation");
-        gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);
+	GUI_FRAME_NOTE(page,frame,"Distant calculation");
 /*create a vbox in frame*/
-        vbox=gtk_vbox_new(TRUE, 0);
-        gtk_container_add(GTK_CONTAINER(frame),vbox);
+	GUI_VBOX_FRAME(frame,vbox);
 /* 1st line */
 	VASP_NEW_LINE();
 /* 2nd line */
@@ -3796,10 +3703,8 @@ GUI_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routin
 	VASP_NEW_LINE();
 
 /* --- Outside of notebook */
-	frame = gtk_frame_new(NULL);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vasp_gui.window)->vbox), frame, FALSE, FALSE, 0);
-	vbox = gtk_vbox_new(FALSE, _SPACE);
-	gtk_container_add(GTK_CONTAINER(frame), vbox);
+	GUI_FRAME_BOX(GTK_BOX(GTK_DIALOG(vasp_gui.window)->vbox),frame);
+	GUI_VBOX_FRAME(frame,vbox);
 /* Action buttons */
 	vasp_gui.button_save=gui_stock_button(GTK_STOCK_SAVE, save_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
 	vasp_gui.button_exec=gui_stock_button(GTK_STOCK_EXECUTE, exec_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
