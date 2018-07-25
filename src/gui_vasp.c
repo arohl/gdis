@@ -781,14 +781,14 @@ void vasp_prec_selected(GtkWidget *w, struct model_pak *model){
 void prec_toggle(GtkWidget *w, GtkWidget *box){
 	if(!(vasp_gui.calc.use_prec)){
 		/*switch to manual values*/
-		gtk_widget_set_sensitive(vasp_gui.encut,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.enaug,TRUE);
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.encut),g_strdup_printf("%.2lf",vasp_gui.calc.encut));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.enaug),g_strdup_printf("%.2lf",vasp_gui.calc.enaug));
+		GUI_UNLOCK(vasp_gui.encut);
+		GUI_UNLOCK(vasp_gui.enaug);
+		GUI_ENTRY_TEXT(vasp_gui.encut,g_strdup_printf("%.2lf",vasp_gui.calc.encut));
+		GUI_ENTRY_TEXT(vasp_gui.enaug,g_strdup_printf("%.2lf",vasp_gui.calc.enaug));
 	}else{
 		/*switch to automatic values*/
-		gtk_widget_set_sensitive(vasp_gui.encut,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.enaug,FALSE);
+		GUI_LOCK(vasp_gui.encut);
+		GUI_LOCK(vasp_gui.enaug);
 	}
 
 
@@ -798,11 +798,11 @@ void prec_toggle(GtkWidget *w, GtkWidget *box){
 /******************/
 void vasp_algo_selected(GtkWidget *w, struct model_pak *model){
 	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gtk_widget_set_sensitive(vasp_gui.ialgo,FALSE);
+	GUI_LOCK(vasp_gui.ialgo);
 	switch(index){
 	case 1://USE_IALGO
 		vasp_gui.calc.algo=VA_IALGO;
-		gtk_widget_set_sensitive(vasp_gui.ialgo,TRUE);
+		GUI_UNLOCK(vasp_gui.ialgo);
 		break;
 	case 2://VERYFAST
 		vasp_gui.calc.algo=VA_VERYFAST;break;
@@ -876,23 +876,23 @@ void vasp_ialgo_selected(GtkWidget *w, struct model_pak *model){
 void elec_toggle(GtkWidget *w, GtkWidget *box){
 	if(!(vasp_gui.calc.auto_elec)){
 		/*switch to manual values*/
-		gtk_widget_set_sensitive(vasp_gui.nsim,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.vtime,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.nbands,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.nelect,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.iwavpr,TRUE);
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsim),g_strdup_printf("%i",vasp_gui.calc.nsim));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.vtime),g_strdup_printf("%.4lf",vasp_gui.calc.vtime));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nbands),g_strdup_printf("%i",vasp_gui.calc.nbands));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelect),g_strdup_printf("%.4lf",vasp_gui.calc.nelect));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.iwavpr),g_strdup_printf("%i",vasp_gui.calc.iwavpr));
+		GUI_UNLOCK(vasp_gui.nsim);
+		GUI_UNLOCK(vasp_gui.vtime);
+		GUI_UNLOCK(vasp_gui.nbands);
+		GUI_UNLOCK(vasp_gui.nelect);
+		GUI_UNLOCK(vasp_gui.iwavpr);
+		GUI_ENTRY_TEXT(vasp_gui.nsim,g_strdup_printf("%i",vasp_gui.calc.nsim));
+		GUI_ENTRY_TEXT(vasp_gui.vtime,g_strdup_printf("%.4lf",vasp_gui.calc.vtime));
+		GUI_ENTRY_TEXT(vasp_gui.nbands,g_strdup_printf("%i",vasp_gui.calc.nbands));
+		GUI_ENTRY_TEXT(vasp_gui.nelect,g_strdup_printf("%.4lf",vasp_gui.calc.nelect));
+		GUI_ENTRY_TEXT(vasp_gui.iwavpr,g_strdup_printf("%i",vasp_gui.calc.iwavpr));
 	}else{
 		/*switch to automatic values*/
-		gtk_widget_set_sensitive(vasp_gui.nsim,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.vtime,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.nbands,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.nelect,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.iwavpr,FALSE);
+		GUI_LOCK(vasp_gui.nsim);
+		GUI_LOCK(vasp_gui.vtime);
+		GUI_LOCK(vasp_gui.nbands);
+		GUI_LOCK(vasp_gui.nelect);
+		GUI_LOCK(vasp_gui.iwavpr);
 	}
 }
 /*******************/
@@ -918,26 +918,26 @@ void vasp_lreal_selected(GtkWidget *w, struct model_pak *model){
 void grid_toggle(GtkWidget *w, GtkWidget *box){
         if(!(vasp_gui.calc.auto_grid)){
                 /*switch to manual values*/
-                gtk_widget_set_sensitive(vasp_gui.ngx,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.ngy,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.ngz,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.ngxf,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.ngyf,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.ngzf,TRUE);
-                gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngx),g_strdup_printf("%i",vasp_gui.calc.ngx));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngy),g_strdup_printf("%i",vasp_gui.calc.ngy));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngz),g_strdup_printf("%i",vasp_gui.calc.ngz));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngxf),g_strdup_printf("%i",vasp_gui.calc.ngxf));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngyf),g_strdup_printf("%i",vasp_gui.calc.ngyf));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngzf),g_strdup_printf("%i",vasp_gui.calc.ngzf));
+		GUI_UNLOCK(vasp_gui.ngx);
+		GUI_UNLOCK(vasp_gui.ngy);
+		GUI_UNLOCK(vasp_gui.ngz);
+		GUI_UNLOCK(vasp_gui.ngxf);
+		GUI_UNLOCK(vasp_gui.ngyf);
+		GUI_UNLOCK(vasp_gui.ngzf);
+		GUI_ENTRY_TEXT(vasp_gui.ngx,g_strdup_printf("%i",vasp_gui.calc.ngx));
+		GUI_ENTRY_TEXT(vasp_gui.ngy,g_strdup_printf("%i",vasp_gui.calc.ngy));
+		GUI_ENTRY_TEXT(vasp_gui.ngz,g_strdup_printf("%i",vasp_gui.calc.ngz));
+		GUI_ENTRY_TEXT(vasp_gui.ngxf,g_strdup_printf("%i",vasp_gui.calc.ngxf));
+		GUI_ENTRY_TEXT(vasp_gui.ngyf,g_strdup_printf("%i",vasp_gui.calc.ngyf));
+		GUI_ENTRY_TEXT(vasp_gui.ngzf,g_strdup_printf("%i",vasp_gui.calc.ngzf));
         }else{
                 /*switch to automatic values*/
-                gtk_widget_set_sensitive(vasp_gui.ngx,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.ngy,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.ngz,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.ngxf,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.ngyf,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.ngzf,FALSE);
+		GUI_LOCK(vasp_gui.ngx);
+		GUI_LOCK(vasp_gui.ngy);
+		GUI_LOCK(vasp_gui.ngz);
+		GUI_LOCK(vasp_gui.ngxf);
+		GUI_LOCK(vasp_gui.ngyf);
+		GUI_LOCK(vasp_gui.ngzf);
         }
 }
 /***************************/
@@ -947,12 +947,12 @@ void ismear_changed(GtkWidget *w, struct model_pak *model){
         const gchar *label = gtk_entry_get_text(GTK_ENTRY(w));
         sscanf(label,"%i",&(vasp_gui.calc.ismear));
 	if(vasp_gui.calc.ismear==-5) {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),TRUE);
-		gtk_widget_set_sensitive(vasp_gui.have_tetra,TRUE);
+		GUI_TOGGLE_ON(vasp_gui.have_tetra);
+		GUI_UNLOCK(vasp_gui.have_tetra);
 	}
 	else {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),FALSE);
-		gtk_widget_set_sensitive(vasp_gui.have_tetra,FALSE);
+		GUI_TOGGLE_OFF(vasp_gui.have_tetra);
+		GUI_LOCK(vasp_gui.have_tetra);
 	}
 }
 /*****************************/
@@ -1000,9 +1000,9 @@ void vasp_gga_selected(GtkWidget *w, struct model_pak *model){
 /*********************/
 void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
 	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gtk_widget_set_sensitive(vasp_gui.cmbj,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.cmbja,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.cmbjb,FALSE);
+	GUI_LOCK(vasp_gui.cmbj);
+	GUI_LOCK(vasp_gui.cmbja);
+	GUI_LOCK(vasp_gui.cmbjb);
 	switch(index){
 	case 0://TPSS
 		vasp_gui.calc.mgga=VMG_TPSS;break;
@@ -1013,9 +1013,9 @@ void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
 	case 3://MBJ
 	default:
 		vasp_gui.calc.mgga=VMG_MBJ;
-		gtk_widget_set_sensitive(vasp_gui.cmbj,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.cmbja,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.cmbjb,TRUE);
+		GUI_UNLOCK(vasp_gui.cmbj);
+		GUI_UNLOCK(vasp_gui.cmbja);
+		GUI_UNLOCK(vasp_gui.cmbjb);
 	}
 }
 /*******************/
@@ -1024,17 +1024,17 @@ void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
 void metagga_toggle(GtkWidget *w, GtkWidget *box){
         if(!vasp_gui.calc.lmetagga){
                 /*switch to manual values*/
-                gtk_widget_set_sensitive(vasp_gui.metagga,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.cmbj,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.cmbja,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.cmbjb,FALSE);
+		GUI_LOCK(vasp_gui.metagga);
+		GUI_LOCK(vasp_gui.cmbj);
+		GUI_LOCK(vasp_gui.cmbja);
+		GUI_LOCK(vasp_gui.cmbjb);
         }else{
                 /*switch to automatic values*/
-                gtk_widget_set_sensitive(vasp_gui.metagga,TRUE);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),3);//MBJ (actually there is no default)
-		gtk_widget_set_sensitive(vasp_gui.cmbj,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.cmbja,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.cmbjb,TRUE);
+		GUI_UNLOCK(vasp_gui.metagga);
+		GUI_COMBOBOX_SET(vasp_gui.metagga,3);//MBJ (actually there is no default)
+		GUI_UNLOCK(vasp_gui.cmbj);
+		GUI_UNLOCK(vasp_gui.cmbja);
+		GUI_UNLOCK(vasp_gui.cmbjb);
         }
 }
 /*******************/
@@ -1043,20 +1043,20 @@ void metagga_toggle(GtkWidget *w, GtkWidget *box){
 void ldau_toggle(GtkWidget *w, GtkWidget *box){
         if(!vasp_gui.calc.ldau){
                 /*switch to manual values*/
-                gtk_widget_set_sensitive(vasp_gui.ldau,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.ldau_print,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.ldaul,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.ldauu,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.ldauj,FALSE);
+		GUI_LOCK(vasp_gui.ldau);
+		GUI_LOCK(vasp_gui.ldau_print);
+		GUI_LOCK(vasp_gui.ldaul);
+		GUI_LOCK(vasp_gui.ldauu);
+		GUI_LOCK(vasp_gui.ldauj);
         }else{
                 /*switch to automatic values*/
-                gtk_widget_set_sensitive(vasp_gui.ldau,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.ldau_print,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.ldaul,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.ldauu,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.ldauj,TRUE);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),1);//2:LSDA+U Dudarev
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),0);//0:Silent
+		GUI_UNLOCK(vasp_gui.ldau);
+		GUI_UNLOCK(vasp_gui.ldau_print);
+		GUI_UNLOCK(vasp_gui.ldaul);
+		GUI_UNLOCK(vasp_gui.ldauu);
+		GUI_UNLOCK(vasp_gui.ldauj);
+		GUI_COMBOBOX_SET(vasp_gui.ldau,1);//2:LSDA+U Dudarev
+		GUI_COMBOBOX_SET(vasp_gui.ldau_print,0);//0:Silent
 		/*TODO: update ldaul, ldauu, ldauj*/
         }
 }
@@ -1095,39 +1095,38 @@ void vasp_ldau_print_selected(GtkWidget *w, struct model_pak *model){
 /************************************/
 void mixer_toggle(GtkWidget *w, GtkWidget *box){
         if((vasp_gui.calc.auto_mixer)){
-                /*switch to manual values*/
-                gtk_widget_set_sensitive(vasp_gui.mixer,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.amix,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.bmix,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.amin,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.amix_mag,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.bmix_mag,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.maxmix,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.wc,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.inimix,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.mixpre,FALSE);
+		/*switch to manual values*/
+		GUI_LOCK(vasp_gui.mixer);
+		GUI_LOCK(vasp_gui.amix);
+		GUI_LOCK(vasp_gui.bmix);
+		GUI_LOCK(vasp_gui.amin);
+		GUI_LOCK(vasp_gui.amix_mag);
+		GUI_LOCK(vasp_gui.bmix_mag);
+		GUI_LOCK(vasp_gui.maxmix);
+		GUI_LOCK(vasp_gui.wc);
+		GUI_LOCK(vasp_gui.inimix);
+		GUI_LOCK(vasp_gui.mixpre);
         }else{
                 /*switch to automatic values*/
-                gtk_widget_set_sensitive(vasp_gui.mixer,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.amix,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.bmix,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.amin,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.amix_mag,TRUE);
-                gtk_widget_set_sensitive(vasp_gui.bmix_mag,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.maxmix,TRUE);
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),3);//4:BROYDEN
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.amix),g_strdup_printf("%.4lf",vasp_gui.calc.amix));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.bmix),g_strdup_printf("%.4lf",vasp_gui.calc.bmix));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.amin),g_strdup_printf("%.4lf",vasp_gui.calc.amin));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.amix_mag),g_strdup_printf("%.4lf",vasp_gui.calc.amix_mag));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.bmix_mag),g_strdup_printf("%.4lf",vasp_gui.calc.bmix_mag));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.maxmix),g_strdup_printf("%i",vasp_gui.calc.maxmix));
+		GUI_UNLOCK(vasp_gui.mixer);
+		GUI_UNLOCK(vasp_gui.amix);
+		GUI_UNLOCK(vasp_gui.bmix);
+		GUI_UNLOCK(vasp_gui.amin);
+		GUI_UNLOCK(vasp_gui.amix_mag);
+		GUI_UNLOCK(vasp_gui.bmix_mag);
+		GUI_UNLOCK(vasp_gui.maxmix);
+		GUI_COMBOBOX_SET(vasp_gui.mixer,3);//4:BROYDEN
+		GUI_ENTRY_TEXT(vasp_gui.amix,g_strdup_printf("%.4lf",vasp_gui.calc.amix));
+		GUI_ENTRY_TEXT(vasp_gui.bmix,g_strdup_printf("%.4lf",vasp_gui.calc.bmix));
+		GUI_ENTRY_TEXT(vasp_gui.amin,g_strdup_printf("%.4lf",vasp_gui.calc.amin));
+		GUI_ENTRY_TEXT(vasp_gui.amix_mag,g_strdup_printf("%.4lf",vasp_gui.calc.amix_mag));
+		GUI_ENTRY_TEXT(vasp_gui.bmix_mag,g_strdup_printf("%.4lf",vasp_gui.calc.bmix_mag));
+		GUI_ENTRY_TEXT(vasp_gui.maxmix,g_strdup_printf("%i",vasp_gui.calc.maxmix));
 		if(vasp_gui.calc.imix==VM_4){
-			gtk_widget_set_sensitive(vasp_gui.wc,TRUE);
-			gtk_widget_set_sensitive(vasp_gui.inimix,TRUE);
-			gtk_widget_set_sensitive(vasp_gui.mixpre,TRUE);
+			GUI_UNLOCK(vasp_gui.wc);
+			GUI_UNLOCK(vasp_gui.inimix);
+			GUI_UNLOCK(vasp_gui.mixpre);
 		}
-		
         }
 }
 /*******************/
@@ -1135,9 +1134,9 @@ void mixer_toggle(GtkWidget *w, GtkWidget *box){
 /*******************/
 void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
 	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gtk_widget_set_sensitive(vasp_gui.wc,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.inimix,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.mixpre,FALSE);
+	GUI_LOCK(vasp_gui.wc);
+	GUI_LOCK(vasp_gui.inimix);
+	GUI_LOCK(vasp_gui.mixpre);
 	switch(index){
 	case 0://0:NO MIXING
 		vasp_gui.calc.imix=VM_0;break;
@@ -1148,9 +1147,9 @@ void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
 	case 3://4:BROYDEN
 	default:
 		vasp_gui.calc.imix=VM_4;
-		gtk_widget_set_sensitive(vasp_gui.wc,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.inimix,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.mixpre,TRUE);
+		GUI_UNLOCK(vasp_gui.wc);
+		GUI_UNLOCK(vasp_gui.inimix);
+		GUI_UNLOCK(vasp_gui.mixpre);
 	}
 }
 /***************************/
@@ -1186,11 +1185,11 @@ void vasp_mixpre_selected(GtkWidget *w, struct model_pak *model){
 /********************/
 void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
 	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gtk_widget_set_sensitive(vasp_gui.ldipol,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.lmono,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.dipol,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.epsilon,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.efield,TRUE);
+	GUI_UNLOCK(vasp_gui.ldipol);
+	GUI_UNLOCK(vasp_gui.lmono);
+	GUI_UNLOCK(vasp_gui.dipol);
+	GUI_UNLOCK(vasp_gui.epsilon);
+	GUI_UNLOCK(vasp_gui.efield);
 	switch(index){
 	case 1://1:u axis
 		vasp_gui.calc.idipol=VID_1;break;
@@ -1200,16 +1199,16 @@ void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
 		vasp_gui.calc.idipol=VID_3;break;
 	case 4://4:all axis
 		vasp_gui.calc.idipol=VID_4;
-		gtk_widget_set_sensitive(vasp_gui.efield,FALSE);/*not implemented*/
+		GUI_LOCK(vasp_gui.efield);
 		break;
 	case 0://0:no calcul
 	default:
 		vasp_gui.calc.idipol=VID_0;
-		gtk_widget_set_sensitive(vasp_gui.ldipol,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.lmono,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.dipol,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.epsilon,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
+		GUI_LOCK(vasp_gui.ldipol);
+		GUI_LOCK(vasp_gui.lmono);
+		GUI_LOCK(vasp_gui.dipol);
+		GUI_LOCK(vasp_gui.epsilon);
+		GUI_LOCK(vasp_gui.efield);
 	}
 }
 /********************/
@@ -1240,24 +1239,24 @@ void vasp_lorbit_selected(GtkWidget *w, struct model_pak *model){
 /********************/
 void vasp_ibrion_selected(GtkWidget *w, struct model_pak *model){
 	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gtk_widget_set_sensitive(vasp_gui.tebeg,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.teend,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.smass,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.nblock,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.kblock,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.npaco,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.apaco,FALSE);
+GUI_LOCK(vasp_gui.tebeg);
+GUI_LOCK(vasp_gui.teend);
+GUI_LOCK(vasp_gui.smass);
+GUI_LOCK(vasp_gui.nblock);
+GUI_LOCK(vasp_gui.kblock);
+GUI_LOCK(vasp_gui.npaco);
+GUI_LOCK(vasp_gui.apaco);
 	switch(index){
 	case 1://0:Molecular Dynamics
 		vasp_gui.calc.ibrion=0;
 		/*molecular dynamics part*/
-		gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.teend,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.smass,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.nblock,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.kblock,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.npaco,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.apaco,TRUE);
+GUI_UNLOCK(vasp_gui.tebeg);
+GUI_UNLOCK(vasp_gui.teend);
+GUI_UNLOCK(vasp_gui.smass);
+GUI_UNLOCK(vasp_gui.nblock);
+GUI_UNLOCK(vasp_gui.kblock);
+GUI_UNLOCK(vasp_gui.npaco);
+GUI_UNLOCK(vasp_gui.apaco);
 		break;
 	case 2://1:Quasi-Newton
 		vasp_gui.calc.ibrion=1;break;
@@ -2721,7 +2720,7 @@ void gui_vasp_dialog(void){
 	g_free(title);
 	vasp_gui.window = dialog_window(dialog);
 /* --- Outside of notebook */
-	GUI_FRAME_BOX(GTK_DIALOG(vasp_gui.window)->vbox,frame);
+	GUI_FRAME_WINDOW(vasp_gui.window,frame);
 	GUI_VBOX_FRAME(frame,vbox);
 /* --- MODEL NAME */
 	GUI_LINE_BOX(vbox,hbox);
@@ -2736,7 +2735,7 @@ GUI_TOOLTIP(vasp_gui.name,"The model name will be used in VASP files\nas well as
 GUI_TOOLTIP(vasp_gui.file_entry,"Use the result of a calculation (vasprun.xml)\nas a model to fill up settings of the current one.\nNOTE: important settings (such as NELM) will be wrong\nand all settings should be checked again. Carefully.");
 	GUI_OPEN_BUTTON_BOX(hbox,button,load_vasprun_dialog);
 /* create frame in box */
-	GUI_FRAME_BOX(GTK_DIALOG(vasp_gui.window)->vbox,frame);
+	GUI_FRAME_WINDOW(vasp_gui.window,frame);
 /* create notebook in frame */
 	GUI_NOTE_FRAME(frame,notebook);
 
@@ -2784,7 +2783,7 @@ GUI_TOOLTIP(vasp_gui.simple_species,"From POTCAR file, the following species are
 /* 4th line */
 	GUI_TEXT_TABLE(table,vasp_gui.simple_potcar,vasp_gui.calc.potcar_file,"POTCAR FILE:",0,3,3,4);
 GUI_TOOLTIP(vasp_gui.simple_potcar,"Where is the POTCAR file for this calculation?");
-	GUI_BUTTON_TABLE(table,vasp_gui.simple_potcar_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,3,4);
+	GUI_OPEN_BUTTON_TABLE(table,vasp_gui.simple_potcar_button,load_potcar_file_dialog,3,4,3,4);
 /* 5th line */
 	GUI_LEFT_LABEL_TABLE(table,"EXEC:",0,1,4,5);
 	GUI_SPIN_TABLE(table,vasp_gui.simple_np,vasp_gui.calc.job_nproc,parallel_eq,"NP=",1,2,4,5);
@@ -2808,7 +2807,7 @@ GUI_TOOLTIP(vasp_gui.simple_kpar,"How many k-points should be worked on at a tim
 	GUI_LABEL_TABLE(table,"for a given calculation type. User should then check said defaults extremely carefuly...",1,2,1,2);
 /* 3th line */
 	GUI_LABEL_TABLE(table,"GENERATE ==>",0,1,3,4);
-	GUI_BUTTON_TABLE(table,vasp_gui.simple_apply,GTK_STOCK_APPLY,vasp_apply_simple,1,2,3,4);
+	GUI_APPLY_BUTTON_TABLE(table,vasp_gui.simple_apply,vasp_apply_simple,1,2,3,4);
 GUI_TOOLTIP(vasp_gui.simple_apply,"Use this to obtain a preset of setting.\nIf calculation is already set using this will\noverwrite settings resulting in an unpredictable state.");
 	GUI_LABEL_TABLE(table,"<== (and check...)",2,3,3,4);
 /* --- end frame */
@@ -3438,11 +3437,11 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,1,5);
 /* 1st line */
-	VASP_ENTRY_TABLE(vasp_gui.ismear_3,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.ismear_3,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.ismear_3,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
-	VASP_CHECK_TABLE(vasp_gui.kgamma_3,vasp_gui.calc.kgamma,NULL,"KGAMMA",1,2,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.kgamma_3,vasp_gui.calc.kgamma,NULL,"KGAMMA",1,2,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.kgamma_3,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
-	VASP_ENTRY_TABLE(vasp_gui.kspacing_3,vasp_gui.calc.kspacing,"%.4f","KSPACING=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.kspacing_3,vasp_gui.calc.kspacing,"%.4f","KSPACING=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
 	/*empty: col3*/
 	/*empty: col4*/
@@ -3452,32 +3451,32 @@ GUI_TOOLTIP(vasp_gui.kspacing_3,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS fi
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_mode,"GEN:",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Manual Entry");
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Line Mode");
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Automatic (M&P)");
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Gamma (M&P)");
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Monkhorst-Pack classic");
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Basis set definition");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.kpoints_mode,"GEN:",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Manual Entry");
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Line Mode");
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Automatic (M&P)");
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Gamma (M&P)");
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Monkhorst-Pack classic");
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_mode,"Basis set definition");
 GUI_TOOLTIP(vasp_gui.kpoints_mode,"Sets how the k-points are generated/entered as defined in Ch. 5.5.");
-	VASP_CHECK_TABLE(vasp_gui.kpoints_cart,vasp_gui.calc.kpoints_cart,NULL,"Cartesian",1,2,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.kpoints_cart,vasp_gui.calc.kpoints_cart,NULL,"Cartesian",1,2,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.kpoints_cart,"Switch cartesian/reciprocal lattice coordinate mode.");
-	VASP_SPIN_TABLE(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx,NULL,"KX",2,3,0,1);
+	GUI_SPIN_TABLE(table,vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx,NULL,"KX",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.kpoints_kx,"Grid size for automated generation\n1st component only for M&P.");
-	VASP_SPIN_TABLE(vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky,NULL,"KY",3,4,0,1);
+	GUI_SPIN_TABLE(table,vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky,NULL,"KY",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.kpoints_ky,"2nd Component of the M&P grid size.");
-	VASP_SPIN_TABLE(vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz,NULL,"KZ",4,5,0,1);
+	GUI_SPIN_TABLE(table,vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz,NULL,"KZ",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.kpoints_kz,"3rd Component of the M&P grid size.");
 /* 2nd line */
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_nkpts,vasp_gui.calc.kpoints_nkpts,"%i","NKPTS=",0,1,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_nkpts,vasp_gui.calc.kpoints_nkpts,"%i","NKPTS=",0,1,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_nkpts,"Total number of k-points (0 for automated methods).");
-	VASP_CHECK_TABLE(vasp_gui.have_tetra,vasp_gui.calc.kpoints_tetra,toogle_tetra,"Tetrahedron",1,2,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.have_tetra,vasp_gui.calc.kpoints_tetra,toogle_tetra,"Tetrahedron",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.have_tetra,"Switch on the tetrahedron method for entering k-points.\nISMEAR must be set to -5 for this method!");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_sx,vasp_gui.calc.kpoints_sx,"%.4lf","SX=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_sx,vasp_gui.calc.kpoints_sx,"%.4lf","SX=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_sx,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 1st reciprocal lattice component.");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_sy,vasp_gui.calc.kpoints_sy,"%.4lf","SY=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_sy,vasp_gui.calc.kpoints_sy,"%.4lf","SY=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_sy,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 2nd reciprocal lattice component.");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_sz,vasp_gui.calc.kpoints_sz,"%.4lf","SZ=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_sz,vasp_gui.calc.kpoints_sz,"%.4lf","SZ=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nThis will set a shift from grid origin\nin 3rd reciprocal lattice component.");
 /* --- end frame */
 /* --- Coordinate */
@@ -3485,26 +3484,22 @@ GUI_TOOLTIP(vasp_gui.kpoints_sz,"In case a grid is used to generate k-points\nTh
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(vasp_gui.kpoints_coord,table,2,5);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.kpoints_kpts,"KPOINT:",0,4,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.kpoints_kpts,"ADD kpoint");
 GUI_TOOLTIP(vasp_gui.kpoints_kpts,"List of the k-points coordinates.\nThe index after comment sign \"! kpoint:\" can be used\nfor entering tetrahedron edge definition.");
         /*2 buttons*/
-        hbox = gtk_hbox_new(FALSE, 0);
-	VASP_NEW_SEPARATOR();
-        gui_stock_button(GTK_STOCK_APPLY,vasp_kpoint_modified,NULL,hbox);
-        gui_stock_button(GTK_STOCK_DELETE,vasp_kpoint_delete,NULL,hbox);
-        gtk_table_attach_defaults(GTK_TABLE(table),hbox,4,5,0,1);
+	GUI_2BUTTONS_TABLE(table,vasp_kpoint_modified,vasp_kpoint_delete,4,5,0,1);
 /* 2nd line */
-        VASP_ENTRY_TABLE(vasp_gui.kpoints_i,vasp_gui.calc.kpoints_i,"%i","INDEX:",0,1,1,2);
-        gtk_widget_set_sensitive(vasp_gui.kpoints_i,FALSE);/*<- is changed only by selecting kpoints_kpts*/
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_i,vasp_gui.calc.kpoints_i,"%i","INDEX:",0,1,1,2);
+	GUI_LOCK(vasp_gui.kpoints_i);/*<- is changed only by selecting kpoints_kpts*/
 GUI_TOOLTIP(vasp_gui.kpoints_i,"The index of current k-point.\n(can be changed by deletion/addition only)");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_x,vasp_gui.calc.kpoints_x,"%.4lf","X=",1,2,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_x,vasp_gui.calc.kpoints_x,"%.4lf","X=",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_x,"Coordinate of k-point in 1st component of selected mode.\n(cartesian or reciprocal)");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_y,vasp_gui.calc.kpoints_y,"%.4lf","Y=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_y,vasp_gui.calc.kpoints_y,"%.4lf","Y=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_y,"Coordinate of k-point in 2nd component of selected mode.\n(cartesian or reciprocal)");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_z,vasp_gui.calc.kpoints_z,"%.4lf","Z=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_z,vasp_gui.calc.kpoints_z,"%.4lf","Z=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_z,"Coordinate of k-point in 3rd component of selected mode.\n(cartesian or reciprocal)");
-	VASP_ENTRY_TABLE(vasp_gui.kpoints_w,vasp_gui.calc.kpoints_w,"%.4lf","W=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kpoints_w,vasp_gui.calc.kpoints_w,"%.4lf","W=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of all weight does not have to be 1\nbut relative ratio should be respected.");
 /* --- end frame */
 /* --- Tetrahedron */
@@ -3512,45 +3507,40 @@ GUI_TOOLTIP(vasp_gui.kpoints_w,"Symmetry degeneration weight of k-point.\nSum of
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(vasp_gui.kpoints_tetra,table,3,6);
 /* 1st line */
-	VASP_ENTRY_TABLE(vasp_gui.tetra_total,vasp_gui.calc.tetra_total,"%i","TOTAL=",0,1,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_total,vasp_gui.calc.tetra_total,"%i","TOTAL=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.tetra_total,"Total number of tetrahedrons.");
-	label = gtk_label_new("EXACT VOLUME:");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
-	VASP_ENTRY_TABLE(vasp_gui.tetra_volume,vasp_gui.calc.tetra_volume,"%.6lf","V=",2,3,0,1);
+	GUI_LABEL_TABLE(table,"EXACT VOLUME:",1,2,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_volume,vasp_gui.calc.tetra_volume,"%.6lf","V=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.tetra_volume,"Volume weight for a single tetrahedron.\nAll have a volume defined by the ratio of\ntetrahedron volume / Brillouin zone Volume.");
-	label = gtk_label_new("for (A,B,C,D) tetrahedron");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,3,6,0,1);
+	GUI_LABEL_TABLE(table,"for (A,B,C,D) tetrahedron",3,6,0,1);
 /* 2nd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.tetra,"TETRAHEDRON:",0,5,1,2);
-	VASP_COMBOBOX_ADD(vasp_gui.tetra,"ADD tetrahedron");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.tetra,"TETRAHEDRON:",0,5,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.tetra,"ADD tetrahedron");
 GUI_TOOLTIP(vasp_gui.tetra,"Tetrahedron list, consisting of\nsymmetry degeneration weight followed by\nfour corner points of each tetrahedron\nin k-point indices given above.");
 	/*2 buttons*/
-	hbox = gtk_hbox_new(FALSE, 0);
-	VASP_NEW_SEPARATOR();
-	gui_stock_button(GTK_STOCK_APPLY,vasp_tetra_modified,NULL,hbox);
-	gui_stock_button(GTK_STOCK_DELETE,vasp_tetra_delete,NULL,hbox);
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,5,6,1,2);
+	GUI_2BUTTONS_TABLE(table,vasp_tetra_modified,vasp_tetra_delete,5,6,1,2);
 /* 3rd line */
-	VASP_ENTRY_TABLE(vasp_gui.tetra_i,vasp_gui.calc.tetra_i,"%i","INDEX:",0,1,2,3);
-	gtk_widget_set_sensitive(vasp_gui.tetra_i,FALSE);/*<- is changed only by selecting tetra*/
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_i,vasp_gui.calc.tetra_i,"%i","INDEX:",0,1,2,3);
+	GUI_LOCK(vasp_gui.tetra_i);/*<- is changed only by selecting tetra*/
 GUI_TOOLTIP(vasp_gui.tetra_i,"The index of current tetrahedron.\n(can be changed by deletion/addition only)");
-	VASP_ENTRY_TABLE(vasp_gui.tetra_w,vasp_gui.calc.tetra_w,"%.4lf","Degen. W=",1,2,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_w,vasp_gui.calc.tetra_w,"%.4lf","Degen. W=",1,2,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_w,"Symmetry degeneration weight.\nUnlike k-points, weight must be normalized\nie. total Brillouin zone Volume should be recovered\nby summing all degeneration * V");
-	VASP_ENTRY_TABLE(vasp_gui.tetra_a,vasp_gui.calc.tetra_a,"%i","PtA:",2,3,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_a,vasp_gui.calc.tetra_a,"%i","PtA:",2,3,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_a,"1st corner of the tetrahedron (A) in k-point index.");
-	VASP_ENTRY_TABLE(vasp_gui.tetra_b,vasp_gui.calc.tetra_b,"%i","PtB:",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_b,vasp_gui.calc.tetra_b,"%i","PtB:",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_b,"2nd corner of the tetrahedron (B) in k-point index.");
-	VASP_ENTRY_TABLE(vasp_gui.tetra_c,vasp_gui.calc.tetra_c,"%i","PtC:",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_c,vasp_gui.calc.tetra_c,"%i","PtC:",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_c,"3rd corner of the tetrahedron (C) in k-point index.");
-	VASP_ENTRY_TABLE(vasp_gui.tetra_d,vasp_gui.calc.tetra_d,"%i","PtD:",5,6,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.tetra_d,vasp_gui.calc.tetra_d,"%i","PtD:",5,6,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index.");
 /* initialize */
-        g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.ismear_3)),"changed",GTK_SIGNAL_FUNC(ismear_changed),data);
-        g_signal_connect(GTK_OBJECT(GTK_ENTRY(vasp_gui.kspacing_3)),"changed",GTK_SIGNAL_FUNC(kspacing_changed),data);
-	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_mode,vasp_gui.calc.kpoints_mode,vasp_kpoints_mode_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.kpoints_kpts,0,vasp_kpoints_kpts_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.tetra,0,vasp_tetra_selected);
+	GUI_ENTRY_CHANGE(vasp_gui.ismear_3,ismear_changed,data);
+	GUI_ENTRY_CHANGE(vasp_gui.kspacing_3,kspacing_changed,data);
+	GUI_COMBOBOX_SETUP(vasp_gui.kpoints_mode,vasp_gui.calc.kpoints_mode,vasp_kpoints_mode_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.kpoints_kpts,0,vasp_kpoints_kpts_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.tetra,0,vasp_tetra_selected);
 	toogle_tetra();
+	ismear_changed(vasp_gui.ismear_3,data);/*necessary*/
 /* --- end frame */
 /* TODO: import KPOINTS/IBZKPT file*/
 
@@ -3563,12 +3553,11 @@ GUI_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,2,1);
 /* 1st line */
-	VASP_TEXT_TABLE(vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
-	gtk_widget_set_sensitive(vasp_gui.poscar_species,FALSE);
+	GUI_TEXT_TABLE(table,vasp_gui.poscar_species,vasp_gui.calc.species_symbols,"SPECIES:",0,1,0,1);
+	GUI_LOCK(vasp_gui.poscar_species);
 GUI_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetected in the POSCAR ionic information.");
 /* 2nd line */
-	label = gtk_label_new("(each species will require a separate POTCAR information)");
-        gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
+	GUI_LABEL_TABLE(table,"(each species will require a separate POTCAR information)",0,1,1,2);
 /* --- end frame */
 /* --- get POTCAR information */
 	GUI_FRAME_NOTE(page,frame,"get POTCAR information");
@@ -3576,23 +3565,21 @@ GUI_TOOLTIP(vasp_gui.poscar_species,"List of atomic symbol of the species\ndetec
 	GUI_TABLE_FRAME(frame,table,3,4);
 /* 1st line */
 	/* 2 lines radiobutton */
-	vbox = gtk_vbox_new(FALSE,0);
-	new_radio_group(0,vbox,FF);
-	vasp_gui.potcar_select_file = add_radio_button("Use POTCAR file",(gpointer)toggle_potcar_file,NULL);
-	vasp_gui.potcar_select_folder = add_radio_button("Use POTCAR path",(gpointer)toggle_potcar_folder,NULL);
-	gtk_table_attach_defaults(GTK_TABLE(table),vbox,0,1,0,2);
+	GUI_2RADIO_TABLE(table,
+		vasp_gui.potcar_select_file,"Use POTCAR file",toggle_potcar_file,
+		vasp_gui.potcar_select_folder,"Use POTCAR path",toggle_potcar_folder,0,1,0,2);
 GUI_TOOLTIP(vasp_gui.potcar_select_file,"Load a previously prepared POTCAR file.\nThe species (and species order) should match\nEXACTLY those of the POSCAR ion information.");
 GUI_TOOLTIP(vasp_gui.potcar_select_folder,"Use the directory where all POTCAR information are available.\nUsually a directory containing atomic symbols sub-directories.");
-	VASP_TEXT_TABLE(vasp_gui.potcar_file,vasp_gui.calc.potcar_file,"FILE:",1,3,0,1);
-	VASP_BUTTON_TABLE(vasp_gui.potcar_file_button,GTK_STOCK_OPEN,load_potcar_file_dialog,3,4,0,1);
+	GUI_TEXT_TABLE(table,vasp_gui.potcar_file,vasp_gui.calc.potcar_file,"FILE:",1,3,0,1);
+	GUI_OPEN_BUTTON_TABLE(table,vasp_gui.potcar_file_button,load_potcar_file_dialog,3,4,0,1);
 GUI_TOOLTIP(vasp_gui.potcar_file,"POTCAR file, including its full path.");
 /* 2nd line */
-	VASP_TEXT_TABLE(vasp_gui.potcar_folder,vasp_gui.calc.potcar_folder,"PATH:",1,3,1,2);
-	VASP_BUTTON_TABLE(vasp_gui.potcar_folder_button,GTK_STOCK_OPEN,load_potcar_folder_dialog,3,4,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.potcar_folder,vasp_gui.calc.potcar_folder,"PATH:",1,3,1,2);
+	GUI_OPEN_BUTTON_TABLE(table,vasp_gui.potcar_folder_button,load_potcar_folder_dialog,3,4,1,2);
 GUI_TOOLTIP(vasp_gui.potcar_folder,"Full PATH to the POTCAR sub-directories.");
 /* 3rd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
-	VASP_BUTTON_TABLE(vasp_gui.species_button,GTK_STOCK_APPLY,apply_species_flavor,3,4,2,3);
+	GUI_COMBOBOX_TABLE(table,vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
+	GUI_OPEN_BUTTON_TABLE(table,vasp_gui.species_button,apply_species_flavor,3,4,2,3);
 GUI_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a choice\nbetween different pseudopotential setting (flavors) exists\nEx: _h hard, _s soft _pv include pseudo-core valence, etc.");
 /* initialize */
 	toggle_potcar_file(NULL,NULL);
@@ -3603,16 +3590,16 @@ GUI_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a 
 	GUI_TABLE_FRAME(frame,table,2,2);
 /* 1st line */
 	//multicolumn label
-        label = gtk_label_new("DETECTED");
-        gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
-	VASP_TEXT_TABLE(vasp_gui.potcar_species,vasp_gui.calc.potcar_species,"SPECIES:",1,2,0,1);
+	GUI_LABEL_TABLE(table,"DETECTED",0,1,0,2);
+	GUI_TEXT_TABLE(table,vasp_gui.potcar_species,vasp_gui.calc.potcar_species,"SPECIES:",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.potcar_species,"List of atomic symbol of the species\ndetected from the POTCAR setting.");
-	gtk_widget_set_sensitive(vasp_gui.potcar_species,FALSE);
+	GUI_LOCK(vasp_gui.potcar_species);
 /* 2nd line */
 	/*occ: col0*/
-	VASP_TEXT_TABLE(vasp_gui.potcar_species_flavor,vasp_gui.calc.potcar_species_flavor,"FLAVOR:",1,2,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.potcar_species_flavor,vasp_gui.calc.potcar_species_flavor,"FLAVOR:",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors (PATH method)\ndetected from the POTCAR setting.");
-	gtk_widget_set_sensitive(vasp_gui.potcar_species_flavor,FALSE);
+	GUI_LOCK(vasp_gui.potcar_species_flavor);
+/* --- end frame */
 
 /*----------------*/
 /* page 6 -> EXEC */
@@ -3623,26 +3610,26 @@ GUI_TOOLTIP(vasp_gui.potcar_species_flavor,"List of the pseudopotential flavors 
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,3,6);
 /* 1st line */
-	VASP_LABEL_TABLE("VASP EXEC:",0,1,0,1);
-	VASP_TEXT_TABLE(vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
+	GUI_LABEL_TABLE(table,"VASP EXEC:",0,1,0,1);
+	GUI_TEXT_TABLE(table,vasp_gui.job_vasp_exe,vasp_gui.calc.job_vasp_exe,"FILE=",1,5,0,1);
 GUI_TOOLTIP(vasp_gui.job_vasp_exe,"Location (full path) of the vasp executable.");
-	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_vasp_exe_dialog,5,6,0,1);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_vasp_exe_dialog,5,6,0,1);
 /* 2nd line */
-	VASP_LABEL_TABLE("CALCUL PATH:",0,1,1,2);
-	VASP_TEXT_TABLE(vasp_gui.job_path,vasp_gui.calc.job_path,"PATH=",1,5,1,2);
+	GUI_LABEL_TABLE(table,"CALCUL PATH:",0,1,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.job_path,vasp_gui.calc.job_path,"PATH=",1,5,1,2);
 GUI_TOOLTIP(vasp_gui.job_path,"Location (full path) of the calculation directory.\nit is IMPORTANT to check this parameter so that\n* no other calculation is overwritten\n* calculation will not start in an unexpected directory.");
-	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_path_dialog,5,6,1,2);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_path_dialog,5,6,1,2);
 /* 3rd line */
-	VASP_LABEL_TABLE("OUTPUT:",0,1,2,3);
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lwave,NULL,"LWAVE",1,2,2,3);/*not calling anything*/
+	GUI_LABEL_TABLE(table,"OUTPUT:",0,1,2,3);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lwave,NULL,"LWAVE",1,2,2,3);/*not calling anything*/
 GUI_TOOLTIP(button,"LWAVE: Ch. 6.52 DEFAULT: TRUE\nIf set the WAVECAR (wavefunctions) file is written.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lcharg,NULL,"LCHARG",2,3,2,3);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lcharg,NULL,"LCHARG",2,3,2,3);/*not calling anything*/
 GUI_TOOLTIP(button,"LCHARG: Ch. 6.52 DEFAULT: TRUE\nIf set the CHGCAR (charge density) file is written.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lvtot,NULL,"LVTOT",3,4,2,3);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lvtot,NULL,"LVTOT",3,4,2,3);/*not calling anything*/
 GUI_TOOLTIP(button,"LVTOT: Ch. 6.53 DEFAULT: FALSE\nIf set the LOCPOT (local potential) file is written.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lvhar,NULL,"LVHAR",4,5,2,3);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lvhar,NULL,"LVHAR",4,5,2,3);/*not calling anything*/
 GUI_TOOLTIP(button,"LVHAR: Ch. 6.54 DEFAULT: FALSE\nIf set the full local potential is written to LOCPOT\n(ie. ionic+Hartree+XC) otherwise only electrostatic\n(ie. ionic+Hartree) is written.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lelf,NULL,"LELF",5,6,2,3);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lelf,NULL,"LELF",5,6,2,3);/*not calling anything*/
 GUI_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron localization function)\nfile is written.");
 /* --- end frame */
 /* --- PARALLEL */
@@ -3650,22 +3637,22 @@ GUI_TOOLTIP(button,"LELF: Ch 6.55 DEFAULT: FALSE\nIf set the ELFCAR (electron lo
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,2,6);
 /* 1st line */
-	VASP_LABEL_TABLE("MPIRUN:",0,1,0,1);
-	VASP_TEXT_TABLE(vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
+	GUI_LABEL_TABLE(table,"MPIRUN:",0,1,0,1);
+	GUI_TEXT_TABLE(table,vasp_gui.job_mpirun,vasp_gui.calc.job_mpirun,"FILE=",1,5,0,1);
 GUI_TOOLTIP(vasp_gui.job_mpirun,"Location (full path) of mpirun executable.\nRequired for parallel calculation only.");
-	VASP_BUTTON_TABLE(button,GTK_STOCK_OPEN,load_mpirun_dialog,5,6,0,1);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_mpirun_dialog,5,6,0,1);
 /* 2nd line */
-	VASP_SPIN_TABLE(vasp_gui.job_nproc,vasp_gui.calc.job_nproc,parallel_eq,"NP=",0,1,1,2);
+	GUI_SPIN_TABLE(table,vasp_gui.job_nproc,vasp_gui.calc.job_nproc,parallel_eq,"NP=",0,1,1,2);
 GUI_TOOLTIP(vasp_gui.job_nproc,"Total number of CPU used for calculation.\nwill be used as N in \"mpirun -np N vasp\"\nto start vasp calculation.");
-	VASP_SPIN_TABLE(vasp_gui.ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",1,2,1,2);
+	GUI_SPIN_TABLE(table,vasp_gui.ncore,vasp_gui.calc.ncore,parallel_eq,"NCORE=",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.ncore,"NCORE: Ch. 6.57 DEFAULT: 1\nSets how many cores works on one orbital.\nNote that NCORE is limited by KPAR.");
-	VASP_SPIN_TABLE(vasp_gui.kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",2,3,1,2);
+	GUI_SPIN_TABLE(table,vasp_gui.kpar,vasp_gui.calc.kpar,parallel_eq,"KPAR=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.kpar,"KPAR: Ch. 6.57 DEFAULT: 1\nSets the number of k-points treated in parallel.\nEach k-point is worked on by NCORE CPUs.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lplane,NULL,"LPLANE",3,4,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lplane,NULL,"LPLANE",3,4,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LPLANE: Ch. 6.57 DEFAULT: TRUE\nIf set the real-space data distribution is done plane wise.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalu,NULL,"LSCALU",4,5,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lscalu,NULL,"LSCALU",4,5,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LSCALU: Ch. 6.59 DEFAULT: FALSE\nIf set parallel LU decomposition will be used.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lscalapack,NULL,"LSCALAPACK",5,6,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lscalapack,NULL,"LSCALAPACK",5,6,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routines will be used.");
 /* --- end frame */
 /* --- DISTANT */
@@ -3673,38 +3660,37 @@ GUI_TOOLTIP(button,"LSCALAPACK: Ch. 6.59 DEFAULT: FALSE\nIf set scaLAPACK routin
 /*create a vbox in frame*/
 	GUI_VBOX_FRAME(frame,vbox);
 /* 1st line */
-	VASP_NEW_LINE();
+	GUI_LINE_BOX(vbox,hbox);
 /* 2nd line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("Remote execution of VASP is currently UNDER CONSTRUCTION.");
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"Remote execution of VASP is currently UNDER CONSTRUCTION.");
 /* 3rd line */
-	VASP_NEW_LINE();
-//	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("For now, please save files and manually transfer them to the distant server, then submit and retreive files as usual.");
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"For now, please save files and manually transfer them to the distant server, then submit and retreive files as usual.");
 /* 4th line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("The future GDIS job interface will hopefully automate the whole process...");
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"The future GDIS job interface will hopefully automate the whole process...");
 /* 5th line */
-	VASP_NEW_LINE();
-	VASP_NEW_LABEL("...and will be made available in the VASP calculation interface at that time.");
-	VASP_NEW_SEPARATOR();
-	VASP_NEW_LABEL("--OVHPA");
+	GUI_LINE_BOX(vbox,hbox);
+	GUI_LABEL_BOX(hbox,label,"...and will be made available in the VASP calculation interface at that time.");
+	GUI_NEW_SEPARATOR(hbox,separator);
+	GUI_LABEL_BOX(hbox,label,"--OVHPA");
 /* 6th line */
-	VASP_NEW_LINE();
+	GUI_LINE_BOX(vbox,hbox);
+/* --- end frame */
 
 /* --- Outside of notebook */
-	GUI_FRAME_BOX(GTK_BOX(GTK_DIALOG(vasp_gui.window)->vbox),frame);
+	GUI_FRAME_WINDOW(vasp_gui.window,frame);
 	GUI_VBOX_FRAME(frame,vbox);
 /* Action buttons */
-	vasp_gui.button_save=gui_stock_button(GTK_STOCK_SAVE, save_vasp_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
-	vasp_gui.button_exec=gui_stock_button(GTK_STOCK_EXECUTE, exec_calc, NULL, GTK_DIALOG(vasp_gui.window)->action_area);
-	gui_stock_button(GTK_STOCK_CLOSE, quit_vasp_gui, dialog, GTK_DIALOG(vasp_gui.window)->action_area);
+	GUI_SAVE_ACTION(vasp_gui.window,vasp_gui.button_save,save_vasp_calc,NULL);
+	GUI_EXEC_ACTION(vasp_gui.window,vasp_gui.button_exec,exec_calc,NULL);
+	GUI_CLOSE_ACTION(vasp_gui.window,button,quit_vasp_gui,dialog);
 /* connect to signals */
-        g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(vasp_gui_page_switch),NULL);
-
+	GUI_PAGE_CHANGE(notebook,vasp_gui_page_switch,NULL);
 /* all done */
 	vasp_gui_refresh();/*refresh once more*/
-        gtk_widget_show_all(vasp_gui.window);
+	GUI_SHOW(vasp_gui.window);/*display*/
         sysenv.refresh_dialog=TRUE;
 }
 

@@ -92,7 +92,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         tv = gtk_text_view_new();\
         tv_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv));\
         gtk_text_view_set_editable(GTK_TEXT_VIEW(tv),FALSE);\
-        GUI_LOCK(tv);\
+	gtk_widget_set_sensitive(tv,FALSE);\
         gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(_absurd),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);\
         gtk_container_add(GTK_CONTAINER(_absurd),tv);\
         gtk_container_set_border_width(GTK_CONTAINER(_absurd),1);\
@@ -111,6 +111,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_FRAME_NOTE(page,frame,caption) do{\
 	frame = gtk_frame_new(caption);\
 	gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);\
+}while(0)
+/*Connect a switch-page even of a notebook (notebook) to a function (function) passing data (data).*/
+#define GUI_PAGE_CHANGE(notebook,function,data) do{\
+	g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
 /*******************/
 /* FRAME INTERFACE */
@@ -220,6 +224,11 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
 	if((function)!=NULL) g_signal_connect(GTK_COMBO_BOX_TEXT(combobox),"changed",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
+/*Only set a default value (default_value) for the combobox (combobox).
+ * Can be call anytime, and is equivalent to GUI_COMBOBOX_SETUP(combobox,default_value,NULL).*/
+#define GUI_COMBOBOX_SET(combobox,default_value) do{\
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
+}while(0)
 /*Create a new cell with:
  * 	 a boxed spin button, which default value is 1 and interval is [1,100], and labeled with text ("caption").
  * Due to limitation of GTK, value has to be of double type and not integer (event though it make little sense).*/
@@ -232,11 +241,18 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin),min,max);\
 }while(0)
 /*Create a new cell with:
- * 	 a button (not boxed!) of type (type) connected on click to function (function).*/
-#define GUI_BUTTON_TABLE(table,button,type,function,l,r,t,b) do{\
-        button=gtk_button_new_from_stock(type);\
+ * 	 an open button (button) connected on click to function (function).*/
+#define GUI_OPEN_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
+	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);\
 	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
-        g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+/*Create a new cell with:
+ * 	 an apply button (button) connected on click to function (function).*/
+#define GUI_APPLY_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
+	button=gtk_button_new_from_stock(GTK_STOCK_APPLY);\
+	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
 }while(0)
 /*Create a new cell with:
  * 	 a boxed button of type APPLY connected on click to a function (function_1),
@@ -262,6 +278,16 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
 }while(0)
+/*Create a new cell with:
+ * 	 a radio button (radio_1) with caption ("caption_1") connected to function (pointer_1)
+ * 	 a radio button (radio_2) with caption ("caption_2") connected to function (pointer_2)*/
+#define GUI_2RADIO_TABLE(table,radio_1,caption_1,pointer_1,radio_2,caption_2,pointer_2,l,r,t,b) do{\
+	GtkWidget *_vbox = gtk_vbox_new(FALSE,0);\
+	new_radio_group(0,_vbox,FF);\
+	radio_1 = add_radio_button(caption_1,(gpointer)pointer_1,NULL);\
+	radio_2 = add_radio_button(caption_2,(gpointer)pointer_2,NULL);\
+	gtk_table_attach_defaults(GTK_TABLE(table),_vbox,l,r,t,b);\
+}while(0)
 /********************/
 /* GENERAL COMMANDS */
 /********************/
@@ -269,10 +295,31 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
 /*set the entry (entry) text ("text")*/
 #define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
+/*connect entry (entry) on change with the function (function) passing data (data).*/
+#define GUI_ENTRY_CHANGE(entry,function,data) g_signal_connect(GTK_OBJECT(GTK_ENTRY(entry)),"changed",GTK_SIGNAL_FUNC(function),data)
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
 #define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)
-
-
-
-
+/*set a toggle button (button) ON and OFF*/
+#define GUI_TOGGLE_ON(button) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),TRUE)
+#define GUI_TOGGLE_OFF(button) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),FALSE)
+/*insert a frame (frame) in a dialog (window) using an implicit vertical box.*/
+#define GUI_FRAME_WINDOW(window,frame) do{\
+	GUI_FRAME_BOX(GTK_DIALOG(window)->vbox,frame);\
+}while(0)
+/*add a save action button (button) connected to function (function) passing data (data) on the dialog (window).*/
+#define GUI_SAVE_ACTION(window,button,function,data) do{\
+	button=gui_stock_button(GTK_STOCK_SAVE,function,data,GTK_DIALOG(window)->action_area);\
+}while(0)
+/*add an execute action button (button) connected to function (function) passing data (data) on the dialog (window).*/ 
+#define GUI_EXEC_ACTION(window,button,function,data) do{\
+	button=gui_stock_button(GTK_STOCK_EXECUTE,function,data,GTK_DIALOG(window)->action_area);\
+}while(0)
+/*add a close action button (button) connected to function (function) passing data (data) on the dialog (window).*/
+#define GUI_CLOSE_ACTION(window,button,function,data) do{\
+	button=gui_stock_button(GTK_STOCK_CLOSE,function,data,GTK_DIALOG(window)->action_area);\
+}while(0)
+/*display the dialog (window).*/
+#define GUI_SHOW(window) do{\
+	gtk_widget_show_all(window);\
+}while(0)
