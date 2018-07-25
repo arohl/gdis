@@ -3065,18 +3065,18 @@ GUI_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh gri
         table = gtk_table_new(4, 2, FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_ENTRY_TABLE(vasp_gui.ismear,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.ismear,vasp_gui.calc.ismear,"%i","ISMEAR=",0,1,0,1);
 GUI_TOOLTIP(vasp_gui.ismear,"ISMEAR: Ch. 6.38 DEFAULT: 1\nDetermine how the partial occupations are set.\nIt is advised to change it to ISMEAR=0\nfor semiconducting or insulating materials.");
-	VASP_ENTRY_TABLE(vasp_gui.sigma,vasp_gui.calc.sigma,"%.4lf","SIGMA=",1,2,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.sigma,vasp_gui.calc.sigma,"%.4lf","SIGMA=",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.sigma,"SIGMA: Ch. 6.38 DEFAULT: 0.2\nDetermine the width of the smearing (eV)\nFor ISMEAR=0 (semiconductors or insulators)\na small SIGMA=0.05 can be chosen.");
-	VASP_CHECK_TABLE(vasp_gui.kgamma,vasp_gui.calc.kgamma,NULL,"KGAMMA",2,3,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.kgamma,vasp_gui.calc.kgamma,NULL,"KGAMMA",2,3,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.kgamma,"KGAMMA: Ch. 6.4 DEFAULT: TRUE\nWhen KPOINTS file is not present KGAMMA\nindicate if the k-grid is centered around gamma point.");
-	VASP_ENTRY_TABLE(vasp_gui.kspacing,vasp_gui.calc.kspacing,"%.4lf","KSPACING=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.kspacing,vasp_gui.calc.kspacing,"%.4lf","KSPACING=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.kspacing,"KSPACING: Ch. 6.4 DEFAULT: 0.5\nWhen KPOINTS file is not present KSPACING\nDetermine the smallest spacing between k-points (Ang^-1).");
 /* 2nd line */
-	VASP_TEXT_TABLE(vasp_gui.fermwe,vasp_gui.calc.fermwe,"FERMWE=",0,2,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.fermwe,vasp_gui.calc.fermwe,"FERMWE=",0,2,1,2);
 GUI_TOOLTIP(vasp_gui.fermwe,"FERMWE: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 explicitly sets\noccupancy for each band.");
-	VASP_TEXT_TABLE(vasp_gui.fermdo,vasp_gui.calc.fermdo,"FERMDO=",2,4,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.fermdo,vasp_gui.calc.fermdo,"FERMDO=",2,4,1,2);
 GUI_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=2 sets\noccupancy for down spin of each band.");
 /* --- end frame */
 /* --- spin */
@@ -3086,20 +3086,20 @@ GUI_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=
 	table = gtk_table_new(5, 2,FALSE);
 	gtk_container_add(GTK_CONTAINER(frame), table);
 /* 1st line */
-	VASP_CHECK_TABLE(button,vasp_gui.calc.ispin,NULL,"SPIN POLARIZED",0,1,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.ispin,NULL,"SPIN POLARIZED",0,1,0,1);/*not calling anything*/
 GUI_TOOLTIP(button,"ISPIN: Ch. 6.12 DEFAULT 1\nSpin polarized calculation sets ISPIN=2.");
-	VASP_CHECK_TABLE(vasp_gui.lnoncoll,vasp_gui.calc.non_collinear,lnoncoll_toggle,"NON COLLINEAR",1,2,0,1);
+	GUI_CHECK_TABLE(table,vasp_gui.lnoncoll,vasp_gui.calc.non_collinear,lnoncoll_toggle,"NON COLLINEAR",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.lnoncoll,"LNONCOLLINEAR: Ch. 6.68.1 DEFAULT FALSE\nAllow to perform fully, non-collinear\nmagnetic structure calculations.");
-	VASP_CHECK_TABLE(vasp_gui.lsorbit,vasp_gui.calc.lsorbit,lsorbit_toggle,"LSORBIT",2,3,0,1);
+	GUI_CHECK_TABLE(table,vasp_gui.lsorbit,vasp_gui.calc.lsorbit,lsorbit_toggle,"LSORBIT",2,3,0,1);
  GUI_TOOLTIP(vasp_gui.lsorbit,"LSORBIT: Ch. 6.68.2 DEFAULT: FALSE\nSwitch on spin-orbit coupling (for PAW)\nautomatically sets LNONCOLLINEAR when TRUE.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.gga_compat,NULL,"GGA_COMPAT",3,4,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.gga_compat,NULL,"GGA_COMPAT",3,4,0,1);/*not calling anything*/
 GUI_TOOLTIP(button,"GGA_COMPAT: Ch. 6.42 DEFAULT: TRUE\nRestores the lattice symmetry\nfor gradient corrected functionals.");
-	VASP_ENTRY_TABLE(vasp_gui.nupdown,vasp_gui.calc.nupdown,"%.1f","NUPDOWN=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nupdown,vasp_gui.calc.nupdown,"%.1f","NUPDOWN=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.nupdown,"NUPDOWN: Ch. 6.36 DEFAULT -1\nSets the difference between number\nof electrons in up and down spin component.");
 /* 2nd line */
-	VASP_TEXT_TABLE(vasp_gui.magmom,vasp_gui.calc.magmom,"MAGMOM=",0,3,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.magmom,vasp_gui.calc.magmom,"MAGMOM=",0,3,1,2);
 GUI_TOOLTIP(vasp_gui.magmom,"MAGMOM: Ch. 6.13 DEFAULT: NIONS\nSets the initial magnetic moment for each atom\nuseful only for calculation with no WAVECAR or CHGCAR\nor magnetic calculations from a non-magnetic start.\nFor non-collinear calculations default value is 3*NIONS.");
-	VASP_TEXT_TABLE(vasp_gui.saxis,vasp_gui.calc.saxis,"SAXIS=",3,5,1,2);
+	GUI_TEXT_TABLE(table,vasp_gui.saxis,vasp_gui.calc.saxis,"SAXIS=",3,5,1,2);
 GUI_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation axis for spin.\nThe default is SAXIS = eps 0 1\nwhere eps is a small quantity.");
 /* --- end frame */
 /* --- exchange correlation */
@@ -3108,67 +3108,66 @@ GUI_TOOLTIP(vasp_gui.saxis,"SAXIS: Ch. 6.68.2 DEFAULT -\nSets the quantisation a
 /* create a table in the frame*/
 	table = gtk_table_new(5, 5,FALSE);
 	gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-        VASP_COMBOBOX_TABLE(vasp_gui.gga,"GGA=",0,1,0,1);
-        VASP_COMBOBOX_ADD(vasp_gui.gga,"91:PW91");
-	VASP_COMBOBOX_ADD(vasp_gui.gga,"PE:PBE");
-	VASP_COMBOBOX_ADD(vasp_gui.gga,"RP:rPBE");
-	VASP_COMBOBOX_ADD(vasp_gui.gga,"AM:AM05");
-	VASP_COMBOBOX_ADD(vasp_gui.gga,"PS:PBEsol");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.gga,"GGA=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.gga,"91:PW91");
+	GUI_COMBOBOX_ADD(vasp_gui.gga,"PE:PBE");
+	GUI_COMBOBOX_ADD(vasp_gui.gga,"RP:rPBE");
+	GUI_COMBOBOX_ADD(vasp_gui.gga,"AM:AM05");
+	GUI_COMBOBOX_ADD(vasp_gui.gga,"PS:PBEsol");
 GUI_TOOLTIP(vasp_gui.gga,"GGA: Ch. 6.40 DEFAULT -\nSets the gradient corrected functional.\nThe default is selected according to the POTCAR file.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.voskown,NULL,"VOSKOWN",1,2,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.voskown,NULL,"VOSKOWN",1,2,0,1);/*not calling anything*/
 GUI_TOOLTIP(button,"VOSKOWN: Ch. 6.41 DEFAULT 0\nSets the Vosko, Wilk and Nusair method\nfor interpolation of correlation functional).\nUseful only if GGA=91 (PW91).");
 	/*empty: col2*/
 	/*empty: col3*/
 	/*empty: col4*/
 /* 2nd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.metagga,"METAGGA=",0,1,1,2);
-	VASP_COMBOBOX_ADD(vasp_gui.metagga,"TPSS");
-	VASP_COMBOBOX_ADD(vasp_gui.metagga,"rTPSS");
-	VASP_COMBOBOX_ADD(vasp_gui.metagga,"M06L");
-	VASP_COMBOBOX_ADD(vasp_gui.metagga,"MBJ");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.metagga,"METAGGA=",0,1,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.metagga,"TPSS");
+	GUI_COMBOBOX_ADD(vasp_gui.metagga,"rTPSS");
+	GUI_COMBOBOX_ADD(vasp_gui.metagga,"M06L");
+	GUI_COMBOBOX_ADD(vasp_gui.metagga,"MBJ");
 GUI_TOOLTIP(vasp_gui.metagga,"METAGGA: Ch. 6.43 DEFAULT none\nSets the meta-GGA functional.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lmetagga,metagga_toggle,"LMETAGGA",1,2,1,2);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lmetagga,metagga_toggle,"LMETAGGA",1,2,1,2);
 GUI_TOOLTIP(button,"LMETAGGA (secret) DEFAULT FALSE\nIgnored (but recognized and read) by VASP.\nUsed (here) to enable a METAGGA calculation.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lasph,NULL,"LASPH",2,3,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lasph,NULL,"LASPH",2,3,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LASPH: Ch. 6.44 DEFAULT FALSE\nSets calculation of non-spherical contributions\nfrom the gradient corrections in PAW spheres.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.lmixtau,NULL,"LMIXTAU",3,4,1,2);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.lmixtau,NULL,"LMIXTAU",3,4,1,2);/*not calling anything*/
 GUI_TOOLTIP(button,"LMIXTAU: Ch. 6.43.2 DEFAULT FALSE\nSets inclusion of kinetic energy density\nto the mixer (useful to converge METAGGA).");
-	VASP_ENTRY_TABLE(vasp_gui.lmaxtau,vasp_gui.calc.lmaxtau,"%i","LMAXTAU=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.lmaxtau,vasp_gui.calc.lmaxtau,"%i","LMAXTAU=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.lmaxtau,"LMAXTAU: Ch. 6.43.1 DEFAULT 0\nSets maximum l-quantum number\nto calculate PAW one-center expansion\nof the kinetic energy density.\nDefault is 6 if LASPH is set to TRUE.");
 /* 3rd line */
-	VASP_TEXT_TABLE(vasp_gui.cmbj,vasp_gui.calc.cmbj,"CMBJ=",0,3,2,3);
+	GUI_TEXT_TABLE(table,vasp_gui.cmbj,vasp_gui.calc.cmbj,"CMBJ=",0,3,2,3);
 GUI_TOOLTIP(vasp_gui.cmbj,"CMBJ: Ch 6.43 DEFAULT: -\nFor MBJ meta-GGA calculations CMBJ\nsets the mixing coefficient for Becke-Roussel potential\nfor each species or constant if CMBJ has only one value.");
-	VASP_ENTRY_TABLE(vasp_gui.cmbja,vasp_gui.calc.cmbja,"%.4lf","CMBJA=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.cmbja,vasp_gui.calc.cmbja,"%.4lf","CMBJA=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.cmbja,"CMBJA: Ch. 6.43 DEFAULT -0.012\nAlpha parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
-	VASP_ENTRY_TABLE(vasp_gui.cmbjb,vasp_gui.calc.cmbjb,"%.4lf","CMBJB=",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.cmbjb,vasp_gui.calc.cmbjb,"%.4lf","CMBJB=",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.cmbjb,"CMBJB: Ch. 6.43 DEFAULT 1.023\nBeta parameter to calculate CMBJ\nSelfconsistently at each electronic step.\nUnused if CMBJ is specified.");
 /* 4th line */
-	VASP_COMBOBOX_TABLE(vasp_gui.ldau,"LDAUTYPE=",0,1,3,4);
-	VASP_COMBOBOX_ADD(vasp_gui.ldau,"1:LSDA+U Liechtenstein");
-	VASP_COMBOBOX_ADD(vasp_gui.ldau,"2:LSDA+U Dudarev");
-	VASP_COMBOBOX_ADD(vasp_gui.ldau,"4:LDA+U Liechtenstein");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.ldau,"LDAUTYPE=",0,1,3,4);
+	GUI_COMBOBOX_ADD(vasp_gui.ldau,"1:LSDA+U Liechtenstein");
+	GUI_COMBOBOX_ADD(vasp_gui.ldau,"2:LSDA+U Dudarev");
+	GUI_COMBOBOX_ADD(vasp_gui.ldau,"4:LDA+U Liechtenstein");
 GUI_TOOLTIP(vasp_gui.ldau,"LDAUTYPE: Ch. 6.70 DEFAULT: 2\nSets the type of L(S)DA+U calculation.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.ldau,ldau_toggle,"LDAU",1,2,3,4);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.ldau,ldau_toggle,"LDAU",1,2,3,4);
 GUI_TOOLTIP(button,"LDAU: Ch. 6.70 DEFAULT: FALSE\nSwitches on L(S)DA+U calculation.");
-	VASP_TEXT_TABLE(vasp_gui.ldaul,vasp_gui.calc.ldaul,"LDAUL=",2,5,3,4);
+	GUI_TEXT_TABLE(table,vasp_gui.ldaul,vasp_gui.calc.ldaul,"LDAUL=",2,5,3,4);
 GUI_TOOLTIP(vasp_gui.ldaul,"LDAUL: Ch. 6.70 DEFAULT: 2\nSets the l-quantum number (for each species)\nfor which the on-site interaction is added.");
 /* 5th line */
-	VASP_COMBOBOX_TABLE(vasp_gui.ldau_print,"LDAUPRINT=",0,1,4,5);
-	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"0:Silent");
-	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"1:Occupancy matrix");
-	VASP_COMBOBOX_ADD(vasp_gui.ldau_print,"2:Full output");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.ldau_print,"LDAUPRINT=",0,1,4,5);
+	GUI_COMBOBOX_ADD(vasp_gui.ldau_print,"0:Silent");
+	GUI_COMBOBOX_ADD(vasp_gui.ldau_print,"1:Occupancy matrix");
+	GUI_COMBOBOX_ADD(vasp_gui.ldau_print,"2:Full output");
 GUI_TOOLTIP(vasp_gui.ldau_print,"LDAUPRINT: Ch. 6.70 DEFAULT 0\nSets the level of verbosity of L(S)DA+U.");
-	VASP_TEXT_TABLE(vasp_gui.ldauu,vasp_gui.calc.ldauu,"LDAUU=",1,3,4,5);
+	GUI_TEXT_TABLE(table,vasp_gui.ldauu,vasp_gui.calc.ldauu,"LDAUU=",1,3,4,5);
 GUI_TOOLTIP(vasp_gui.ldauu,"LDAUU: Ch. 6.70 DEFAULT: -\nSets effective on-site Coulomb interaction (for each species).");
-	VASP_TEXT_TABLE(vasp_gui.ldauj,vasp_gui.calc.ldauj,"LDAUJ=",3,5,4,5);
+	GUI_TEXT_TABLE(table,vasp_gui.ldauj,vasp_gui.calc.ldauj,"LDAUJ=",3,5,4,5);
 GUI_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site Exchange interaction (for each species).");
 /* initialize */
-	VASP_COMBOBOX_SETUP(vasp_gui.gga,1,vasp_gga_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.metagga,3,vasp_metagga_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.ldau,1,vasp_ldau_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.ldau_print,0,vasp_ldau_print_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.gga,1,vasp_gga_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.metagga,3,vasp_metagga_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.ldau,1,vasp_ldau_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.ldau_print,0,vasp_ldau_print_selected);
 	metagga_toggle(NULL,NULL);/*initialize TODO: move to end*/
 	ldau_toggle(NULL,NULL);/*initialize TODO: move to end*/
 /* --- end frame */
@@ -3178,43 +3177,42 @@ GUI_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site E
 /* create a table in the frame*/
         table = gtk_table_new(2, 5,FALSE);
         gtk_container_add(GTK_CONTAINER(frame), table);
-//      gtk_container_set_border_width(GTK_CONTAINER(table), PANEL_SPACING);/*useful?*/
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.idipol,"IDIPOL=",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.idipol,"0:no calcul");
-	VASP_COMBOBOX_ADD(vasp_gui.idipol,"1:u axis");
-	VASP_COMBOBOX_ADD(vasp_gui.idipol,"2:v axis");
-	VASP_COMBOBOX_ADD(vasp_gui.idipol,"3:w axis");
-	VASP_COMBOBOX_ADD(vasp_gui.idipol,"4:all axis");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.idipol,"IDIPOL=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.idipol,"0:no calcul");
+	GUI_COMBOBOX_ADD(vasp_gui.idipol,"1:u axis");
+	GUI_COMBOBOX_ADD(vasp_gui.idipol,"2:v axis");
+	GUI_COMBOBOX_ADD(vasp_gui.idipol,"3:w axis");
+	GUI_COMBOBOX_ADD(vasp_gui.idipol,"4:all axis");
 GUI_TOOLTIP(vasp_gui.idipol,"IDIPOL: Ch. 6.64 DEFAULT: -\nSets the direction of the calculated dipole moment\nparallel to the 1st (1), 2nd (2) or 3rd (3) lattice vector.\nIDIPOL=4 trigger full dipole calculation\n0 switches off dipole calculation (remove IDIPOL).");
-	VASP_CHECK_TABLE(vasp_gui.ldipol,vasp_gui.calc.ldipol,NULL,"LDIPOL",1,2,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.ldipol,vasp_gui.calc.ldipol,NULL,"LDIPOL",1,2,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.ldipol,"LDIPOL: Ch. 6.64 DEFAULT: FALSE\nSets potential dipole correction of the\nslab/molecule periodic-boundary induced errors.");
-	VASP_CHECK_TABLE(vasp_gui.lmono,vasp_gui.calc.lmono,NULL,"LMONO",2,3,0,1);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.lmono,vasp_gui.calc.lmono,NULL,"LMONO",2,3,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.lmono,"LMONO: Ch. 6.64 DEFAULT: FALSE\nSets potential monopole correction of the\nslab/molecule periodic-boundary induced errors.");
-	VASP_TEXT_TABLE(vasp_gui.dipol,vasp_gui.calc.dipol,"DIPOL=",3,5,0,1);
+	GUI_TEXT_TABLE(table,vasp_gui.dipol,vasp_gui.calc.dipol,"DIPOL=",3,5,0,1);
 GUI_TOOLTIP(vasp_gui.dipol,"DIPOL: Ch. 6.64 DEFAULT: -\nSets the center of the net charge distribution.\nIf left blank a guess value is sets at runtime.");
 /* 2nd line */
 	/*empty: col0*/
 	/*empty: col1*/
 	/*empty: col2*/
-	VASP_ENTRY_TABLE(vasp_gui.epsilon,vasp_gui.calc.epsilon,"%.4lf","EPSILON=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.epsilon,vasp_gui.calc.epsilon,"%.4lf","EPSILON=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.epsilon,"EPSILON: Ch. 6.64 DEFAULT: 1\nSets the dielectric constant of the medium.");
-	VASP_ENTRY_TABLE(vasp_gui.efield,vasp_gui.calc.efield,"%.4lf","EFIELD=",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.efield,vasp_gui.calc.efield,"%.4lf","EFIELD=",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.efield,"EFIELD: Ch. 6.64 DEFAULT:  0\nApply an external electrostatic field\nin a slab, or molecule calculation.\nOnly a single component can be given\nparallel to IDIPOL direction (1-3).");
 /*initialize sensitive widget*/
-	VASP_COMBOBOX_SETUP(vasp_gui.idipol,0,vasp_idipol_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.idipol,0,vasp_idipol_selected);
 if(vasp_gui.calc.idipol!=VID_0) {
-        gtk_widget_set_sensitive(vasp_gui.ldipol,TRUE);
-        gtk_widget_set_sensitive(vasp_gui.lmono,TRUE);
-        gtk_widget_set_sensitive(vasp_gui.dipol,TRUE);
-        gtk_widget_set_sensitive(vasp_gui.epsilon,TRUE);
-        if(vasp_gui.calc.idipol!=VID_4) gtk_widget_set_sensitive(vasp_gui.efield,TRUE);
+	GUI_UNLOCK(vasp_gui.ldipol);
+	GUI_UNLOCK(vasp_gui.lmono);
+	GUI_UNLOCK(vasp_gui.dipol);
+	GUI_UNLOCK(vasp_gui.epsilon);
+	if(vasp_gui.calc.idipol!=VID_4) GUI_UNLOCK(vasp_gui.efield);
 }else{
-        gtk_widget_set_sensitive(vasp_gui.ldipol,FALSE);
-        gtk_widget_set_sensitive(vasp_gui.lmono,FALSE);
-        gtk_widget_set_sensitive(vasp_gui.dipol,FALSE);
-        gtk_widget_set_sensitive(vasp_gui.epsilon,FALSE);
-        gtk_widget_set_sensitive(vasp_gui.efield,FALSE);
+	GUI_LOCK(vasp_gui.ldipol);
+	GUI_LOCK(vasp_gui.lmono);
+	GUI_LOCK(vasp_gui.dipol);
+	GUI_LOCK(vasp_gui.epsilon);
+	GUI_LOCK(vasp_gui.efield);
 }
 /* --- end frame */
 
