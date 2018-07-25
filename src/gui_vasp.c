@@ -3228,48 +3228,48 @@ GUI_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex s
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.ibrion,"IBRION=",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"-1:Nothing");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"0:Molecular Dynamics");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"1:Quasi-Newton");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"2:Conjugate Gradients");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"3:Damped");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"5:Finite Differences");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"6:Finite Diff. with SYM");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"7:Perturbation Theory");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"8:Pert. Theory with SYM");
-	VASP_COMBOBOX_ADD(vasp_gui.ibrion,"44:Transition State");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.ibrion,"IBRION=",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"-1:Nothing");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"0:Molecular Dynamics");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"1:Quasi-Newton");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"2:Conjugate Gradients");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"3:Damped");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"5:Finite Differences");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"6:Finite Diff. with SYM");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"7:Perturbation Theory");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"8:Pert. Theory with SYM");
+	GUI_COMBOBOX_ADD(vasp_gui.ibrion,"44:Transition State");
 GUI_TOOLTIP(vasp_gui.ibrion,"IBRION: Ch. 6.22 DEFAULT -1\nSets the algorithm for the ions motion.\nDefault is IBRION=0 if NSW>1.");
-	VASP_ENTRY_TABLE(vasp_gui.nsw,vasp_gui.calc.nsw,"%i","NSW=",1,2,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.nsw,vasp_gui.calc.nsw,"%i","NSW=",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.nsw,"NSW: Ch. 6.20 DEFAULT 0\nSet the maximum number of ionic steps.");
-	VASP_ENTRY_TABLE(vasp_gui.ediffg,vasp_gui.calc.ediffg,"%.2E","EDIFFG=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.ediffg,vasp_gui.calc.ediffg,"%.2E","EDIFFG=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.ediffg,"EDIFFG: Ch. 6.19 DEFAULT EDIFF*10\nSets the energy criterion for ending ionic relaxation\n>0 value are for energy difference (eV)\n<0 values are for absolute forces value (eV/Ang).");
-	VASP_ENTRY_TABLE(vasp_gui.potim,vasp_gui.calc.potim,"%.4lf","POTIM=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.potim,vasp_gui.calc.potim,"%.4lf","POTIM=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.potim,"POTIM: Ch. 6.23 DEFAULT 0.5\nFor IBRION=0 (MD) sets time step (fs)\nfor IBRION=1-3 sets force scaling constant.");
-	VASP_ENTRY_TABLE(vasp_gui.pstress,vasp_gui.calc.pstress,"%.4lf","PSTRESS=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.pstress,vasp_gui.calc.pstress,"%.4lf","PSTRESS=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.pstress,"PSTRESS: Ch. 6.25 DEFAULT 0\nSets the Pulay stress correction (kBar)\nalso used to set an external pressure.");
 /* 2nd line */
-	VASP_COMBOBOX_TABLE(vasp_gui.isif,"ISIF=",0,1,1,2);
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"0:F_0_I_0_0");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"1:F_P_I_0_0");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"2:F_S_I_0_0");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"3:F_S_I_S_V");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"4:F_S_I_S_0");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"5:F_S_0_S_0");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"6:F_S_0_S_V");
-	VASP_COMBOBOX_ADD(vasp_gui.isif,"7:F_S_0_0_V");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.isif,"ISIF=",0,1,1,2);
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"0:F_0_I_0_0");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"1:F_P_I_0_0");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"2:F_S_I_0_0");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"3:F_S_I_S_V");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"4:F_S_I_S_0");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"5:F_S_0_S_0");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"6:F_S_0_S_V");
+	GUI_COMBOBOX_ADD(vasp_gui.isif,"7:F_S_0_0_V");
 GUI_TOOLTIP(vasp_gui.isif,"ISIF: Ch. 6.24 DEFAULT 2\nSwitch to calculate F(force) and S(stress)\nand to relax I(ion) S(cell shape) and V(cell voume)\n0 = no calcul/no relaxation P = only total Pressure\nDefault is 0(F_0_I_0_0) if IBRION=0.");
-	VASP_CHECK_TABLE(vasp_gui.relax_ions,vasp_gui.rions,isif_toggle,"atom positions",1,2,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.relax_ions,vasp_gui.rions,isif_toggle,"atom positions",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.relax_ions,"Switches atomic relaxation.\nUpdates ISIF accordingly (but not IBRION).");
-	VASP_CHECK_TABLE(vasp_gui.relax_shape,vasp_gui.rshape,isif_toggle,"cell shape",2,3,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.relax_shape,vasp_gui.rshape,isif_toggle,"cell shape",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.relax_ions,"Switches cell shape relaxation.\nUpdates ISIF accordingly (but not IBRION).");
-	VASP_CHECK_TABLE(vasp_gui.relax_volume,vasp_gui.rvolume,isif_toggle,"cell volume",3,4,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.relax_volume,vasp_gui.rvolume,isif_toggle,"cell volume",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.relax_ions,"Switches cell volume relaxation.\nUpdates ISIF accordingly (but not IBRION).");
-	VASP_ENTRY_TABLE(vasp_gui.nfree,vasp_gui.calc.nfree,"%i","NFREE=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.nfree,vasp_gui.calc.nfree,"%i","NFREE=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ionic steps kept in history\nfor IBRION=1 Quasi-Newton algorithm.\nFor finite difference IBRION=5-6 NFREE\nsets the number of displacement/direction/atom.");
 /* initialize */
-	VASP_COMBOBOX_SETUP(vasp_gui.ibrion,0,vasp_ibrion_selected);
-	VASP_COMBOBOX_SETUP(vasp_gui.isif,0,vasp_isif_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.ibrion,0,vasp_ibrion_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.isif,0,vasp_isif_selected);
 /* --- end frame */
 /* --- MD */
 	GUI_FRAME_NOTE(page,frame,"Molecular Dynamics");
@@ -3277,42 +3277,41 @@ GUI_TOOLTIP(vasp_gui.nfree,"NFREE: Ch. 6.22 DEFAULT: -\nSets the number of ionic
 	GUI_TABLE_FRAME(frame,table,2,5);
 /* 1st line */
 	//multicolumn label
-	label = gtk_label_new("SET IBRION=0 FOR MD");
-	gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,2);
-	VASP_ENTRY_TABLE(vasp_gui.tebeg,vasp_gui.calc.tebeg,"%.1lf","TEBEG=",1,2,0,1);
+	GUI_LABEL_TABLE(table,"SET IBRION=0 FOR MD",0,1,0,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.tebeg,vasp_gui.calc.tebeg,"%.1lf","TEBEG=",1,2,0,1);
 GUI_TOOLTIP(vasp_gui.tebeg,"TEBEG: Ch. 6.29 DEFAULT: 0\nSets the start temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
-	VASP_ENTRY_TABLE(vasp_gui.teend,vasp_gui.calc.teend,"%.1lf","TEEND=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.teend,vasp_gui.calc.teend,"%.1lf","TEEND=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.teend,"TEEND: Ch. 6.29 DEFAULT: TEBEG\nSets the end temperature of MD run.\nTo be corrected by (Nion-1)/Nion.");
-	VASP_ENTRY_TABLE(vasp_gui.smass,vasp_gui.calc.smass,"%.1lf","SMASS=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.smass,vasp_gui.calc.smass,"%.1lf","SMASS=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.smass,"SMASS: Ch. 6.30 DEFAULT 0\nControls the velocities during MD.\nFor IBRION=3 SMASS is used as a damping factor.");
 	/*empty: col4*/
 /* 2nd line */
 	/*occ: col0*/
-	VASP_ENTRY_TABLE(vasp_gui.nblock,vasp_gui.calc.nblock,"%i","NBLOCK=",1,2,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.nblock,vasp_gui.calc.nblock,"%i","NBLOCK=",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.nblock,"NBLOCK: Ch. 6.21 DEFAULT: 1\nSets number of steps after which DOS/pair correlation\nfunction are calculated, and XDATCAR updated.\nFor SMASS=-1 kinetic energy is scaled every NBLOCK.");
-	VASP_ENTRY_TABLE(vasp_gui.kblock,vasp_gui.calc.kblock,"%i","KBLOCK=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.kblock,vasp_gui.calc.kblock,"%i","KBLOCK=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.kblock,"KBLOCK: Ch. 6.21 DEFAULT: NSW\nAfter KBLOCK*NBLOCK iterations DOS and\naverage pair correlation function is written\nto DOSCAR and PCDAT, respectively.");
-	VASP_ENTRY_TABLE(vasp_gui.npaco,vasp_gui.calc.npaco,"%i","NPACO=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.npaco,vasp_gui.calc.npaco,"%i","NPACO=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.npaco,"NPACO Ch. 6.31 DEFAULT: 256\nNumber of slots of pair correlation function.");
-	VASP_ENTRY_TABLE(vasp_gui.apaco,vasp_gui.calc.apaco,"%.4lf","APACO=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.apaco,vasp_gui.calc.apaco,"%.4lf","APACO=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for calculation\nof pair correlation function.");
 /* initialize sensitive widget*/	
 	if (vasp_gui.calc.ibrion==0) {/*selecting MD enable molecular dynamics settings*/
-		gtk_widget_set_sensitive(vasp_gui.tebeg,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.teend,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.smass,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.nblock,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.kblock,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.npaco,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.apaco,TRUE);
+		GUI_UNLOCK(vasp_gui.tebeg);
+		GUI_UNLOCK(vasp_gui.teend);
+		GUI_UNLOCK(vasp_gui.smass);
+		GUI_UNLOCK(vasp_gui.nblock);
+		GUI_UNLOCK(vasp_gui.kblock);
+		GUI_UNLOCK(vasp_gui.npaco);
+		GUI_UNLOCK(vasp_gui.apaco);
 	}else{
-                gtk_widget_set_sensitive(vasp_gui.tebeg,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.teend,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.smass,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.nblock,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.kblock,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.npaco,FALSE);
-                gtk_widget_set_sensitive(vasp_gui.apaco,FALSE);
+		GUI_LOCK(vasp_gui.tebeg);
+		GUI_LOCK(vasp_gui.teend);
+		GUI_LOCK(vasp_gui.smass);
+		GUI_LOCK(vasp_gui.nblock);
+		GUI_LOCK(vasp_gui.kblock);
+		GUI_LOCK(vasp_gui.npaco);
+		GUI_LOCK(vasp_gui.apaco);
 	}
 /* --- end frame */
 /* --- POSCAR */
@@ -3320,109 +3319,101 @@ GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for 
 /* create a table in the frame*/
 	GUI_TABLE_FRAME(frame,table,7,5);
 /* 1st line */
-	VASP_COMBOBOX_TABLE(vasp_gui.poscar_free,"DYN:",0,1,0,1);
-	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FIXED");
-	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FREE");
-	VASP_COMBOBOX_ADD(vasp_gui.poscar_free,"Manual selection");
+	GUI_COMBOBOX_TABLE(table,vasp_gui.poscar_free,"DYN:",0,1,0,1);
+	GUI_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FIXED");
+	GUI_COMBOBOX_ADD(vasp_gui.poscar_free,"All atom FREE");
+	GUI_COMBOBOX_ADD(vasp_gui.poscar_free,"Manual selection");
 GUI_TOOLTIP(vasp_gui.poscar_free,"Set position tags to \"F F F\" (FIXED)\n\"T T T\" (FREE) or user modifications.");
-	VASP_CHECK_TABLE(button,vasp_gui.calc.poscar_sd,toggle_poscar_sd,"Sel. Dynamics",1,2,0,1);
+	GUI_CHECK_TABLE(table,button,vasp_gui.calc.poscar_sd,toggle_poscar_sd,"Sel. Dynamics",1,2,0,1);
 GUI_TOOLTIP(button,"Allow use of tags for ion motion (Ch. 5.7).");
-	VASP_ENTRY_TABLE(vasp_gui.isym,vasp_gui.calc.isym,"%i","ISYM=",2,3,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.isym,vasp_gui.calc.isym,"%i","ISYM=",2,3,0,1);
 GUI_TOOLTIP(vasp_gui.isym,"ISYM: Ch. 6.27 DEFAULT 2\nSwitch symmetry method (0=OFF)\nDefault is 1 for ultrasoft, 2 for PAW PP.");
-	VASP_ENTRY_TABLE(vasp_gui.sym_prec,vasp_gui.calc.sym_prec,"%.2lE","_PREC=",3,4,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.sym_prec,vasp_gui.calc.sym_prec,"%.2lE","_PREC=",3,4,0,1);
 GUI_TOOLTIP(vasp_gui.sym_prec,"SYMPREC: Ch. 6.27 DEFAULT 10^-5\nSets the accuracy of ion positions\nin determining the system symmetry.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_a0,vasp_gui.calc.poscar_a0,"%.4lf","A0=",4,5,0,1);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_a0,vasp_gui.calc.poscar_a0,"%.4lf","A0=",4,5,0,1);
 GUI_TOOLTIP(vasp_gui.poscar_a0,"Lattice parameter (Ch. 5.7)\nSets the lattice constant (Ang.) parameter\nevery lattice vector will be scaled with.");
 /* 2nd line */
 	/*empty: col0 (TODO: SUPERCELL)*/
-	VASP_CHECK_TABLE(vasp_gui.poscar_direct,vasp_gui.calc.poscar_direct,toggle_poscar_direct,"Direct Coord.",1,2,1,2);
+	GUI_CHECK_TABLE(table,vasp_gui.poscar_direct,vasp_gui.calc.poscar_direct,toggle_poscar_direct,"Direct Coord.",1,2,1,2);
 GUI_TOOLTIP(vasp_gui.poscar_direct,"Sets whether ions positions are given\nin direct lattice or cartesian coordinate.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_ux,vasp_gui.calc.poscar_ux,"%.4lf","UX=",2,3,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_ux,vasp_gui.calc.poscar_ux,"%.4lf","UX=",2,3,1,2);
 GUI_TOOLTIP(vasp_gui.poscar_ux,"First lattice vector x component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_uy,vasp_gui.calc.poscar_uy,"%.4lf","UY=",3,4,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_uy,vasp_gui.calc.poscar_uy,"%.4lf","UY=",3,4,1,2);
 GUI_TOOLTIP(vasp_gui.poscar_uy,"First lattice vector y component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_uz,vasp_gui.calc.poscar_uz,"%.4lf","UZ=",4,5,1,2);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_uz,vasp_gui.calc.poscar_uz,"%.4lf","UZ=",4,5,1,2);
 GUI_TOOLTIP(vasp_gui.poscar_uz,"First lattice vector z component.");
 /* 3rd line */
 	/*empty: col0 (TODO: -X)*/
 	/*empty: col1 (TODO: +X)*/
-	VASP_ENTRY_TABLE(vasp_gui.poscar_vx,vasp_gui.calc.poscar_vx,"%.4lf","VX=",2,3,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_vx,vasp_gui.calc.poscar_vx,"%.4lf","VX=",2,3,2,3);
 GUI_TOOLTIP(vasp_gui.poscar_vx,"Second lattice vector x component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_vy,vasp_gui.calc.poscar_vy,"%.4lf","VY=",3,4,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_vy,vasp_gui.calc.poscar_vy,"%.4lf","VY=",3,4,2,3);
 GUI_TOOLTIP(vasp_gui.poscar_vy,"Second lattice vector y component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_vz,vasp_gui.calc.poscar_vz,"%.4lf","VZ=",4,5,2,3);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_vz,vasp_gui.calc.poscar_vz,"%.4lf","VZ=",4,5,2,3);
 GUI_TOOLTIP(vasp_gui.poscar_vz,"Second lattice vector z component.");
 /* 4th line */
 	/*empty: col0 (TODO: -Y)*/
 	/*empty: col1 (TODO: +Y)*/
-	VASP_ENTRY_TABLE(vasp_gui.poscar_wx,vasp_gui.calc.poscar_wx,"%.4lf","WX=",2,3,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_wx,vasp_gui.calc.poscar_wx,"%.4lf","WX=",2,3,3,4);
 GUI_TOOLTIP(vasp_gui.poscar_wx,"Third lattice vector x component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_wy,vasp_gui.calc.poscar_wy,"%.4lf","WY=",3,4,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_wy,vasp_gui.calc.poscar_wy,"%.4lf","WY=",3,4,3,4);
 GUI_TOOLTIP(vasp_gui.poscar_wy,"Third lattice vector y component.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_wz,vasp_gui.calc.poscar_wz,"%.4lf","WZ=",4,5,3,4);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_wz,vasp_gui.calc.poscar_wz,"%.4lf","WZ=",4,5,3,4);
 GUI_TOOLTIP(vasp_gui.poscar_wz,"Third lattice vector z component.");
 /* 5th line */
 	/*empty: col0 (TODO: -Z)*/
 	/*empty: col1 (TODO: +Z)*/
-	VASP_CHECK_TABLE(vasp_gui.poscar_tx,vasp_gui.calc.poscar_tx,NULL,"TX",2,3,4,5);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.poscar_tx,vasp_gui.calc.poscar_tx,NULL,"TX",2,3,4,5);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin first lattice coordinate.");
-	VASP_CHECK_TABLE(vasp_gui.poscar_ty,vasp_gui.calc.poscar_ty,NULL,"TY",3,4,4,5);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.poscar_ty,vasp_gui.calc.poscar_ty,NULL,"TY",3,4,4,5);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin second lattice coordinate.");
-	VASP_CHECK_TABLE(vasp_gui.poscar_tz,vasp_gui.calc.poscar_tz,NULL,"TZ",4,5,4,5);/*not calling anything*/
+	GUI_CHECK_TABLE(table,vasp_gui.poscar_tz,vasp_gui.calc.poscar_tz,NULL,"TZ",4,5,4,5);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin third lattice coordinate.");
 /* 6th line */
-        /*this combo is special and should be explicitely defined*/
-	hbox = gtk_hbox_new(FALSE, 0);
-	label = gtk_label_new("ATOMS:");
-	gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
-        vasp_gui.poscar_atoms = gtk_combo_box_text_new_with_entry();/*gtkcombo replacement*/
-        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(vasp_gui.poscar_atoms))), FALSE);/*supposed to be simple?*/
-        idx=0;
-        for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
+	/*NEW: rewrite of ATOM list combobox*/
+	GUI_COMBOBOX_TABLE(table,vasp_gui.poscar_atoms,"ATOMS:",0,4,5,6);
+	idx=0;
+	for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 		gchar sym[3];
-                core=list2->data;
+		core=list2->data;
 		sym[0]=core->atom_label[0];
 		if(g_ascii_islower(core->atom_label[1])) sym[1]=core->atom_label[1];
 		else sym[1]='\0';
 		sym[2]='\0';
-                if(vasp_gui.calc.poscar_free==VPF_FIXED)
-gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%s)",
-        core->x[0],core->x[1],core->x[2],idx,sym));
-                else
-gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%s)",
-        core->x[0],core->x[1],core->x[2],idx,sym));
-                idx++;
-        }
-vasp_gui.calc.atoms_total=idx;
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT (vasp_gui.poscar_atoms),"ADD atom");
-	gtk_box_pack_start(GTK_BOX(hbox),vasp_gui.poscar_atoms,TRUE,TRUE,0);
-        gtk_table_attach_defaults(GTK_TABLE(table),hbox,0,4,5,6);
-        g_signal_connect(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),"changed",GTK_SIGNAL_FUNC(vasp_poscar_atoms_selected),data);
+		if(vasp_gui.calc.poscar_free==VPF_FIXED){
+			GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,
+				g_strdup_printf("%.8lf %.8lf %.8lf  F   F   F ! atom: %i (%s)",core->x[0],core->x[1],core->x[2],idx,sym));
+		}else{
+			GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,
+				g_strdup_printf("%.8lf %.8lf %.8lf  T   T   T ! atom: %i (%s)",core->x[0],core->x[1],core->x[2],idx,sym));
+		}
+		idx++;
+	}
+	vasp_gui.calc.atoms_total=idx;
+	GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,"ADD atom");
+	GUI_COMBOBOX_SETUP(vasp_gui.poscar_atoms,idx,vasp_poscar_atoms_selected);
+        /*this combo is special and should be explicitely defined*/
 GUI_TOOLTIP(vasp_gui.poscar_atoms,"Atoms positions in POSCAR format.");
 	/*2 buttons*/
-	hbox = gtk_hbox_new(FALSE, 0);
-	VASP_NEW_SEPARATOR();
-        gui_stock_button(GTK_STOCK_APPLY,vasp_atom_modified,NULL,hbox);
-        gui_stock_button(GTK_STOCK_DELETE,vasp_atom_delete,NULL,hbox);
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,4,5,5,6);
+	GUI_2BUTTONS_TABLE(table,vasp_atom_modified,vasp_atom_delete,4,5,5,6);
 /* 7th line */
-	VASP_ENTRY_TABLE(vasp_gui.poscar_index,vasp_gui.calc.poscar_index,"%i","INDEX:",0,1,6,7);
-	gtk_widget_set_sensitive(vasp_gui.poscar_index,FALSE);/*<- is changed only by selecting poscar_atoms*/
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_index,vasp_gui.calc.poscar_index,"%i","INDEX:",0,1,6,7);
+	GUI_LOCK(vasp_gui.poscar_index);/*<- is changed only by selecting poscar_atoms*/
 GUI_TOOLTIP(vasp_gui.poscar_index,"Atom number (in POSCAR ORDER).");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_symbol,vasp_gui.calc.poscar_symbol,"%s","SYMBOL:",1,2,6,7);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_symbol,vasp_gui.calc.poscar_symbol,"%s","SYMBOL:",1,2,6,7);
 GUI_TOOLTIP(vasp_gui.poscar_index,"Atom symbol (will correspond to POSCAR).\nChanging symbol will change index accordingly.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_x,vasp_gui.calc.poscar_x,"%.6lf","X=",2,3,6,7);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_x,vasp_gui.calc.poscar_x,"%.6lf","X=",2,3,6,7);
 GUI_TOOLTIP(vasp_gui.poscar_x,"atom component X: x in cartesian mode\nand first lattice coordinate in direct mode.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_y,vasp_gui.calc.poscar_y,"%.6lf","Y=",3,4,6,7);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_y,vasp_gui.calc.poscar_y,"%.6lf","Y=",3,4,6,7);
 GUI_TOOLTIP(vasp_gui.poscar_y,"atom component Y: y in cartesian mode\nand second lattice coordinate in direct mode.");
-	VASP_ENTRY_TABLE(vasp_gui.poscar_z,vasp_gui.calc.poscar_z,"%.6lf","Z=",4,5,6,7);
+	GUI_ENTRY_TABLE(table,vasp_gui.poscar_z,vasp_gui.calc.poscar_z,"%.6lf","Z=",4,5,6,7);
 GUI_TOOLTIP(vasp_gui.poscar_z,"atom component Z: z in cartesian mode\nand third lattice coordinate in direct mode.");
 /* initialize sensitive widget*/
-	VASP_COMBOBOX_SETUP(vasp_gui.poscar_free,1,vasp_poscar_free_selected);
+	GUI_COMBOBOX_SETUP(vasp_gui.poscar_free,1,vasp_poscar_free_selected);
 if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)){
-	gtk_widget_set_sensitive(vasp_gui.poscar_tx,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.poscar_ty,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.poscar_tz,FALSE);
+	GUI_LOCK(vasp_gui.poscar_tx);
+	GUI_LOCK(vasp_gui.poscar_ty);
+	GUI_LOCK(vasp_gui.poscar_tz);
 	if(vasp_gui.calc.poscar_free==VPF_FIXED){
 		vasp_gui.calc.poscar_tx=FALSE;
 		vasp_gui.calc.poscar_ty=FALSE;
@@ -3435,7 +3426,6 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 }
 /* (re)initialize */
 	toggle_poscar_sd(NULL,NULL);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);/*sets "ADD atom" as active*/
 	vasp_poscar_free_selected(vasp_gui.poscar_free,NULL);
 /* --- end frame */
 
