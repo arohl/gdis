@@ -611,8 +611,7 @@ void vasp_gui_refresh(){
 	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.kpoints_nkpts);
 	GUI_ENTRY_TEXT(vasp_gui.kpoints_nkpts,text);
 	g_free(text);
-	if(vasp_gui.calc.kpoints_mode) GUI_TOGGLE_ON(vasp_gui.kpoints_mode);
-	else GUI_TOGGLE_OFF(vasp_gui.kpoints_mode);
+	GUI_COMBOBOX_SET(vasp_gui.kpoints_mode,vasp_gui.calc.kpoints_mode);
 	switch(vasp_gui.calc.kpoints_mode){
 	case VKP_MAN:
 		/*we do not update the kpoint list (here)*/
