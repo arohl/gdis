@@ -52,16 +52,22 @@ The GNU GPL can also be found at http://www.gnu.org
 }while(0)
 /*Set a new text entry (entry) with initial value ("value") expanding (wilde=TRUE) or not (wilde=FALSE) in an horizontal box (hbox).*/
 #define GUI_TEXT_ENTRY(hbox,entry,value,wilde) do{\
+	gchar *_text;\
         entry=gtk_entry_new();\
-        if(value!=NULL) gtk_entry_set_text(GTK_ENTRY(entry),g_strdup_printf("%s",value));\
+	_text=g_strdup_printf("%s",value);\
+        if(value!=NULL) gtk_entry_set_text(GTK_ENTRY(entry),_text);\
         gtk_box_pack_start(GTK_BOX(hbox), entry, wilde, wilde, 0);\
+	g_free(_text);\
 }while(0)
 /*Set a new entry (entry) with initial value (value) of format ("format") with a width of (size) characters, in an horizontal box (hbox).*/
 #define GUI_ENTRY(hbox,entry,value,format,size) do{\
+	gchar *_text;\
         entry=gtk_entry_new();\
-        gtk_entry_set_text(GTK_ENTRY(entry),g_strdup_printf(format,value));\
+	_text=g_strdup_printf(format,value);\
+        gtk_entry_set_text(GTK_ENTRY(entry),_text);\
         gtk_entry_set_width_chars (GTK_ENTRY(entry),size);\
         gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);\
+	g_free(_text);\
 }while(0)
 /*Set a new separator (separator) in an horizontal box (hbox).*/
 #define GUI_NEW_SEPARATOR(hbox,separator) do{\
@@ -229,6 +235,23 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_COMBOBOX_SET(combobox,default_value) do{\
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
 }while(0)
+/*Get combobox (combobox) active index (index).*/
+#define GUI_COMBOBOX_GET(combobox,index) do{\
+	index=gtk_combo_box_get_active(GTK_COMBO_BOX(combobox));\
+}while(0)
+/*Get combobox (combobox) active text ("text")*/
+#define GUI_COMBOBOX_GET_TEXT(combobox,text) do{\
+	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combobox));\
+}while(0)
+/*Insert combobox (combobox) text ("text") at position index (index).*/
+/* NEW: use non-deprecated gtk_combo_box_text_insert_text */
+#define GUI_COMBOBOX_ADD_TEXT(combobox,index,text) do{\
+	gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(combobox),index,text);\
+}while(0)
+/*Delete combobox (combobox) text at position index (index)*/
+#define GUI_COMBOBOX_DEL(combobox,index) do{\
+	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(combobox),index);\
+}while(0)
 /*Create a new cell with:
  * 	 a boxed spin button, which default value is 1 and interval is [1,100], and labeled with text ("caption").
  * Due to limitation of GTK, value has to be of double type and not integer (event though it make little sense).*/
@@ -296,6 +319,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /*set the entry (entry) text ("text")*/
 #define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
 /*connect entry (entry) on change with the function (function) passing data (data).*/
+/* NEW: GTK2 says that return text is const and shall not be freed, hence the g_strdup */
+#define GUI_ENTRY_GET_TEXT(entry,text) do{\
+	text=g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));\
+}while(0)
 #define GUI_ENTRY_CHANGE(entry,function,data) g_signal_connect(GTK_OBJECT(GTK_ENTRY(entry)),"changed",GTK_SIGNAL_FUNC(function),data)
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)

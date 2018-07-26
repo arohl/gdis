@@ -1287,37 +1287,37 @@ void vasp_isif_selected(GtkWidget *w, struct model_pak *model){
 	vasp_gui.calc.isif=index;
 	switch(index){
 	case 3://3:F_S_I_S_V
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
+		GUI_TOGGLE_ON(vasp_gui.relax_ions);
+		GUI_TOGGLE_ON(vasp_gui.relax_shape);
+		GUI_TOGGLE_ON(vasp_gui.relax_volume);
 		break;
 	case 4://4:F_S_I_S_0
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
+		GUI_TOGGLE_ON(vasp_gui.relax_ions);
+		GUI_TOGGLE_ON(vasp_gui.relax_shape);
+		GUI_TOGGLE_OFF(vasp_gui.relax_volume);
 		break;
 	case 5://5:F_S_0_S_0
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
+		GUI_TOGGLE_OFF(vasp_gui.relax_ions);
+		GUI_TOGGLE_ON(vasp_gui.relax_shape);
+		GUI_TOGGLE_OFF(vasp_gui.relax_volume);
 		break;	
 	case 6://6:F_S_0_S_V
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
+		GUI_TOGGLE_OFF(vasp_gui.relax_ions);
+		GUI_TOGGLE_ON(vasp_gui.relax_shape);
+		GUI_TOGGLE_ON(vasp_gui.relax_volume);
 		break;
 	case 7://7:F_S_0_0_V
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),TRUE);
+		GUI_TOGGLE_OFF(vasp_gui.relax_ions);
+		GUI_TOGGLE_OFF(vasp_gui.relax_shape);
+		GUI_TOGGLE_ON(vasp_gui.relax_volume);
 		break;
 	case 0://0:F_0_I_0_0
 	case 1://1:F_P_I_0_0
 	case 2://2:F_S_I_0_0
 	default:
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_shape),FALSE);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_volume),FALSE);
+		GUI_TOGGLE_ON(vasp_gui.relax_ions);
+		GUI_TOGGLE_OFF(vasp_gui.relax_shape);
+		GUI_TOGGLE_OFF(vasp_gui.relax_volume);
 	}
 }
 /****************/
@@ -1333,14 +1333,14 @@ else if ((!vasp_gui.rions)&&(vasp_gui.rshape)&&(vasp_gui.rvolume)) vasp_gui.calc
 else if ((!vasp_gui.rions)&&(!vasp_gui.rshape)&&(vasp_gui.rvolume)) vasp_gui.calc.isif=7;
 /*deal with forbiden combination*/
 if((vasp_gui.rions)&&(!vasp_gui.rshape)&&(vasp_gui.rvolume)) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),FALSE);
+	GUI_TOGGLE_OFF(vasp_gui.relax_ions);
 	vasp_gui.calc.isif=7;
 }
 if((!vasp_gui.rions)&&(!vasp_gui.rshape)&&(!vasp_gui.rvolume)) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.relax_ions),TRUE);
+	GUI_TOGGLE_ON(vasp_gui.relax_ions);
 	vasp_gui.calc.isif=2;
 }
-gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.isif),vasp_gui.calc.isif);/*more simple than before*/
+GUI_COMBOBOX_SET(vasp_gui.isif,vasp_gui.calc.isif);
 }
 /*****************************/
 /* selective dynamics toggle */
@@ -1348,31 +1348,40 @@ gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.isif),vasp_gui.calc.isif);/*more
 void toggle_poscar_sd(){
 	if((vasp_gui.calc.poscar_free==VPF_MAN)&&(vasp_gui.calc.poscar_sd)){
 		/*we need some tags*/
-		gtk_widget_set_sensitive(vasp_gui.poscar_tx,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.poscar_ty,TRUE);
-		gtk_widget_set_sensitive(vasp_gui.poscar_tz,TRUE);
+		GUI_UNLOCK(vasp_gui.poscar_tx);
+		GUI_UNLOCK(vasp_gui.poscar_ty);
+		GUI_UNLOCK(vasp_gui.poscar_tz);
 	}else{
 		/*tags are no longer important*/
-		gtk_widget_set_sensitive(vasp_gui.poscar_tx,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.poscar_ty,FALSE);
-		gtk_widget_set_sensitive(vasp_gui.poscar_tz,FALSE);
+		GUI_LOCK(vasp_gui.poscar_tx);
+		GUI_LOCK(vasp_gui.poscar_ty);
+		GUI_LOCK(vasp_gui.poscar_tz);
 	}
-	gtk_widget_set_sensitive(vasp_gui.poscar_free,vasp_gui.calc.poscar_sd);
+	if(vasp_gui.calc.poscar_sd) GUI_UNLOCK(vasp_gui.poscar_free);
+	else GUI_LOCK(vasp_gui.poscar_free);
 }
 /*************************/
 /* selecting poscar_free */
 /*************************/
 void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
-	const gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gint ix=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*PUSH*/
+	gint index;
+	gint ix;
 	gchar *text;
 	gdouble x,y,z;
 	gchar symbol[3];
 	gint idx=0;
 	gchar tag;
-        gtk_widget_set_sensitive(vasp_gui.poscar_tx,(index==2));
-        gtk_widget_set_sensitive(vasp_gui.poscar_ty,(index==2));
-        gtk_widget_set_sensitive(vasp_gui.poscar_tz,(index==2));
+	GUI_COMBOBOX_GET(w,index);
+	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,ix);/*PUSH*/
+	if(index==2){
+		GUI_UNLOCK(vasp_gui.poscar_tx);
+		GUI_UNLOCK(vasp_gui.poscar_ty);
+		GUI_UNLOCK(vasp_gui.poscar_tz);
+	}else{
+		GUI_LOCK(vasp_gui.poscar_tx);
+		GUI_LOCK(vasp_gui.poscar_ty);
+		GUI_LOCK(vasp_gui.poscar_tz);
+	}
 	switch(index){
 	case 0://All atom FIXED
 		vasp_gui.calc.poscar_free=VPF_FIXED;
@@ -1387,27 +1396,29 @@ void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
 		vasp_gui.calc.poscar_free=VPF_FREE;
 		tag='T';
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
+	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
 	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
 		/*modify each line tags*/
 		sscanf(text,"%lf %lf %lf %*c %*c %*c ! atom: %*i (%[^)])",&x,&y,&z,&(symbol[0]));
-		gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,
-			g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
-			x,y,z,tag,tag,tag,idx,symbol));
-		gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
+		g_free(text);/*combobox returned text should be freed*/
+		text=g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",x,y,z,tag,tag,tag,idx,symbol);
+		GUI_COMBOBOX_ADD_TEXT(vasp_gui.poscar_atoms,idx,text);
+		GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,idx+1);
 		idx++;
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
+		g_free(text);/*so is g_strdup text*/
+		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
 	}
 	/*return to selected atom*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),ix);/*PULL*/
+	g_free(text);/*free "ADD atom" string*/
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,ix);/*PULL*/
 }
 /************************/
 /* poscar_direct toggle */
 /************************/
 void toggle_poscar_direct(){
-	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*PUSH*/
+	gint index;//=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));/*PUSH*/
 	gint idx=0;
 	gchar *text;
 	gchar *tamp;
@@ -1416,6 +1427,7 @@ void toggle_poscar_direct(){
 	gdouble vx,vy,vz;
 	gdouble wx,wy,wz;
 	/* TODO: recalculate all positions on a single click */
+	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,index);/*PUSH*/
 	/*mini sync*/
         VASP_REG_VAL(poscar_a0,"%lf");
         VASP_REG_VAL(poscar_ux,"%lf");
@@ -1437,12 +1449,13 @@ void toggle_poscar_direct(){
 	wy=vasp_gui.calc.poscar_wy*vasp_gui.calc.poscar_a0;
 	wz=vasp_gui.calc.poscar_wz*vasp_gui.calc.poscar_a0;
 	/**/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-	text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
+	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
         while(g_ascii_strcasecmp(text,"ADD atom")!=0){
                 /*get each line*/
 		tamp=g_strdup(text);/*to get enough space*/
 		sscanf(text,"%lf %lf %lf %[^\n]",&x,&y,&z,tamp);
+		g_free(text);
 		/*convert*/
 			if(vasp_gui.calc.poscar_direct){
 				/*was cartesian, now changed to direct*/
@@ -1456,37 +1469,47 @@ void toggle_poscar_direct(){
 				z=z*(uz+vz+wz);
 			}
 		/*rewrite data*/
-                gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx,g_strdup_printf("%.8lf %.8lf %.8lf  %s",x,y,z,tamp));
-                gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),idx+1);
+		text=g_strdup_printf("%.8lf %.8lf %.8lf  %s",x,y,z,tamp);
+		GUI_COMBOBOX_ADD_TEXT(vasp_gui.poscar_atoms,idx,text);
+		GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,idx+1);
 		g_free(tamp);
+		g_free(text);
 		idx++;
 		/*get new line*/
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),idx);
-		text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
+		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index);/*PULL*/
+	g_free(text);/*free "ADD atom" string*/
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,index);/*PULL*/
 }
 /*************************/
 /* selecting poscar atom */
 /*************************/
 void vasp_poscar_atoms_selected(GtkWidget *w, struct model_pak *model){
-	/* using combobox*/
-	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(w));
-	gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w));
+	gint index;
+	gchar *text;
 	gdouble x,y,z;
 	gchar tx,ty,tz;
 	gchar symbol[3];
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_index),g_strdup_printf("%i",index));
+	GUI_COMBOBOX_GET(w,index);
+	text=g_strdup_printf("%i",index);
+	GUI_ENTRY_TEXT(vasp_gui.poscar_index,text);
+	g_free(text);
+	GUI_COMBOBOX_GET_TEXT(w,text);
 	if (g_ascii_strcasecmp(text,"ADD atom") == 0) {
 		/*allow symbol*/
-		gtk_widget_set_sensitive(vasp_gui.poscar_symbol,TRUE);
-	}else{
+		GUI_UNLOCK(vasp_gui.poscar_symbol);
+		}else{
 		/*populate atom properties*/
 		sscanf(text,"%lf %lf %lf %c %c %c ! atom: %*i (%[^)])",&x,&y,&z,&tx,&ty,&tz,&(symbol[0]));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_symbol),g_strdup_printf("%s",symbol));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_x),g_strdup_printf("%.6lf",x));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_y),g_strdup_printf("%.6lf",y));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_z),g_strdup_printf("%.6lf",z));
+		g_free(text);text=g_strdup_printf("%s",symbol);
+		GUI_ENTRY_TEXT(vasp_gui.poscar_symbol,text);
+		g_free(text);text=g_strdup_printf("%.6lf",x);
+		GUI_ENTRY_TEXT(vasp_gui.poscar_x,text);
+		g_free(text);text=g_strdup_printf("%.6lf",y);
+		GUI_ENTRY_TEXT(vasp_gui.poscar_y,text);
+		g_free(text);text=g_strdup_printf("%.6lf",z);
+		GUI_ENTRY_TEXT(vasp_gui.poscar_z,text);
 		/* register all that */
 		vasp_gui.calc.poscar_index=index;
 		vasp_gui.calc.poscar_x=x;
@@ -1496,35 +1519,44 @@ void vasp_poscar_atoms_selected(GtkWidget *w, struct model_pak *model){
 		vasp_gui.calc.poscar_ty=(ty=='T');
 		vasp_gui.calc.poscar_tz=(tz=='T');
 		/* disallow symbol */
-		gtk_widget_set_sensitive(vasp_gui.poscar_symbol,FALSE);
+		GUI_LOCK(vasp_gui.poscar_symbol);
 	}
+	g_free(text);
 	/* set tags sensitivity */
-	gtk_widget_set_sensitive(vasp_gui.poscar_tx,(vasp_gui.calc.poscar_free==VPF_MAN));
-	gtk_widget_set_sensitive(vasp_gui.poscar_ty,(vasp_gui.calc.poscar_free==VPF_MAN));
-	gtk_widget_set_sensitive(vasp_gui.poscar_tz,(vasp_gui.calc.poscar_free==VPF_MAN));
+	if(vasp_gui.calc.poscar_free==VPF_MAN){
+		GUI_UNLOCK(vasp_gui.poscar_tx);
+		GUI_UNLOCK(vasp_gui.poscar_ty);
+		GUI_UNLOCK(vasp_gui.poscar_tz);
+	}else{
+		GUI_LOCK(vasp_gui.poscar_tx);
+		GUI_LOCK(vasp_gui.poscar_ty);
+		GUI_LOCK(vasp_gui.poscar_tz);
+	}
 	/* (re)set tags value! */
-	if(vasp_gui.calc.poscar_tx) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tx),TRUE);
-	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tx),FALSE);
-	if(vasp_gui.calc.poscar_ty) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_ty),TRUE);
-	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_ty),FALSE);
-	if(vasp_gui.calc.poscar_tz) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tz),TRUE);
-	else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.poscar_tz),FALSE);
+	if(vasp_gui.calc.poscar_tx) GUI_TOGGLE_ON(vasp_gui.poscar_tx);
+	else GUI_TOGGLE_OFF(vasp_gui.poscar_tx);
+	if(vasp_gui.calc.poscar_ty) GUI_TOGGLE_ON(vasp_gui.poscar_ty);
+	else GUI_TOGGLE_OFF(vasp_gui.poscar_ty);
+	if(vasp_gui.calc.poscar_tz) GUI_TOGGLE_ON(vasp_gui.poscar_tz);
+	else GUI_TOGGLE_OFF(vasp_gui.poscar_tz);
 }
 /**************************/
 /* modify/add poscar atom */
 /**************************/
 void vasp_atom_modified(){
-	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));
-	gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
+	gint index;
+	gchar *text;
 	gchar *tamp;
 	gchar tx,ty,tz;
-
 	/*mini-sync*/
+	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,index);/*PUSH*/
 	VASP_REG_VAL(poscar_index,"%i");
 	VASP_REG_VAL(poscar_x,"%lf");
 	VASP_REG_VAL(poscar_y,"%lf");
 	VASP_REG_VAL(poscar_z,"%lf");
-	sprintf(vasp_gui.calc.poscar_symbol,"%s",gtk_entry_get_text(GTK_ENTRY(vasp_gui.poscar_symbol)));
+	GUI_ENTRY_GET_TEXT(vasp_gui.poscar_symbol,text);
+	sprintf(vasp_gui.calc.poscar_symbol,"%s",text);
+	g_free(text);
 	tx='F';
 	ty='F';
 	tz='F';
@@ -1542,33 +1574,42 @@ void vasp_atom_modified(){
 		break;
 	}
 	/* add/modify */
+	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
 	if(g_ascii_strcasecmp(text,"ADD atom") == 0){
 		/*we are going to insert some data*/
-		gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index,
-			g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
-			vasp_gui.calc.poscar_x,vasp_gui.calc.poscar_y,vasp_gui.calc.poscar_z,tx,ty,tz,index,vasp_gui.calc.poscar_symbol));
+		g_free(text);
+		text=g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
+			vasp_gui.calc.poscar_x,vasp_gui.calc.poscar_y,vasp_gui.calc.poscar_z,tx,ty,tz,index,vasp_gui.calc.poscar_symbol);
+		GUI_COMBOBOX_ADD_TEXT(vasp_gui.poscar_atoms,index,text);
 	}else{
 		/*we are goign to modify some data*/
-		gtk_combo_box_insert_text(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index,
-			g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
-			vasp_gui.calc.poscar_x,vasp_gui.calc.poscar_y,vasp_gui.calc.poscar_z,tx,ty,tz,index,vasp_gui.calc.poscar_symbol));
-		/* Note: GTK 3.0 has gtk_combo_box_text_insert */
-		gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),index+1);
+		g_free(text);
+		text=g_strdup_printf("%.8lf %.8lf %.8lf  %c   %c   %c ! atom: %i (%s)",
+			vasp_gui.calc.poscar_x,vasp_gui.calc.poscar_y,vasp_gui.calc.poscar_z,tx,ty,tz,index,vasp_gui.calc.poscar_symbol);
+		GUI_COMBOBOX_ADD_TEXT(vasp_gui.poscar_atoms,index,text);
+		GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,index+1);
 	}
+	g_free(text);
 	/*re-select current entry (to refresh content)*/
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index);
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,index);/*PULL*/
 	vasp_gui.poscar_dirty=TRUE;
 }
 /**********************/
 /* delete poscar atom */
 /**********************/
 void vasp_atom_delete(){
-	gint index=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms));
-	gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms));
-	if(g_ascii_strcasecmp(text,"ADD atom") == 0) return;/*can't delete this one*/
+	gint index;
+	gchar *text;
+	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,index);
 	if(index==-1) return;/*nothing selected anyway*/
-	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(vasp_gui.poscar_atoms),index);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.poscar_atoms),index-1);
+	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+	if(g_ascii_strcasecmp(text,"ADD atom") == 0) {
+		g_free(text);
+		return;/*can't delete this one*/
+	}
+	GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,index);
+	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,index-1);
+	g_free(text);
 	vasp_gui.poscar_dirty=TRUE;
 }
 /**************************/
