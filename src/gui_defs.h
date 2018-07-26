@@ -260,8 +260,13 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	spin = gui_direct_spin(caption,&(value),1.0,100.0,1.0,function,NULL,_hbox);\
 	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
 }while(0)
+/*Set spin (spin) within range [min,max] (min,max).*/
 #define GUI_SPIN_RANGE(spin,min,max) do{\
 	gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin),min,max);\
+}while(0)
+/*Set spin (spin) at value (value).*/
+#define GUI_SPIN_SET(spin,value) do{\
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin),value);\
 }while(0)
 /*Create a new cell with:
  * 	 an open button (button) connected on click to function (function).*/

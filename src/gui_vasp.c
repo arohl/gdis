@@ -90,7 +90,9 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
     char *filename;
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(filename) {
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.file_entry),g_strdup_printf("%s",filename));
+	gchar *text=g_strdup_printf("%s",filename);
+	GUI_ENTRY_TEXT(vasp_gui.file_entry,text);
+	g_free(text);
 	vasprun_update(filename,&vasp_gui.calc);/*<- update everything according to the new vasprun.xml*/
 	g_free (filename);
 	vasp_gui_refresh();/*refresh GUI with new vasp_gui.calc*/
@@ -115,7 +117,9 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
     char *filename;
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(filename) {
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.job_mpirun),g_strdup_printf("%s",filename));
+	gchar *text=g_strdup_printf("%s",filename);
+	GUI_ENTRY_TEXT(vasp_gui.job_mpirun,text);
+	g_free(text);
 	/* sync job_mpirun */
 	VASP_REG_TEXT(job_mpirun);
         g_free (filename);
@@ -134,7 +138,9 @@ void load_vasp_exe_dialog(GtkButton *button, gpointer data){
     char *filename;
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(filename) {
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.job_vasp_exe),g_strdup_printf("%s",filename));
+	gchar *text=g_strdup_printf("%s",filename);
+	GUI_ENTRY_TEXT(vasp_gui.job_vasp_exe,text);
+	g_free(text);
 	/*sync job_vasp_exe*/
 	VASP_REG_TEXT(job_vasp_exe);
         g_free (filename);
@@ -153,7 +159,9 @@ file_chooser=gtk_file_chooser_dialog_new("Select working folder",GTK_WINDOW(vasp
   {
     char *foldername = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
     if(foldername) {
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.job_path),g_strdup_printf("%s",foldername));
+	gchar *text=g_strdup_printf("%s",foldername);
+	GUI_ENTRY_TEXT(vasp_gui.job_path,text);
+	g_free(text);
 	/*sync job_path*/
 	VASP_REG_TEXT(job_path);
         g_free (foldername);
@@ -165,319 +173,446 @@ file_chooser=gtk_file_chooser_dialog_new("Select working folder",GTK_WINDOW(vasp
 /* refresh the GUI with value from vasp_gui.calc */
 /*********************************************/
 void vasp_gui_refresh(){
+	gchar *text;
 /*do not refresh the simple interface, though*/
         switch(vasp_gui.calc.prec){
         case VP_SINGLE:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.prec,1);break;
         case VP_ACCURATE:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.prec,2);break;
         case VP_HIGH:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.prec,3);break;
         case VP_MED:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.prec,4);break;
         case VP_LOW:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),5);break;
+		GUI_COMBOBOX_SET(vasp_gui.prec,5);break;
         case VP_NORM:
         default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.prec),0);
+		GUI_COMBOBOX_SET(vasp_gui.prec,0);
         }
 	//use_prec already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.encut),g_strdup_printf("%.2lf",vasp_gui.calc.encut));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.enaug),g_strdup_printf("%.2lf",vasp_gui.calc.enaug));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ediff),g_strdup_printf("%.2lE",vasp_gui.calc.ediff));
+	text=g_strdup_printf("%.2lf",vasp_gui.calc.encut);
+	GUI_ENTRY_TEXT(vasp_gui.encut,text);
+	g_free(text);text=g_strdup_printf("%.2lf",vasp_gui.calc.enaug);
+	GUI_ENTRY_TEXT(vasp_gui.enaug,text);
+	g_free(text);text=g_strdup_printf("%.2lE",vasp_gui.calc.ediff);
+	GUI_ENTRY_TEXT(vasp_gui.ediff,text);
+	g_free(text);
 	switch(vasp_gui.calc.algo){
 	case VA_IALGO:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),1);
+		GUI_COMBOBOX_SET(vasp_gui.algo,1);
 		switch(vasp_gui.calc.ialgo){
 		case VIA_OE_FIXED:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),0);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,0);break;
 		case VIA_O_FIXED:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),1);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,1);break;
 		case VIA_SUBROT:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),2);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,2);break;
 		case VIA_STEEP:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),3);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,3);break;
 		case VIA_CG:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),4);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,4);break;
 		case VIA_PSTEEP:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),5);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,5);break;
 		case VIA_PCG:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),6);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,6);break;
 		case VIA_ESTEEP:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),8);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,8);break;
 		case VIA_RMMP:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),9);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,9);break;
 		case VIA_PRMM:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),10);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,10);break;
 		case VIA_VAR_DAMP:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),11);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,11);break;
 		case VIA_VAR_QUENCH:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),12);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,12);break;
 		case VIA_VAR_PCG:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),13);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,13);break;
 		case VIA_EXACT:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),14);break;
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,14);break;
 		case VIA_KOSUGI:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ialgo),7);
+			GUI_COMBOBOX_SET(vasp_gui.ialgo,7);
 		}
 		break;
 	case VA_VERYFAST:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,2);break;
 	case VA_FAST:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,3);break;
 	case VA_CONJ:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,4);break;
 	case VA_ALL:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),5);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,5);break;
 	case VA_DAMPED:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),6);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,6);break;
 	case VA_SUBROT:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),7);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,7);break;
 	case VA_EIGEN:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),8);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,8);break;
 	case VA_NONE:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),9);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,9);break;
 	case VA_NOTHING:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),10);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,10);break;
 	case VA_EXACT:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),11);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,11);break;
 	case VA_DIAG:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),12);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,12);break;
 	case VA_NORM:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.algo),0);break;
+		GUI_COMBOBOX_SET(vasp_gui.algo,0);
 	}
 	//ldiag already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsim),g_strdup_printf("%i",vasp_gui.calc.nsim));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.vtime),g_strdup_printf("%.4lf",vasp_gui.calc.vtime));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.iwavpr),g_strdup_printf("%i",vasp_gui.calc.iwavpr));
+	text=g_strdup_printf("%i",vasp_gui.calc.nsim);
+	GUI_ENTRY_TEXT(vasp_gui.nsim,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.vtime);
+	GUI_ENTRY_TEXT(vasp_gui.vtime,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.iwavpr);
+	GUI_ENTRY_TEXT(vasp_gui.iwavpr,text);
+	g_free(text);
 	//auto already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nbands),g_strdup_printf("%i",vasp_gui.calc.nbands));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelect),g_strdup_printf("%.4lf",vasp_gui.calc.nelect));
+	text=g_strdup_printf("%i",vasp_gui.calc.nbands);
+	GUI_ENTRY_TEXT(vasp_gui.nbands,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.nelect);
+	GUI_ENTRY_TEXT(vasp_gui.nelect,text);
+	g_free(text);
 	//iniwav already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.istart),g_strdup_printf("%i",vasp_gui.calc.istart));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.icharg),g_strdup_printf("%i",vasp_gui.calc.icharg));
-	/*mixer*/
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelm),g_strdup_printf("%i",vasp_gui.calc.nelm));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelmdl),g_strdup_printf("%i",vasp_gui.calc.nelmdl));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nelmin),g_strdup_printf("%i",vasp_gui.calc.nelmin));
+	text=g_strdup_printf("%i",vasp_gui.calc.istart);
+	GUI_ENTRY_TEXT(vasp_gui.istart,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.icharg);
+	GUI_ENTRY_TEXT(vasp_gui.icharg,text);
+	g_free(text);
+	//mixer
+	text=g_strdup_printf("%i",vasp_gui.calc.nelm);
+	GUI_ENTRY_TEXT(vasp_gui.nelm,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.nelmdl);
+	GUI_ENTRY_TEXT(vasp_gui.nelmdl,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.nelmin);
+	GUI_ENTRY_TEXT(vasp_gui.nelmin,text);
+	g_free(text);
 	if(!vasp_gui.calc.auto_mixer){
 		switch(vasp_gui.calc.imix){
 		case VM_0:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),0);break;
+			GUI_COMBOBOX_SET(vasp_gui.mixer,0);break;
 		case VM_1:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),1);break;
+			GUI_COMBOBOX_SET(vasp_gui.mixer,1);break;
 		case VM_2:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),2);break;
+			GUI_COMBOBOX_SET(vasp_gui.mixer,2);break;
 		case VM_4:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixer),3);
+			GUI_COMBOBOX_SET(vasp_gui.mixer,3);
 		}
 		switch(vasp_gui.calc.inimix){
 		case VIM_0:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.inimix),0);break;
+			GUI_COMBOBOX_SET(vasp_gui.inimix,0);break;
 		case VIM_1:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.inimix),1);
+			GUI_COMBOBOX_SET(vasp_gui.inimix,1);
 		}
 		switch(vasp_gui.calc.mixpre){
 		case VMP_0:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),0);break;
+			GUI_COMBOBOX_SET(vasp_gui.mixpre,0);break;
 		case VMP_2:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),2);break;
+			GUI_COMBOBOX_SET(vasp_gui.mixpre,2);break;
 		case VMP_1:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.mixpre),1);
+			GUI_COMBOBOX_SET(vasp_gui.mixpre,1);
 		}
         }
 	switch(vasp_gui.calc.lreal){
 	case VLR_AUTO:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),0);break;
+		GUI_COMBOBOX_SET(vasp_gui.lreal,0);break;
 	case VLR_ON:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.lreal,1);break;
 	case VLR_TRUE:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.lreal,2);break;
 	case VLR_FALSE:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lreal),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.lreal,3);
 	}
-	if(vasp_gui.calc.ropt!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ropt),g_strdup_printf("%s",vasp_gui.calc.ropt));
+	if(vasp_gui.calc.ropt!=NULL){
+		text=g_strdup_printf("%s",vasp_gui.calc.ropt);
+		GUI_ENTRY_TEXT(vasp_gui.ropt,text);
+		g_free(text);
+	}
 	//addgrid already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxmix),g_strdup_printf("%i",vasp_gui.calc.lmaxmix));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxpaw),g_strdup_printf("%i",vasp_gui.calc.lmaxpaw));
+	text=g_strdup_printf("%i",vasp_gui.calc.lmaxmix);
+	GUI_ENTRY_TEXT(vasp_gui.lmaxmix,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.lmaxpaw);
+	GUI_ENTRY_TEXT(vasp_gui.lmaxpaw,text);
+	g_free(text);
 	if(!vasp_gui.calc.auto_grid){
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngx),g_strdup_printf("%i",vasp_gui.calc.ngx));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngy),g_strdup_printf("%i",vasp_gui.calc.ngy));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngz),g_strdup_printf("%i",vasp_gui.calc.ngz));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngxf),g_strdup_printf("%i",vasp_gui.calc.ngxf));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngyf),g_strdup_printf("%i",vasp_gui.calc.ngyf));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.ngzf),g_strdup_printf("%i",vasp_gui.calc.ngzf));
+		text=g_strdup_printf("%i",vasp_gui.calc.ngx);
+		GUI_ENTRY_TEXT(vasp_gui.ngx,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.ngy);
+		GUI_ENTRY_TEXT(vasp_gui.ngy,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.ngz);
+		GUI_ENTRY_TEXT(vasp_gui.ngz,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.ngxf);
+		GUI_ENTRY_TEXT(vasp_gui.ngxf,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.ngyf);
+		GUI_ENTRY_TEXT(vasp_gui.ngyf,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.ngzf);
+		GUI_ENTRY_TEXT(vasp_gui.ngzf,text);
+		g_free(text);
 	}
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear),g_strdup_printf("%i",vasp_gui.calc.ismear));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.sigma),g_strdup_printf("%.4lf",vasp_gui.calc.sigma));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma),vasp_gui.calc.kgamma);
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing),g_strdup_printf("%.4lf",vasp_gui.calc.kspacing));
-	if(vasp_gui.calc.fermwe!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.fermwe),g_strdup_printf("%s",vasp_gui.calc.fermwe));
-	if(vasp_gui.calc.fermdo!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.fermdo),g_strdup_printf("%s",vasp_gui.calc.fermdo));
+	text=g_strdup_printf("%i",vasp_gui.calc.ismear);
+	GUI_ENTRY_TEXT(vasp_gui.ismear,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.sigma);
+	GUI_ENTRY_TEXT(vasp_gui.sigma,text);
+	g_free(text);
+	if(vasp_gui.calc.kgamma) GUI_TOGGLE_ON(vasp_gui.kgamma);
+	else GUI_TOGGLE_OFF(vasp_gui.kgamma);
+	text=g_strdup_printf("%.4lf",vasp_gui.calc.kspacing);
+	GUI_ENTRY_TEXT(vasp_gui.kspacing,text);
+	g_free(text);
+	if(vasp_gui.calc.fermwe!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.fermwe);
+		GUI_ENTRY_TEXT(vasp_gui.fermwe,text);
+		g_free(text);
+	}
+	if(vasp_gui.calc.fermdo!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.fermdo);
+		GUI_ENTRY_TEXT(vasp_gui.fermdo,text);
+		g_free(text);
+	}
 	//ispin already sync
 	//non_collinear already sync
 	//lsorbit already sync
 	//gga_compat already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nupdown),g_strdup_printf("%.1lf",vasp_gui.calc.nupdown));
-	if(vasp_gui.calc.magmom!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.magmom),g_strdup_printf("%s",vasp_gui.calc.magmom));
-	if(vasp_gui.calc.saxis!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.saxis),g_strdup_printf("%s",vasp_gui.calc.saxis));
+	text=g_strdup_printf("%.1lf",vasp_gui.calc.nupdown);
+	GUI_ENTRY_TEXT(vasp_gui.nupdown,text);
+	g_free(text);
+	if(vasp_gui.calc.magmom!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.magmom);
+		GUI_ENTRY_TEXT(vasp_gui.magmom,text);
+		g_free(text);
+	}
+	if(vasp_gui.calc.saxis!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.saxis);
+		GUI_ENTRY_TEXT(vasp_gui.saxis,text);
+		g_free(text);
+	}
 	switch(vasp_gui.calc.gga){
 	case VG_91:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),0);break;
+		GUI_COMBOBOX_SET(vasp_gui.gga,0);break;
 	case VG_RP:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.gga,2);break;
 	case VG_AM:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.gga,3);break;
 	case VG_PS:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.gga,4);break;
 	case VG_PE:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.gga),1);
+		GUI_COMBOBOX_SET(vasp_gui.gga,1);
 	}
 	//voskown already sync
 	switch (vasp_gui.calc.mgga){
 	case VMG_TPSS:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),0);break;
+		GUI_COMBOBOX_SET(vasp_gui.metagga,0);break;
 	case VMG_RTPSS:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.metagga,1);break;
 	case VMG_M06L:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.metagga,2);break;
 	case VMG_MBJ:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.metagga),3);
+		GUI_COMBOBOX_SET(vasp_gui.metagga,3);
 	}
 	//lmetagga already sync
 	//lasph already sync
 	//lmixtau already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.lmaxtau),g_strdup_printf("%i",vasp_gui.calc.lmaxtau));
-	if(vasp_gui.calc.cmbj!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbj),g_strdup_printf("%s",vasp_gui.calc.cmbj));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbja),g_strdup_printf("%.4lf",vasp_gui.calc.cmbja));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cmbjb),g_strdup_printf("%.4lf",vasp_gui.calc.cmbjb));
+	text=g_strdup_printf("%i",vasp_gui.calc.lmaxtau);
+	GUI_ENTRY_TEXT(vasp_gui.lmaxtau,text);
+	g_free(text);
+	if(vasp_gui.calc.cmbj!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.cmbj);
+		GUI_ENTRY_TEXT(vasp_gui.cmbj,text);
+		g_free(text);
+	}
+	text=g_strdup_printf("%.4lf",vasp_gui.calc.cmbja);
+	GUI_ENTRY_TEXT(vasp_gui.cmbja,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.cmbjb);
+	GUI_ENTRY_TEXT(vasp_gui.cmbjb,text);
+	g_free(text);
 	if(vasp_gui.calc.ldau){
 		switch(vasp_gui.calc.ldau_type){
 		case VU_1:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),0);break;
+			GUI_COMBOBOX_SET(vasp_gui.ldau,0);break;
 		case VU_4:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),2);break;
+			GUI_COMBOBOX_SET(vasp_gui.ldau,2);break;
 		case VU_2:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau),1);
+			GUI_COMBOBOX_SET(vasp_gui.ldau,1);
 		}
 		switch(vasp_gui.calc.ldau_output){
 		case VUO_1:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),1);break;
+			GUI_COMBOBOX_SET(vasp_gui.ldau_print,1);break;
 		case VUO_2:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),2);break;
+			GUI_COMBOBOX_SET(vasp_gui.ldau_print,2);break;
 		case VUO_0:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ldau_print),0);
+			GUI_COMBOBOX_SET(vasp_gui.ldau_print,0);
 		}
-		if(vasp_gui.calc.ldaul!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldaul),g_strdup_printf("%s",vasp_gui.calc.ldaul));
-		if(vasp_gui.calc.ldauu!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldauu),g_strdup_printf("%s",vasp_gui.calc.ldauu));
-		if(vasp_gui.calc.ldauj!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.ldauj),g_strdup_printf("%s",vasp_gui.calc.ldauj));
+		if(vasp_gui.calc.ldaul!=NULL) {
+			text=g_strdup_printf("%s",vasp_gui.calc.ldaul);
+			GUI_ENTRY_TEXT(vasp_gui.ldaul,text);
+			g_free(text);
+		}
+		if(vasp_gui.calc.ldauu!=NULL) {
+			text=g_strdup_printf("%s",vasp_gui.calc.ldauu);
+			GUI_ENTRY_TEXT(vasp_gui.ldauu,text);
+			g_free(text);
+		}
+		if(vasp_gui.calc.ldauj!=NULL) {
+			text=g_strdup_printf("%s",vasp_gui.calc.ldauj);
+			GUI_ENTRY_TEXT(vasp_gui.ldauj,text);
+			g_free(text);
+		}
 	}
 	switch(vasp_gui.calc.idipol){
 	case VID_1:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.idipol,1);break;
 	case VID_2:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.idipol,2);break;
 	case VID_3:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.idipol,3);break;
 	case VID_4:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.idipol,4);break;
 	case VID_0:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.idipol),0);
+		GUI_COMBOBOX_SET(vasp_gui.idipol,0);
 	}
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.ldipol),vasp_gui.calc.ldipol);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lmono),vasp_gui.calc.lmono);
-	if(vasp_gui.calc.dipol!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.dipol),g_strdup_printf("%s",vasp_gui.calc.dipol));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.epsilon),g_strdup_printf("%.4lf",vasp_gui.calc.epsilon));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.efield),g_strdup_printf("%.4lf",vasp_gui.calc.efield));
+	if(vasp_gui.calc.ldipol) GUI_TOGGLE_ON(vasp_gui.ldipol);
+	else GUI_TOGGLE_OFF(vasp_gui.ldipol);
+	if(vasp_gui.calc.lmono) GUI_TOGGLE_ON(vasp_gui.lmono);
+	else GUI_TOGGLE_OFF(vasp_gui.lmono);
+	if(vasp_gui.calc.dipol!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.dipol);
+		GUI_ENTRY_TEXT(vasp_gui.dipol,text);
+		g_free(text);
+	}
+	text=g_strdup_printf("%.4lf",vasp_gui.calc.epsilon);
+	GUI_ENTRY_TEXT(vasp_gui.epsilon,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.efield);
+	GUI_ENTRY_TEXT(vasp_gui.efield,text);
+	g_free(text);
 	switch(vasp_gui.calc.lorbit){
 	case 1:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,1);break;
 	case 2:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,2);break;
 	case 5:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,3);break;
 	case 10:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,4);break;
 	case 11:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),5);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,5);break;
 	case 12:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),6);break;
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,6);break;
 	case 0:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.lorbit),0);
+		GUI_COMBOBOX_SET(vasp_gui.lorbit,0);
 	}
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nedos),g_strdup_printf("%i",vasp_gui.calc.nedos));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.emin),g_strdup_printf("%.2lf",vasp_gui.calc.emin));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.emax),g_strdup_printf("%.2lf",vasp_gui.calc.emax));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.efermi),g_strdup_printf("%.2lf",vasp_gui.calc.efermi));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_paw),vasp_gui.calc.have_paw);
-	if(vasp_gui.calc.rwigs!=NULL) gtk_entry_set_text(GTK_ENTRY(vasp_gui.rwigs),g_strdup_printf("%s",vasp_gui.calc.rwigs));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.loptics),vasp_gui.calc.loptics);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lepsilon),vasp_gui.calc.lepsilon);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lrpa),vasp_gui.calc.lrpa);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.lnabla),vasp_gui.calc.lnabla);
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.cshift),g_strdup_printf("%.2lf",vasp_gui.calc.cshift));
+	text=g_strdup_printf("%i",vasp_gui.calc.nedos);
+	GUI_ENTRY_TEXT(vasp_gui.nedos,text);
+	g_free(text);text=g_strdup_printf("%.2lf",vasp_gui.calc.emin);
+	GUI_ENTRY_TEXT(vasp_gui.emin,text);
+	g_free(text);text=g_strdup_printf("%.2lf",vasp_gui.calc.emax);
+	GUI_ENTRY_TEXT(vasp_gui.emax,text);
+	g_free(text);text=g_strdup_printf("%.2lf",vasp_gui.calc.efermi);
+	GUI_ENTRY_TEXT(vasp_gui.efermi,text);
+	g_free(text);
+	if(vasp_gui.calc.have_paw) GUI_TOGGLE_ON(vasp_gui.have_paw);
+	else GUI_TOGGLE_OFF(vasp_gui.have_paw);
+	if(vasp_gui.calc.rwigs!=NULL) {
+		text=g_strdup_printf("%s",vasp_gui.calc.rwigs);
+		GUI_ENTRY_TEXT(vasp_gui.rwigs,text);
+		g_free(text);
+	}
+	if(vasp_gui.calc.loptics) GUI_TOGGLE_ON(vasp_gui.loptics);
+	else GUI_TOGGLE_OFF(vasp_gui.loptics);
+	if(vasp_gui.calc.lepsilon) GUI_TOGGLE_ON(vasp_gui.lepsilon);
+	else GUI_TOGGLE_OFF(vasp_gui.lepsilon);
+	if(vasp_gui.calc.lrpa) GUI_TOGGLE_ON(vasp_gui.lrpa);
+	else GUI_TOGGLE_OFF(vasp_gui.lrpa);
+	if(vasp_gui.calc.lnabla) GUI_TOGGLE_ON(vasp_gui.lnabla);
+	else GUI_TOGGLE_OFF(vasp_gui.lnabla);
+	text=g_strdup_printf("%.2lf",vasp_gui.calc.cshift);
+	GUI_ENTRY_TEXT(vasp_gui.cshift,text);
+	g_free(text);
 	switch(vasp_gui.calc.ibrion){
 	case 0:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),1);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,1);break;
 	case 1:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),2);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,2);break;
 	case 2:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),3);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,3);break;
 	case 3:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),4);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,4);break;
 	case 5:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),5);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,5);break;
 	case 6:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),6);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,6);break;
 	case 7:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),7);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,7);break;
 	case 8:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),8);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,8);break;
 	case 44:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),9);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,9);break;
 	case -1:
 	default:
-		gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.ibrion),0);break;
+		GUI_COMBOBOX_SET(vasp_gui.ibrion,0);
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.isif),vasp_gui.calc.isif);
+	GUI_COMBOBOX_SET(vasp_gui.isif,vasp_gui.calc.isif);
 	//relax_ions already sync
 	//relax_shape already sync
 	//relax_volume already sync
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nsw),g_strdup_printf("%i",vasp_gui.calc.nsw));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ediffg),g_strdup_printf("%.2lE",vasp_gui.calc.ediffg));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potim),g_strdup_printf("%.4lf",vasp_gui.calc.potim));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.pstress),g_strdup_printf("%.4lf",vasp_gui.calc.pstress));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.nfree),g_strdup_printf("%i",vasp_gui.calc.nfree));
+	text=g_strdup_printf("%i",vasp_gui.calc.nsw);
+	GUI_ENTRY_TEXT(vasp_gui.nsw,text);
+	g_free(text);text=g_strdup_printf("%.2lE",vasp_gui.calc.ediffg);
+	GUI_ENTRY_TEXT(vasp_gui.ediffg,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.potim);
+	GUI_ENTRY_TEXT(vasp_gui.potim,text);
+	g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.pstress);
+	GUI_ENTRY_TEXT(vasp_gui.pstress,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.nfree);
+	GUI_ENTRY_TEXT(vasp_gui.nfree,text);
+	g_free(text);
 	if(vasp_gui.calc.ibrion==0){
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.tebeg),g_strdup_printf("%.1lf",vasp_gui.calc.tebeg));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.teend),g_strdup_printf("%.1lf",vasp_gui.calc.teend));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.smass),g_strdup_printf("%.1lf",vasp_gui.calc.smass));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.nblock),g_strdup_printf("%i",vasp_gui.calc.nblock));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kblock),g_strdup_printf("%i",vasp_gui.calc.kblock));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.npaco),g_strdup_printf("%i",vasp_gui.calc.npaco));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.apaco),g_strdup_printf("%.4lf",vasp_gui.calc.apaco));
+		text=g_strdup_printf("%.1lf",vasp_gui.calc.tebeg);
+		GUI_ENTRY_TEXT(vasp_gui.tebeg,text);
+		g_free(text);text=g_strdup_printf("%.1lf",vasp_gui.calc.teend);
+		GUI_ENTRY_TEXT(vasp_gui.teend,text);
+		g_free(text);text=g_strdup_printf("%.1lf",vasp_gui.calc.smass);
+		GUI_ENTRY_TEXT(vasp_gui.smass,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.nblock);
+		GUI_ENTRY_TEXT(vasp_gui.nblock,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.kblock);
+		GUI_ENTRY_TEXT(vasp_gui.kblock,text);
+		g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.npaco);
+		GUI_ENTRY_TEXT(vasp_gui.npaco,text);
+		g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.apaco);
+		GUI_ENTRY_TEXT(vasp_gui.apaco,text);
+		g_free(text);
 	}
 	/*POSCAR*/
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.poscar_species),g_strdup_printf("%s",vasp_gui.calc.species_symbols));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_poscar),g_strdup_printf("%s",vasp_gui.calc.species_symbols));
+	text=g_strdup_printf("%s",vasp_gui.calc.species_symbols);
+	GUI_ENTRY_TEXT(vasp_gui.poscar_species,text);
+	g_free(text);text=g_strdup_printf("%s",vasp_gui.calc.species_symbols);
+	GUI_ENTRY_TEXT(vasp_gui.simple_poscar,text);
+	g_free(text);
 	/*KPOINTS*/
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear_3),g_strdup_printf("%i",vasp_gui.calc.ismear));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.kgamma_3),vasp_gui.calc.kgamma);
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kspacing_3),g_strdup_printf("%.4lf",vasp_gui.calc.kspacing));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_nkpts),g_strdup_printf("%i",vasp_gui.calc.kpoints_nkpts));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.kpoints_mode),vasp_gui.calc.kpoints_mode);
+	text=g_strdup_printf("%i",vasp_gui.calc.ismear);
+	GUI_ENTRY_TEXT(vasp_gui.ismear_3,text);
+	g_free(text);
+	if(vasp_gui.calc.kgamma) GUI_TOGGLE_ON(vasp_gui.kgamma_3);
+	else GUI_TOGGLE_OFF(vasp_gui.kgamma_3);
+	text=g_strdup_printf("%.4lf",vasp_gui.calc.kspacing);
+	GUI_ENTRY_TEXT(vasp_gui.kspacing_3,text);
+	g_free(text);text=g_strdup_printf("%i",vasp_gui.calc.kpoints_nkpts);
+	GUI_ENTRY_TEXT(vasp_gui.kpoints_nkpts,text);
+	g_free(text);
+	if(vasp_gui.calc.kpoints_mode) GUI_TOGGLE_ON(vasp_gui.kpoints_mode);
+	else GUI_TOGGLE_OFF(vasp_gui.kpoints_mode);
 	switch(vasp_gui.calc.kpoints_mode){
 	case VKP_MAN:
 		/*we do not update the kpoint list (here)*/
@@ -486,38 +621,38 @@ void vasp_gui_refresh(){
 		/*we do not update the kpoint list (here)*/
 		break;
 	case VKP_GAMMA:
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_gui.calc.kpoints_kx);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_ky),vasp_gui.calc.kpoints_ky);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kz),vasp_gui.calc.kpoints_kz);
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sx),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sx));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sy),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sy));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sz),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sz));
+		GUI_SPIN_SET(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx);
+		GUI_SPIN_SET(vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky);
+		GUI_SPIN_SET(vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz);
+		text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sx);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sx,text);
+		g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sy);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sy,text);
+		g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sz);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sz,text);
+		g_free(text);
 		break;
 	case VKP_MP:
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_gui.calc.kpoints_kx);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_ky),vasp_gui.calc.kpoints_ky);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kz),vasp_gui.calc.kpoints_kz);
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sx),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sx));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sy),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sy));
-		gtk_entry_set_text(GTK_ENTRY(vasp_gui.kpoints_sz),g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sz));
+		GUI_SPIN_SET(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx);
+		GUI_SPIN_SET(vasp_gui.kpoints_ky,vasp_gui.calc.kpoints_ky);
+		GUI_SPIN_SET(vasp_gui.kpoints_kz,vasp_gui.calc.kpoints_kz);
+		text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sx);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sx,text);
+		g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sy);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sy,text);
+		g_free(text);text=g_strdup_printf("%.4lf",vasp_gui.calc.kpoints_sz);
+		GUI_ENTRY_TEXT(vasp_gui.kpoints_sz,text);
+		g_free(text);
 		break;
 	case VKP_BASIS:
 		/*we do not update the basis definition list (here)*/
 		break;
 	case VKP_AUTO:
 	default:
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpoints_kx),vasp_gui.calc.kpoints_kx);
+		GUI_SPIN_SET(vasp_gui.kpoints_kx,vasp_gui.calc.kpoints_kx);
 	}
 	/*skip POTCAR*/
 	/*skip EXEC*/
-
-/*
-        gtk_entry_set_text(GTK_ENTRY(vasp_gui.ismear),g_strdup_printf("%i",vasp_gui.calc.ismear));
-        gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_tetra),TRUE);
-        gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0);
-*/
-
 }
 /************************************************************/
 /* Preload with default parameter from the simple interface */
@@ -1612,6 +1747,7 @@ void vasp_atom_delete(){
 	g_free(text);
 	vasp_gui.poscar_dirty=TRUE;
 }
+/* XXX XXX XXX HERE XXX XXX XXX */
 /**************************/
 /* selecting kpoints_mode */
 /**************************/
