@@ -332,11 +332,13 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /*set the entry (entry) text ("text")*/
 #define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
 /*connect entry (entry) on change with the function (function) passing data (data).*/
-/* NEW: GTK2 says that return text is const and shall not be freed, hence the g_strdup */
+#define GUI_ENTRY_CHANGE(entry,function,data) g_signal_connect(GTK_OBJECT(GTK_ENTRY(entry)),"changed",GTK_SIGNAL_FUNC(function),data)
+/*get the text ("text") of an entry (entry).*/
+/* NEW: GTK2 says that return text is const and shall not be freed, hence the g_strdup
+ * so text HAVE TO be freed after use.*/
 #define GUI_ENTRY_GET_TEXT(entry,text) do{\
 	text=g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));\
 }while(0)
-#define GUI_ENTRY_CHANGE(entry,function,data) g_signal_connect(GTK_OBJECT(GTK_ENTRY(entry)),"changed",GTK_SIGNAL_FUNC(function),data)
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
 #define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)
