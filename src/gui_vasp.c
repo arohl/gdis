@@ -658,19 +658,23 @@ void vasp_gui_refresh(){
 /************************************************************/
 void vasp_apply_simple(GtkButton *button, gpointer data){
 	/*simple interface*/
-#define _OUT(a) gtk_text_buffer_insert_at_cursor(vasp_gui.simple_message_buff,a,-1)
-	gint calcul=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_calcul));
-	gint system=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_system));
-	gint kgrid=gtk_combo_box_get_active(GTK_COMBO_BOX(vasp_gui.simple_kgrid));
+	gint calcul;
+	gint system;
+	gint kgrid;
 	gint dim=(gint)vasp_gui.dimension;
-	gtk_text_buffer_set_text(vasp_gui.simple_message_buff,"Simple interface started.\n",-1);
+	gchar *text;
+	/**/
+	GUI_COMBOBOX_GET(vasp_gui.simple_calcul,calcul);
+	GUI_COMBOBOX_GET(vasp_gui.simple_system,system);
+	GUI_COMBOBOX_GET(vasp_gui.simple_kgrid,kgrid);
+	GUI_TEXTVIEW_SET(vasp_gui.simple_message_buff,"Simple interface started.\n");
 	/*1st take care of the obvious*/
 	if((vasp_gui.simple_rgeom)&&(calcul<3)){
-		_OUT("FAIL: ROUGHT GEOMETRY: OPTIMIZE GEOMETRY FIRST!\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"FAIL: ROUGHT GEOMETRY: OPTIMIZE GEOMETRY FIRST!\n");
 		return;
 	}
 	if(dim==0){
-		_OUT("ATOM/MOLECULE in a box, setting only gamma point\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"ATOM/MOLECULE in a box, setting only gamma point\n");
 		vasp_gui.calc.kpoints_mode=VKP_GAMMA;
 		vasp_gui.calc.kpoints_kx=1.;
 		vasp_gui.calc.kpoints_ky=1.;
@@ -678,71 +682,72 @@ void vasp_apply_simple(GtkButton *button, gpointer data){
 	}else{
 		vasp_gui.calc.kpoints_mode=VKP_AUTO;
 		vasp_gui.calc.kpoints_kx = (gdouble)(dim+dim*(1+2*(2*kgrid+1)));/*not a serious formula*/
-		gtk_text_buffer_insert_at_cursor(vasp_gui.simple_message_buff,
-			g_strdup_printf("SET AUTO gamma-centered grid w/ AUTO = %i\n",(gint)vasp_gui.calc.kpoints_kx),-1);
+		text=g_strdup_printf("SET AUTO gamma-centered grid w/ AUTO = %i\n",(gint)vasp_gui.calc.kpoints_kx);
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,text);
+		g_free(text);
 	}
 	if(calcul<3){
 		vasp_gui.calc.prec=VP_ACCURATE;
-		_OUT("SET PREC=ACCURATE\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET PREC=ACCURATE\n");
 		vasp_gui.calc.algo=VA_NORM;
-		_OUT("SET ALGO=NORMAL\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ALGO=NORMAL\n");
 		vasp_gui.calc.ldiag=TRUE;
-		_OUT("SET LDIAG=.TRUE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LDIAG=.TRUE.\n");
 	}
 	vasp_gui.calc.use_prec=TRUE;
 	/*set LREAL*/
 	if(vasp_gui.calc.atoms_total>16) {
 		vasp_gui.calc.lreal=VLR_AUTO;
-		_OUT("SET LREAL=Auto\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LREAL=Auto\n");
 	} else {
 		vasp_gui.calc.lreal=VLR_FALSE;
-		_OUT("SET LREAL=.FALSE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LREAL=.FALSE.\n");
 	}
 	/*set smearing*/
 	if(system>0) {
 		vasp_gui.calc.ismear=0;
-		_OUT("SET ISMEAR=0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISMEAR=0\n");
 		vasp_gui.calc.sigma=0.05;
-		_OUT("SET SIGMA=0.05\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET SIGMA=0.05\n");
 	} else {
 		vasp_gui.calc.ismear=1;
-		_OUT("SET ISMEAR=1\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISMEAR=1\n");
 		vasp_gui.calc.sigma=0.2;
-		_OUT("SET SIGMA=0.2\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET SIGMA=0.2\n");
 	}
 	/*set dipol correction*/
-	_OUT("Please manually SET all dipole related settings in ELECT-I!\n");
+	GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"Please manually SET all dipole related settings in ELECT-I!\n");
 	switch(dim){
 		case 0://atom in a box
 			vasp_gui.calc.idipol=VID_4;
-			_OUT("SET IDIPOL=4\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IDIPOL=4\n");
 			break;
 		case 1:
 			//linear system is characterized by a major axis
 			vasp_gui.calc.idipol=VID_3;
-			_OUT("SET IDIPOL=3\n");
-			_OUT("By convention, the major direction for a 1D material is the Z axis.\n");
-			_OUT("If this is not the case, RESET IDIPOL accordingly!\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IDIPOL=3\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"By convention, the major direction for a 1D material is the Z axis.\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"If this is not the case, RESET IDIPOL accordingly!\n");
 			break;
 		case 2:
 			//surface are characterized by a normal axis
 			vasp_gui.calc.idipol=VID_3;
-			_OUT("SET IDIPOL=3\n");
-			_OUT("By convention, the Z AXIS is normal to the surface of 2D material.\n");
-			_OUT("If this is not the case, RESET IDIPOL accordingly!\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IDIPOL=3\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"By convention, the Z AXIS is normal to the surface of 2D material.\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"If this is not the case, RESET IDIPOL accordingly!\n");
 			break;
 		case 3:
 		default:
 			vasp_gui.calc.ldipol=FALSE;
-			_OUT("SET LDIPOL=.FALSE.\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LDIPOL=.FALSE.\n");
 	}
 	/* spin? */
 	if((gint)(vasp_gui.calc.electron_total/2)-(gdouble)(vasp_gui.calc.electron_total/2.0)!=0.0){
 		vasp_gui.calc.ispin=TRUE;
-		_OUT("SET ISPIN=2\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISPIN=2\n");
 	}else{
 		vasp_gui.calc.ispin=FALSE;
-		_OUT("SET ISPIN=1\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISPIN=1\n");
 	}
 	/*set calculation specific*/
 	switch(calcul){
@@ -750,143 +755,143 @@ void vasp_apply_simple(GtkButton *button, gpointer data){
 		/*use ismear=-5 if we have enough kpoints (ie more than 3)*/
 		if((kgrid>1)&&(dim>0)) {
 			vasp_gui.calc.ismear=-5;
-			_OUT("SET ISMEAR=-5\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISMEAR=-5\n");
 		}
 		break;
 	case 1://DOS/BANDS (single point)
-		if(dim==0) _OUT("PB: COARSE KGRID BUT BAND/DOS REQUIRED!\n");
+		if(dim==0) GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"PB: COARSE KGRID BUT BAND/DOS REQUIRED!\n");
 		if(vasp_gui.calc.have_paw) {
 			vasp_gui.calc.lorbit=12;
-			_OUT("SET LORBIT=12\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LORBIT=12\n");
 		} else {
 			vasp_gui.calc.lorbit=2;
-			_OUT("SET LORBIT=2\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LORBIT=2\n");
 		}
 		vasp_gui.calc.nedos=2001;
-		_OUT("SET NEDOS=2001\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NEDOS=2001\n");
 		vasp_gui.calc.emin=-10.;
-		_OUT("SET EMIN=-10.0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EMIN=-10.0\n");
 		vasp_gui.calc.emax=10.;
-		_OUT("SET EMAX=10.0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EMAX=10.0\n");
 		break;
 	case 2://Lattice Dynamics (opt.)
 		vasp_gui.calc.addgrid=TRUE;
-		_OUT("SET ADDGRID=.TRUE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ADDGRID=.TRUE.\n");
 		/*according to vasp manual, Sec. 9.9*/
 		//PREC=Accurate already set
 		vasp_gui.calc.lreal=VLR_FALSE;/*force LREAL=FALSE*/
-		_OUT("SET LREAL=.FALSE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LREAL=.FALSE.\n");
 		//smearing default 
 		vasp_gui.calc.ibrion=6;
-		_OUT("Default to finite Difference (IBRION=6)... SET IBRION=8 for Linear Perturbation!\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,
+			"Default to finite Difference (IBRION=6)... SET IBRION=8 for Linear Perturbation!\n");
 		/*according to vasp manual, Sec. 6.22.6*/
 		vasp_gui.calc.potim=0.015;
-		_OUT("SET POTIM=0.015\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET POTIM=0.015\n");
 		if(vasp_gui.calc.ncore>1){
-			_OUT("Lattice Dynamics does not support NCORE>1... RESETING NCORE\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"Lattice Dynamics does not support NCORE>1... RESETING NCORE\n");
 			vasp_gui.calc.ncore=1;
-			_OUT("(note that kpar can be set > 1\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"(note that kpar can be set > 1\n");
 		}
 		break;
 	case 3://Geometry (opt.)
 		if(vasp_gui.simple_rgeom){
 			vasp_gui.calc.prec=VP_NORM;
-			_OUT("SET PREC=NORMAL\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET PREC=NORMAL\n");
 			vasp_gui.calc.use_prec=TRUE;
 			vasp_gui.calc.algo=VA_FAST;
-			_OUT("SET ALGO=FAST\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ALGO=FAST\n");
 			/*according to vasp manual, Sec. 6.2.4*/
 			vasp_gui.calc.nelmin=5;
-			_OUT("SET NELMIN=5\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NELMIN=5\n");
 			vasp_gui.calc.ediff=1E-2;
-			_OUT("SET EDIFF=1E-2\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EDIFF=1E-2\n");
 			vasp_gui.calc.ediffg=-0.3;
-			_OUT("SET EDIFFG=-0.3\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EDIFFG=-0.3\n");
 			vasp_gui.calc.nsw=10;
-			_OUT("SET NSW=10\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NSW=10\n");
 			vasp_gui.calc.ibrion=2;
-			_OUT("SET IBRION=2\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IBRION=2\n");
 		}else{
 			vasp_gui.calc.prec=VP_ACCURATE;
-			_OUT("SET PREC=ACCURATE\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET PREC=ACCURATE\n");
 			vasp_gui.calc.use_prec=TRUE;
 			vasp_gui.calc.algo=VA_NORM;
-			_OUT("SET ALGO=NORMAL\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ALGO=NORMAL\n");
 			vasp_gui.calc.ldiag=TRUE;
-			_OUT("SET LDIAG=.TRUE.\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LDIAG=.TRUE.\n");
 			vasp_gui.calc.addgrid=TRUE;
-			_OUT("SET ADDGRID=.TRUE.\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ADDGRID=.TRUE.\n");
 			/*according to manual, Sec. 6.2.5*/
 			vasp_gui.calc.nelmin=8;
-			_OUT("SET NELMIN=8\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NELMIN=8\n");
 			vasp_gui.calc.ediff=1E-5;
-			_OUT("SET EDIFF=1E-5\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EDIFF=1E-5\n");
 			vasp_gui.calc.ediffg=-0.01;
-			_OUT("SET EDIFFG=-0.01\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EDIFFG=-0.01\n");
 			vasp_gui.calc.nsw=20;
-			_OUT("SET NSW=20\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NSW=20\n");
 			vasp_gui.calc.maxmix=80;
-			_OUT("SET MAXMIX=80\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET MAXMIX=80\n");
 			vasp_gui.calc.ibrion=1;
-			_OUT("SET IBRION=1\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IBRION=1\n");
 			vasp_gui.calc.nfree=10;
-			_OUT("SET NFREE=10\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NFREE=10\n");
 		}
 		break;
 	case 4://Molecular Dynamics (opt.)
 		if(vasp_gui.simple_rgeom) {
 			vasp_gui.calc.prec=VP_LOW;
-			_OUT("SET PREC=LOW\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET PREC=LOW\n");
 		} else {
 			vasp_gui.calc.prec=VP_NORM;
-			_OUT("SET PREC=NROMAL\n");
+			GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET PREC=NROMAL\n");
 		}
 		vasp_gui.calc.use_prec=TRUE;/*<- this is maybe too high for PREC=NORMAL*/
 		/*according to vasp manual, Sec. 9.7*/
 		vasp_gui.calc.ediff=1E-5;
-		_OUT("SET EDIFF=1E-5\n");
-		_OUT("Please set smearing manually!\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET EDIFF=1E-5\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"Please set smearing manually!\n");
 		vasp_gui.calc.ismear=-1;
-		_OUT("SET ISMEAR=-1\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISMEAR=-1\n");
 		vasp_gui.calc.sigma=0.086;
-		_OUT("SET SIGMA=0.086\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET SIGMA=0.086\n");
 		/*choose smearing wisely*/
 		vasp_gui.calc.algo=VA_VERYFAST;
-		_OUT("SET ALGO=VERYFAST");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ALGO=VERYFAST");
 		vasp_gui.calc.maxmix=40;
-		_OUT("SET MAXMIX=40\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET MAXMIX=40\n");
 		vasp_gui.calc.isym=0;
-		_OUT("SET ISYM=0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET ISYM=0\n");
 		vasp_gui.calc.nelmin=4;
-		_OUT("SET NELMIN=4\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NELMIN=4\n");
 		vasp_gui.calc.ibrion=0;
-		_OUT("SET IBRION=0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET IBRION=0\n");
 		vasp_gui.calc.nsw=100;
-		_OUT("SET NSW=100\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NSW=100\n");
 		vasp_gui.calc.nwrite=0;/*TODO: for (adv.)*/
-		_OUT("SET NWRITE=0\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NWRITE=0\n");
 		vasp_gui.calc.lcharg=FALSE;
-		_OUT("SET LCHARG=.FALSE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LCHARG=.FALSE.\n");
 		vasp_gui.calc.lwave=FALSE;
-		_OUT("SET LWAVE=.FALSE.\n");
-		_OUT("Please set TEBEG and TEEND manually!\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET LWAVE=.FALSE.\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"Please set TEBEG and TEEND manually!\n");
 		vasp_gui.calc.tebeg=1000;
-		_OUT("SET TEBEG=1000\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET TEBEG=1000\n");
 		vasp_gui.calc.teend=1000;
-		_OUT("SET TEEND=1000\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET TEEND=1000\n");
 		vasp_gui.calc.smass=3;
-		_OUT("SET SMASS=3\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET SMASS=3\n");
 		vasp_gui.calc.nblock=50;
-		_OUT("SET NBLOCK=50\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET NBLOCK=50\n");
 		vasp_gui.calc.potim=1.5;
-		_OUT("SET POTIM=1.5\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"SET POTIM=1.5\n");
 		break;
 	default:
-		_OUT("FAIL: UNKNOWN CALCUL SETTING!\n");
+		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,"FAIL: UNKNOWN CALCUL SETTING!\n");
 		return;
 	}
-	vasp_gui_refresh();
-#undef _OUT
+	vasp_gui_refresh();/*TODO: refresh the simple interface part that was changed*/
 }
 /******************/
 /* selecting PREC */

@@ -104,6 +104,14 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         gtk_container_set_border_width(GTK_CONTAINER(_absurd),1);\
         gtk_box_pack_start(GTK_BOX(box),_absurd,TRUE,TRUE,0);\
 }while(0)
+/*Set text ("text") in textbuffer (tv_buffer)*/
+#define GUI_TEXTVIEW_SET(tv_buffer,text) do{\
+	gtk_text_buffer_set_text(tv_buffer,text,-1);\
+}while(0)
+/*Insert text ("text") in textbuffer (tv_buffer) - at cursor.*/
+#define GUI_TEXTVIEW_INSERT(tv_buffer,text) do{\
+	gtk_text_buffer_insert_at_cursor(tv_buffer,text,-1);\
+}while(0)
 /**********************/
 /* NOTEBOOK INTERFACE */
 /**********************/
