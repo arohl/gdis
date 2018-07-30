@@ -76,7 +76,7 @@ void gui_vasp_init(){
 /*********************************************************/
 /* Load calculation setting from an included vasprun.xml */
 /*********************************************************/
-void load_vasprun_dialog(GtkButton *button, gpointer data){
+void load_vasprun_dialog(void){//IGNORED: GtkButton *button, gpointer data
   GtkWidget *file_chooser;
   GtkFileFilter *filter;
 /*set filter*/
@@ -103,7 +103,7 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
 /**************************/
 /* load mpirun executable */
 /**************************/
-void load_mpirun_dialog(GtkButton *button, gpointer data){
+void load_mpirun_dialog(void){//IGNORED: GtkButton *button, gpointer data
   GtkWidget *file_chooser;
   GtkFileFilter *filter;
 /*set filter*/
@@ -130,7 +130,7 @@ gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filt
 /****************************/
 /* load the vasp executable */
 /****************************/
-void load_vasp_exe_dialog(GtkButton *button, gpointer data){
+void load_vasp_exe_dialog(void){//IGNORED: GtkButton *button, gpointer data
   GtkWidget *file_chooser;
   file_chooser = gtk_file_chooser_dialog_new("Select VASP Executable",GTK_WINDOW(vasp_gui.window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);
   if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT)
@@ -151,7 +151,7 @@ void load_vasp_exe_dialog(GtkButton *button, gpointer data){
 /*****************************************/
 /* point to the path to run the VASP job */
 /*****************************************/
-void load_path_dialog(GtkButton *button, gpointer data){
+void load_path_dialog(void){//IGNORED: GtkButton *button, gpointer data
   GtkWidget *file_chooser;
 file_chooser=gtk_file_chooser_dialog_new("Select working folder",GTK_WINDOW(vasp_gui.window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);
   gtk_file_chooser_set_action (GTK_FILE_CHOOSER(file_chooser),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
@@ -656,7 +656,7 @@ void vasp_gui_refresh(){
 /************************************************************/
 /* Preload with default parameter from the simple interface */
 /************************************************************/
-void vasp_apply_simple(GtkButton *button, gpointer data){
+void vasp_apply_simple(void){//IGNORED: GtkButton *button, gpointer data
 	/*simple interface*/
 	gint calcul;
 	gint system;
@@ -896,7 +896,7 @@ void vasp_apply_simple(GtkButton *button, gpointer data){
 /******************/
 /* selecting PREC */
 /******************/
-void vasp_prec_selected(GtkWidget *w, struct model_pak *model){
+void vasp_prec_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
@@ -918,7 +918,7 @@ void vasp_prec_selected(GtkWidget *w, struct model_pak *model){
 /*****************************************/
 /* Toggle use of automatic prec settings */
 /*****************************************/
-void prec_toggle(GtkWidget *w, GtkWidget *box){
+void prec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	gchar *text;
 	if(!(vasp_gui.calc.use_prec)){
 		/*switch to manual values*/
@@ -940,7 +940,7 @@ void prec_toggle(GtkWidget *w, GtkWidget *box){
 /******************/
 /* selecting ALGO */
 /******************/
-void vasp_algo_selected(GtkWidget *w, struct model_pak *model){
+void vasp_algo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.ialgo);
@@ -979,7 +979,7 @@ void vasp_algo_selected(GtkWidget *w, struct model_pak *model){
 /*******************/
 /* selecting IALGO */
 /*******************/
-void vasp_ialgo_selected(GtkWidget *w, struct model_pak *model){
+void vasp_ialgo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1019,7 +1019,7 @@ void vasp_ialgo_selected(GtkWidget *w, struct model_pak *model){
 /***************/
 /* elec toggle */
 /***************/
-void elec_toggle(GtkWidget *w, GtkWidget *box){
+void elec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	gchar *text;
 	if(!(vasp_gui.calc.auto_elec)){
 		/*switch to manual values*/
@@ -1051,7 +1051,7 @@ void elec_toggle(GtkWidget *w, GtkWidget *box){
 /*******************/
 /* selecting LREAL */
 /*******************/
-void vasp_lreal_selected(GtkWidget *w, struct model_pak *model){
+void vasp_lreal_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1069,7 +1069,7 @@ void vasp_lreal_selected(GtkWidget *w, struct model_pak *model){
 /***************/
 /* grid toggle */
 /***************/
-void grid_toggle(GtkWidget *w, GtkWidget *box){
+void grid_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	gchar *text;
 	if(!(vasp_gui.calc.auto_grid)){
 		/*switch to manual values*/
@@ -1105,7 +1105,7 @@ void grid_toggle(GtkWidget *w, GtkWidget *box){
 /***************************/
 /* ismear value is changed */
 /***************************/
-void ismear_changed(GtkWidget *w, struct model_pak *model){
+void ismear_changed(GtkWidget *w){//IGNORED: struct model_pak *model
 	gchar *label;
 	GUI_ENTRY_GET_TEXT(w,label);
 	sscanf(label,"%i",&(vasp_gui.calc.ismear));
@@ -1122,7 +1122,7 @@ void ismear_changed(GtkWidget *w, struct model_pak *model){
 /*****************************/
 /* kspacing value is changed */
 /*****************************/
-void kspacing_changed(GtkWidget *w, struct model_pak *model){
+void kspacing_changed(GtkWidget *w){//IGNORED: struct model_pak *model
 	gchar *label;
 	GUI_ENTRY_GET_TEXT(w,label);
 	sscanf(label,"%lf",&(vasp_gui.calc.kspacing));
@@ -1131,21 +1131,21 @@ void kspacing_changed(GtkWidget *w, struct model_pak *model){
 /************************/
 /* toggle LNONCOLLINEAR */
 /************************/
-void lnoncoll_toggle(GtkWidget *w, GtkWidget *box){
+void lnoncoll_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	/* unselecting LNONCOLLINEAR automatically unselect LSORBIT */
 	if(!vasp_gui.calc.non_collinear) GUI_TOGGLE_OFF(vasp_gui.lsorbit);
 }
 /******************/
 /* toggle LSORBIT */
 /******************/
-void lsorbit_toggle(GtkWidget *w, GtkWidget *box){
+void lsorbit_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	/* LSORBIT automatically select LNONCOLLINEAR */
 	if(vasp_gui.calc.lsorbit) GUI_TOGGLE_ON(vasp_gui.lnoncoll);
 }
 /*****************/
 /* selecting GGA */
 /*****************/
-void vasp_gga_selected(GtkWidget *w, struct model_pak *model){
+void vasp_gga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1165,7 +1165,7 @@ void vasp_gga_selected(GtkWidget *w, struct model_pak *model){
 /*********************/
 /* selecting METAGGA */
 /*********************/
-void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
+void vasp_metagga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.cmbj);
@@ -1189,7 +1189,7 @@ void vasp_metagga_selected(GtkWidget *w, struct model_pak *model){
 /*******************/
 /* toggle LMETAGGA */
 /*******************/
-void metagga_toggle(GtkWidget *w, GtkWidget *box){
+void metagga_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	if(!vasp_gui.calc.lmetagga){
 		/*switch to manual values*/
 		GUI_LOCK(vasp_gui.metagga);
@@ -1208,7 +1208,7 @@ void metagga_toggle(GtkWidget *w, GtkWidget *box){
 /*******************/
 /* toggle L(S)DA+U */
 /*******************/
-void ldau_toggle(GtkWidget *w, GtkWidget *box){
+void ldau_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	gchar *text;
 	if(!vasp_gui.calc.ldau){
 		/*switch to manual values*/
@@ -1247,7 +1247,7 @@ void ldau_toggle(GtkWidget *w, GtkWidget *box){
 /***************************/
 /* selecting L(S)DA+U type */
 /***************************/
-void vasp_ldau_selected(GtkWidget *w, struct model_pak *model){
+void vasp_ldau_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1263,7 +1263,7 @@ void vasp_ldau_selected(GtkWidget *w, struct model_pak *model){
 /***************************************/
 /* selecting L(S)DA+U output verbosity */
 /***************************************/
-void vasp_ldau_print_selected(GtkWidget *w, struct model_pak *model){
+void vasp_ldau_print_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1279,7 +1279,7 @@ void vasp_ldau_print_selected(GtkWidget *w, struct model_pak *model){
 /************************************/
 /* toggle manual selection of mixer */
 /************************************/
-void mixer_toggle(GtkWidget *w, GtkWidget *box){
+void mixer_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	gchar *text;
 	if((vasp_gui.calc.auto_mixer)){
 		/*switch to manual values*/
@@ -1326,7 +1326,7 @@ void mixer_toggle(GtkWidget *w, GtkWidget *box){
 /*******************/
 /* selecting mixer */
 /*******************/
-void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
+void vasp_mixer_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.wc);
@@ -1350,7 +1350,7 @@ void vasp_mixer_selected(GtkWidget *w, struct model_pak *model){
 /***************************/
 /* selecting initial mixer */
 /***************************/
-void vasp_inimix_selected(GtkWidget *w, struct model_pak *model){
+void vasp_inimix_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1364,7 +1364,7 @@ void vasp_inimix_selected(GtkWidget *w, struct model_pak *model){
 /************************/
 /* selecting pre-mixing */
 /************************/
-void vasp_mixpre_selected(GtkWidget *w, struct model_pak *model){
+void vasp_mixpre_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1380,7 +1380,7 @@ void vasp_mixpre_selected(GtkWidget *w, struct model_pak *model){
 /********************/
 /* selecting idipol */
 /********************/
-void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
+void vasp_idipol_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_UNLOCK(vasp_gui.ldipol);
@@ -1412,7 +1412,7 @@ void vasp_idipol_selected(GtkWidget *w, struct model_pak *model){
 /********************/
 /* selecting lorbit */
 /********************/
-void vasp_lorbit_selected(GtkWidget *w, struct model_pak *model){
+void vasp_lorbit_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1436,7 +1436,7 @@ void vasp_lorbit_selected(GtkWidget *w, struct model_pak *model){
 /********************/
 /* selecting ibrion */
 /********************/
-void vasp_ibrion_selected(GtkWidget *w, struct model_pak *model){
+void vasp_ibrion_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.tebeg);
@@ -1482,7 +1482,7 @@ void vasp_ibrion_selected(GtkWidget *w, struct model_pak *model){
 /******************/
 /* selecting ISIF */
 /******************/
-void vasp_isif_selected(GtkWidget *w, struct model_pak *model){
+void vasp_isif_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	vasp_gui.calc.isif=index;
@@ -1524,7 +1524,7 @@ void vasp_isif_selected(GtkWidget *w, struct model_pak *model){
 /****************/
 /* isif toggles */
 /****************/
-void isif_toggle(GtkWidget *w, GtkWidget *box){
+void isif_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /*recalculate isif function of the user switches*/
 if((vasp_gui.rions)&&(!vasp_gui.rshape)&&(!vasp_gui.rvolume)) {if(vasp_gui.calc.isif>2) vasp_gui.calc.isif=2;}
 else if((vasp_gui.rions)&&(vasp_gui.rshape)&&(vasp_gui.rvolume)) vasp_gui.calc.isif=3;
@@ -1564,7 +1564,7 @@ void toggle_poscar_sd(){
 /*************************/
 /* selecting poscar_free */
 /*************************/
-void vasp_poscar_free_selected(GtkWidget *w, struct model_pak *model){
+void vasp_poscar_free_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	gint ix;
 	gchar *text;
@@ -1686,7 +1686,7 @@ void toggle_poscar_direct(){
 /*************************/
 /* selecting poscar atom */
 /*************************/
-void vasp_poscar_atoms_selected(GtkWidget *w, struct model_pak *model){
+void vasp_poscar_atoms_selected(GtkWidget *w){//IGNORED:  struct model_pak *model
 	gint index;
 	gchar *text;
 	gdouble x,y,z;
@@ -1816,7 +1816,7 @@ void vasp_atom_delete(){
 /**************************/
 /* selecting kpoints_mode */
 /**************************/
-void vasp_kpoints_mode_selected(GtkWidget *w, struct model_pak *model){
+void vasp_kpoints_mode_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	gchar *text;
 	GUI_COMBOBOX_GET(w,index);
@@ -1897,7 +1897,7 @@ void vasp_kpoints_mode_selected(GtkWidget *w, struct model_pak *model){
 /**********************/
 /* selecting a kpoint */
 /**********************/
-void vasp_kpoints_kpts_selected(GtkWidget *w, struct model_pak *model){
+void vasp_kpoints_kpts_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	gchar *text;
 	gdouble x,y,z,wt;
@@ -2005,7 +2005,7 @@ void toogle_tetra(){
 /*************************/
 /* selecting tetrahedron */
 /*************************/
-void vasp_tetra_selected(GtkWidget *w, struct model_pak *model){
+void vasp_tetra_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 	gint index;
 	gchar *text;
 	gdouble wt;
@@ -2111,7 +2111,7 @@ void potcar_get_species(){
 	sscanf(line," %c%c%c%*s %*s",&(sym[0]),&(sym[1]),&(sym[2]));
 	if((sym[0]=='P')&&(sym[1]=='A')&&(sym[2]=='W')) {
 		vasp_gui.calc.have_paw=TRUE;
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vasp_gui.have_paw),TRUE);
+		GUI_TOGGLE_ON(vasp_gui.have_paw);
 	}
 	sym[2]='\0';
 	while(line){
@@ -2126,59 +2126,71 @@ void potcar_get_species(){
 	}
 	fclose(fp);
 	/*update vasp_gui.simple_species and vasp_gui.potcar_species*/
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
+	tamp=g_strdup_printf("%s",vasp_gui.calc.potcar_species);
+	GUI_ENTRY_TEXT(vasp_gui.simple_species,tamp);
+	g_free(tamp);tamp=g_strdup_printf("%s",vasp_gui.calc.potcar_species);
+	GUI_ENTRY_TEXT(vasp_gui.potcar_species,tamp);
+	g_free(tamp);
 }
 /************************************************************************/
 /* point to a file where POTCAR information is stored for each elements */
 /************************************************************************/
-void load_potcar_file_dialog(GtkButton *button, gpointer data){
-  GtkWidget *file_chooser;
-  GtkFileFilter *filter;
-/*set filter*/
-  filter = gtk_file_filter_new();
-  gtk_file_filter_add_pattern(filter, "*POTCAR");
-  gtk_file_filter_set_name (filter,"POTCAR files");
-  file_chooser = gtk_file_chooser_dialog_new("Select a POTCAR File",GTK_WINDOW(vasp_gui.window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);
-gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);/*apply filter*/
-  if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT)
-  {
-    char *filename;
-    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
-    if(filename) {
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_potcar),g_strdup_printf("%s",filename));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_file),g_strdup_printf("%s",filename));
-/*dont forget to sync!!*/
-	VASP_REG_TEXT(potcar_file);
-	g_free (filename);
-	potcar_get_species();
-    }
-  }
-  gtk_widget_destroy (GTK_WIDGET(file_chooser));
+void load_potcar_file_dialog(void){//IGNORED: GtkButton *button, gpointer data
+	GtkWidget *file_chooser;
+	gint have_answer;
+	char *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(vasp_gui.window,file_chooser,"Select a POTCAR File","*POTCAR","POTCAR files");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(vasp_gui.simple_potcar,text);
+			g_free(text);text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(vasp_gui.potcar_file,text);
+			g_free(text);
+			VASP_REG_TEXT(potcar_file);
+			g_free (filename);
+			potcar_get_species();
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*****************************************************/
 /* register a specific pseudopotential for a species */
 /*****************************************************/
-void apply_species_flavor(GtkButton *button, gpointer data){
-	gchar *text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(vasp_gui.species_flavor));
-	gchar *symbol=g_strdup(text);
-	gchar *flavor=g_strdup(text);
+void apply_species_flavor(void){//IGNORED: GtkButton *button, gpointer data
+	gchar *text;
+	gchar *symbol;
+	gchar *flavor;
 	gchar sym[3];
 	gint idx;
 	gchar *result=NULL;
+	/**/
+	GUI_COMBOBOX_GET_TEXT(vasp_gui.species_flavor,text);
 	if(text==NULL) return;/*nothing selected*/
-	if(text[0]=='\0') return;/*nothing selected*/
+	symbol=g_strdup(text);/*prepare enough size*/
+	flavor=g_strdup(text);/*prepare enough size*/
+	if(text[0]=='\0') {
+		/*nothing selected*/
+		goto flavor_end;
+	}
 	sscanf(text,"%[^:]: %s",symbol,flavor);
+	g_free(text);
 	text=g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor);
 	g_free(vasp_gui.calc.potcar_species_flavor);
 	sym[2]='\0';
+	/*chemical symbol is at MAX 2 characters*/
 	if(g_ascii_islower(symbol[1])){/*2 letters*/
 		sscanf(symbol,"%c%c",&(sym[0]),&(sym[1]));
 		idx=0;
 		while((g_ascii_strncasecmp(&(text[idx]),sym,2)!=0)&&(text[idx]!='\0')) idx++;
 		if(text[idx]=='\0'){
 			fprintf(stderr,"ERROR in setting POTCAR flavor.\n");
-			return;/*this should never happen*/
+			/*this should never happen*/
+			goto flavor_end;
 		}
 		if(idx!=0) {
 			text[idx]='\0';
@@ -2204,7 +2216,9 @@ void apply_species_flavor(GtkButton *button, gpointer data){
 		}
 		if(text[idx]=='\0'){
 			fprintf(stderr,"ERROR in setting POTCAR flavor.\n");
-			return;/*this should never happen*/
+			/*this should never happen*/
+			goto flavor_end;
+
 		}
 		if(idx!=0) {
 			text[idx]='\0';
@@ -2220,14 +2234,21 @@ void apply_species_flavor(GtkButton *button, gpointer data){
 			vasp_gui.calc.potcar_species_flavor=g_strdup_printf("%s%s",result,&(text[idx]));
 		}
 	}
+	g_free(text);text=g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor);
+	GUI_ENTRY_TEXT(vasp_gui.potcar_species_flavor,text);
 	g_free(result);
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species_flavor),g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor));
+flavor_end:
+	g_free(text);
+	g_free(symbol);
+	g_free(flavor);
+	return;
 }
 /******************************************************/
 /* register a species and a flavor from POTCAR FOLDER */
 /******************************************************/
 #define DEBUG_POTCAR_FOLDER 0
 void potcar_folder_register(gchar *item){
+	gchar *text;
 	gchar elem[3];
 	elem[0]=item[0];
 	if(g_ascii_islower (item[1])) elem[1]=item[1];
@@ -2236,23 +2257,30 @@ void potcar_folder_register(gchar *item){
 #if DEBUG_POTCAR_FOLDER
 	fprintf(stdout,"#DBG: REG_ %s as %s \n",item,elem);
 #endif
-	VASP_COMBOBOX_ADD(vasp_gui.species_flavor,g_strdup_printf("%s: %s",elem,item));
+	text=g_strdup_printf("%s: %s",elem,item);
+	GUI_COMBOBOX_ADD(vasp_gui.species_flavor,text);
+	g_free(text);
 }
 /**************************************/
 /* get information from POTCAR folder */
 /**************************************/
 void potcar_folder_get_info(){
 	/*using POTCAR files, given they are not stored in a ZCOMPRESS format*/
-	const gchar *path=gtk_entry_get_text(GTK_ENTRY(vasp_gui.potcar_folder));
-	GSList *folders=file_dir_list(path,FALSE);
+	gchar *path;
+	GSList *folders;
 	gchar *item;
 	gchar sym[3];
+	gchar *text;
+	/**/
+	GUI_ENTRY_GET_TEXT(vasp_gui.potcar_folder,path);
+	folders=file_dir_list(path,FALSE);
+	g_free(path);
 	vasp_poscar_sync();
 #if DEBUG_POTCAR_FOLDER
 	fprintf(stdout,"#DBG: looking for %s\n",vasp_gui.calc.species_symbols);
 #endif
 	/*wipe all entry in vasp_gui.species_flavor*/
-	gtk_list_store_clear(GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(vasp_gui.species_flavor))));
+	GUI_COMBOBOX_WIPE(vasp_gui.species_flavor);
 	sym[2]='\0';
 	for ( ; folders ; folders=g_slist_next(folders)){
 		item=g_strdup_printf("%s",(char *)folders->data);
@@ -2279,61 +2307,71 @@ void potcar_folder_get_info(){
 		}
 		g_free(item);
 	}
+	/*FIXME: wipe before copy?*/
 	vasp_gui.calc.potcar_species=g_strdup(vasp_gui.calc.species_symbols);/*just copy is enough for now*/
 	vasp_gui.calc.potcar_species_flavor=g_strdup(vasp_gui.calc.species_symbols);/*same here*/
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.simple_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species),g_strdup_printf("%s",vasp_gui.calc.potcar_species));
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_species_flavor),g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vasp_gui.species_flavor),0);
+
+	text=g_strdup_printf("%s",vasp_gui.calc.potcar_species);
+	GUI_ENTRY_TEXT(vasp_gui.simple_species,text);
+	GUI_ENTRY_TEXT(vasp_gui.potcar_species,text);
+	g_free(text);text=g_strdup_printf("%s",vasp_gui.calc.potcar_species_flavor);
+	GUI_ENTRY_TEXT(vasp_gui.potcar_species_flavor,text);
+	g_free(text);
+	GUI_COMBOBOX_SET(vasp_gui.species_flavor,0);
 }
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */
 /***************************************************************/
-void load_potcar_folder_dialog(GtkButton *button, gpointer data){
-  GtkWidget *file_chooser;
-file_chooser=gtk_file_chooser_dialog_new("Select the POTCAR folder",GTK_WINDOW(vasp_gui.window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);
-  gtk_file_chooser_set_action (GTK_FILE_CHOOSER(file_chooser),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-  if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT)
-  {
-    char *foldername = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
-    if(foldername) {
-	gtk_entry_set_text(GTK_ENTRY(vasp_gui.potcar_folder),g_strdup_printf("%s",foldername));
-	if(vasp_gui.calc.potcar_folder!=NULL) g_free(vasp_gui.calc.potcar_folder);
-	vasp_gui.calc.potcar_folder=g_strdup_printf("%s",foldername);
-	g_free (foldername);
-	potcar_folder_get_info();
-    }
-  }
-  gtk_widget_destroy (GTK_WIDGET(file_chooser));
+void load_potcar_folder_dialog(void){//IGNORED: GtkButton *button, gpointer data
+	GtkWidget *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_FOLDER(vasp_gui.window,file_chooser,"Select the POTCAR folder");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(vasp_gui.potcar_folder,text);
+			g_free(text);
+			if(vasp_gui.calc.potcar_folder!=NULL) g_free(vasp_gui.calc.potcar_folder);
+			vasp_gui.calc.potcar_folder=g_strdup_printf("%s",filename);
+			g_free (filename);
+			potcar_folder_get_info();
+		}
+	}	
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*************************************/
 /* Select POTCAR information by file */
 /*************************************/
-void toggle_potcar_file(GtkWidget *w, GtkWidget *box){
+void toggle_potcar_file(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	vasp_gui.have_potcar_folder=FALSE;
-	gtk_widget_set_sensitive(vasp_gui.potcar_folder,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.species_flavor,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.species_button,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_file,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_file_button,TRUE);
+	GUI_LOCK(vasp_gui.potcar_folder);
+	GUI_LOCK(vasp_gui.potcar_folder_button);
+	GUI_LOCK(vasp_gui.species_flavor);
+	GUI_LOCK(vasp_gui.species_button);
+	GUI_UNLOCK(vasp_gui.potcar_file);
+	GUI_UNLOCK(vasp_gui.potcar_file_button);
 }
 /*************************************/
 /* Select POTCAR information by path */
 /*************************************/
-void toggle_potcar_folder(GtkWidget *w, GtkWidget *box){
+void toggle_potcar_folder(void){//IGNORED: GtkWidget *w, GtkWidget *box
 	vasp_gui.have_potcar_folder=TRUE;
-	gtk_widget_set_sensitive(vasp_gui.potcar_file,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_file_button,FALSE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_folder,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.potcar_folder_button,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.species_flavor,TRUE);
-	gtk_widget_set_sensitive(vasp_gui.species_button,TRUE);
+	GUI_LOCK(vasp_gui.potcar_file);
+	GUI_LOCK(vasp_gui.potcar_file_button);
+	GUI_UNLOCK(vasp_gui.potcar_folder);
+	GUI_UNLOCK(vasp_gui.potcar_folder_button);
+	GUI_UNLOCK(vasp_gui.species_flavor);
+	GUI_UNLOCK(vasp_gui.species_button);
 }
 /************************************************************************/
-/* tentative to equilibrate the NPAR,NCORE,KPAR with the number of CPUs */
+/* equilibrate NPAR,NCORE,KPAR with the number of CPUs */
 /************************************************************************/
-void parallel_eq(GtkWidget *w, GtkWidget *box){
+void parallel_eq(void){//IGNORED: *GtkWidget *w, GtkWidget *box
 	/*parallel equilibration*/
 	gint np,ncore,kpar;
 	/* no need to sync */
@@ -2343,26 +2381,27 @@ void parallel_eq(GtkWidget *w, GtkWidget *box){
 	/*we have np CPU*/
 	if(np==1){
 		//NCORE=1 ; KPAR=1
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0);
-		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,1.0);
-		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,1.0);
+		GUI_SPIN_SET(vasp_gui.ncore,1.0);
+		GUI_SPIN_SET(vasp_gui.kpar,1.0);
+		GUI_SPIN_RANGE(vasp_gui.ncore,1.0,1.0);
+		GUI_SPIN_RANGE(vasp_gui.kpar,1.0,1.0);
 		/*same for simplified interface*/
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0);
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0);
-		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0,1.0);
-		gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0,1.0);
+		GUI_SPIN_SET(vasp_gui.simple_ncore,1.0);
+		GUI_SPIN_SET(vasp_gui.simple_kpar,1.0);
+		GUI_SPIN_RANGE(vasp_gui.simple_ncore,1.0,1.0);
+		GUI_SPIN_RANGE(vasp_gui.simple_kpar,1.0,1.0);
 		return;
 	}
 	/* ncore should be [1,ncpu/kpar] */
-	if(ncore>((gint)np/kpar)) gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.ncore),(gdouble)((gint)np/kpar));
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.ncore),1.0,(gdouble)((gint)np/kpar));
+	if(ncore>((gint)np/kpar)) {
+		GUI_SPIN_SET(vasp_gui.ncore,(gdouble)((gint)np/kpar));
+		GUI_SPIN_SET(vasp_gui.simple_ncore,(gdouble)((gint)np/kpar));
+	}
+	GUI_SPIN_RANGE(vasp_gui.ncore,1.0,(gdouble)((gint)np/kpar));
+	GUI_SPIN_RANGE(vasp_gui.simple_ncore,1.0,(gdouble)((gint)np/kpar));
 	/* kpar can be [1,ncpu] */
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.kpar),1.0,(gdouble)np);
-	/*same for the simplified interface*/
-	if(ncore>((gint)np/kpar)) gtk_spin_button_set_value(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),(gdouble)((gint)np/kpar));
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_ncore),1.0,(gdouble)((gint)np/kpar));
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(vasp_gui.simple_kpar),1.0,(gdouble)np);
+	GUI_SPIN_RANGE(vasp_gui.kpar,1.0,(gdouble)np);
+	GUI_SPIN_RANGE(vasp_gui.simple_kpar,1.0,(gdouble)np);
 }
 /***************************/
 /* sync poscar information */
@@ -2701,6 +2740,9 @@ void calc_to_kpoints(FILE *output,vasp_calc_struct calc){
 	switch (vasp_gui.calc.kpoints_mode){
 	case VKP_LINE:
 		fprintf(output,"Line-mode\n");
+		if(vasp_gui.calc.kpoints_cart) fprintf(output,"Cartesian\n");
+		else fprintf(output,"Reciprocal\n");
+		break;
 	case VKP_BASIS:
 	case VKP_MAN:
 		if(vasp_gui.calc.kpoints_cart) fprintf(output,"Cartesian\n");
@@ -2801,7 +2843,7 @@ if(!vasp_gui.have_potcar_folder){
 	if(vasp_gui.calc.potcar_species_flavor==NULL) return;
 	hasend=FALSE;
 	idx=0;
-	while((text[idx]==' ')) {/*skip trailing space*/
+	while((text[idx]==' ')||(text[idx]=='\t')) {/*skip trailing space*/
 		if(text[idx]=='\0') {
 			fprintf(stderr,"ERROR while reading POTCAR flavors!\n");
 			g_free(text);
@@ -3209,8 +3251,8 @@ GUI_TOOLTIP(vasp_gui.icharg,"ICHARG: Ch. 6.15 DEFAULT 2\nDetermine how the initi
 	GUI_COMBOBOX_SETUP(vasp_gui.algo,0,vasp_algo_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.ialgo,7,vasp_ialgo_selected);
 	GUI_LOCK(vasp_gui.ialgo);
-	prec_toggle(NULL,NULL);
-	elec_toggle(NULL,NULL);
+	prec_toggle();
+	elec_toggle();
 /* --- end frame */
 /* --- mixing */
 	GUI_FRAME_NOTE(page,frame,"Mixing");
@@ -3261,7 +3303,7 @@ GUI_TOOLTIP(vasp_gui.wc,"WC: Ch. 6.49 DEFAULT: 1000\nstep weight factor for Broy
 	GUI_COMBOBOX_SETUP(vasp_gui.mixer,3,vasp_mixer_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.mixpre,1,vasp_mixpre_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.inimix,1,vasp_inimix_selected);
-	mixer_toggle(NULL,NULL);
+	mixer_toggle();
 /* --- end frame */
 /* --- projector */
 	GUI_FRAME_NOTE(page,frame,"Projector");
@@ -3307,7 +3349,7 @@ GUI_TOOLTIP(vasp_gui.ngyf,"NGYF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh gri
 GUI_TOOLTIP(vasp_gui.ngzf,"NGZF: Ch. 6.3 DEFAULT: -\nnumber of fine FFT-mesh grid-points along the z direction.");
 /* initialize */
 	GUI_COMBOBOX_SETUP(vasp_gui.lreal,3,vasp_lreal_selected);
-	grid_toggle(NULL,NULL);
+	grid_toggle();
 /* --- end frame */
 
 /*-------------------*/
@@ -3333,8 +3375,8 @@ GUI_TOOLTIP(vasp_gui.fermwe,"FERMWE: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 explicitl
 	GUI_TEXT_TABLE(table,vasp_gui.fermdo,vasp_gui.calc.fermdo,"FERMDO=",2,4,1,2);
 GUI_TOOLTIP(vasp_gui.fermdo,"FERDO: Ch. 6.38 DEFAULT -\nFor ISMEAR=-2 and ISPIN=2 sets\noccupancy for down spin of each band.");
 /* initialize */
-	GUI_ENTRY_CHANGE(vasp_gui.ismear,ismear_changed,data);/*NEW: ELECT-I ismear -> KPOINTS ismear*/
-	GUI_ENTRY_CHANGE(vasp_gui.kspacing,kspacing_changed,data);/*NEW: ELECT-I kspacing -> KPOINTS kspacing*/
+	GUI_ENTRY_CHANGE(vasp_gui.ismear,ismear_changed,NULL);/*NEW: ELECT-I ismear -> KPOINTS ismear*/
+	GUI_ENTRY_CHANGE(vasp_gui.kspacing,kspacing_changed,NULL);/*NEW: ELECT-I kspacing -> KPOINTS kspacing*/
 /* --- end frame */
 /* --- spin */
 	GUI_FRAME_NOTE(page,frame,"Spin");
@@ -3421,8 +3463,8 @@ GUI_TOOLTIP(vasp_gui.ldauj,"LDAUJ: Ch. 6.70 DEFAULT: -\nSets effective on-site E
 	GUI_COMBOBOX_SETUP(vasp_gui.metagga,3,vasp_metagga_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.ldau,1,vasp_ldau_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.ldau_print,0,vasp_ldau_print_selected);
-	metagga_toggle(NULL,NULL);/*initialize TODO: move to end*/
-	ldau_toggle(NULL,NULL);/*initialize TODO: move to end*/
+	metagga_toggle();
+	ldau_toggle();
 /* --- end frame */
 /* --- dipole */
 	GUI_FRAME_NOTE(page,frame,"Dipole");
@@ -3729,7 +3771,7 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 }
 /* (re)initialize */
 	toggle_poscar_sd(NULL,NULL);
-	vasp_poscar_free_selected(vasp_gui.poscar_free,NULL);
+	vasp_poscar_free_selected(vasp_gui.poscar_free);
 /* --- end frame */
 
 /*-------------------*/
@@ -3838,13 +3880,13 @@ GUI_TOOLTIP(vasp_gui.tetra_c,"3rd corner of the tetrahedron (C) in k-point index
 	GUI_ENTRY_TABLE(table,vasp_gui.tetra_d,vasp_gui.calc.tetra_d,"%i","PtD:",5,6,2,3);
 GUI_TOOLTIP(vasp_gui.tetra_d,"4th corner of the tetrahedron (D) in k-point index.");
 /* initialize */
-	GUI_ENTRY_CHANGE(vasp_gui.ismear_3,ismear_changed,data);
-	GUI_ENTRY_CHANGE(vasp_gui.kspacing_3,kspacing_changed,data);
+	GUI_ENTRY_CHANGE(vasp_gui.ismear_3,ismear_changed,NULL);
+	GUI_ENTRY_CHANGE(vasp_gui.kspacing_3,kspacing_changed,NULL);
 	GUI_COMBOBOX_SETUP(vasp_gui.kpoints_mode,vasp_gui.calc.kpoints_mode,vasp_kpoints_mode_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.kpoints_kpts,0,vasp_kpoints_kpts_selected);
 	GUI_COMBOBOX_SETUP(vasp_gui.tetra,0,vasp_tetra_selected);
 	toogle_tetra();
-	ismear_changed(vasp_gui.ismear_3,data);/*necessary*/
+	ismear_changed(vasp_gui.ismear_3);/*necessary*/
 /* --- end frame */
 /* TODO: import KPOINTS/IBZKPT file*/
 
@@ -3883,10 +3925,10 @@ GUI_TOOLTIP(vasp_gui.potcar_file,"POTCAR file, including its full path.");
 GUI_TOOLTIP(vasp_gui.potcar_folder,"Full PATH to the POTCAR sub-directories.");
 /* 3rd line */
 	GUI_COMBOBOX_TABLE(table,vasp_gui.species_flavor,"FLAVOR:",2,3,2,3);
-	GUI_OPEN_BUTTON_TABLE(table,vasp_gui.species_button,apply_species_flavor,3,4,2,3);
+	GUI_APPLY_BUTTON_TABLE(table,vasp_gui.species_button,apply_species_flavor,3,4,2,3);
 GUI_TOOLTIP(vasp_gui.species_flavor,"When Using PATH method, for each species a choice\nbetween different pseudopotential setting (flavors) exists\nEx: _h hard, _s soft _pv include pseudo-core valence, etc.");
 /* initialize */
-	toggle_potcar_file(NULL,NULL);
+	toggle_potcar_file();
 /* --- end frame */
 /* --- POTCAR results */
 	GUI_FRAME_NOTE(page,frame,"POTCAR results");

@@ -260,6 +260,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_COMBOBOX_DEL(combobox,index) do{\
 	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(combobox),index);\
 }while(0)
+/*Wipe the combobox (combobox)*/
+#define GUI_COMBOBOX_WIPE(combobox) do{\
+	gtk_list_store_clear(GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(combobox))));\
+}while(0)
 /*Create a new cell with:
  * 	 a boxed spin button, which default value is 1 and interval is [1,100], and labeled with text ("caption").
  * Due to limitation of GTK, value has to be of double type and not integer (event though it make little sense).*/
@@ -360,6 +364,36 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /*add a close action button (button) connected to function (function) passing data (data) on the dialog (window).*/
 #define GUI_CLOSE_ACTION(window,button,function,data) do{\
 	button=gui_stock_button(GTK_STOCK_CLOSE,function,data,GTK_DIALOG(window)->action_area);\
+}while(0)
+/*prepare an open-dialog (open_dialog) in the window (window) with the title (title) and an implicit filter with pattern (filter_pattern) and filter title (filter_caption).*/
+#define GUI_PREPARE_OPEN_DIALOG(window,open_dialog,title,filter_pattern,filter_caption) do{\
+	GtkFileFilter *_filter = gtk_file_filter_new();\
+	gtk_file_filter_add_pattern(_filter,filter_pattern);\
+	if(filter_caption!=NULL) gtk_file_filter_set_name (_filter,filter_caption);\
+	open_dialog = gtk_file_chooser_dialog_new(title,GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);\
+	gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(open_dialog),_filter);\
+}while(0)
+/*prepare an open-folder dialog (open_dialog) in the window (window) with the title (title).*/
+#define GUI_PREPARE_OPEN_FOLDER(window,open_dialog,title) do{\
+	open_dialog = gtk_file_chooser_dialog_new(title,GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_OPEN,GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,GTK_STOCK_OPEN,GTK_RESPONSE_ACCEPT,NULL);\
+	gtk_file_chooser_set_action(GTK_FILE_CHOOSER(open_dialog),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);\
+}while(0)
+/*run the previously open-dialog (open_dialog) and either:
+ * 	i) get selected filename (filename) and signal having an answer (have_answer);
+ * 	OR
+ * 	ii) set filename to NULL and signal absence of answer (have_answer). */
+#define GUI_OPEN_DIALOG_RUN(open_dialog,have_answer,filename) do{\
+	if(gtk_dialog_run(GTK_DIALOG(open_dialog)) == GTK_RESPONSE_ACCEPT) {\
+		have_answer=TRUE;\
+		filename=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));\
+	}else{\
+		have_answer=FALSE;\
+		filename=NULL;\
+	}\
+}while(0)
+/*destroy the open-dialog (open_dialog)*/
+#define GUI_KILL_OPEN_DIALOG(open_dialog) do{\
+	gtk_widget_destroy (GTK_WIDGET(open_dialog));\
 }while(0)
 /*display the dialog (window).*/
 #define GUI_SHOW(window) do{\
