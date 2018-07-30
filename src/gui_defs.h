@@ -130,6 +130,9 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_PAGE_CHANGE(notebook,function,data) do{\
 	g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
+#define GUI_NOTE_PAGE_NUMBER(notebook,number) do{\
+	number = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));\
+}while(0)
 /*******************/
 /* FRAME INTERFACE */
 /*******************/
@@ -255,6 +258,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /* NEW: use non-deprecated gtk_combo_box_text_insert_text */
 #define GUI_COMBOBOX_ADD_TEXT(combobox,index,text) do{\
 	gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(combobox),index,text);\
+}while(0)
+/*Prepend text ("text") in combobox (combobox).*/
+#define GUI_COMBOBOX_PREPEND_TEXT(combobox,text) do{\
+	gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(combobox),text);\
 }while(0)
 /*Delete combobox (combobox) text at position index (index)*/
 #define GUI_COMBOBOX_DEL(combobox,index) do{\
@@ -398,4 +405,8 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /*display the dialog (window).*/
 #define GUI_SHOW(window) do{\
 	gtk_widget_show_all(window);\
+}while(0)
+/*close window (window)*/
+#define GUI_CLOSE(window) do{\
+	gtk_widget_destroy(window);\
 }while(0)
