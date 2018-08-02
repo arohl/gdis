@@ -30,6 +30,11 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* DEFINES: interface */
 #define GUI_SPACE 0
+#define GUI_OBJ GtkWidget
+#define GUI_NOTE GtkNotebook
+#define GUI_TEXTVIEW GtkTextView
+#define GUI_TEXTVIEW_BUFFER GtkTextBuffer
+
 /*****************/
 /* BOX INTERFACE */
 /*****************/
@@ -340,6 +345,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /********************/
 /*create a tooltip with text ("text") for the widget (widget).*/
 #define GUI_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
+/*registering value of entry (entry) into variable (value), according to format (format).*/
+#define GUI_REG_VAL(entry,value,format) do{\
+        sscanf(gtk_entry_get_text(GTK_ENTRY(entry)),format,&(value));\
+}while(0)
 /*set the entry (entry) text ("text")*/
 #define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
 /*connect entry (entry) on change with the function (function) passing data (data).*/
@@ -350,6 +359,8 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_ENTRY_GET_TEXT(entry,text) do{\
 	text=g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));\
 }while(0)
+/*get the lenght of text in entry (entry)*/
+#define GUI_ENTRY_LENGHT(entry) (gtk_entry_get_text_length(GTK_ENTRY(entry)))
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
 #define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)

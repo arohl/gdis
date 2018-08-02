@@ -65,7 +65,7 @@ gint read_parameter_uspex(gchar *filename, struct model_pak *model){
         gchar *line=NULL;
 	gchar *ptr;
 	gint idx;
-        uspex_calc_struct *uspex_calc=model->uspex;
+        uspex_output_struct *uspex_calc=model->uspex;
 	/* specific */
 	gchar method;
 	/*start*/
@@ -185,7 +185,7 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	long int vfpos;
         gchar *line=NULL;
 	gchar tmp[64];
-        uspex_calc_struct *uspex_calc=model->uspex;
+        uspex_output_struct *uspex_calc=model->uspex;
         /* specific */
 	gint idx=0;
 	gchar *ptr;
@@ -306,7 +306,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gdouble min_F=0.;
 	gdouble max_E;
 	gchar *atoms;
-	uspex_calc_struct *uspex_calc;
+	uspex_output_struct *uspex_calc;
 	/* checks */
 	g_return_val_if_fail(model != NULL, 1);
 	g_return_val_if_fail(filename != NULL, 2);
@@ -318,7 +318,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	}
 	/*allocs*/
 	if(model->uspex!=NULL) g_free(model->uspex);
-	model->uspex=g_malloc(sizeof(uspex_calc_struct));
+	model->uspex=g_malloc(sizeof(uspex_output_struct));
 	uspex_calc=model->uspex;
 	/* TODO: check that selected file is OUTPUT.txt */
 	vf = fopen(filename, "rt");
@@ -979,7 +979,7 @@ uspex_fail:
 }
 gint read_frame_uspex(FILE *vf, struct model_pak *model){
 	gchar *line;
-	uspex_calc_struct *uspex_calc=model->uspex;
+	uspex_output_struct *uspex_calc=model->uspex;
 	long int vfpos;/*to counter _BUG_ where loading a raw frame does not update model->cur_frame*/
 	gchar *ptr;
 	gint idx=0;

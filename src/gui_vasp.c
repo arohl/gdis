@@ -76,8 +76,8 @@ void gui_vasp_init(){
 /*********************************************************/
 /* Load calculation setting from an included vasprun.xml */
 /*********************************************************/
-void load_vasprun_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_vasprun_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
@@ -100,8 +100,8 @@ void load_vasprun_dialog(void){//IGNORED: GtkButton *button, gpointer data
 /**************************/
 /* load mpirun executable */
 /**************************/
-void load_mpirun_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_mpirun_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
@@ -123,8 +123,8 @@ void load_mpirun_dialog(void){//IGNORED: GtkButton *button, gpointer data
 /****************************/
 /* load the vasp executable */
 /****************************/
-void load_vasp_exe_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_vasp_exe_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
@@ -146,8 +146,8 @@ void load_vasp_exe_dialog(void){//IGNORED: GtkButton *button, gpointer data
 /*****************************************/
 /* point to the path to run the VASP job */
 /*****************************************/
-void load_path_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_path_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
@@ -653,7 +653,7 @@ void vasp_gui_refresh(){
 /************************************************************/
 /* Preload with default parameter from the simple interface */
 /************************************************************/
-void vasp_apply_simple(void){//IGNORED: GtkButton *button, gpointer data
+void vasp_apply_simple(void){
 	/*simple interface*/
 	gint calcul;
 	gint system;
@@ -893,7 +893,7 @@ void vasp_apply_simple(void){//IGNORED: GtkButton *button, gpointer data
 /******************/
 /* selecting PREC */
 /******************/
-void vasp_prec_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_prec_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
@@ -915,7 +915,7 @@ void vasp_prec_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /*****************************************/
 /* Toggle use of automatic prec settings */
 /*****************************************/
-void prec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void prec_toggle(void){
 	gchar *text;
 	if(!(vasp_gui.calc.use_prec)){
 		/*switch to manual values*/
@@ -937,7 +937,7 @@ void prec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /******************/
 /* selecting ALGO */
 /******************/
-void vasp_algo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_algo_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.ialgo);
@@ -976,7 +976,7 @@ void vasp_algo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /*******************/
 /* selecting IALGO */
 /*******************/
-void vasp_ialgo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_ialgo_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1016,7 +1016,7 @@ void vasp_ialgo_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /***************/
 /* elec toggle */
 /***************/
-void elec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void elec_toggle(void){
 	gchar *text;
 	if(!(vasp_gui.calc.auto_elec)){
 		/*switch to manual values*/
@@ -1048,7 +1048,7 @@ void elec_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /*******************/
 /* selecting LREAL */
 /*******************/
-void vasp_lreal_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_lreal_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1066,7 +1066,7 @@ void vasp_lreal_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /***************/
 /* grid toggle */
 /***************/
-void grid_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void grid_toggle(void){
 	gchar *text;
 	if(!(vasp_gui.calc.auto_grid)){
 		/*switch to manual values*/
@@ -1102,7 +1102,7 @@ void grid_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /***************************/
 /* ismear value is changed */
 /***************************/
-void ismear_changed(GtkWidget *w){//IGNORED: struct model_pak *model
+void ismear_changed(GUI_OBJ *w){
 	gchar *label;
 	GUI_ENTRY_GET_TEXT(w,label);
 	sscanf(label,"%i",&(vasp_gui.calc.ismear));
@@ -1119,7 +1119,7 @@ void ismear_changed(GtkWidget *w){//IGNORED: struct model_pak *model
 /*****************************/
 /* kspacing value is changed */
 /*****************************/
-void kspacing_changed(GtkWidget *w){//IGNORED: struct model_pak *model
+void kspacing_changed(GUI_OBJ *w){
 	gchar *label;
 	GUI_ENTRY_GET_TEXT(w,label);
 	sscanf(label,"%lf",&(vasp_gui.calc.kspacing));
@@ -1128,21 +1128,21 @@ void kspacing_changed(GtkWidget *w){//IGNORED: struct model_pak *model
 /************************/
 /* toggle LNONCOLLINEAR */
 /************************/
-void lnoncoll_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void lnoncoll_toggle(void){
 	/* unselecting LNONCOLLINEAR automatically unselect LSORBIT */
 	if(!vasp_gui.calc.non_collinear) GUI_TOGGLE_OFF(vasp_gui.lsorbit);
 }
 /******************/
 /* toggle LSORBIT */
 /******************/
-void lsorbit_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void lsorbit_toggle(void){
 	/* LSORBIT automatically select LNONCOLLINEAR */
 	if(vasp_gui.calc.lsorbit) GUI_TOGGLE_ON(vasp_gui.lnoncoll);
 }
 /*****************/
 /* selecting GGA */
 /*****************/
-void vasp_gga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_gga_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1162,7 +1162,7 @@ void vasp_gga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /*********************/
 /* selecting METAGGA */
 /*********************/
-void vasp_metagga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_metagga_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.cmbj);
@@ -1186,7 +1186,7 @@ void vasp_metagga_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /*******************/
 /* toggle LMETAGGA */
 /*******************/
-void metagga_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void metagga_toggle(void){
 	if(!vasp_gui.calc.lmetagga){
 		/*switch to manual values*/
 		GUI_LOCK(vasp_gui.metagga);
@@ -1205,7 +1205,7 @@ void metagga_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /*******************/
 /* toggle L(S)DA+U */
 /*******************/
-void ldau_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void ldau_toggle(void){
 	gchar *text;
 	if(!vasp_gui.calc.ldau){
 		/*switch to manual values*/
@@ -1244,7 +1244,7 @@ void ldau_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /***************************/
 /* selecting L(S)DA+U type */
 /***************************/
-void vasp_ldau_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_ldau_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1260,7 +1260,7 @@ void vasp_ldau_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /***************************************/
 /* selecting L(S)DA+U output verbosity */
 /***************************************/
-void vasp_ldau_print_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_ldau_print_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1276,7 +1276,7 @@ void vasp_ldau_print_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /************************************/
 /* toggle manual selection of mixer */
 /************************************/
-void mixer_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void mixer_toggle(void){
 	gchar *text;
 	if((vasp_gui.calc.auto_mixer)){
 		/*switch to manual values*/
@@ -1323,7 +1323,7 @@ void mixer_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /*******************/
 /* selecting mixer */
 /*******************/
-void vasp_mixer_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_mixer_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.wc);
@@ -1347,7 +1347,7 @@ void vasp_mixer_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /***************************/
 /* selecting initial mixer */
 /***************************/
-void vasp_inimix_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_inimix_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1361,7 +1361,7 @@ void vasp_inimix_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /************************/
 /* selecting pre-mixing */
 /************************/
-void vasp_mixpre_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_mixpre_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1377,7 +1377,7 @@ void vasp_mixpre_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /********************/
 /* selecting idipol */
 /********************/
-void vasp_idipol_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_idipol_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_UNLOCK(vasp_gui.ldipol);
@@ -1409,7 +1409,7 @@ void vasp_idipol_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /********************/
 /* selecting lorbit */
 /********************/
-void vasp_lorbit_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_lorbit_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
@@ -1433,7 +1433,7 @@ void vasp_lorbit_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /********************/
 /* selecting ibrion */
 /********************/
-void vasp_ibrion_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_ibrion_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	GUI_LOCK(vasp_gui.tebeg);
@@ -1479,7 +1479,7 @@ void vasp_ibrion_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /******************/
 /* selecting ISIF */
 /******************/
-void vasp_isif_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_isif_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	vasp_gui.calc.isif=index;
@@ -1521,7 +1521,7 @@ void vasp_isif_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /****************/
 /* isif toggles */
 /****************/
-void isif_toggle(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void isif_toggle(void){
 /*recalculate isif function of the user switches*/
 if((vasp_gui.rions)&&(!vasp_gui.rshape)&&(!vasp_gui.rvolume)) {if(vasp_gui.calc.isif>2) vasp_gui.calc.isif=2;}
 else if((vasp_gui.rions)&&(vasp_gui.rshape)&&(vasp_gui.rvolume)) vasp_gui.calc.isif=3;
@@ -1561,7 +1561,7 @@ void toggle_poscar_sd(){
 /*************************/
 /* selecting poscar_free */
 /*************************/
-void vasp_poscar_free_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_poscar_free_selected(GUI_OBJ *w){
 	gint index;
 	gint ix;
 	gchar *text;
@@ -1683,7 +1683,7 @@ void toggle_poscar_direct(){
 /*************************/
 /* selecting poscar atom */
 /*************************/
-void vasp_poscar_atoms_selected(GtkWidget *w){//IGNORED:  struct model_pak *model
+void vasp_poscar_atoms_selected(GUI_OBJ *w){
 	gint index;
 	gchar *text;
 	gdouble x,y,z;
@@ -1744,7 +1744,6 @@ void vasp_poscar_atoms_selected(GtkWidget *w){//IGNORED:  struct model_pak *mode
 void vasp_atom_modified(){
 	gint index;
 	gchar *text;
-	gchar *tamp;
 	gchar tx,ty,tz;
 	/*mini-sync*/
 	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,index);/*PUSH*/
@@ -1799,13 +1798,17 @@ void vasp_atom_delete(){
 	gint index;
 	gchar *text;
 	GUI_COMBOBOX_GET(vasp_gui.poscar_atoms,index);
-	if(index==-1) return;/*nothing selected anyway*/
+	if(index==-1) {
+		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,0);
+		return;/*nothing selected anyway*/
+	}
 	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
 	if(g_ascii_strcasecmp(text,"ADD atom") == 0) {
 		g_free(text);
 		return;/*can't delete this one*/
 	}
 	GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,index);
+	if(index-1<0) index=1;
 	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,index-1);
 	g_free(text);
 	vasp_gui.poscar_dirty=TRUE;
@@ -1813,7 +1816,7 @@ void vasp_atom_delete(){
 /**************************/
 /* selecting kpoints_mode */
 /**************************/
-void vasp_kpoints_mode_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_kpoints_mode_selected(GUI_OBJ *w){
 	gint index;
 	gchar *text;
 	GUI_COMBOBOX_GET(w,index);
@@ -1894,7 +1897,7 @@ void vasp_kpoints_mode_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 /**********************/
 /* selecting a kpoint */
 /**********************/
-void vasp_kpoints_kpts_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_kpoints_kpts_selected(GUI_OBJ *w){
 	gint index;
 	gchar *text;
 	gdouble x,y,z,wt;
@@ -1928,7 +1931,6 @@ void vasp_kpoints_kpts_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 void vasp_kpoint_modified(){
 	gint index;
 	gchar *text;
-	gchar *tamp;
 	/*mini-sync*/
 	GUI_COMBOBOX_GET(vasp_gui.kpoints_kpts,index);/*PUSH*/
 	GUI_COMBOBOX_GET_TEXT(vasp_gui.kpoints_kpts,text);
@@ -1979,7 +1981,10 @@ void vasp_kpoint_delete(){
 	gint index;
 	gchar *text;
 	GUI_COMBOBOX_GET(vasp_gui.kpoints_kpts,index);
-	if(index==-1) return;/*nothing selected anyway*/
+	if(index==-1) {
+		GUI_COMBOBOX_SET(vasp_gui.kpoints_kpts,0);
+		return;/*nothing selected anyway*/
+	}
 	GUI_COMBOBOX_GET_TEXT(vasp_gui.kpoints_kpts,text);
 	if(g_ascii_strcasecmp(text,"ADD kpoint") == 0) {
 		g_free(text);
@@ -1987,6 +1992,7 @@ void vasp_kpoint_delete(){
 	}
 	g_free(text);
 	GUI_COMBOBOX_DEL(vasp_gui.kpoints_kpts,index);
+	if(index-1<0) index=1;
 	GUI_COMBOBOX_SET(vasp_gui.kpoints_kpts,index-1);
 }
 /****************/
@@ -2002,7 +2008,7 @@ void toogle_tetra(){
 /*************************/
 /* selecting tetrahedron */
 /*************************/
-void vasp_tetra_selected(GtkWidget *w){//IGNORED: struct model_pak *model
+void vasp_tetra_selected(GUI_OBJ *w){
 	gint index;
 	gchar *text;
 	gdouble wt;
@@ -2035,7 +2041,6 @@ void vasp_tetra_selected(GtkWidget *w){//IGNORED: struct model_pak *model
 void vasp_tetra_modified(){
 	gint index;
 	gchar *text;
-	gchar *tamp;
 	/*mini-sync*/
 	GUI_COMBOBOX_GET(vasp_gui.tetra,index);
 	GUI_COMBOBOX_GET_TEXT(vasp_gui.tetra,text);
@@ -2071,7 +2076,7 @@ void vasp_tetra_delete(){
 	gint index;
 	gchar *text;
 	GUI_COMBOBOX_GET(vasp_gui.tetra,index);
-	if(index==-1) {/*TODO: set similar strategy to kpoints and atom lists*/
+	if(index==-1) {
 		GUI_COMBOBOX_SET(vasp_gui.tetra,0);
 		return;/*nothing selected anyway*/
 	}
@@ -2082,7 +2087,7 @@ void vasp_tetra_delete(){
 	}
 	g_free(text);
 	GUI_COMBOBOX_DEL(vasp_gui.tetra,index);
-	if(index-1<0) index=1;/*TODO: set similar strategy to kpoints and atom lists*/
+	if(index-1<0) index=1;
 	GUI_COMBOBOX_SET(vasp_gui.tetra,index-1);
 }
 /****************************************************/
@@ -2132,8 +2137,8 @@ void potcar_get_species(){
 /************************************************************************/
 /* point to a file where POTCAR information is stored for each elements */
 /************************************************************************/
-void load_potcar_file_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_potcar_file_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	char *filename;
 	gchar *text;
@@ -2158,7 +2163,7 @@ void load_potcar_file_dialog(void){//IGNORED: GtkButton *button, gpointer data
 /*****************************************************/
 /* register a specific pseudopotential for a species */
 /*****************************************************/
-void apply_species_flavor(void){//IGNORED: GtkButton *button, gpointer data
+void apply_species_flavor(void){
 	gchar *text;
 	gchar *symbol;
 	gchar *flavor;
@@ -2272,6 +2277,7 @@ void potcar_folder_get_info(){
 	GUI_ENTRY_GET_TEXT(vasp_gui.potcar_folder,path);
 	folders=file_dir_list(path,FALSE);
 	g_free(path);
+	vasp_gui.poscar_dirty=TRUE;/*FIX _BUG_ when loading POTCAR folder *after* changing vasprun.xml*/
 	vasp_poscar_sync();
 #if DEBUG_POTCAR_FOLDER
 	fprintf(stdout,"#DBG: looking for %s\n",vasp_gui.calc.species_symbols);
@@ -2319,8 +2325,8 @@ void potcar_folder_get_info(){
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */
 /***************************************************************/
-void load_potcar_folder_dialog(void){//IGNORED: GtkButton *button, gpointer data
-	GtkWidget *file_chooser;
+void load_potcar_folder_dialog(void){
+	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
@@ -2336,6 +2342,7 @@ void load_potcar_folder_dialog(void){//IGNORED: GtkButton *button, gpointer data
 			if(vasp_gui.calc.potcar_folder!=NULL) g_free(vasp_gui.calc.potcar_folder);
 			vasp_gui.calc.potcar_folder=g_strdup_printf("%s",filename);
 			g_free (filename);
+			/*sync before*/
 			potcar_folder_get_info();
 		}
 	}	
@@ -2344,7 +2351,7 @@ void load_potcar_folder_dialog(void){//IGNORED: GtkButton *button, gpointer data
 /*************************************/
 /* Select POTCAR information by file */
 /*************************************/
-void toggle_potcar_file(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void toggle_potcar_file(void){
 	vasp_gui.have_potcar_folder=FALSE;
 	GUI_LOCK(vasp_gui.potcar_folder);
 	GUI_LOCK(vasp_gui.potcar_folder_button);
@@ -2356,7 +2363,7 @@ void toggle_potcar_file(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /*************************************/
 /* Select POTCAR information by path */
 /*************************************/
-void toggle_potcar_folder(void){//IGNORED: GtkWidget *w, GtkWidget *box
+void toggle_potcar_folder(void){
 	vasp_gui.have_potcar_folder=TRUE;
 	GUI_LOCK(vasp_gui.potcar_file);
 	GUI_LOCK(vasp_gui.potcar_file_button);
@@ -2368,7 +2375,7 @@ void toggle_potcar_folder(void){//IGNORED: GtkWidget *w, GtkWidget *box
 /************************************************************************/
 /* equilibrate NPAR,NCORE,KPAR with the number of CPUs */
 /************************************************************************/
-void parallel_eq(void){//IGNORED: *GtkWidget *w, GtkWidget *box
+void parallel_eq(void){
 	/*parallel equilibration*/
 	gint np,ncore,kpar;
 	/* no need to sync */
@@ -2506,7 +2513,7 @@ void vasp_poscar_sync(){
 /************************/
 /* Switch notebook page */
 /************************/
-void vasp_gui_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num){//IGNORED: gpointer user_data
+void vasp_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 	gint from_page;
 	gchar *text;
 	/* some (few) values need to be updated from a page to another*/
@@ -2565,7 +2572,6 @@ void vasp_gui_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num){
 /* convert current vasp_gui into current vasp_calc_struct */
 /**********************************************************/
 void vasp_gui_sync(){
-	gchar *tamp;
 	/* sync start here */
 	VASP_REG_TEXT(name);
 	//prec already sync
@@ -2982,7 +2988,7 @@ void vasp_cleanup(){
 /*****************************************/
 /* Execute or enqueue a vasp calculation */
 /*****************************************/
-void run_vasp_exec(vasp_exec_struct *vasp_exec){//IGNORED: struct task_pak *task
+void run_vasp_exec(vasp_exec_struct *vasp_exec){
 	/* Execute a vasp task TODO distant job */
 	gchar *cmd;
 	gchar *cwd;/*for push/pull*/
@@ -3059,7 +3065,7 @@ void exec_calc(){
 /********************************/
 /* Quit vasp calculation dialog */
 /********************************/
-void quit_vasp_gui(GtkWidget *w, gpointer data){
+void quit_vasp_gui(GUI_OBJ *w, gpointer data){
 	struct model_pak *model=data;
 	vasp_cleanup();
 	dialog_destroy(w,model);
@@ -3072,9 +3078,9 @@ void gui_vasp_dialog(void){
 /*TODO: use distant connections*/
 	gchar *title;
 	gpointer dialog;
-	GtkWidget *frame, *vbox, *hbox, *table;
-	GtkWidget *notebook, *page, *button, *label;
-	GtkWidget *separator;
+	GUI_OBJ *frame, *vbox, *hbox, *table;
+	GUI_OBJ *notebook, *page, *button, *label;
+	GUI_OBJ *separator;
 	/* special */
 	GSList *list2;
 	struct model_pak *data;

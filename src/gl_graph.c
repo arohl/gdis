@@ -396,7 +396,7 @@ yy = (gint) yf;
 yy *= -1;
 yy += oy;
 if((y>yy-3)&&(y<yy+3)){
-	uspex_calc_struct *uspex_calc=model->uspex;
+	uspex_output_struct *uspex_calc=model->uspex;
 	/*we have a hit*/
 	graph->select=struct_sel;
 	graph->select_2=ptr[i];
@@ -434,7 +434,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 			yy *= -1;
 			yy += oy;
 			if((y>yy-3)&&(y<yy+3)){
-				uspex_calc_struct *uspex_calc=model->uspex;
+				uspex_output_struct *uspex_calc=model->uspex;
 				/*we have a hit*/
 				graph->select=struct_sel;
 				graph->select_2=ptr[i];
