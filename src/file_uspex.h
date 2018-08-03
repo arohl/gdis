@@ -26,67 +26,64 @@ typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
 	US_CM_USPEX,	/*USPEX*/
 	US_CM_META,	/*metadynamics*/
 	US_CM_VCNEB,	/*VC-NEB*/
-	US_CM_PSO,	/*PSO*/
+	US_CM_PSO,	/*PSO, unsupported*/
+	US_CM_UNKNOWN,	/*reserved for future use*/
 } uspex_method;
 
+typedef enum {
+	US_OT_ENTHALPY=1,			/*most stable structure*/
+	US_OT_VOLUME=2,				/*min volume*/
+	US_OT_HARDNESS=3,			/*max hardness*/
+	US_OT_ORDER=4,				/*most ordered structure*/
+	US_OT_DISTANCE=5,			/*max structure <differences>*/
+	US_OT_DIELEC_S=6,			/*max dielectric suseptibility*/
+	US_OT_GAP=7,				/*max band gap*/
+	US_OT_DIELEC_GAP=8,			/*max energy storage capacity*/
+	US_OT_MAG=9,				/*max magnetization*/
+	US_OT_QE=10,				/*max stucture quasientropy*/
+/*elasticity related*/
+	US_OT_BULK_M=1101,			/*max bulk modulus*/
+	US_OT_SHEAR_M=1102,			/*max shear modulus*/
+	US_OT_YOUNG_M=1103,			/*max Young modulus*/
+	US_OT_POISSON=1104,			/*max Poisson modulus*/
+	US_OT_PUGH_R=1105,			/*max Pugh modulus ratio*/
+	US_OT_VICKERS_H=1106,			/*max Vickers hardness*/
+	US_OT_FRACTURE=1107,			/*max fracture toughness*/
+	US_OT_DEBYE_T=1108,			/*max Debye temperature*/
+	US_OT_SOUND_V=1109,			/*max sound velocity*/
+	US_OT_SWAVE_V=1110,			/*max S-wave velocity*/
+	US_OT_PWAVE_V=1111,			/*max P-wave velocity*/
+	US_OT_UNKNOWN=0,			/*reserved for future use*/
+} uspex_opt;
+
 typedef struct {
-        gint gen;		/*generation of this individual*/
-	gint natoms;		/*number of atoms*/
-	gint *atoms;		/*number of atoms per species*/
-        gdouble energy;		/*total energy*/
-	gdouble E;		/*reduce energy / atoms*/
-	gdouble fitness;	/*NEW: fitness*/
-        gdouble volume;		/*total volume*/
+        gint gen;				/*generation of this individual*/
+	gint natoms;				/*number of atoms*/
+	gint *atoms;				/*number of atoms per species*/
+        gdouble energy;				/*total energy*/
+	gdouble E;				/*reduce energy / atoms*/
+	gdouble fitness;			/*NEW: fitness*/
+        gdouble volume;				/*total volume*/
 } uspex_individual;
 
-/* global output structure */
-typedef struct {
-/*name*/
-	gchar *name;
-	gint version;
-/*system parameters*/
-	uspex_method method;
-	gint type;
-	/* in detail */
-        gint dim;
-        gboolean mol;
-        gboolean var;
-	/* optimization */
-	gint opt_type;
-	gboolean have_fitness;
-/*structures*/
-	gint num_gen;
-	gint num_struct;
-	gint nspecies;          /*number of species*/
-	gint *spe_Z;		/*atomic number of each species*/
-	gint *red_index;	/*in case not all structure are displayed (ie. META)*/
-	gdouble min_E;
-	gdouble max_E;
-	uspex_individual *ind;
-	gint num_best;
-	gint *best_ind;
-/*interpretation*/
-	gpointer graph;
-	gpointer graph_best;
-	gpointer graph_comp;
-} uspex_output_struct;
 /* USPEX calculation structure */
 typedef struct {
 /*additional controls*/
 	gchar *name;				/*the job name*/
 	gint special;				/*special tag*/
-	uspex_output_struct ouput;		/*output structure (once/if output is loaded)*/
 /*4.1 Type of run & System*/
         uspex_method    calculationMethod;	/*supported calculation methods*/
         gint            calculationType;	/*supported calculation types*/
         gint            _calctype_dim;		/*HIDDEN: X.. digit in calculation type: dimension*/
         gboolean        _calctype_mol;		/*HIDDEN: .X. digit in calculation type: molecular*/
         gboolean        _calctype_var;		/*HIDDEN: ..X digit in calculation type: variable composition*/
-        gint            optType;		/* optimization property*/
+        uspex_opt	optType;		/* optimization property*/
+	gint		_nspecies;		/*HIDDEN: number of different species*/
 	gint 		*atomType;		/*atomic number of each species*/
+	gint 		_var_nspecies;		/*HIDDEN: numer of numSpecies blocks*/
 	gint 		*numSpecies;		/*number of species for each type*/
 	gdouble		ExternalPressure;	/*external pressure*/
-	gint 		valences;		/*valence for each species*/
+	gint 		*valences;		/*valence for each species*/
 	gdouble		*goodBonds;		/*minimum bond valences*/
 	gboolean	checkMolecules;		/*check molecules*/
 	gboolean	checkConnectivity;	/*check connectivity*/
@@ -112,13 +109,15 @@ typedef struct {
 	gdouble		mutationDegree;		/*max displacement (Ang) in softmutation*/
 	gdouble		mutationRate;		/*standard deviation in the strain matrix for lattice mutation*/
 	gdouble		DisplaceInLatmutation;	/*max displacement in sofmutation of lattice mutation*/
-	gboolean	autofrac;		/*automatic evolution of variation operators*/
+	gboolean	AutoFrac;		/*automatic evolution of variation operators*/
 /*4.5 Constrains*/
 	gdouble		minVectorLength;	/*minimum length of a cell parameter*/
 	gdouble 	*IonDistances;		/*triangular-matrix of the minimum allowed interatomic distances*/
 	gint		constraint_enhancement;	/*allow c_e times stricter constraints of IonDistances*/
+	gint 		_nmolecules;		/*HIDDEN: number of molecules*/
 	gdouble		*MolCenters;		/*triangular-matrix of minimal distances between centers of molecules*/
 /*4.6 Cell*/
+	gint 		_nlatticelines;		/*HIDDEN: number of lines in Latticevalues*/
 	gdouble 	*Latticevalues;		/*initial volume/parameter of the unit cell*/
 	gint 		splitInto;		/*number of subcells into which unit cell is split*/
 /*4.7 Restart*/
@@ -131,7 +130,7 @@ typedef struct {
 	gint 		numParallelCalcs;	/*number of structure relaxations at a time (in parallel)*/
 	gchar 		*commandExecutable;	/*executable file/command for each optimization step*/
 	gint		whichCluster;		/*type of job-submission*/
-	gchar 		*remoteFolder;		/*remote folder where calcualtion is performed (whichCluster=2)*/
+	gchar 		*remoteFolder;		/*remote folder where calculation is performed (whichCluster=2)*/
 	gboolean	PhaseDiagram;		/*calculate a crude phase diagram w/ (rough) transition pressure*/
 /*4.9 fingerprint*/
 	gdouble		RmaxFing;		/*the distance cutoff (Ang)*/
@@ -210,8 +209,39 @@ typedef struct {
 	gint		PrintStep;		/*save VC-NEB restart files in STEP directory every PS steps*/
 /*6.3 Set initial pathway in VC-NEB*/
 		/*no keyword in this section*/
-
 } uspex_calc_struct;
+/* global output structure */
+typedef struct {
+/*name*/
+        gchar *name;
+        gint version;
+	uspex_calc_struct calc;
+/*system parameters*/
+        uspex_method method;
+        gint type;
+        /* in detail */
+        gint dim;
+        gboolean mol;
+        gboolean var;
+        /* optimization */
+        gint opt_type;
+        gboolean have_fitness;
+/*structures*/
+        gint num_gen;
+        gint num_struct;
+        gint nspecies;          /*number of species*/
+        gint *spe_Z;            /*atomic number of each species*/
+        gint *red_index;        /*in case not all structure are displayed (ie. META)*/
+        gdouble min_E;
+        gdouble max_E;
+        uspex_individual *ind;
+        gint num_best;
+        gint *best_ind;
+/*interpretation*/
+        gpointer graph;
+        gpointer graph_best;
+        gpointer graph_comp;
+} uspex_output_struct;
 /* execution structure */
 typedef struct {
 	int job_id;
