@@ -239,6 +239,13 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
+#define __GET_CHARS(value) if (find_in_string(__Q(value),line) != NULL) {\
+	ptr = g_strdup_printf("%%s : %s",__Q(value));\
+	sscanf(line,ptr,&(CALC.value));\
+	g_free(ptr);g_free(line);line = file_read_line(vf);\
+	continue;\
+}
+
 	line = file_read_line(vf);
 	while (line){
 		if (find_in_string("calculationMethod",line) != NULL) {
@@ -458,7 +465,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for goodBonds*/
-			CALC.goodBonds = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gint));
+			CALC.goodBonds = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gdouble));
 			for(i=0;i<CALC._nspecies*CALC._nspecies;i++) CALC.goodBonds[i]=0.;
 			j=0;
 			while((j<CALC._nspecies)&&(find_in_string("oodBonds",line)==NULL)){
@@ -509,7 +516,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for IonDistances*/
-			CALC.IonDistances = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gint));
+			CALC.IonDistances = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gdouble));
 			for(i=0;i<CALC._nspecies*CALC._nspecies;i++) CALC.IonDistances[i]=0.;
 			j=0;
 			while((j<CALC._nspecies)&&(find_in_string("onDistances",line)==NULL)){
@@ -533,6 +540,458 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			continue;
 		}
 		__GET_INT(constraint_enhancement);
+		if (find_in_string("MolCenters",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count number of molecules*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			CALC._nmolecules=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._nmolecules++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			CALC.MolCenters = g_malloc(CALC._nmolecules*CALC._nmolecules*sizeof(gdouble));
+			for(i=0;i<CALC._nmolecules;i++) CALC.MolCenters[i]=0.;
+			j=0;
+			while((j<CALC._nmolecules)&&(find_in_string("EndMol",line)==NULL)){
+				ptr=&(line[0]);i=0;
+				while((*ptr!='\n')&&(*ptr!='\0')){
+					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+					sscanf(ptr,"%lf%*s",&(CALC.MolCenters[i+j*CALC._nmolecules]));
+					ptr++;i++;
+					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				}
+				j++;
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			if(find_in_string("EndMol",line) != NULL){
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("Latticevalues",line) != NULL) {
+			/*Latticevalues can be one or several volumes, one line crystal definition, or 3 lines lattice cell vectors...*/
+			vfpos=ftell(vf);/* flag */
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count first line number of items*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			CALC._nlatticevalues=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._nlatticevalues++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			/*depending on varcomp*/
+			if(CALC._calctype_var){
+				/*varcomp calculation: should be only one line*/
+				g_free(line);line = file_read_line(vf);/*go next line*/
+				if(find_in_string("Endvalues",line) != NULL){/*only volumes values*/
+					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+					g_free(line);line = file_read_line(vf);/*go next line*/
+					ptr=&(line[0]);i=0;
+					while((*ptr!='\n')&&(*ptr!='\0')){
+						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+						sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i]));
+						ptr++;i++;
+						while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					}
+				}else{/*varcomp but more than one line -> _nlatticevalues <= 3 or bad setting*/
+					if((CALC._nlatticevalues<=3)&&(CALC._nlatticevalues>1)){
+						/*this may be a definition of 1, 2, or 3D cell, but why?*/
+						CALC.Latticevalues = g_malloc(CALC._nlatticevalues*CALC._nlatticevalues*sizeof(gdouble));
+						for(i=0;i<CALC._nlatticevalues*CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+						fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+						g_free(line);line = file_read_line(vf);/*go next line*/
+						ptr=&(line[0]);
+						j=0;
+						while((j<CALC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
+							ptr=&(line[0]);i=0;
+							while((*ptr!='\n')&&(*ptr!='\0')){
+								if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+								sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i+j*CALC._nlatticevalues]));
+								ptr++;i++;
+								while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+							}
+							j++;
+							g_free(line);
+							line = file_read_line(vf);
+						}
+					}else{/*this is a bad setting*/
+						g_free(line);
+						line = g_strdup_printf("ERROR: USPEX bad Latticevalues/varcomp setting in Parameters.txt!\n");
+						gui_text_show(ERROR, line);
+						g_free(line);
+						g_free(line);line = file_read_line(vf);/*go next line*/
+					}
+				}
+			}else{
+				/*NOT varcomp calculation: should be a crystal definition*/
+				if(CALC._nlatticevalues==6){/*crystal definition*/
+					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+					g_free(line);line = file_read_line(vf);/*go next line*/
+					ptr=&(line[0]);i=0;
+					while((*ptr!='\n')&&(*ptr!='\0')){
+						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+						sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i]));
+						ptr++;i++;
+						 while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					}
+				}else if((CALC._nlatticevalues<=3)&&(CALC._nlatticevalues>1)){/*lattice vectors*/
+					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*CALC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<CALC._nlatticevalues*CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+					g_free(line);line = file_read_line(vf);/*go next line*/
+					ptr=&(line[0]);
+					j=0;
+					while((j<CALC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
+						ptr=&(line[0]);i=0;
+						while((*ptr!='\n')&&(*ptr!='\0')){
+							if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+							sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i+j*CALC._nlatticevalues]));
+							ptr++;i++;
+							while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+						}
+						j++;
+						g_free(line);
+						line = file_read_line(vf);
+					}
+				}else if(CALC._nlatticevalues==1){/*only the volume value*/
+					CALC.Latticevalues = g_malloc(sizeof(gdouble));
+					CALC.Latticevalues[0]=0.;
+					sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[0]));
+					g_free(line);
+					line = file_read_line(vf);
+				}else{/*bad setting*/
+					g_free(line);
+					line = g_strdup_printf("ERROR: USPEX bad Latticevalues setting in Parameters.txt!\n");
+					gui_text_show(ERROR, line);
+					g_free(line);
+					g_free(line);line = file_read_line(vf);/*go next line*/
+				}
+			}
+			if(find_in_string("Endvalues",line) != NULL){
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("splitInto",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count number of splits*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			CALC._nsplits=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._nsplits++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			/*look for splits*/
+			CALC.splitInto = g_malloc(CALC._nsplits*sizeof(gint));
+			for(i=0;i<CALC._nsplits;i++) CALC.splitInto[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%i%*s",&(CALC.splitInto[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndSplitInto line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("abinitioCode",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count number of optimization steps*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			CALC._num_opt_steps=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._num_opt_steps++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}/*note that the METADYNAMICS parenthesis are ignored as well*/
+			/*look for abinitioCode*/
+			CALC.abinitioCode = g_malloc(CALC._num_opt_steps*sizeof(gint));
+			for(i=0;i<CALC._nsplits;i++) CALC.abinitioCode[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if((*ptr==' ')||(*ptr=='(')) while((*ptr==' ')||(*ptr=='(')) ptr++;/*skip space(s) & parenthesis*/
+				sscanf(ptr,"%i%*s",&(CALC.abinitioCode[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end (skip ')' if any)*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the ENDabinit line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("KresolStart",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*in my understanding, there is either 1 or _num_opt_steps values of KresolStart*/
+			CALC.KresolStart = g_malloc(CALC._num_opt_steps*sizeof(gdouble));
+			for(i=0;i<CALC._nsplits;i++) CALC.KresolStart[i]=0.;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%lf%*s",&(CALC.KresolStart[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the Kresolend line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("vacuumSize",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*in my understanding, there is also either 1 or _num_opt_steps values of vacuumSize*/
+			CALC.vacuumSize = g_malloc(CALC._num_opt_steps*sizeof(gdouble));
+			for(i=0;i<CALC._nsplits;i++) CALC.vacuumSize[i]=0.;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%lf%*s",&(CALC.vacuumSize[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the endVacuumSize line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_INT(numParallelCalcs);
+		if (find_in_string("commandExecutable",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*there is 1<x<_num_opt_steps lines of commandExecutable*/
+			j=0;
+			ptr = g_strdup("");
+			while((j<CALC._num_opt_steps)&&(find_in_string("EndExecutable",ptr)==NULL)){
+				CALC.commandExecutable = g_strdup_printf("%s\n%s",ptr,line);
+				g_free(ptr);
+				g_free(line);
+				line = file_read_line(vf);
+				ptr = CALC.commandExecutable;
+				j++;
+			}
+			if(find_in_string("EndExecutable",line) != NULL){
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_INT(whichCluster);
+		__GET_CHARS(remoteFolder);
+		__GET_BOOL(PhaseDiagram);
+		__GET_DOUBLE(RmaxFing);
+		__GET_DOUBLE(deltaFing);
+		__GET_DOUBLE(sigmaFing);
+		__GET_INT(antiSeedsActivation);
+		__GET_DOUBLE(antiSeedsMax);
+		__GET_DOUBLE(antiSeedsSigma);
+		__GET_BOOL(doSpaceGroup);
+		if (find_in_string("SymTolerance",line) != NULL) {
+			/*can be either a number or quantifier*/
+			if(g_ascii_isalpha(line[0])){
+				/*Either high, medium, or low*/
+				switch(line[0]){
+				case 'H':
+				case 'h':
+					CALC.SymTolerance=0.05;
+					break;
+				case 'M':
+				case 'm':
+					CALC.SymTolerance=0.10;
+					break;
+				case 'L':
+				case 'l':
+					CALC.SymTolerance=0.20;
+					break;
+				default:/*everything else is a bad setting*/
+					g_free(line);
+					line = g_strdup_printf("ERROR: USPEX bad SymTolerance setting in Parameters.txt!\n");
+					gui_text_show(ERROR, line);
+				}
+			}else{
+				/*get the number directly*/
+				sscanf(line,"%lf%*s",&(CALC.SymTolerance));
+			}
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_INT(repeatForStatistics);
+		__GET_DOUBLE(stopFitness);
+		__GET_BOOL(collectForces);
+		__GET_BOOL(ordering_active);
+		__GET_BOOL(symmetrize);
+		if (find_in_string("valenceElectr",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*if no _nspecies, get it now*/
+			__NSPECIES(line);
+			/*look for valenceElectr*/
+			CALC.valenceElectr = g_malloc(CALC._nspecies*sizeof(gint));
+			for(i=0;i<CALC._nspecies;i++) CALC.valenceElectr[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%i%*s",&(CALC.valenceElectr[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the endValenceElectr line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_DOUBLE(percSliceShift);
+		__GET_INT(dynamicalBestHM);
+		__GET_STRING(softMutOnly);/*TODO: rewrite as "smart" int array*/
+		__GET_DOUBLE(maxDistHeredity);
+		__GET_INT(manyParents);
+		__GET_DOUBLE(minSlice);
+		__GET_DOUBLE(maxSlice);
+		__GET_INT(numberparents);
+		__GET_DOUBLE(thicknessS);
+		__GET_DOUBLE(thicknessB);
+		__GET_INT(reconstruct);
+		__GET_INT(firstGeneMax);
+		__GET_INT(minAt);
+		__GET_INT(maxAt);
+		__GET_DOUBLE(fracTrans);
+		__GET_DOUBLE(howManyTrans);
+		if (find_in_string("specificTrans",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count number of specificTrans*/
+			ptr=&(line[0]);
+			CALC._nspetrans=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._nspetrans++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			/*look for specificTrans*/
+			CALC.specificTrans = g_malloc(CALC._nspetrans*sizeof(gint));
+			for(i=0;i<CALC._nspetrans;i++) CALC.specificTrans[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%i%*s",&(CALC.specificTrans[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndTransSpecific line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_DOUBLE(GaussianWidth);
+		__GET_DOUBLE(GaussianHeight);
+		__GET_INT(FullRelax);
+		__GET_DOUBLE(maxVectorLength);
+		__GET_DOUBLE(PSO_softMut);
+		__GET_DOUBLE(PSO_BestStruc);
+		__GET_DOUBLE(PSO_BestEver);
+		if (find_in_string("vcnebType",line) != NULL) {
+			k=0;sscanf(line,"%i%*s",&(k));
+			j=k;
+			i=((int)(j/100))%10;
+			if((i<1)||(i>2)) {
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			CALC._vcnebtype_method=i;
+			j-=i*100;
+			i=((int)(j/10))%10;
+			if((i<0)||(i>1)){
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			CALC._vcnebtype_img_num=(i==1);
+			j-=i*10;
+			i=j%10;
+			if((i<0)||(i>1)){
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			CALC._vcnebtype_spring=(i==1);
+			CALC.vcnebType=k;
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_INT(numImages);
+		__GET_INT(numSteps);
+		__GET_INT(optReadImages);
+		__GET_BOOL(optimizerType);
+		__GET_INT(optRelaxType);
+		__GET_DOUBLE(dt);
+		__GET_DOUBLE(ConvThreshold);
+		__GET_DOUBLE(VarPathLength);
+		__GET_DOUBLE(K_min);
+		__GET_DOUBLE(K_max);
+		__GET_DOUBLE(Kconstant);
+		__GET_BOOL(optFreezing);
+		__GET_INT(optMethodCIDI);
+		__GET_INT(startCIDIStep);
+		if (find_in_string("pickupImages",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			/*count number of picked-up images*/
+			ptr=&(line[0]);
+			CALC._npickimg=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					CALC._npickimg++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			/*look for pickupImages*/
+			CALC.pickupImages = g_malloc(CALC._npickimg*sizeof(gint));
+			for(i=0;i<CALC._npickimg;i++) CALC.pickupImages[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
+				sscanf(ptr,"%i%*s",&(CALC.pickupImages[i]));
+				ptr++;i++;
+				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndPickupImages line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_INT(FormatType);
+		__GET_INT(PrintStep);
 	/*in case no match was done:*/
 	g_free(line);
 	line = file_read_line(vf);
