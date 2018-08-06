@@ -1,6 +1,6 @@
 ## GDIS, Copyright (C) 2000-2015 by Sean Fleming, Andrew Rohl
 
-<a.rohl@curtin.edu.au>
+<andrew.rohl@curtin.edu.au>
 
 GDIS comes with ABSOLUTELY NO WARRANTY.
 
