@@ -58,7 +58,6 @@ extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
 #define DEBUG_USPEX_READ 0
-#define _UO (*uspex_output)
 
 gint read_parameter_uspex(gchar *filename, struct model_pak *model){
 	FILE *vf;
@@ -179,36 +178,75 @@ fprintf(stdout,"#DBG: USPEX species[%i] Z=%i\n",idx,_UO.spe_Z[idx]);
 /*end of Parameters.txt read*/
 	return 0;
 }
+void init_uspex_parameters(uspex_calc_struct *uspex_calc){
+	/*init an (assumed) empty structure with default parameters*/
+	/* Contrary to USPEX defaults, init default are just to prepare the calc structure. */
+	_UC.name=NULL;
+	_UC.special=0;
+	_UC.calculationMethod=US_CM_UNKNOWN;
+	_UC.calculationType=300;
+	_UC._calctype_dim=3;
+	_UC._calctype_mol=FALSE;
+	_UC._calctype_var=FALSE;
+	_UC.optType=US_OT_ENTHALPY;
+	_UC._nspecies=0;
+	_UC.atomType=NULL;
+	_UC._var_nspecies=0;
+	_UC.numSpecies=NULL;
+	_UC.ExternalPressure=0.;
+	_UC.valences=NULL;
+	_UC.goodBonds=NULL;
+	_UC.checkMolecules=TRUE;
+	_UC.checkConnectivity=FALSE;
+	_UC.populationSize=0;
+	_UC.initialPopSize=0;
+	_UC.numGenerations=100;
+	_UC.stopCrit=0;
+	_UC.bestFrac=0.7;
+	_UC.keepBestHM=0;
+	_UC.reoptOld=FALSE;
+	_UC.symmetries=NULL;
+	_UC.fracGene=0.5;
+	_UC.fracRand=0.2;
+	_UC.fracPerm=0.;
+	_UC.fracAtomsMut=0.1;
+	_UC.fracRotMut=0.;
+	_UC.fracLatMut=0.;
+	_UC.howManySwaps=0;
+	_UC.specificSwaps=NULL;
+	_UC.mutationDegree=0;
+	_UC.mutationRate=0.5;
+	_UC.DisplaceInLatmutation=1.0;
+	_UC.AutoFrac=FALSE;
+	
+}
 /************************************************************************/
 /* Read Parameters.txt and fill keywords of uspex_calc_struct structure */
 /*For reading Parameters.txt files, *not* preparing a model for display.*/
 /************************************************************************/
-gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
-#define CALC (*calc)
+gint read_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	FILE *vf;
 	long int vfpos;
 	gchar *line=NULL;
 	gchar *ptr;
-//	gchar tmp[64];
 	gchar c;
 	gint i,j,k;
-//	gdouble d;
 	/*tests*/
 	if(filename==NULL) return -1;
-	if(calc==NULL) return -1;
+	if(uspex_calc==NULL) return -1;
 	vf = fopen(filename, "rt");
 	if (!vf) return -2;
 	/**/
-	CALC._nspecies=0;/*set hidden to 0*/
+	_UC._nspecies=0;/*set hidden to 0*/
 /*some lazy defines*/
 #define __NSPECIES(line) do{\
-	if(CALC._nspecies==0){\
+	if(_UC._nspecies==0){\
 		ptr=&(line[0]);\
 		while(*ptr==' ') ptr++;\
-		CALC._nspecies=1;\
+		_UC._nspecies=1;\
 		while(*ptr!='\0'){\
 			if(*ptr==' ') {\
-				CALC._nspecies++;ptr++;\
+				_UC._nspecies++;ptr++;\
 				while(g_ascii_isgraph(*ptr)) ptr++;\
 			}else ptr++;\
 		}\
@@ -218,30 +256,30 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
-	CALC.value=(k==1);\
+	_UC.value=(k==1);\
 	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
 #define __GET_INT(value) if (find_in_string(__Q(value),line) != NULL) {\
-	sscanf(line,"%i%*s",&(CALC.value));\
+	sscanf(line,"%i%*s",&(_UC.value));\
 	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
 #define __GET_DOUBLE(value) if (find_in_string(__Q(value),line) != NULL) {\
-	sscanf(line,"%lf%*s",&(CALC.value));\
+	sscanf(line,"%lf%*s",&(_UC.value));\
 	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
 #define __GET_STRING(value) if (find_in_string(__Q(value),line) != NULL) {\
 	g_free(line);line = file_read_line(vf);\
-	CALC.value=g_strdup(line);\
+	_UC.value=g_strdup(line);\
 	g_free(line);line = file_read_line(vf);\
 	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
 #define __GET_CHARS(value) if (find_in_string(__Q(value),line) != NULL) {\
 	ptr = g_strdup_printf("%%s : %s",__Q(value));\
-	sscanf(line,ptr,&(CALC.value));\
+	sscanf(line,ptr,&(_UC.value));\
 	g_free(ptr);g_free(line);line = file_read_line(vf);\
 	continue;\
 }
@@ -253,23 +291,23 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			switch(c){
 			case 'u':
 			case 'U':/*USPEX method*/
-				CALC.calculationMethod=US_CM_USPEX;
+				_UC.calculationMethod=US_CM_USPEX;
 				break;
 			case 'm':
 			case 'M':
-				CALC.calculationMethod=US_CM_META;
+				_UC.calculationMethod=US_CM_META;
 				break;
 			case 'v':
 			case 'V':
-				CALC.calculationMethod=US_CM_VCNEB;
+				_UC.calculationMethod=US_CM_VCNEB;
 				break;
 			case 'p':
 			case 'P':
 				/*PSO method is not supported yet*/
-				CALC.calculationMethod=US_CM_PSO;
+				_UC.calculationMethod=US_CM_PSO;
 				break;
 			default:
-				CALC.calculationMethod=US_CM_UNKNOWN;
+				_UC.calculationMethod=US_CM_UNKNOWN;
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -284,7 +322,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._calctype_dim=i;
+			_UC._calctype_dim=i;
 			j-=i*100;
 			i=((int)(j/10))%10;
 			if((i<0)||(i>1)){
@@ -292,7 +330,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._calctype_mol=(i==1);
+			_UC._calctype_mol=(i==1);
 			j-=i*10;
 			i=j%10;
 			if((i<0)||(i>1)){
@@ -300,8 +338,8 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._calctype_var=(i==1);
-			CALC.calculationType=k;
+			_UC._calctype_var=(i==1);
+			_UC.calculationType=k;
 			g_free(line);
 			line = file_read_line(vf);
 			continue;
@@ -310,70 +348,70 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			k=0;sscanf(line,"%i%*s",&(k));
 			switch (k){
 			case 1:
-				CALC.optType=US_OT_ENTHALPY;
+				_UC.optType=US_OT_ENTHALPY;
 				break;
 			case 2:
-				CALC.optType=US_OT_VOLUME;
+				_UC.optType=US_OT_VOLUME;
 				break;
 			case 3:
-				CALC.optType=US_OT_HARDNESS;
+				_UC.optType=US_OT_HARDNESS;
 				break;
 			case 4:
-				CALC.optType=US_OT_ORDER;
+				_UC.optType=US_OT_ORDER;
 				break;
 			case 5:
-				CALC.optType=US_OT_DISTANCE;
+				_UC.optType=US_OT_DISTANCE;
 				break;
 			case 6:
-				CALC.optType=US_OT_DIELEC_S;
+				_UC.optType=US_OT_DIELEC_S;
 				break;
 			case 7:
-				CALC.optType=US_OT_GAP;
+				_UC.optType=US_OT_GAP;
 				break;
 			case 8:
-				CALC.optType=US_OT_DIELEC_GAP;
+				_UC.optType=US_OT_DIELEC_GAP;
 				break;
 			case 9:
-				CALC.optType=US_OT_MAG;
+				_UC.optType=US_OT_MAG;
 				break;
 			case 10:
-				CALC.optType=US_OT_QE;
+				_UC.optType=US_OT_QE;
 				break;
 			case 1101:
-				CALC.optType=US_OT_BULK_M;
+				_UC.optType=US_OT_BULK_M;
 				break;
 			case 1102:
-				CALC.optType=US_OT_SHEAR_M;
+				_UC.optType=US_OT_SHEAR_M;
 				break;
 			case 1103:
-				CALC.optType=US_OT_YOUNG_M;
+				_UC.optType=US_OT_YOUNG_M;
 				break;
 			case 1104:
-				CALC.optType=US_OT_POISSON;
+				_UC.optType=US_OT_POISSON;
 				break;
 			case 1105:
-				CALC.optType=US_OT_PUGH_R;
+				_UC.optType=US_OT_PUGH_R;
 				break;
 			case 1106:
-				CALC.optType=US_OT_VICKERS_H;
+				_UC.optType=US_OT_VICKERS_H;
 				break;
 			case 1107:
-				CALC.optType=US_OT_FRACTURE;
+				_UC.optType=US_OT_FRACTURE;
 				break;
 			case 1108:
-				CALC.optType=US_OT_DEBYE_T;
+				_UC.optType=US_OT_DEBYE_T;
 				break;
 			case 1109:
-				CALC.optType=US_OT_SOUND_V;
+				_UC.optType=US_OT_SOUND_V;
 				break;
 			case 1110:
-				CALC.optType=US_OT_SWAVE_V;
+				_UC.optType=US_OT_SWAVE_V;
 				break;
 			case 1111:
-				CALC.optType=US_OT_PWAVE_V;
+				_UC.optType=US_OT_PWAVE_V;
 				break;
 			default:
-				CALC.optType=US_OT_UNKNOWN;
+				_UC.optType=US_OT_UNKNOWN;
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -384,16 +422,16 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for atomType*/
-			CALC.atomType = g_malloc(CALC._nspecies*sizeof(gint));
-			for(i=0;i<CALC._nspecies;i++) CALC.atomType[i]=0;
+			_UC.atomType = g_malloc(_UC._nspecies*sizeof(gint));
+			for(i=0;i<_UC._nspecies;i++) _UC.atomType[i]=0;
 			ptr=&(line[0]);i=0;
 //			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				if(g_ascii_isdigit(*ptr)) CALC.atomType[i]=g_ascii_strtod(ptr,NULL);/*user provided Z number*/
-				else CALC.atomType[i]=elem_symbol_test(ptr);/*try user provided symbol*/
-				if((CALC.atomType[i]<=0)||(CALC.atomType[i]>MAX_ELEMENTS-1)){/*invalid Z*/
-					CALC.atomType[i]=0;/*allow it for now*/
+				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=g_ascii_strtod(ptr,NULL);/*user provided Z number*/
+				else _UC.atomType[i]=elem_symbol_test(ptr);/*try user provided symbol*/
+				if((_UC.atomType[i]<=0)||(_UC.atomType[i]>MAX_ELEMENTS-1)){/*invalid Z*/
+					_UC.atomType[i]=0;/*allow it for now*/
 				}
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
@@ -411,20 +449,20 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			__NSPECIES(line);
 			/*look for numSpecies*/
 			/*1st get the total number of lines*/
-			CALC._var_nspecies=0;
+			_UC._var_nspecies=0;
 			do{
 				g_free(line);line = file_read_line(vf);/*go next line*/
-				CALC._var_nspecies++;
+				_UC._var_nspecies++;
 			}while(find_in_string("umSpecies",line) == NULL);
 			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 			line = file_read_line(vf);/*first line of numSpecies*/
-			CALC.numSpecies = g_malloc(CALC._nspecies*CALC._var_nspecies*sizeof(gint));
-			for(i=0;i<CALC._nspecies*CALC._var_nspecies;i++) CALC.numSpecies[i]=0;
-			for(j=0;j<CALC._var_nspecies;j++){
+			_UC.numSpecies = g_malloc(_UC._nspecies*_UC._var_nspecies*sizeof(gint));
+			for(i=0;i<_UC._nspecies*_UC._var_nspecies;i++) _UC.numSpecies[i]=0;
+			for(j=0;j<_UC._var_nspecies;j++){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
 					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%i%*s",&(CALC.numSpecies[i+j*CALC._nspecies]));
+					sscanf(ptr,"%i%*s",&(_UC.numSpecies[i+j*_UC._nspecies]));
 					ptr++;i++;
 					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 				}
@@ -445,12 +483,12 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for valences*/
-			CALC.valences = g_malloc(CALC._nspecies*sizeof(gint));
-			for(i=0;i<CALC._nspecies;i++) CALC.valences[i]=0;
+			_UC.valences = g_malloc(_UC._nspecies*sizeof(gint));
+			for(i=0;i<_UC._nspecies;i++) _UC.valences[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(CALC.valences[i]));
+				sscanf(ptr,"%i%*s",&(_UC.valences[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -465,14 +503,14 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for goodBonds*/
-			CALC.goodBonds = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gdouble));
-			for(i=0;i<CALC._nspecies*CALC._nspecies;i++) CALC.goodBonds[i]=0.;
+			_UC.goodBonds = g_malloc(_UC._nspecies*_UC._nspecies*sizeof(gdouble));
+			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.goodBonds[i]=0.;
 			j=0;
-			while((j<CALC._nspecies)&&(find_in_string("oodBonds",line)==NULL)){
+			while((j<_UC._nspecies)&&(find_in_string("oodBonds",line)==NULL)){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
 					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(CALC.goodBonds[i+j*CALC._nspecies]));
+					sscanf(ptr,"%lf%*s",&(_UC.goodBonds[i+j*_UC._nspecies]));
 					ptr++;i++;
 					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 				}
@@ -516,14 +554,14 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for IonDistances*/
-			CALC.IonDistances = g_malloc(CALC._nspecies*CALC._nspecies*sizeof(gdouble));
-			for(i=0;i<CALC._nspecies*CALC._nspecies;i++) CALC.IonDistances[i]=0.;
+			_UC.IonDistances = g_malloc(_UC._nspecies*_UC._nspecies*sizeof(gdouble));
+			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.IonDistances[i]=0.;
 			j=0;
-			while((j<CALC._nspecies)&&(find_in_string("onDistances",line)==NULL)){
+			while((j<_UC._nspecies)&&(find_in_string("onDistances",line)==NULL)){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
 					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(CALC.IonDistances[i+j*CALC._nspecies]));
+					sscanf(ptr,"%lf%*s",&(_UC.IonDistances[i+j*_UC._nspecies]));
 					ptr++;i++;
 					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 				}
@@ -545,21 +583,21 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*count number of molecules*/
 			ptr=&(line[0]);
 			while(*ptr==' ') ptr++;
-			CALC._nmolecules=1;
+			_UC._nmolecules=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._nmolecules++;
+					_UC._nmolecules++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
-			CALC.MolCenters = g_malloc(CALC._nmolecules*CALC._nmolecules*sizeof(gdouble));
-			for(i=0;i<CALC._nmolecules;i++) CALC.MolCenters[i]=0.;
+			_UC.MolCenters = g_malloc(_UC._nmolecules*_UC._nmolecules*sizeof(gdouble));
+			for(i=0;i<_UC._nmolecules;i++) _UC.MolCenters[i]=0.;
 			j=0;
-			while((j<CALC._nmolecules)&&(find_in_string("EndMol",line)==NULL)){
+			while((j<_UC._nmolecules)&&(find_in_string("EndMol",line)==NULL)){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
 					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(CALC.MolCenters[i+j*CALC._nmolecules]));
+					sscanf(ptr,"%lf%*s",&(_UC.MolCenters[i+j*_UC._nmolecules]));
 					ptr++;i++;
 					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 				}
@@ -582,43 +620,43 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*count first line number of items*/
 			ptr=&(line[0]);
 			while(*ptr==' ') ptr++;
-			CALC._nlatticevalues=1;
+			_UC._nlatticevalues=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._nlatticevalues++;
+					_UC._nlatticevalues++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
 			/*depending on varcomp*/
-			if(CALC._calctype_var){
+			if(_UC._calctype_var){
 				/*varcomp calculation: should be only one line*/
 				g_free(line);line = file_read_line(vf);/*go next line*/
 				if(find_in_string("Endvalues",line) != NULL){/*only volumes values*/
-					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 					g_free(line);line = file_read_line(vf);/*go next line*/
 					ptr=&(line[0]);i=0;
 					while((*ptr!='\n')&&(*ptr!='\0')){
 						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-						sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i]));
+						sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i]));
 						ptr++;i++;
 						while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 					}
 				}else{/*varcomp but more than one line -> _nlatticevalues <= 3 or bad setting*/
-					if((CALC._nlatticevalues<=3)&&(CALC._nlatticevalues>1)){
+					if((_UC._nlatticevalues<=3)&&(_UC._nlatticevalues>1)){
 						/*this may be a definition of 1, 2, or 3D cell, but why?*/
-						CALC.Latticevalues = g_malloc(CALC._nlatticevalues*CALC._nlatticevalues*sizeof(gdouble));
-						for(i=0;i<CALC._nlatticevalues*CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+						_UC.Latticevalues = g_malloc(_UC._nlatticevalues*_UC._nlatticevalues*sizeof(gdouble));
+						for(i=0;i<_UC._nlatticevalues*_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 						fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 						g_free(line);line = file_read_line(vf);/*go next line*/
 						ptr=&(line[0]);
 						j=0;
-						while((j<CALC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
+						while((j<_UC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
 							ptr=&(line[0]);i=0;
 							while((*ptr!='\n')&&(*ptr!='\0')){
 								if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-								sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i+j*CALC._nlatticevalues]));
+								sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i+j*_UC._nlatticevalues]));
 								ptr++;i++;
 								while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 							}
@@ -636,30 +674,30 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				}
 			}else{
 				/*NOT varcomp calculation: should be a crystal definition*/
-				if(CALC._nlatticevalues==6){/*crystal definition*/
-					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+				if(_UC._nlatticevalues==6){/*crystal definition*/
+					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 					g_free(line);line = file_read_line(vf);/*go next line*/
 					ptr=&(line[0]);i=0;
 					while((*ptr!='\n')&&(*ptr!='\0')){
 						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-						sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i]));
+						sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i]));
 						ptr++;i++;
 						 while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 					}
-				}else if((CALC._nlatticevalues<=3)&&(CALC._nlatticevalues>1)){/*lattice vectors*/
-					CALC.Latticevalues = g_malloc(CALC._nlatticevalues*CALC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<CALC._nlatticevalues*CALC._nlatticevalues;i++) CALC.Latticevalues[i]=0.;
+				}else if((_UC._nlatticevalues<=3)&&(_UC._nlatticevalues>1)){/*lattice vectors*/
+					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*_UC._nlatticevalues*sizeof(gdouble));
+					for(i=0;i<_UC._nlatticevalues*_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 					g_free(line);line = file_read_line(vf);/*go next line*/
 					ptr=&(line[0]);
 					j=0;
-					while((j<CALC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
+					while((j<_UC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
 						ptr=&(line[0]);i=0;
 						while((*ptr!='\n')&&(*ptr!='\0')){
 							if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-							sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[i+j*CALC._nlatticevalues]));
+							sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i+j*_UC._nlatticevalues]));
 							ptr++;i++;
 							while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 						}
@@ -667,10 +705,10 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 						g_free(line);
 						line = file_read_line(vf);
 					}
-				}else if(CALC._nlatticevalues==1){/*only the volume value*/
-					CALC.Latticevalues = g_malloc(sizeof(gdouble));
-					CALC.Latticevalues[0]=0.;
-					sscanf(ptr,"%lf%*s",&(CALC.Latticevalues[0]));
+				}else if(_UC._nlatticevalues==1){/*only the volume value*/
+					_UC.Latticevalues = g_malloc(sizeof(gdouble));
+					_UC.Latticevalues[0]=0.;
+					sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[0]));
 					g_free(line);
 					line = file_read_line(vf);
 				}else{/*bad setting*/
@@ -694,20 +732,20 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*count number of splits*/
 			ptr=&(line[0]);
 			while(*ptr==' ') ptr++;
-			CALC._nsplits=1;
+			_UC._nsplits=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._nsplits++;
+					_UC._nsplits++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
 			/*look for splits*/
-			CALC.splitInto = g_malloc(CALC._nsplits*sizeof(gint));
-			for(i=0;i<CALC._nsplits;i++) CALC.splitInto[i]=0;
+			_UC.splitInto = g_malloc(_UC._nsplits*sizeof(gint));
+			for(i=0;i<_UC._nsplits;i++) _UC.splitInto[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(CALC.splitInto[i]));
+				sscanf(ptr,"%i%*s",&(_UC.splitInto[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -722,20 +760,20 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*count number of optimization steps*/
 			ptr=&(line[0]);
 			while(*ptr==' ') ptr++;
-			CALC._num_opt_steps=1;
+			_UC._num_opt_steps=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._num_opt_steps++;
+					_UC._num_opt_steps++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}/*note that the METADYNAMICS parenthesis are ignored as well*/
 			/*look for abinitioCode*/
-			CALC.abinitioCode = g_malloc(CALC._num_opt_steps*sizeof(gint));
-			for(i=0;i<CALC._nsplits;i++) CALC.abinitioCode[i]=0;
+			_UC.abinitioCode = g_malloc(_UC._num_opt_steps*sizeof(gint));
+			for(i=0;i<_UC._nsplits;i++) _UC.abinitioCode[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if((*ptr==' ')||(*ptr=='(')) while((*ptr==' ')||(*ptr=='(')) ptr++;/*skip space(s) & parenthesis*/
-				sscanf(ptr,"%i%*s",&(CALC.abinitioCode[i]));
+				sscanf(ptr,"%i%*s",&(_UC.abinitioCode[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end (skip ')' if any)*/
 			}
@@ -748,12 +786,12 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 		if (find_in_string("KresolStart",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*in my understanding, there is either 1 or _num_opt_steps values of KresolStart*/
-			CALC.KresolStart = g_malloc(CALC._num_opt_steps*sizeof(gdouble));
-			for(i=0;i<CALC._nsplits;i++) CALC.KresolStart[i]=0.;
+			_UC.KresolStart = g_malloc(_UC._num_opt_steps*sizeof(gdouble));
+			for(i=0;i<_UC._nsplits;i++) _UC.KresolStart[i]=0.;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%lf%*s",&(CALC.KresolStart[i]));
+				sscanf(ptr,"%lf%*s",&(_UC.KresolStart[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -766,12 +804,12 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 		if (find_in_string("vacuumSize",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*in my understanding, there is also either 1 or _num_opt_steps values of vacuumSize*/
-			CALC.vacuumSize = g_malloc(CALC._num_opt_steps*sizeof(gdouble));
-			for(i=0;i<CALC._nsplits;i++) CALC.vacuumSize[i]=0.;
+			_UC.vacuumSize = g_malloc(_UC._num_opt_steps*sizeof(gdouble));
+			for(i=0;i<_UC._nsplits;i++) _UC.vacuumSize[i]=0.;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%lf%*s",&(CALC.vacuumSize[i]));
+				sscanf(ptr,"%lf%*s",&(_UC.vacuumSize[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -787,12 +825,12 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*there is 1<x<_num_opt_steps lines of commandExecutable*/
 			j=0;
 			ptr = g_strdup("");
-			while((j<CALC._num_opt_steps)&&(find_in_string("EndExecutable",ptr)==NULL)){
-				CALC.commandExecutable = g_strdup_printf("%s\n%s",ptr,line);
+			while((j<_UC._num_opt_steps)&&(find_in_string("EndExecutable",ptr)==NULL)){
+				_UC.commandExecutable = g_strdup_printf("%s\n%s",ptr,line);
 				g_free(ptr);
 				g_free(line);
 				line = file_read_line(vf);
-				ptr = CALC.commandExecutable;
+				ptr = _UC.commandExecutable;
 				j++;
 			}
 			if(find_in_string("EndExecutable",line) != NULL){
@@ -820,15 +858,15 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				switch(line[0]){
 				case 'H':
 				case 'h':
-					CALC.SymTolerance=0.05;
+					_UC.SymTolerance=0.05;
 					break;
 				case 'M':
 				case 'm':
-					CALC.SymTolerance=0.10;
+					_UC.SymTolerance=0.10;
 					break;
 				case 'L':
 				case 'l':
-					CALC.SymTolerance=0.20;
+					_UC.SymTolerance=0.20;
 					break;
 				default:/*everything else is a bad setting*/
 					g_free(line);
@@ -837,7 +875,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				}
 			}else{
 				/*get the number directly*/
-				sscanf(line,"%lf%*s",&(CALC.SymTolerance));
+				sscanf(line,"%lf%*s",&(_UC.SymTolerance));
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -853,12 +891,12 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			/*if no _nspecies, get it now*/
 			__NSPECIES(line);
 			/*look for valenceElectr*/
-			CALC.valenceElectr = g_malloc(CALC._nspecies*sizeof(gint));
-			for(i=0;i<CALC._nspecies;i++) CALC.valenceElectr[i]=0;
+			_UC.valenceElectr = g_malloc(_UC._nspecies*sizeof(gint));
+			for(i=0;i<_UC._nspecies;i++) _UC.valenceElectr[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(CALC.valenceElectr[i]));
+				sscanf(ptr,"%i%*s",&(_UC.valenceElectr[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -888,20 +926,20 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*count number of specificTrans*/
 			ptr=&(line[0]);
-			CALC._nspetrans=1;
+			_UC._nspetrans=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._nspetrans++;
+					_UC._nspetrans++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
 			/*look for specificTrans*/
-			CALC.specificTrans = g_malloc(CALC._nspetrans*sizeof(gint));
-			for(i=0;i<CALC._nspetrans;i++) CALC.specificTrans[i]=0;
+			_UC.specificTrans = g_malloc(_UC._nspetrans*sizeof(gint));
+			for(i=0;i<_UC._nspetrans;i++) _UC.specificTrans[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(CALC.specificTrans[i]));
+				sscanf(ptr,"%i%*s",&(_UC.specificTrans[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -927,7 +965,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._vcnebtype_method=i;
+			_UC._vcnebtype_method=i;
 			j-=i*100;
 			i=((int)(j/10))%10;
 			if((i<0)||(i>1)){
@@ -935,7 +973,7 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._vcnebtype_img_num=(i==1);
+			_UC._vcnebtype_img_num=(i==1);
 			j-=i*10;
 			i=j%10;
 			if((i<0)||(i>1)){
@@ -943,8 +981,8 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 				line = file_read_line(vf);
 				continue;
 			}
-			CALC._vcnebtype_spring=(i==1);
-			CALC.vcnebType=k;
+			_UC._vcnebtype_spring=(i==1);
+			_UC.vcnebType=k;
 			g_free(line);
 			line = file_read_line(vf);
 			continue;
@@ -967,20 +1005,20 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*count number of picked-up images*/
 			ptr=&(line[0]);
-			CALC._npickimg=1;
+			_UC._npickimg=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					CALC._npickimg++;
+					_UC._npickimg++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
 			/*look for pickupImages*/
-			CALC.pickupImages = g_malloc(CALC._npickimg*sizeof(gint));
-			for(i=0;i<CALC._npickimg;i++) CALC.pickupImages[i]=0;
+			_UC.pickupImages = g_malloc(_UC._npickimg*sizeof(gint));
+			for(i=0;i<_UC._npickimg;i++) _UC.pickupImages[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(CALC.pickupImages[i]));
+				sscanf(ptr,"%i%*s",&(_UC.pickupImages[i]));
 				ptr++;i++;
 				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
 			}
@@ -996,11 +1034,87 @@ gint read_uspex_parameters(gchar *filename,uspex_calc_struct *calc){
 	g_free(line);
 	line = file_read_line(vf);
 	}
-
+	fclose(vf);
 	return 0;
+#undef __GET_BOOL
+#undef __GET_INT
+#undef __GET_DOUBLE
+#undef __GET_STRING
+#undef __GET_CHARS
 #undef __NSPECIES
-#undef CALC
 }
+
+gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
+#define __TITLE(caption) do{\
+	gchar *tmp=g_strnfill (strlen(caption),'*');\
+	fprintf(vf,"%s\n",tmp);\
+	fprintf(vf,"%s\n",caption);\
+	fprintf(vf,"%s\n",tmp);\
+	g_free(tmp);\
+}while(0)
+#define __OUT_BOOL(value) do{\
+	if(_UC.value==1) fprintf(vf,"1\t: %s",__Q(value));\
+	else fprintf(vf,"0\t: %s\n",__Q(value));\
+}while(0)
+#define __OUT_INT(value) do{\
+	fprintf(vf,"%i\t: %s\n",_UC.value,__Q(value));\
+}while(0)
+#define __OUT_DOUBLE(value) do{\
+	fprintf(vf,"%f\t: %s\n",_UC.value,__Q(value));\
+}while(0)
+        FILE *vf;
+//        long int vfpos;
+        gchar *line=NULL;
+//        gchar *ptr;
+//        gchar c;
+        gint i;//,j,k;
+        /*tests*/
+        if(filename==NULL) return -1;
+        if(uspex_calc==NULL) return -1;
+        vf = fopen(filename, "w");
+        if (!vf) return -2;
+        /*output a "Parameter.txt" input*/
+	fprintf(vf,"PARAMETERS EVOLUTIONARY ALGORITHM\n");
+	fprintf(vf,"GENERATED BY GDIS %4.2f.%d (C) %d\n",VERSION,PATCH,YEAR);
+	if(_UC.name==NULL) _UC.name=g_strdup("(unnamed)");
+	line=g_strdup_printf("* CALCULATION: %s *",_UC.name);
+	__TITLE(line);
+	g_free(line);
+	line=g_strdup_printf("*       TYPE OF RUN AND SYSTEM       *");
+	__TITLE(line);
+	g_free(line);
+	switch(_UC.calculationMethod){
+	case US_CM_USPEX:
+		fprintf(vf,"USPEX\t: calculationMethod\n");
+		break;
+	case US_CM_META:
+		fprintf(vf,"META\t: calculationMethod\n");
+		break;
+	case US_CM_VCNEB:
+		fprintf(vf,"VCNEB\t: calculationMethod\n");
+		break;
+	case US_CM_PSO:
+		fprintf(vf,"PSO\t: calculationMethod\n");
+		break;
+	case US_CM_UNKNOWN:
+	default:
+		fprintf(vf,"???\t: calculationMethod (unsupported method)\n");
+	}
+	__OUT_INT(calculationType);
+	__OUT_INT(optType);
+	fprintf(vf,"%% atomType\n");
+	for(i=0;i<_UC._nspecies;i++) fprintf(vf,"%i ",_UC.atomType[i]);
+	fprintf(vf,"\n");
+	fprintf(vf,"%% EndAtomType\n");
+
+
+
+
+	
+	fclose(vf);
+	return 0;
+}
+
 
 gint read_individuals_uspex(gchar *filename, struct model_pak *model){
         FILE *vf;
@@ -1261,8 +1375,25 @@ if(job>-1){
 	}
 	g_free(line);
 /* --- and close */
-	fclose(vf);
+	fclose(vf);vf=NULL;
 /* --- READ Parameters.txt */
+/* XXX XXX XXX */
+	init_uspex_parameters(&(_UO.calc));
+	aux_file = g_strdup_printf("%s%s",res_folder,"Parameters.txt");
+	if(read_uspex_parameters(aux_file,&(_UO.calc))){
+		line = g_strdup_printf("ERROR: reading USPEX REAL Parameter.txt file!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		g_free(aux_file);
+		goto uspex_fail;
+	}
+	g_free(aux_file);
+
+//	if(dump_uspex_parameters("out.uspex",&(_UO.calc))){
+//		fprintf(stdout,"ERR: couldn't write Parameters.txt file: out.uspex\n");
+//	}
+
+/* XXX XXX XXX */
 	aux_file = g_strdup_printf("%s%s",res_folder,"Parameters.txt");
 	if(read_parameter_uspex(aux_file,model)!=0) {
 		line = g_strdup_printf("ERROR: reading USPEX Parameter.txt file!\n");
@@ -1292,7 +1423,10 @@ if((_UO.method==US_CM_USPEX)||(_UO.method==US_CM_META)){
                 aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
                 vf = fopen(aux_file, "rt");
                 if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-                else fclose(vf);
+                else {
+			fclose(vf);
+			vf=NULL;
+		}
         }else{  
                 aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
         }
@@ -1396,7 +1530,10 @@ if((_UO.method==US_CM_USPEX)||(_UO.method==US_CM_META)){
 		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
 		vf = fopen(aux_file, "rt");
 		if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
-		else fclose(vf);
+		else {
+			fclose(vf);
+			vf=NULL;
+		}
 	}else{
 		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
 	}
@@ -1412,7 +1549,10 @@ if((_UO.method==US_CM_USPEX)||(_UO.method==US_CM_META)){
 		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
 		vf = fopen(aux_file, "rt");
 		if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-		else fclose(vf);
+		else {
+			fclose(vf);
+			vf=NULL;
+		}
 	}else{
 		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
 	}
@@ -1425,7 +1565,7 @@ if((_UO.method==US_CM_USPEX)||(_UO.method==US_CM_META)){
                 goto uspex_fail;
         }
 	read_frame_uspex(vf,model);/*open first frame*/
-        fclose(vf);
+        fclose(vf);vf=NULL;
 
 /* --- Prepare the summary graph */
 	/*no need to load BESTIndividuals since we already know everything from Individuals*/
@@ -1671,7 +1811,7 @@ fprintf(stdout,"#DBG: USPEX[VCNEB]: NATOMS=%i ATOMS=%s\n",natoms,atoms);
 	}
 	fclose(f_src);
 	fclose(f_dest);
-	fclose(vf);
+	fclose(vf);vf=NULL;
 	g_free(atoms);
 	_UO.ind=g_malloc((_UO.num_struct)*sizeof(uspex_individual));
 /* --- read energies from the Energy file */
@@ -1720,7 +1860,7 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UO.i
 		g_free(line);
 		line = file_read_line(vf);
 	}
-	fclose(vf);
+	fclose(vf);vf=NULL;
 	g_free(aux_file);
 	/*create the reduced index table*/
 	_UO.red_index=g_malloc(_UO.num_struct*sizeof(gint));
@@ -1757,7 +1897,7 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UO.i
         g_free(aux_file);
         rewind(vf);
         read_frame_uspex(vf,model);/*open first frame*/
-        fclose(vf);
+        fclose(vf);vf=NULL;
 
 	/*do a "best" graph with each image*/
         _UO.graph_best=graph_new("PATH", model);
@@ -1796,7 +1936,7 @@ uspex_fail:
 	line = g_strdup_printf("ERROR: loading USPEX failed!\n");
 	gui_text_show(ERROR, line);
 	g_free(line);
-	fclose(vf);
+	if(vf!=NULL) fclose(vf);
 	return 3;
 }
 gint read_frame_uspex(FILE *vf, struct model_pak *model){

@@ -22,6 +22,13 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* header for USPEX file */
 
+/*defines*/
+#define _UO (*uspex_output)
+#define _UC (*uspex_calc)
+
+
+
+/*structures*/
 typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
 	US_CM_USPEX,	/*USPEX*/
 	US_CM_META,	/*metadynamics*/
