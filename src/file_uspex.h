@@ -26,8 +26,6 @@ The GNU GPL can also be found at http://www.gnu.org
 #define _UO (*uspex_output)
 #define _UC (*uspex_calc)
 
-
-
 /*structures*/
 typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
 	US_CM_USPEX,	/*USPEX*/
@@ -36,7 +34,6 @@ typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
 	US_CM_PSO,	/*PSO, unsupported*/
 	US_CM_UNKNOWN,	/*reserved for future use*/
 } uspex_method;
-
 typedef enum {
 	US_OT_ENTHALPY=1,			/*most stable structure*/
 	US_OT_VOLUME=2,				/*min volume*/
@@ -62,7 +59,6 @@ typedef enum {
 	US_OT_PWAVE_V=1111,			/*max P-wave velocity*/
 	US_OT_UNKNOWN=0,			/*reserved for future use*/
 } uspex_opt;
-
 typedef struct {
         gint gen;				/*generation of this individual*/
 	gint natoms;				/*number of atoms*/
@@ -72,7 +68,6 @@ typedef struct {
 	gdouble fitness;			/*NEW: fitness*/
         gdouble volume;				/*total volume*/
 } uspex_individual;
-
 /* USPEX calculation structure */
 typedef struct {
 /*additional controls*/
@@ -225,7 +220,7 @@ typedef struct {
 /*name*/
         gchar *name;
         gint version;
-	uspex_calc_struct calc;
+	uspex_calc_struct *calc;
 /*system parameters*/
         uspex_method method;
         gint type;
@@ -261,7 +256,5 @@ typedef struct {
 	gchar *job_path;
 } uspex_exec_struct;
 
-
 /*methods of interest*/
-
 
