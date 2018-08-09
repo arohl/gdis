@@ -293,8 +293,8 @@ else
 }
 
 if((type==GRAPH_USPEX)||(type==GRAPH_USPEX_BEST)){
-ptr = g_malloc(1+((gint)x[0])*sizeof(gdouble));
-memcpy(ptr,x,(1+(gint)x[0])*sizeof(gdouble));
+ptr = g_malloc((1+(gint)x[0])*sizeof(gdouble));/*_VALGRIND_BUG_ (misplaced parenthesis)*/
+memcpy(ptr,&(x[0]),(1+(gint)x[0])*sizeof(gdouble));
 }else{
 ptr = g_malloc(size*sizeof(gdouble));
 memcpy(ptr, x, size*sizeof(gdouble));

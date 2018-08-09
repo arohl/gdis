@@ -1835,7 +1835,10 @@ core_delete_all(model);
 		name=g_strdup(spec);
                 model->num_atoms+=ix;
         }while(1);
+	g_free(spec);/*FIX _VALGRIND_BUG_*/
+	g_free(label);/*FIX _VALGRIND_BUG_*/
 property_add_ranked(7, "Formula", name, model);
+	g_free(name);/*FIX _VALGRIND_BUG_*/
 	g_free(line);
 	/*Always true in VASP*/
         model->fractional=TRUE;

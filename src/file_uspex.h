@@ -197,7 +197,7 @@ typedef struct {
 	gint		numImages;		/*initial number of images*/
 	gint 		numSteps;		/*maximum VC-NEB steps*/
 	gint 		optReadImages;		/*reading the Image file (all image, initial and final, or +intermediate)*/
-	gboolean	optimizerType;		/*optimization algorithm*/
+	gint		optimizerType;		/*optimization algorithm*/
 	gint		optRelaxType;		/*relaxation mode (fixed cell, only cell, full relaxation)*/
 	gdouble		dt;			/*time step*/
 	gdouble		ConvThreshold;		/*halting RMS (eV/Ang) condition*/
