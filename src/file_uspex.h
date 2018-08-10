@@ -221,21 +221,15 @@ typedef struct {
         gchar *name;
         gint version;
 	uspex_calc_struct *calc;
-/*system parameters*/
-        uspex_method method;
-        gint type;
-        /* in detail */
+        /* details */
         gint dim;
         gboolean mol;
         gboolean var;
         /* optimization */
-        gint opt_type;
         gboolean have_fitness;
 /*structures*/
         gint num_gen;
         gint num_struct;
-        gint nspecies;          /*number of species*/
-        gint *spe_Z;            /*atomic number of each species*/
         gint *red_index;        /*in case not all structure are displayed (ie. META)*/
         gdouble min_E;
         gdouble max_E;

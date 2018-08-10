@@ -396,7 +396,7 @@ yy = (gint) yf;
 yy *= -1;
 yy += oy;
 if((y>yy-3)&&(y<yy+3)){
-	uspex_output_struct *uspex_calc=model->uspex;
+	uspex_output_struct *uspex_output=model->uspex;
 	/*we have a hit*/
 	graph->select=struct_sel;
 	graph->select_2=ptr[i];
@@ -404,7 +404,7 @@ if((y>yy-3)&&(y<yy+3)){
 	graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
 	vf=fopen(model->filename, "r");
 	if(!vf) return;
-	model->cur_frame=(*uspex_calc).best_ind[struct_sel+1];/*this is the structure number*/
+	model->cur_frame=(*uspex_output).best_ind[struct_sel+1];/*this is the structure number*/
 	read_raw_frame(vf,model->cur_frame,model);
 	fclose(vf);
 	tree_model_refresh(model);
@@ -434,7 +434,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 			yy *= -1;
 			yy += oy;
 			if((y>yy-3)&&(y<yy+3)){
-				uspex_output_struct *uspex_calc=model->uspex;
+				uspex_output_struct *uspex_output=model->uspex;
 				/*we have a hit*/
 				graph->select=struct_sel;
 				graph->select_2=ptr[i];
@@ -442,7 +442,7 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
 				graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
 				vf=fopen(model->filename, "r");
 				if(!vf) return;
-				if((*uspex_calc).method==US_CM_META) n_struct++;
+				if((*uspex_output).calc->calculationMethod==US_CM_META) n_struct++;
 				model->cur_frame=n_struct+i-1;
 				read_raw_frame(vf,n_struct+i-1,model);
 				fclose(vf);
