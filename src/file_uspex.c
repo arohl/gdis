@@ -276,7 +276,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			k=0;sscanf(line,"%i%*s",&(k));
 			j=k;
 			i=((int)(j/100))%10;
-			if((i<0)||(i>3)) {
+			if((i!=-2)&&((i<0)||(i>3))) {
 				g_free(line);
 				line = file_read_line(vf);
 				continue;
@@ -1376,7 +1376,6 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
         FILE *vf;
 	long int vfpos;
         gchar *line=NULL;
-	gchar tmp[64];
         uspex_output_struct *uspex_output=model->uspex;
         /* specific */
 	gint idx=0;
@@ -1431,24 +1430,26 @@ gint read_individuals_uspex(gchar *filename, struct model_pak *model){
 	}
 	_UO.num_struct--;
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	g_free(line);
 	line = file_read_line(vf);
 	/* now prepare arrays <- JOB=USPEX/300 example */
 	if(_UO.num_struct==0) return 1;
 	_UO.red_index=g_malloc(max_struct*sizeof(gint));
 	for(idx=0;idx<max_struct;idx++) _UO.red_index[idx]=0;
-	sscanf(line," %*[^[][%[^]]] %lf %*f %*s",
-		&(tmp[0]),&(_UO.min_E));
+	sscanf(line," %*[^[][%*[^]]] %lf %*f %*s",&(_UO.min_E));
 	if(!e_red) _UO.min_E/=(gdouble)_UO.ind[0].natoms;
 	_UO.max_E=_UO.min_E;
 	idx=0;_UO.num_gen=1;
 	while(line){
 if(_UO.have_fitness){
-	sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*f %lf %*s",
-		&(_UO.ind[idx].gen),&(red_index),&(tmp[0]),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume),&(_UO.ind[idx].fitness));
+	sscanf(line," %i %i%*[^[][%*[^]]] %lf %lf %*f %lf %*s",
+		&(_UO.ind[idx].gen),&(red_index),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume),&(_UO.ind[idx].fitness));
 	if(isnan(_UO.ind[idx].fitness)) _UO.ind[idx].fitness=10000;
-}else
-	sscanf(line," %i %i%*[^[][%[^]]] %lf %lf %*s",
-		&(_UO.ind[idx].gen),&(red_index),&(tmp[0]),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume));
+}else{
+	sscanf(line," %i %i%*[^[][%*[^]]] %lf %lf %*s",
+		&(_UO.ind[idx].gen),&(red_index),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume));
+}
+		if(_UO.calc->calculationMethod==US_CM_META) red_index--;/*because of META "special" numbering*/
 		if(_UO.ind[idx].gen<_UO.num_gen) _UO.ind[idx].gen++;
 		if(_UO.ind[idx].gen>_UO.num_gen) _UO.num_gen=_UO.ind[idx].gen;
 /*_VALGRIND_BUG_: _UO.red_index[red_index]=idx;*/
@@ -1456,7 +1457,7 @@ if(_UO.have_fitness){
 		if(!e_red) _UO.ind[idx].E=_UO.ind[idx].energy/_UO.ind[idx].natoms;
 		else _UO.ind[idx].E=_UO.ind[idx].energy;
 #if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG: USPEX[Individual]: GEN=%i STRUCT=%i e=%lf n_atom=%i E=%lf\n",_UO.ind[idx].gen,idx+1,_UO.ind[idx].energy,_UO.ind[idx].natoms,_UO.ind[idx].E);
+fprintf(stdout,"#DBG: USPEX[Individual]: GEN=%i STRUCT=%i e=%lf E=%lf\n",_UO.ind[idx].gen,idx+1,_UO.ind[idx].energy,_UO.ind[idx].E);
 #endif
 		if(_UO.ind[idx].E<_UO.min_E) _UO.min_E=_UO.ind[idx].E;
 		if(_UO.ind[idx].E>_UO.max_E) _UO.max_E=_UO.ind[idx].E;
@@ -1673,7 +1674,8 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 	model->basename=g_strdup_printf("uspex");
 /* we have to open structure file first because of inconsistency in atom reporting in Individuals file*/
 /* --- READ gatheredPOSCARS <- this is going to be the main model file */
-/* ^^^ META: If gatheredPOSCARS_relaxed exists, read it instead */
+/* ^^^ META is ill-defined: read first gatheredPOSCARS, then update with gatheredPOSCARS_relaxed in the future TODO*/
+/*
         if(_UC.calculationMethod==US_CM_META) {
                 aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
                 vf = fopen(aux_file, "rt");
@@ -1685,6 +1687,8 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
         }else{  
                 aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
         }
+*/
+	aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
         vf = fopen(aux_file, "rt");
         if (!vf) {
                 if(_UO.ind!=NULL) g_free(_UO.ind);
@@ -1782,18 +1786,8 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
         g_free(aux_file);
 	fclose(vf);
 /* --- READ Individuals <- information about all structures */
-/* ^^^ META: If Individuals_relaxed exists, read it instead */
-	if(_UC.calculationMethod==US_CM_META) {
-		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
-		vf = fopen(aux_file, "rt");
-		if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
-		else {
-			fclose(vf);
-			vf=NULL;
-		}
-	}else{
-		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
-	}
+/* ^^^ META is ill-defined: read first Individuals, then update with Individual_relaxed and hope*/
+	aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
 	if(read_individuals_uspex(aux_file,model)!=0) {
 		line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
 		gui_text_show(ERROR, line);
@@ -1801,20 +1795,55 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 		goto uspex_fail;
 	}
 	g_free(aux_file);
-/* --- open the last frame */
 	if(_UC.calculationMethod==US_CM_META) {
-		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
+		aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
 		vf = fopen(aux_file, "rt");
 		if (!vf) {
 			g_free(aux_file);
-			aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-		} else {
+		}else{
+			/*we have an Individuals_relaxed, read it and update ONLY the structure defined inside*/
+			vfpos=ftell(vf);/* flag */
+			line = file_read_line(vf);
+			while(line){
+				ptr=&(line[0]);
+				while(*ptr==' ') ptr++;
+				if(g_ascii_isdigit(*ptr)) {
+					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+					break;
+				}
+				vfpos=ftell(vf);/* flag */
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			g_free(line);
+			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+			line = file_read_line(vf);
+			if(line==NULL) goto no_ind_relax;
+			/*skip the gen=0 value!!*/
+			g_free(line);line = file_read_line(vf);
+			vfpos=ftell(vf);/* flag */
+			/*no need to count, there will be less structure*/
+			line = file_read_line(vf);
+			while(line){
+				sscanf(line," %*i %i %*s",&idx);
+				if(_UO.have_fitness){
+sscanf(line," %i %*i%*[^[][%*[^]]] %lf %lf %*f %lf %*s",
+	&(_UO.ind[idx].gen),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume),&(_UO.ind[idx].fitness));
+if(isnan(_UO.ind[idx].fitness)) _UO.ind[idx].fitness=10000;
+				}else{
+sscanf(line," %i %*i%*[^[][%*[^]]] %lf %lf %*s",
+	&(_UO.ind[idx].gen),&(_UO.ind[idx].energy),&(_UO.ind[idx].volume));
+}
+				g_free(line);
+				line = file_read_line(vf);
+			}
+no_ind_relax:
 			fclose(vf);
-			vf=NULL;
 		}
-	}else{
-		aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
 	}
+/* --- open the last frame */
+/* ^^^ META is ill-defined: read first gatheredPOSCARS, then update with gatheredPOSCARS_relaxed in the future TODO*/
+	aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
         vf = fopen(aux_file, "rt");g_free(aux_file);
         if (!vf) {/*very unlikely, we just opened it*/
                 if(_UO.ind!=NULL) g_free(_UO.ind);
@@ -1825,22 +1854,89 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
         }
 	read_frame_uspex(vf,model);/*open first frame*/
         fclose(vf);vf=NULL;
-
 /* --- Prepare the summary graph */
-	/*no need to load BESTIndividuals since we already know everything from Individuals*/
-	_UO.graph=graph_new("ALL", model);
-	_UO.graph_best=graph_new("BEST", model);
+/* ^^^ META is ill-defined: but we can read BESTIndividuals_relaxed instead of BESTIndividuals, hurrah!*/
 	if(_UO.num_struct>_UO.num_gen){
+		_UO.graph=graph_new("ALL", model);
+		_UO.graph_best=graph_new("BEST", model);
+		_UO.num_best=_UO.num_gen;/*I hope this one is always true*/
+		_UO.best_ind=g_malloc((1+_UO.num_best)*sizeof(gint));
+		for(ix=0;ix<(1+_UO.num_best);ix++) _UO.best_ind[ix]=0;
+		/*NEW: read BESTIndividuals IDs first, when exists!*/
+if(_UO.calc->calculationMethod==US_CM_META){
+		aux_file = g_strdup_printf("%s%s",res_folder,"BESTIndividuals_relaxed");
+		vf = fopen(aux_file, "rt");g_free(aux_file);
+		if(!vf) {
+			aux_file = g_strdup_printf("%s%s",res_folder,"BESTIndividuals");
+			vf = fopen(aux_file, "rt");g_free(aux_file);
+		}
+}else{
+		aux_file = g_strdup_printf("%s%s",res_folder,"BESTIndividuals");
+		vf = fopen(aux_file, "rt");g_free(aux_file);
+}
+		probe=0;
+if(vf){
+		/*read BESTIndividuals*/
+		/*skip header, avoid _BUG_ when Individual format have 1 OR 2 line header.*/
+		vfpos=ftell(vf);/* flag */
+		line = file_read_line(vf);
+		while(line){
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			if(g_ascii_isdigit(*ptr)) {
+				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				break;
+			}
+			vfpos=ftell(vf);/* flag */
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		if(line==NULL) goto no_best_ind;
+	        /* META calculation have a gen=0 Individual
+	          unfortunately, it is *not* in the gather-
+	         -POSCARS file, so we ignore gen=0 for now. */
+	        if(_UO.calc->calculationMethod==US_CM_META){
+	                g_free(line);
+	                line = file_read_line(vf);
+	                vfpos=ftell(vf);/* flag */
+	        }
+		/*count best stuctures*/
+		num=0;
+		while (line){
+			num++;
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		num--;
+		if(num>_UO.num_best) goto no_best_ind;/*num<_UO.num_best is allowed for unfinished calculation*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		line = file_read_line(vf);
+		/*now fill array*/
+		while(line){
+			sscanf(line," %i %i %*s",&gen,&ix);
+			ix--;
+			if(_UO.calc->calculationMethod==US_CM_META) ix--;/*META "special" numbering*/
+			_UO.best_ind[gen]=ix;
+#if DEBUG_USPEX_READ
+        fprintf(stdout,"#DBG: USPEX GEN=%i BESTIndividuals=%i E=%f f=%f\n",
+		gen,ix+1,_UO.ind[_UO.best_ind[gen]].energy,_UO.ind[_UO.best_ind[gen]].fitness);
+#endif
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		/*that's all <- we get values directly from Individuals*/
+		probe=1;
+no_best_ind:
+		fclose(vf);
+}
 		skip=0;
 		gen=1;
-		_UO.num_best=_UO.num_gen;
-		_UO.best_ind=g_malloc((1+_UO.num_best)*sizeof(gint));
-		_UO.best_ind[0]=0;
 		ix=0;
 		while(gen<=_UO.num_gen){
 		  while(_UO.ind[ix].gen<gen) ix++;/*reach generation gen*/
 		  num=0;
 		  skip=ix;
+if(probe==0){
 		  min_E=_UO.ind[ix].E;
 		  if(_UO.have_fitness) min_F=_UO.ind[ix].fitness;
 		  _UO.best_ind[gen]=ix;
@@ -1860,6 +1956,15 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 			ix++;
 			if(ix>=_UO.num_struct) break;/*FIX _VALGRIND_BUG_*/
 		  }
+}else{
+		  min_E=_UO.ind[_UO.best_ind[gen]].E;
+		  if(_UO.have_fitness) min_F=_UO.ind[_UO.best_ind[gen]].fitness;
+		  while(_UO.ind[ix].gen==gen){
+			num++;
+			ix++;
+			if(ix>=_UO.num_struct) break;
+		  }
+}
 		  e=g_malloc((1+num)*sizeof(gdouble));
 		  ix=skip;
 		  e[0]=(gdouble)num;
@@ -1880,15 +1985,21 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 		max_E=_UO.ind[_UO.best_ind[1]].E;
 		min_E=max_E;
 		for(gen=0;gen<_UO.num_gen;gen++) {
-			if(_UO.ind[_UO.best_ind[gen+1]].E>max_E) max_E=_UO.ind[_UO.best_ind[gen+1]].E;
-			if(_UO.ind[_UO.best_ind[gen+1]].E<min_E) min_E=_UO.ind[_UO.best_ind[gen+1]].E;
 			e[gen+1]=_UO.ind[_UO.best_ind[gen+1]].E;
+			if(max_E<e[gen+1]) max_E=e[gen+1];
+			if(min_E>e[gen+1]) min_E=e[gen+1];
 #if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf\n",gen+1,1+_UO.best_ind[gen+1],e[gen+1]);
+fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf e=%f\n",gen+1,1+_UO.best_ind[gen+1],e[gen+1],_UO.ind[_UO.best_ind[gen+1]].energy);
 #endif
 		}
-		if(_UC.calculationMethod==US_CM_META) {/*shift best_ind by 1*/
+/*
+		if(_UC.calculationMethod==US_CM_META) {//shift best_ind by 1
 			for(gen=1;gen<=_UO.num_gen;gen++) _UO.best_ind[gen]++;
+		}
+*/
+		if(max_E==min_E) {
+			min_E-=0.1;
+			max_E+=0.1;
 		}
 		graph_add_borned_data(
 			_UO.num_gen,e,0,_UO.num_gen,
