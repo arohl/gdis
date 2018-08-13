@@ -175,6 +175,30 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.FormatType=2;/*MUST BE VASP FORMAT!*/
 	_UC.PrintStep=1;
 }
+void free_uspex_parameters(uspex_calc_struct *uspex_calc){
+	/*free the sub-structures, and set it back to init*/
+	g_free(_UC.name);
+	g_free(_UC.atomType);
+	g_free(_UC.numSpecies);
+	g_free(_UC.valences);
+	g_free(_UC.goodBonds);
+	g_free(_UC.symmetries);
+	g_free(_UC.specificSwaps);
+	g_free(_UC.IonDistances);
+	g_free(_UC.MolCenters);
+	g_free(_UC.Latticevalues);
+	g_free(_UC.splitInto);
+	g_free(_UC.abinitioCode);
+	g_free(_UC.KresolStart);
+	g_free(_UC.vacuumSize);
+	g_free(_UC.commandExecutable);
+	g_free(_UC.remoteFolder);
+	g_free(_UC.valenceElectr);
+	g_free(_UC.softMutOnly);
+	g_free(_UC.specificTrans);
+	g_free(_UC.pickupImages);
+	init_uspex_parameters(uspex_calc);
+}
 /************************************************************************/
 /* Read Parameters.txt and fill keywords of uspex_calc_struct structure */
 /************************************************************************/
@@ -964,6 +988,139 @@ fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);
 #undef __GET_CHARS
 #undef __NSPECIES
 }
+void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
+#define _SRC (*src)
+#define _DEST (*dest)
+#define _CP(value) _DEST.value=_SRC.value
+#define _COPY(value,size,type) do{\
+	if((_SRC.value)!=NULL){\
+		memcpy(_DEST.value,_SRC.value,size*sizeof(type));\
+	}else{\
+		_DEST.value=NULL;\
+	}\
+}while(0)
+/*1st free / init the destination*/
+free_uspex_parameters(dest);
+init_uspex_parameters(dest);
+/*copy*/
+_CP(name);
+_CP(special);
+_CP(calculationMethod);
+_CP(calculationType);
+_CP(_calctype_dim);
+_CP(_calctype_mol);
+_CP(_calctype_var);
+_CP(optType);
+_CP(_nspecies);
+_COPY(atomType,_SRC._nspecies,gint);
+_CP(_var_nspecies);
+_COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
+_CP(ExternalPressure);
+_COPY(valences,_SRC._nspecies,gint);
+_COPY(goodBonds,(_SRC._nspecies*_SRC._nspecies),gdouble);
+_CP(checkMolecules);
+_CP(checkConnectivity);
+_CP(populationSize);
+_CP(initialPopSize);
+_CP(numGenerations);
+_CP(stopCrit);
+_CP(bestFrac);
+_CP(keepBestHM);
+_CP(reoptOld);
+_COPY(symmetries,strlen(_SRC.symmetries),gchar);
+_CP(fracGene);
+_CP(fracRand);
+_CP(fracPerm);
+_CP(fracAtomsMut);
+_CP(fracRotMut);
+_CP(fracLatMut);
+_CP(howManySwaps);
+_COPY(specificSwaps,strlen(_SRC.specificSwaps),gchar);
+_CP(mutationDegree);
+_CP(mutationRate);
+_CP(DisplaceInLatmutation);
+_CP(AutoFrac);
+_CP(minVectorLength);
+_COPY(IonDistances,(_SRC._nspecies*_SRC._nspecies),gdouble);
+_CP(constraint_enhancement);
+_COPY(MolCenters,_SRC._nmolecules,gdouble);
+if(_SRC._calctype_var){
+	_COPY(Latticevalues,_SRC._nlatticevalues,gdouble);
+}else{
+	if(_SRC._nlatticevalues==6) _COPY(Latticevalues,6,gdouble);
+	else if(_SRC._nlatticevalues<=3) _COPY(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues,gdouble);
+	else if(_SRC._nlatticevalues==1) _COPY(Latticevalues,1,gdouble);
+}
+_COPY(splitInto,_SRC._nsplits,gint);
+_COPY(abinitioCode,_SRC._num_opt_steps,gint);
+_COPY(KresolStart,_SRC._num_opt_steps,gdouble);
+_COPY(vacuumSize,_SRC._num_opt_steps,gdouble);
+_CP(numParallelCalcs);
+_COPY(commandExecutable,strlen(_SRC.commandExecutable),gchar);
+_CP(whichCluster);
+_COPY(remoteFolder,strlen(_SRC.remoteFolder),gchar);
+_CP(PhaseDiagram);
+_CP(RmaxFing);
+_CP(deltaFing);
+_CP(sigmaFing);
+_CP(antiSeedsActivation);
+_CP(antiSeedsMax);
+_CP(antiSeedsSigma);
+_CP(doSpaceGroup);
+_CP(SymTolerance);
+_CP(repeatForStatistics);
+_CP(stopFitness);
+_CP(collectForces);
+_CP(ordering_active);
+_CP(symmetrize);
+_COPY(valenceElectr,_SRC._nspecies,gint);
+_CP(percSliceShift);
+_CP(dynamicalBestHM);
+_COPY(softMutOnly,strlen(_SRC.softMutOnly),gchar);
+_CP(maxDistHeredity);
+_CP(manyParents);
+_CP(minSlice);
+_CP(maxSlice);
+_CP(numberparents);
+_CP(thicknessS);
+_CP(thicknessB);
+_CP(reconstruct);
+_CP(firstGeneMax);
+_CP(minAt);
+_CP(maxAt);
+_CP(fracTrans);
+_CP(howManyTrans);
+_COPY(specificTrans,_SRC._nspetrans,gint);
+_CP(GaussianWidth);
+_CP(GaussianHeight);
+_CP(FullRelax);
+_CP(maxVectorLength);
+_CP(PSO_softMut);
+_CP(PSO_BestStruc);
+_CP(PSO_BestEver);
+_CP(vcnebType);
+_CP(_vcnebtype_method);
+_CP(_vcnebtype_img_num);
+_CP(_vcnebtype_spring);
+_CP(numImages);
+_CP(numSteps);
+_CP(optReadImages);
+_CP(optimizerType);
+_CP(optRelaxType);
+_CP(dt);
+_CP(ConvThreshold);
+_CP(VarPathLength);
+_CP(K_min);
+_CP(K_max);
+_CP(Kconstant);
+_CP(optFreezing);
+_CP(optMethodCIDI);
+_CP(startCIDIStep);
+_COPY(pickupImages,_SRC._npickimg,gint);
+_CP(FormatType);
+_CP(PrintStep);
+}
+
 /*****************************************/
 /* OUTPUT a minimal uspex parameter file */
 /*****************************************/
@@ -1651,12 +1808,6 @@ if(job>-1){
 	}
 	g_free(aux_file);
 	uspex_calc=_UO.calc;
-
-/*
-	if(dump_uspex_parameters("out.uspex",_UO.calc)){
-		fprintf(stdout,"ERR: couldn't write Parameters.txt file: out.uspex\n");
-	}
-*/
 /* --- CHECK type from Parameters.txt matches that of OUTPUT.TXT */
 	if((job!=-1)&&(job!=_UC.calculationType)){
 /*since VCNEB will fail here due to a non-unified OUTPUT.txt format
@@ -1675,19 +1826,6 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 /* we have to open structure file first because of inconsistency in atom reporting in Individuals file*/
 /* --- READ gatheredPOSCARS <- this is going to be the main model file */
 /* ^^^ META is ill-defined: read first gatheredPOSCARS, then update with gatheredPOSCARS_relaxed in the future TODO*/
-/*
-        if(_UC.calculationMethod==US_CM_META) {
-                aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS_relaxed");
-                vf = fopen(aux_file, "rt");
-                if (!vf) aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-                else {
-			fclose(vf);
-			vf=NULL;
-		}
-        }else{  
-                aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
-        }
-*/
 	aux_file = g_strdup_printf("%s%s",res_folder,"gatheredPOSCARS");
         vf = fopen(aux_file, "rt");
         if (!vf) {
@@ -1992,11 +2130,6 @@ if(probe==0){
 fprintf(stdout,"#DBG: USPEX_BEST: GEN=%i STRUCT=%i E=%lf e=%f\n",gen+1,1+_UO.best_ind[gen+1],e[gen+1],_UO.ind[_UO.best_ind[gen+1]].energy);
 #endif
 		}
-/*
-		if(_UC.calculationMethod==US_CM_META) {//shift best_ind by 1
-			for(gen=1;gen<=_UO.num_gen;gen++) _UO.best_ind[gen]++;
-		}
-*/
 		if(max_E==min_E) {
 			min_E-=0.1;
 			max_E+=0.1;

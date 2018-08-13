@@ -72,6 +72,7 @@ typedef struct {
 typedef struct {
 /*additional controls*/
 	gchar *name;				/*the job name*/
+	gchar *filename;			/*corresponding filename*/
 	gint special;				/*special tag*/
 /*4.1 Type of run & System*/
         uspex_method    calculationMethod;	/*supported calculation methods*/
@@ -214,12 +215,19 @@ typedef struct {
 	gint		PrintStep;		/*save VC-NEB restart files in STEP directory every PS steps*/
 /*6.3 Set initial pathway in VC-NEB*/
 		/*no keyword in this section*/
+
+
+
+/*run parameters*/
+        gchar *job_uspex_exe;
+        gchar *job_path;
 } uspex_calc_struct;
 /* global output structure */
 typedef struct {
 /*name*/
         gchar *name;
         gint version;
+	gint index;				/*index is the # of result folder*/
 	uspex_calc_struct *calc;
         /* details */
         gint dim;
@@ -230,7 +238,7 @@ typedef struct {
 /*structures*/
         gint num_gen;
         gint num_struct;
-        gint *red_index;        /*in case not all structure are displayed (ie. META)*/
+        gint *red_index;			/*in case not all structure are displayed (ie. META)*/
         gdouble min_E;
         gdouble max_E;
         uspex_individual *ind;
@@ -244,6 +252,7 @@ typedef struct {
 /* execution structure */
 typedef struct {
 	int job_id;
+	gint index;				/*index is the result# folder*/
 	gboolean have_result;
 	/*job related*/
 	gchar *job_uspex_exe;
@@ -251,4 +260,11 @@ typedef struct {
 } uspex_exec_struct;
 
 /*methods of interest*/
+void init_uspex_parameters(uspex_calc_struct *uspex_calc);
+void free_uspex_parameters(uspex_calc_struct *uspex_calc);
+uspex_calc_struct *read_uspex_parameters(gchar *filename);
+void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest);
+gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc);
+
+
 
