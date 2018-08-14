@@ -61,6 +61,7 @@ struct uspex_calc_gui uspex_gui;
 /*************************/
 void gui_uspex_init(){
 	uspex_gui.cur_page=USPEX_PAGE_SET_I;
+	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
 	uspex_gui.is_dirty=TRUE;
 }
 /************************************************************/
@@ -168,17 +169,156 @@ void uspex_method_selected(GUI_OBJ *w){
 		uspex_gui.calc.calculationMethod = US_CM_UNKNOWN;
 	}
 }
-/******************************************************/
-/* Transfer gdouble spin value into proper gint: _dim */
-/******************************************************/
+/*****************************/
+/* selecting calculationType */
+/*****************************/
+void uspex_type_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1://301
+		uspex_gui.calc.calculationType=US_CT_301;
+		uspex_gui.calc._calctype_dim=3;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=TRUE;
+		break;
+	case 2://310
+		uspex_gui.calc.calculationType=US_CT_310;
+		uspex_gui.calc._calctype_dim=3;
+		uspex_gui.calc._calctype_mol=TRUE;
+		uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 3://311
+		uspex_gui.calc.calculationType=US_CT_311;
+		uspex_gui.calc._calctype_dim=3;
+		uspex_gui.calc._calctype_mol=TRUE;
+		uspex_gui.calc._calctype_var=TRUE;
+		break;
+	case 4://000
+		uspex_gui.calc.calculationType=US_CT_000;
+		uspex_gui.calc._calctype_dim=0;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 5://110
+		uspex_gui.calc.calculationType=US_CT_110;
+		uspex_gui.calc._calctype_dim=1;
+		uspex_gui.calc._calctype_mol=TRUE;
+		uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 6://200
+		uspex_gui.calc.calculationType=US_CT_200;
+		uspex_gui.calc._calctype_dim=2;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 7://201
+		uspex_gui.calc.calculationType=US_CT_201;
+		uspex_gui.calc._calctype_dim=2;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=TRUE;
+		break;
+	case 8://-200
+		uspex_gui.calc.calculationType=US_CT_M200;
+		uspex_gui.calc._calctype_dim=-2;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 0:
+	default://bad value -> default 300
+		uspex_gui.calc.calculationType=US_CT_300;
+		uspex_gui.calc._calctype_dim=3;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=FALSE;
+	}
+	/*now update uspex_gui._calctype_dim, uspex_gui._calctype_mol, and uspex_gui._calctype_var*/
+	GUI_SPIN_SET(uspex_gui._calctype_dim,(gdouble)uspex_gui.calc._calctype_dim);
+	if(uspex_gui.calc._calctype_mol) GUI_TOGGLE_ON(uspex_gui._calctype_mol);
+	else GUI_TOGGLE_OFF(uspex_gui._calctype_mol);
+	if(uspex_gui.calc._calctype_var) GUI_TOGGLE_ON(uspex_gui._calctype_var);
+	else GUI_TOGGLE_OFF(uspex_gui._calctype_var);
+}
+/**************************/
+/* update calculationType */
+/**************************/
+void _update_calculationType(){
+	gint i=0;
+	switch(uspex_gui.calc._calctype_dim){
+	case 3://300,301,310,311
+		i=300;
+		if(uspex_gui.calc._calctype_mol) i+=10;
+		if(uspex_gui.calc._calctype_var) i+=1;
+		break;
+	case 2://200,201
+		i=200;
+		if(uspex_gui.calc._calctype_mol) uspex_gui.calc._calctype_mol=FALSE;
+		if(uspex_gui.calc._calctype_var) i+=1;
+		break;
+	case 1://110
+		i=110;
+		if(!uspex_gui.calc._calctype_mol) uspex_gui.calc._calctype_mol=TRUE;
+		if(uspex_gui.calc._calctype_var) uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case 0://000
+		i=0;
+		if(uspex_gui.calc._calctype_mol) uspex_gui.calc._calctype_mol=FALSE;
+		if(uspex_gui.calc._calctype_var) uspex_gui.calc._calctype_var=FALSE;
+		break;
+	case -2://-200
+		i=-200;
+		if(uspex_gui.calc._calctype_mol) uspex_gui.calc._calctype_mol=FALSE;
+		if(uspex_gui.calc._calctype_var) uspex_gui.calc._calctype_var=FALSE;
+		break;
+	default://should not happen
+		i=300;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=FALSE;
+	}
+	uspex_gui.calc.calculationType=i;
+	switch(uspex_gui.calc.calculationType){
+	case US_CT_301:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,1);break;
+	case US_CT_310:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,2);break;
+	case US_CT_311:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,3);break;
+	case US_CT_000:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,4);break;
+	case US_CT_110:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,5);break;
+	case US_CT_200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,6);break;
+	case US_CT_201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,7);break;
+	case US_CT_M200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,8);break;
+	case US_CT_300:
+	default:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
+	}
+}
+/************************/
+/* update _calctype_dim */
+/************************/
 void spin_update_dim(){
-	uspex_gui.calc._calctype_dim=(gint)uspex_gui._dim;
+	gint i=(gint)uspex_gui._dim;
+	/*ban the -1 value*/
+	if(i==-1){
+		if(uspex_gui.calc._calctype_dim==0) i=-2;
+		else i=0;
+	}
+	/*update calc value*/
+	uspex_gui.calc._calctype_dim=i;
+	/*update spin value*/
+	uspex_gui._dim=(gdouble)i;
+	GUI_SPIN_SET(uspex_gui._calctype_dim,uspex_gui._dim);
+	/*done, now update calculationType*/
+	_update_calculationType();
 }
 /*****************************************/
 /* toggle mol -> update calculation type */
 /*****************************************/
 void mol_toggle(void){
-	gchar *text;
 	if(uspex_gui.calc._calctype_mol){
 		if(uspex_gui.calc._calctype_var) uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+10+1;
 		else uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+10;
@@ -186,15 +326,13 @@ void mol_toggle(void){
 		if(uspex_gui.calc._calctype_var) uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+1;
 		else uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100;
 	}
-	text=g_strdup_printf("%i",uspex_gui.calc.calculationType);
-	GUI_ENTRY_TEXT(uspex_gui.calculationType,text);
-	g_free(text);
+	/*done, now update calculationType*/
+	_update_calculationType();
 }
 /*****************************************/
 /* toggle var -> update calculation type */
 /*****************************************/
 void var_toggle(void){
-	gchar *text;
 	if(uspex_gui.calc._calctype_var){
 		if(uspex_gui.calc._calctype_mol) uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+10+1;
 		else uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+1;
@@ -202,9 +340,8 @@ void var_toggle(void){
 		if(uspex_gui.calc._calctype_mol) uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100+10;
 		else uspex_gui.calc.calculationType = uspex_gui.calc._calctype_dim*100;
 	}
-	text=g_strdup_printf("%i",uspex_gui.calc.calculationType);
-	GUI_ENTRY_TEXT(uspex_gui.calculationType,text);
-	g_free(text);
+	/*done, now update calculationType*/
+	_update_calculationType();
 }
 /***********************************/
 /* selecting optimization property */
@@ -259,6 +396,44 @@ void uspex_optimization_selected(GUI_OBJ *w){
 		uspex_gui.calc.optType=US_OT_UNKNOWN;
 	}
 }
+/*****************************************************************/
+/* Change/ADD atomType, numSpecies, and valence of selected atom */
+/*****************************************************************/
+void apply_atom(){
+/*TODO*/
+}
+/****************************************/
+/* Remove selected atomType information */
+/****************************************/
+void remove_atom(){
+/*TODO*/
+}
+/*********************/
+/* toggle auto_bonds */
+/*********************/
+void auto_bond_toggle(void){
+	if(uspex_gui.auto_bonds){
+		GUI_LOCK(uspex_gui.goodBonds);
+		GUI_LOCK(uspex_gui._bond_d);
+	}else{
+		GUI_UNLOCK(uspex_gui.goodBonds);
+		GUI_UNLOCK(uspex_gui._bond_d);
+	}
+}
+/************************************/
+/* Change/ADD goodBonds information */
+/************************************/
+void apply_bonds(){
+/*TODO*/
+}
+/********************************/
+/* Remove goodBonds information */
+/********************************/
+void remove_bonds(){
+/*TODO*/
+}
+
+
 
 /************************/
 /* Switch notebook page */
@@ -498,51 +673,92 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 /* --- Type & System */
 	GUI_FRAME_NOTE(page,frame,"Type & System");
 /* create a table in the frame*/
-	GUI_TABLE_FRAME(frame,table,5,3);
+	GUI_TABLE_FRAME(frame,table,5,4);
 /* 1st line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationMethod,"calculationMethod: ",0,1,0,1);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationMethod,"calcMethod: ",0,1,0,1);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"USPEX");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"META");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"VCNEB");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"PSO");
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USPEX\nSet the method of calculation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.calculationType,uspex_gui.calc.calculationType,"%3i","calculationType:",1,2,0,1);
-GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.");
+GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"calcType: ",1,2,0,1);
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"300");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"301");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"310");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"311");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"000");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"110");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"200");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"201");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-200");
+GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.\n(311) and (110) calculations may not be supported.");
 	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",2,3,0,1);
+	GUI_SPIN_RANGE(uspex_gui._calctype_dim,-2.,3.);
 GUI_TOOLTIP(uspex_gui._calctype_dim,"Set the dimension of the system.\n3, 2, 1, and 0 are equilvalent to 3D, 2D, 1D, and 0D.\n-2 correspond to 2D crystals.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",3,4,0,1);
-
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc._calctype_var,var_toggle,"VAR",4,5,0,1);
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",3,4,0,1);
+GUI_TOOLTIP(uspex_gui._calctype_mol,"Set the molecularity of the system.");
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",4,5,0,1);
+GUI_TOOLTIP(uspex_gui._calctype_var,"Set the variability of chemical composition.");
 /* 2nd line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,1,1,2);
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX Degree of order");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Structure difference");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"6: MAX Dielect. suscept.");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"7: MAX Band gap");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"8: MAX Dielectric gap");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"9: MAX Magnetization");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"10: MAX Structure quasientropy");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1101: MAX Bulk modulus");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1102: MAX Shear modulus");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1103: MAX Young modulus");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1104: MAX Poisson Modulus");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1105: MAX Pugh ratio");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1106: MAX Vickers hardness");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1107: MAX Fracture toughness");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1108: MAX Debye temperature");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1109: MAX Sound velocity");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1110: MAX S-wave velocity");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"1111: MAX P-wave velocity");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.atomType,"atomType:",0,1,1,2);
+	GUI_COMBOBOX_ADD(uspex_gui.atomType,"ADD ATOMTYPE");
+GUI_TOOLTIP(uspex_gui.atomType,"atomType: Ch. 4.1 DEFAULT: none\nThis list regroups several tags:\natomType, numSpecies, and valences.");
+	uspex_gui._tmp_atom_typ=0;uspex_gui._tmp_atom_num=0;uspex_gui._tmp_atom_val=0;
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_typ,uspex_gui._tmp_atom_typ,"%3i","@Typ:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui._atom_typ,"atomTyp: - DEFAULT: none\nAtomic number of current atom.");
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_num,uspex_gui._tmp_atom_num,"%3i","@Num:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui._atom_num,"atomNum: - DEFAULT: none\nNumber of atoms of that type.");
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_val,uspex_gui._tmp_atom_val,"%3i","@Val:",3,4,1,2);
+GUI_TOOLTIP(uspex_gui._atom_val,"atomVal: - DEFAULT: auto\nValence of the current atom type.\nAutomatically determined if zero.");
+	GUI_2BUTTONS_TABLE(table,apply_atom,remove_atom,4,5,1,2);
+/* 3rd line */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.goodBonds,"goodBonds:",0,1,2,3);
+	GUI_COMBOBOX_ADD(uspex_gui.goodBonds,"ADD GOODBOND");
+GUI_TOOLTIP(uspex_gui.goodBonds,"goodBonds: Ch. 4.1 DEFAULT: auto\nSet the minimum distance at which a bond is considered.");
+	GUI_TEXT_TABLE(table,uspex_gui._bond_d,uspex_gui._tmp_bond_d,"Bonds: ",1,2,2,3);
+GUI_TOOLTIP(uspex_gui._bond_d,"Minimum bond distance between selected and others species.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",3,4,2,3);
+GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
+	GUI_2BUTTONS_TABLE(table,apply_bonds,remove_bonds,4,5,2,3);
+/* 4th line */
+        GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,2,3,4);
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX Degree of order");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Structure difference");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"6: MAX Dielect. suscept.");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"7: MAX Band gap");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"8: MAX Dielectric gap");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"9: MAX Magnetization");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"10: MAX Structure quasientropy");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1101: MAX Bulk modulus");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1102: MAX Shear modulus");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1103: MAX Young modulus");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1104: MAX Poisson Modulus");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1105: MAX Pugh ratio");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1106: MAX Vickers hardness");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1107: MAX Fracture toughness");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1108: MAX Debye temperature");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1109: MAX Sound velocity");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1110: MAX S-wave velocity");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1111: MAX P-wave velocity");
 GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: 1(Enthalpy)\nSelect the properties to optimize.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMolecs",3,4,3,4);/*TODO: add function*/
+GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckConnect",4,5,3,4);/*TODO: add function*/
+GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
 
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optType,0,uspex_optimization_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.atomType,0,NULL);/*TODO: add function*/
+	GUI_SPIN_SET(uspex_gui._calctype_dim,3.);
 	mol_toggle();
 	var_toggle();
+	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,NULL);/*TODO: add function*/
+	auto_bond_toggle();
 /* --- end frame */
 
 /*------------------*/

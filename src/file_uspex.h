@@ -28,12 +28,23 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /*structures*/
 typedef enum {/*released USPEX calculation methods as of 2018 (5)*/
-	US_CM_USPEX,	/*USPEX*/
-	US_CM_META,	/*metadynamics*/
-	US_CM_VCNEB,	/*VC-NEB*/
-	US_CM_PSO,	/*PSO, unsupported*/
-	US_CM_UNKNOWN,	/*reserved for future use*/
+	US_CM_USPEX,				/*USPEX*/
+	US_CM_META,				/*metadynamics*/
+	US_CM_VCNEB,				/*VC-NEB*/
+	US_CM_PSO,				/*PSO, unsupported*/
+	US_CM_UNKNOWN,				/*reserved for future use*/
 } uspex_method;
+typedef enum{
+        US_CT_300=300,				/*bulk crystals; no-mol; no-var*/
+        US_CT_301=301,				/*bulk crystals; no-mol; var*/
+        US_CT_310=310,				/*bulk crystals; mol; no-var*/
+        US_CT_311=311,				/*bulk crystals; mol; var*/
+        US_CT_000=0,				/*nanoparticles; no-mol; no-var*/
+        US_CT_110=110,				/*polymers;	 no-mol; no-var*/
+        US_CT_200=200,				/*surfaces; 	 no-mol; no-var*/
+        US_CT_201=201,				/*surfaces;      no-mol; var*/
+        US_CT_M200=-200,			/*2D crystals; 	 no-mol; no-var*/
+} uspex_type;
 typedef enum {
 	US_OT_ENTHALPY=1,			/*most stable structure*/
 	US_OT_VOLUME=2,				/*min volume*/
@@ -76,7 +87,7 @@ typedef struct {
 	gint special;				/*special tag*/
 /*4.1 Type of run & System*/
         uspex_method    calculationMethod;	/*supported calculation methods*/
-        gint            calculationType;	/*supported calculation types*/
+        uspex_type 	calculationType;	/*supported calculation types*/
         gint            _calctype_dim;		/*HIDDEN: X.. digit in calculation type: dimension*/
         gboolean        _calctype_mol;		/*HIDDEN: .X. digit in calculation type: molecular*/
         gboolean        _calctype_var;		/*HIDDEN: ..X digit in calculation type: variable composition*/

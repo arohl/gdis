@@ -53,17 +53,23 @@ struct uspex_calc_gui{
 	GUI_OBJ *calculationType;
 	GUI_OBJ *_calctype_dim;
 	gdouble _dim;/*absurd spin on double*/
-	//_calctype_mol is auto-sync
-	//_calctype_var is auto-sync
+	GUI_OBJ *_calctype_mol;
+	GUI_OBJ *_calctype_var;
 	GUI_OBJ *optType;
-	/*atoms definition: add/apply/remove*/
-	GUI_OBJ *_atom_type;
+	/*atoms definition: apply/remove*/
+	GUI_OBJ *atomType;
+	GUI_OBJ *_atom_typ;
 	GUI_OBJ *_atom_num;
-	GUI_OBJ *_atom_valence;
+	GUI_OBJ *_atom_val;
+	/*temporary value*/
+	gint _tmp_atom_typ;
+	gint _tmp_atom_num;
+	gint _tmp_atom_val;
 	/*bond definition: apply/auto*/
 	GUI_OBJ *goodBonds;
+	GUI_OBJ *_bond_d;
+	gchar *_tmp_bond_d;
 	gboolean auto_bonds;
-	GUI_OBJ *Bonds;
 	/**/
 	//checkMolecules is auto-sync
 	//checkConnectivity is auto-sync
