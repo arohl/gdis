@@ -1394,6 +1394,7 @@ void delay(gint);
 
 gint read_elem_data(FILE *, gint);
 gint write_elem_data(FILE *);
+GSList *find_unique(gint mode, struct model_pak *model);
 
 void cmd_init(gint, gchar **);
 

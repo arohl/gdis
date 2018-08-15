@@ -2411,105 +2411,118 @@ void parallel_eq(void){
 /* sync poscar information */
 /***************************/
 void vasp_poscar_sync(){
-	gchar *tamp;
+	GSList *list=NULL;
+	GSList *lp;
+	gint *zval,*ztmp;
 	gchar *text;
-	gchar *text2;
-	gchar *tamp2;
+	gchar *tamp;
 	gchar symbol[3];
-	gint idx,jdx;
-	if(vasp_gui.poscar_dirty==FALSE) return;/*ne need to update*/
-/* pass_1: GROUP atom list by atom types */
+	gint idx,jdx,kdx;
+	gint natoms;
+	gint nspecies;
+	gint spec;
+	gboolean have_changed;
+	if(vasp_gui.poscar_dirty==FALSE) return;/*no need to update*/
+	/* get the new number of atoms */
 	idx=0;
 	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
 	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+	sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
+	nspecies=1;
+	tamp=g_strdup(&(vasp_gui.calc.poscar_symbol[0]));
+	zval = g_malloc(sizeof(gint));
+	zval[0]=elem_symbol_test(vasp_gui.calc.poscar_symbol);
 	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
-		sscanf(text,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
-		g_free(text);
-		jdx=0;
-		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,jdx);
-		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text2);
-		while(g_ascii_strcasecmp(text2,"ADD atom")!=0){
-			/**/
-			sscanf(text2,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(symbol[0]));
-			if(g_ascii_strcasecmp(vasp_gui.calc.poscar_symbol,symbol) == 0){
-				GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,jdx);
-				GUI_COMBOBOX_PREPEND_TEXT(vasp_gui.poscar_atoms,text2);
-				idx++;
+		idx++;
+		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
+		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+		sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(symbol[0]));
+		if(g_ascii_strcasecmp(vasp_gui.calc.poscar_symbol,symbol) == 0){
+			/*same species*/
+		}else{
+			/*different species*/
+			have_changed=FALSE;
+			spec=elem_symbol_test(symbol);
+			for(kdx=0;kdx<nspecies;kdx++) if(spec==zval[kdx]) have_changed=TRUE;
+			if(!have_changed){
+				/*unknown species: add symbol*/
+				g_free(text);text=g_strdup_printf("%s %s",tamp,symbol);
+				g_free(tamp);
+				tamp=text;
+				/*add Z*/
+				ztmp = g_malloc((nspecies+1)*sizeof(gint));
+				for(kdx=0;kdx<nspecies;kdx++) ztmp[kdx]=zval[kdx];
+				nspecies++;
+				ztmp[nspecies-1]=spec;
+				g_free(zval);
+				zval=ztmp;
 			}
-			g_free(text2);
-			jdx++;
-			GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,jdx);
-			GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text2);
 		}
-		g_free(text2);
-		idx++;
-		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
-		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+
+		
 	}
-	g_free(text);
-/* pass_2: REORDER atom list <- useful for 'consistent' ordering*/
-	idx=0;
-	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
-	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
-	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
-		GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,idx);
-		GUI_COMBOBOX_PREPEND_TEXT(vasp_gui.poscar_atoms,text);
-		g_free(text);
-		idx++;
-		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
-		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
-	}
-/* pass_3: SETUP unexposed properties (fix atom index)*/
-	idx=0;jdx=0;vasp_gui.calc.electron_total=0;
-	vasp_gui.calc.species_total=1;
-	GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
-	GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
-	sscanf(text,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
-	tamp=g_strdup_printf("	%s",vasp_gui.calc.poscar_symbol);
-	tamp2=g_strdup_printf(" ");
-	while(g_ascii_strcasecmp(text,"ADD atom")!=0){
-		/*get each line*/
-		sscanf(text,"%*f %*f %*f %*c %*c %*c ! atom: %*i (%[^)])",&(symbol[0]));
-		text2=g_strdup(text);/*to get enough space*/
-		sscanf(text,"%[^!]%*s",text2);
-		g_free(text);
-		text=g_strdup_printf("%s! atom: %i (%s)",text2,idx,symbol);
-		GUI_COMBOBOX_ADD_TEXT(vasp_gui.poscar_atoms,idx,text);
-		g_free(text);
-		GUI_COMBOBOX_DEL(vasp_gui.poscar_atoms,idx+1);
-		g_free(text2);
-		vasp_gui.calc.electron_total+=elem_symbol_test(symbol);
-		if(g_ascii_strcasecmp(vasp_gui.calc.poscar_symbol,symbol) != 0) {
-			/*new species*/
-			text=g_strdup_printf("%s %s",tamp,symbol);
-			g_free(tamp);
-			tamp=text;
-			text=g_strdup_printf("%s %i",tamp2,jdx);
-			g_free(tamp2);
-			tamp2=text;
-			vasp_gui.calc.species_total++;
-			sprintf(vasp_gui.calc.poscar_symbol,"%s",symbol);
-			jdx=0;
-		}
-		idx++;
-		jdx++;
-		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,idx);
-		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
-	}
-	vasp_gui.calc.atoms_total=idx;/*so we have the total number of atoms*/
-	/*we need to get the last jdx*/
-	text=g_strdup_printf("%s %i",tamp2,jdx);
-	g_free(tamp2);
-	tamp2=text;
+	natoms=idx;
 	if(vasp_gui.calc.species_symbols!=NULL) g_free(vasp_gui.calc.species_symbols);
-	if(vasp_gui.calc.species_numbers!=NULL) g_free(vasp_gui.calc.species_numbers);
 	vasp_gui.calc.species_symbols=g_strdup(tamp);
 	g_free(tamp);
-	vasp_gui.calc.species_numbers=g_strdup(tamp2);
-	g_free(tamp2);
-	vasp_gui.poscar_dirty=FALSE;
+	/*prepare new list*/
+	ztmp = g_malloc(nspecies*sizeof(gint));
+	for(idx=0;idx<nspecies;idx++){
+		ztmp[idx]=0;
+		jdx=0;
+		GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,jdx);
+		GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+		while(g_ascii_strcasecmp(text,"ADD atom")!=0){
+			sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(symbol[0]));
+			spec=elem_symbol_test(symbol);
+			if(spec==zval[idx]){
+				/*same species*/
+				list = g_slist_append(list,text);
+				ztmp[idx]++;
+			}
+			jdx++;
+			GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,jdx);
+			GUI_COMBOBOX_GET_TEXT(vasp_gui.poscar_atoms,text);
+		}
+	}
+	/*register the last spec count*/
+	if(vasp_gui.calc.species_numbers!=NULL) g_free(vasp_gui.calc.species_numbers);
+	tamp=g_strdup(" ");
+	for(idx=0;idx<nspecies;idx++){
+		text=g_strdup_printf("%s %i",tamp,ztmp[idx]);
+		g_free(tamp);
+		tamp=text;
+	}
+	vasp_gui.calc.species_numbers=g_strdup(tamp);
+	g_free(tamp);
+	/*wipe the combobox*/
+	GUI_COMBOBOX_WIPE(vasp_gui.poscar_atoms);
+	/*copy the ordered list in combobox*/
+	idx=0;spec=0;
+	text=list->data;
+	sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
+	for (lp=list ; lp ; lp=g_slist_next(lp)){
+		text=lp->data;
+		tamp=g_strdup(text);/*to get some space*/
+		sscanf(text,"%[^!]! atom: %*i (%[^)])",tamp,&(symbol[0]));
+		text=g_strdup_printf("%s! atom: %i (%s)",tamp,idx,symbol);
+		g_free(tamp);
+		GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,text);
+		idx++;
+	}
+	GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,"ADD atom");/*add "ADD atom"*/
+        GUI_COMBOBOX_SET(vasp_gui.poscar_atoms,natoms);
+	/*update some properties*/
+	vasp_gui.calc.atoms_total=natoms;
+	vasp_gui.calc.species_total=nspecies;
+	/*cleanup*/
+	for (lp=list ; lp ; lp=g_slist_next(lp)){
+		g_free(lp->data);
+		lp->data=NULL;
+	}
+	g_slist_free(list);
+	g_free(zval);
 }
-
 /************************/
 /* Switch notebook page */
 /************************/

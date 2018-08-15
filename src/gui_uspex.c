@@ -52,6 +52,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "gui_uspex.h"
 
 extern struct sysenv_pak sysenv;
+extern struct elem_pak elements[];
 
 /*globals variables*/
 struct uspex_calc_gui uspex_gui;
@@ -59,10 +60,74 @@ struct uspex_calc_gui uspex_gui;
 /*************************/
 /* initialize gui values */
 /*************************/
-void gui_uspex_init(){
+void gui_uspex_init(struct model_pak *model){
+	gint idx;
 	uspex_gui.cur_page=USPEX_PAGE_SET_I;
+	/*get atom information if not available*/
+	if(uspex_gui.calc.atomType==NULL){
+		gint idx;
+		GSList *list;
+		struct core_pak *core;
+		/*first get the _nspecies*/
+		list=find_unique(ELEMENT,model);
+		uspex_gui.calc._nspecies=(gint)g_slist_length(list);
+		uspex_gui.calc.atomType = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
+		for (idx=0 ; list ; list=g_slist_next(list)){
+			uspex_gui.calc.atomType[idx]=GPOINTER_TO_INT(list->data);
+			idx++;
+		}
+		g_slist_free(list);
+		/*fill the numType with information from current model*/
+		if(uspex_gui.calc.numSpecies!=NULL) g_free(uspex_gui.calc.numSpecies);
+		uspex_gui.calc._var_nspecies=1;/*we don't automatically vary formula at that point*/
+		uspex_gui.calc.numSpecies = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
+		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.numSpecies[idx]=0;
+		idx=0;
+		for (list=model->cores ; list ; list=g_slist_next(list)){
+			core=list->data;
+			if(core->atom_code==uspex_gui.calc.atomType[idx]) uspex_gui.calc.numSpecies[idx]++;
+			else {
+				idx++;
+				uspex_gui.calc.numSpecies[idx]++;
+			}
+		}
+		if(uspex_gui.calc.valences!=NULL) g_free(uspex_gui.calc.valences);
+		uspex_gui.calc.valences = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
+		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
+	}
 	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
 	uspex_gui.is_dirty=TRUE;
+}
+/*****************************************************/
+/*(re) populate atomType combo with atom information */
+/*****************************************************/
+void populate_atomType(void){
+	gint idx,jdx;
+	gchar *line;
+	/*this is call on new atomType information, so wipe previous information*/
+	GUI_COMBOBOX_WIPE(uspex_gui.atomType);
+	GUI_COMBOBOX_WIPE(uspex_gui.goodBonds);
+	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+		line=g_strdup_printf("%s(%i) (V=%i)",
+			elements[uspex_gui.calc.atomType[idx]].symbol,uspex_gui.calc.numSpecies[idx],uspex_gui.calc.valences[idx]);
+		GUI_COMBOBOX_ADD(uspex_gui.atomType,line);
+		g_free(line);
+	}
+/*only update goodBonds if needed*/
+if((uspex_gui.calc.goodBonds!=NULL)&&(uspex_gui.auto_bonds)){
+	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+		line=g_strdup_printf("");
+		for(jdx=0;jdx<uspex_gui.calc._nspecies;jdx++){
+			line=g_strdup_printf("%s %5f",line,uspex_gui.calc.goodBonds[jdx+idx*uspex_gui.calc._nspecies]);
+		}
+		line=g_strdup_printf("%s\n",line);
+		GUI_COMBOBOX_ADD(uspex_gui.goodBonds,line);
+	}
+}
+	/*add ending statement*/
+	GUI_COMBOBOX_ADD(uspex_gui.atomType,"ADD ATOMTYPE");
+	GUI_COMBOBOX_ADD(uspex_gui.goodBonds,"ADD GOODBOND");
+
 }
 /************************************************************/
 /* Load calculation setting from an included Parameters.txt */
@@ -622,17 +687,17 @@ void gui_uspex_dialog(void){
 		if(uspex_calc){
 			uspex_gui.have_output=TRUE;
 			copy_uspex_parameters(uspex_calc,&(uspex_gui.calc));
-			gui_uspex_init();
+			gui_uspex_init(data);
 		}else{
 			uspex_gui.have_output=FALSE;
 			init_uspex_parameters(&(uspex_gui.calc));
-			gui_uspex_init();
+			gui_uspex_init(data);
 		}
 		g_free(uspex_calc);
 	} else {
 		uspex_gui.have_output=FALSE;
 		init_uspex_parameters(&(uspex_gui.calc));
-		gui_uspex_init();
+		gui_uspex_init(data);
 	}
 /* dialog setup */
 	title = g_strdup_printf("USPEX: %s", data->basename);
@@ -753,7 +818,8 @@ GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardnes
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optType,0,uspex_optimization_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.atomType,0,NULL);/*TODO: add function*/
+	populate_atomType();
+	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,NULL);/*TODO: add function*/
 	GUI_SPIN_SET(uspex_gui._calctype_dim,3.);
 	mol_toggle();
 	var_toggle();
