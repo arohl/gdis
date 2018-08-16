@@ -95,6 +95,15 @@ void gui_uspex_init(struct model_pak *model){
 		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
 	}
 	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
+	if(uspex_gui.calc.populationSize==0){
+		/*take a default */
+		uspex_gui.calc.populationSize=(2*model->num_atoms%10)*10;
+		uspex_gui.calc.initialPopSize=uspex_gui.calc.populationSize;
+	}
+	if(uspex_gui.calc.stopCrit==0) {
+		if(uspex_gui.calc._calctype_var) uspex_gui.calc.stopCrit=uspex_gui.calc.maxAt;
+		else uspex_gui.calc.stopCrit=model->num_atoms;
+	}
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -1005,7 +1014,6 @@ GUI_TOOLTIP(button,"anti-opt: - DEFAULT: FALSE\nIf set REVERSE the direction of 
 GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckConnect",5,6,3,4);/*not calling anything*/
 GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
-
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
@@ -1019,6 +1027,23 @@ GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardnes
 	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
 	auto_bond_toggle();
 /* --- end frame */
+/* --- Population */
+	GUI_FRAME_NOTE(page,frame,"Population");
+/* create a table in the frame*/
+	GUI_TABLE_FRAME(frame,table,4,1);
+/* 1st line */
+	GUI_ENTRY_TABLE(table,uspex_gui.populationSize,uspex_gui.calc.populationSize,"%4i","SIZE:",0,1,0,1);
+GUI_TOOLTIP(uspex_gui.populationSize,"populationSize: Ch. 4.2 DEFAULT: auto\nNumber of structures in each generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.initialPopSize,uspex_gui.calc.initialPopSize,"%4i","INIT_SZ:",1,2,0,1);
+GUI_TOOLTIP(uspex_gui.populationSize,"initialPopSize: Ch. 4.2 DEFAULT: populationSize\nNumber of structures in initial generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numGenerations,uspex_gui.calc.numGenerations,"%4i","N_GENE:",2,3,0,1);
+GUI_TOOLTIP(uspex_gui.numGenerations,"numGenerations: Ch. 4.2 DEFAULT: 100\nMaximum number of generations.");
+	GUI_ENTRY_TABLE(table,uspex_gui.stopCrit,uspex_gui.calc.stopCrit,"%4i","STOP_CRIT:",3,4,0,1);
+GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number of generations.");
+/* --- end frame */
+
+
+
 
 /*------------------*/
 /* page 2 -> SET-II */

@@ -76,8 +76,10 @@ struct uspex_calc_gui{
 	//checkMolecules is auto-sync
 	//checkConnectivity is auto-sync
 /*4.2 Population*/
-
-
+	GUI_OBJ *populationSize;
+	GUI_OBJ *initialPopSize;
+	GUI_OBJ *numGenerations;
+	GUI_OBJ *stopCrit;
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;
