@@ -52,6 +52,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "gui_vasp.h"
 
 extern struct sysenv_pak sysenv;
+extern struct elem_pak elements[];
 
 /*globals variables*/
 struct vasp_calc_gui vasp_gui;
@@ -3102,6 +3103,20 @@ void gui_vasp_dialog(void){
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
+/* some format can't be used  */
+	if (data->id == MORPH){
+		title = g_strdup_printf("Can't setup a VASP calculation from a MORPH file!\n");
+		gui_text_show(ERROR,title);
+		g_free(title);
+		return;
+	}
+/* need natoms >1 */
+	if (data->num_atoms==0) {
+		title = g_strdup_printf("Can't setup a VASP calculation with no atom information!\n");
+		gui_text_show(ERROR,title);
+		g_free(title);
+		return;
+	}
 /* do we have a vasprun.xml model?  */
 	if (data->id == VASP) {
 		vasp_gui.have_xml=TRUE;
@@ -3776,10 +3791,9 @@ GUI_TOOLTIP(vasp_gui.poscar_tx,"Tag for the motion of current ion\nin third latt
 	for (list2=data->cores ; list2 ; list2=g_slist_next(list2)){
 		gchar sym[3];
 		core=list2->data;
-		sym[0]=core->atom_label[0];
-		if(g_ascii_islower(core->atom_label[1])) sym[1]=core->atom_label[1];
-		else sym[1]='\0';
-		sym[2]='\0';
+//////////////// NEW: necessary for some unconventional atom definition: for ex. MG (instead of Mg).
+		strcpy(sym,elements[core->atom_code].symbol);
+////////////////
 		if(vasp_gui.calc.poscar_free==VPF_FIXED){
 			GUI_COMBOBOX_ADD(vasp_gui.poscar_atoms,
 				g_strdup_printf("%.8lf %.8lf %.8lf  F	F   F ! atom: %i (%s)",core->x[0],core->x[1],core->x[2],idx,sym));

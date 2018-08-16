@@ -91,7 +91,8 @@ typedef struct {
         gint            _calctype_dim;		/*HIDDEN: X.. digit in calculation type: dimension*/
         gboolean        _calctype_mol;		/*HIDDEN: .X. digit in calculation type: molecular*/
         gboolean        _calctype_var;		/*HIDDEN: ..X digit in calculation type: variable composition*/
-        uspex_opt	optType;		/* optimization property*/
+        uspex_opt	optType;		/*optimization property*/
+	gboolean	anti_opt;		/*if set, reverse the optimization direction*/
 	gint		_nspecies;		/*HIDDEN: number of different species*/
 	gint 		*atomType;		/*atomic number of each species*/
 	gint 		_var_nspecies;		/*HIDDEN: numer of numSpecies blocks*/

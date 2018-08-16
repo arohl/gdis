@@ -61,7 +61,6 @@ struct uspex_calc_gui uspex_gui;
 /* initialize gui values */
 /*************************/
 void gui_uspex_init(struct model_pak *model){
-	gint idx;
 	uspex_gui.cur_page=USPEX_PAGE_SET_I;
 	/*get atom information if not available*/
 	if(uspex_gui.calc.atomType==NULL){
@@ -82,13 +81,13 @@ void gui_uspex_init(struct model_pak *model){
 		uspex_gui.calc._var_nspecies=1;/*we don't automatically vary formula at that point*/
 		uspex_gui.calc.numSpecies = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
 		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.numSpecies[idx]=0;
-		idx=0;
 		for (list=model->cores ; list ; list=g_slist_next(list)){
+			idx=0;
 			core=list->data;
-			if(core->atom_code==uspex_gui.calc.atomType[idx]) uspex_gui.calc.numSpecies[idx]++;
-			else {
+			/*find corresponding species*/
+			while(idx<uspex_gui.calc._nspecies) {
+				if(core->atom_code==uspex_gui.calc.atomType[idx]) uspex_gui.calc.numSpecies[idx]++;
 				idx++;
-				uspex_gui.calc.numSpecies[idx]++;
 			}
 		}
 		if(uspex_gui.calc.valences!=NULL) g_free(uspex_gui.calc.valences);
@@ -116,7 +115,7 @@ void populate_atomType(void){
 /*only update goodBonds if needed*/
 if((uspex_gui.calc.goodBonds!=NULL)&&(uspex_gui.auto_bonds)){
 	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		line=g_strdup_printf("");
+		line=g_strdup("");
 		for(jdx=0;jdx<uspex_gui.calc._nspecies;jdx++){
 			line=g_strdup_printf("%s %5f",line,uspex_gui.calc.goodBonds[jdx+idx*uspex_gui.calc._nspecies]);
 		}
@@ -461,17 +460,150 @@ void uspex_optimization_selected(GUI_OBJ *w){
 		uspex_gui.calc.optType=US_OT_UNKNOWN;
 	}
 }
+/**********************/
+/* Selecting atomType */
+/**********************/
+void atomType_selected(GUI_OBJ *w){
+        gchar *text;
+        gchar sym[3];
+        GUI_COMBOBOX_GET_TEXT(w,text);
+	if (g_ascii_strcasecmp(text,"ADD ATOMTYPE") == 0) return;/*last selection*/
+	sscanf(text,"%[^(](%i) (V=%i)",sym,&(uspex_gui._tmp_atom_num),&(uspex_gui._tmp_atom_val));
+	sym[2]='\0';uspex_gui._tmp_atom_typ=elem_symbol_test(sym);
+	strcpy(uspex_gui._tmp_atom_sym,sym);
+	g_free(text);
+	/*update entries*/
+	GUI_ENTRY_TEXT(uspex_gui._atom_sym,uspex_gui._tmp_atom_sym);
+	text=g_strdup_printf("%i",uspex_gui._tmp_atom_typ);
+	GUI_ENTRY_TEXT(uspex_gui._atom_typ,text);
+	g_free(text);text=g_strdup_printf("%i",uspex_gui._tmp_atom_num);
+	GUI_ENTRY_TEXT(uspex_gui._atom_num,text);
+	g_free(text);text=g_strdup_printf("%i",uspex_gui._tmp_atom_val);
+	GUI_ENTRY_TEXT(uspex_gui._atom_val,text);
+        g_free(text);
+}
 /*****************************************************************/
 /* Change/ADD atomType, numSpecies, and valence of selected atom */
 /*****************************************************************/
 void apply_atom(){
-/*TODO*/
+	gint index;
+	gchar *text;
+	gboolean exists=FALSE;
+	/*information*/
+	gchar sym[3];
+	gchar tmp[3];
+	gint typ;
+	gint num;
+	gint val;
+	/**/
+	GUI_COMBOBOX_GET(uspex_gui.atomType,index);
+	if(index==-1) {/*nothing selected -> should never happen*/
+		GUI_COMBOBOX_SET(uspex_gui.atomType,0);
+		return;
+	}
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+	/*mini-sync*/
+	GUI_REG_VAL(uspex_gui._atom_sym,sym[0],"%s");
+	GUI_REG_VAL(uspex_gui._atom_num,num,"%i");
+	GUI_REG_VAL(uspex_gui._atom_val,val,"%i");
+	typ = elem_symbol_test(sym);
+	/*trick to have a valid sym*/
+	strcpy(sym,elements[typ].symbol);
+	if (g_ascii_strcasecmp(text,"ADD ATOMTYPE") == 0) {
+		g_free(text);
+		/*add a new atomType*/
+		/*check if atomType does not exists*/
+		index=0;
+		GUI_COMBOBOX_SET(uspex_gui.atomType,0);
+		GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+		while(g_ascii_strcasecmp(text,"ADD ATOMTYPE") != 0){
+			sscanf(text,"%[^(](%*i) (V=%*i)",tmp);
+			uspex_gui._tmp_atom_typ=elem_symbol_test(tmp);
+			if(uspex_gui._tmp_atom_typ==typ) exists=TRUE;
+			g_free(text);
+			index++;
+			GUI_COMBOBOX_SET(uspex_gui.atomType,index);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+		}
+		if(exists){
+			text = g_strdup_printf("Atom type %s already exists! Can't add to atomType!\n",sym);
+			gui_text_show(ERROR,text);
+			g_free(text);
+			return;
+		}else{
+			text = g_strdup_printf("%s(%i) (V=%i)",sym,num,val);
+			GUI_COMBOBOX_ADD_TEXT(uspex_gui.atomType,index,text);
+			GUI_COMBOBOX_SET(uspex_gui.atomType,index+1);/*select last*/
+			g_free(text);
+		}
+	}else{
+		/*get current typ*/
+		sscanf(text,"%[^(](%*i) (V=%*i)",tmp);
+		uspex_gui._tmp_atom_typ = elem_symbol_test(tmp);
+		g_free(text);
+		/*modify an atomType*/
+		if(typ!=uspex_gui._tmp_atom_typ){
+			gint index_bkup;
+			/*type have changed, check if new type exists*/
+			index_bkup=index;/*SAVE INDEX*/
+			index=0;
+			GUI_COMBOBOX_SET(uspex_gui.atomType,0);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+			while(g_ascii_strcasecmp(text,"ADD ATOMTYPE") != 0){
+				sscanf(text,"%[^(](%*i) (V=%*i)",tmp);
+				uspex_gui._tmp_atom_typ=elem_symbol_test(tmp);
+				if(uspex_gui._tmp_atom_typ==typ) exists=TRUE;
+				g_free(text);
+				index++;
+				GUI_COMBOBOX_SET(uspex_gui.atomType,index);
+				GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+			}
+			if(exists){
+				text = g_strdup_printf("Atom type %s already exists! Can't modify atomType!\n",sym);
+				gui_text_show(ERROR,text);
+				g_free(text);
+				return;
+			}
+			index=index_bkup;/*RESTORE INDEX*/
+		}
+		/*just update values*/
+		text = g_strdup_printf("%s(%i) (V=%i)",sym,num,val);
+		GUI_COMBOBOX_ADD_TEXT(uspex_gui.atomType,index,text);
+		GUI_COMBOBOX_DEL(uspex_gui.atomType,index+1);
+		g_free(text);
+	}
+	/*select "ADD ATOM" (for convenience)*/
+	GUI_COMBOBOX_SET(uspex_gui.atomType,index);
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+	while(g_ascii_strcasecmp(text,"ADD ATOMTYPE") != 0){
+		g_free(text);
+		index++;
+		GUI_COMBOBOX_SET(uspex_gui.atomType,index);
+		GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+	}
+	g_free(text);
 }
 /****************************************/
 /* Remove selected atomType information */
 /****************************************/
 void remove_atom(){
-/*TODO*/
+	gint index;
+	gchar *text;
+	GUI_COMBOBOX_GET(uspex_gui.atomType,index);
+	if(index==-1) {/*nothing selected -> should never happen*/
+		GUI_COMBOBOX_SET(uspex_gui.atomType,0);
+		return;
+	}
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.atomType,text);
+	if (g_ascii_strcasecmp(text,"ADD ATOMTYPE") == 0) {
+		/*can't delete this one*/
+		g_free(text);
+		return;
+	}
+	GUI_COMBOBOX_DEL(uspex_gui.atomType,index);
+	if(index-1<0) index=1;
+	GUI_COMBOBOX_SET(uspex_gui.atomType,index-1);
+	g_free(text);
 }
 /*********************/
 /* toggle auto_bonds */
@@ -485,17 +617,72 @@ void auto_bond_toggle(void){
 		GUI_UNLOCK(uspex_gui._bond_d);
 	}
 }
+/**********************/
+/* Selecting goodBond */
+/**********************/
+void goodBonds_selected(GUI_OBJ *w){
+        gchar *text;
+	/**/
+        GUI_COMBOBOX_GET_TEXT(w,text);
+        if (g_ascii_strcasecmp(text,"ADD GOODBOND") == 0) return;/*last selection*/
+	/*the line is going directly into _bond_d*/
+	if(uspex_gui._tmp_bond_d!=NULL) g_free(uspex_gui._tmp_bond_d);
+	uspex_gui._tmp_bond_d=g_strdup(text);
+	GUI_ENTRY_TEXT(uspex_gui._bond_d,uspex_gui._tmp_bond_d);
+	g_free(text);
+}
 /************************************/
 /* Change/ADD goodBonds information */
 /************************************/
 void apply_bonds(){
-/*TODO*/
+	gint index;
+	gchar *text;
+	/**/
+	GUI_COMBOBOX_GET(uspex_gui.goodBonds,index);
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+	if(uspex_gui._tmp_bond_d!=NULL) g_free(uspex_gui._tmp_bond_d);
+	GUI_ENTRY_GET_TEXT(uspex_gui._bond_d,uspex_gui._tmp_bond_d);
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.goodBonds,index,uspex_gui._tmp_bond_d);
+	if (g_ascii_strcasecmp(text,"ADD GOODBOND") == 0){
+		/*new line*/
+		GUI_COMBOBOX_SET(uspex_gui.goodBonds,index+1);
+	}else{
+		/*modify*/
+		GUI_COMBOBOX_DEL(uspex_gui.goodBonds,index+1);
+		g_free(text);
+		/*select "ADD GOODBOND" (for convenience)*/
+		GUI_COMBOBOX_SET(uspex_gui.goodBonds,index);
+		GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+		while(g_ascii_strcasecmp(text,"ADD GOODBOND") != 0){
+			g_free(text);
+			index++;
+			GUI_COMBOBOX_SET(uspex_gui.goodBonds,index);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+		}
+	}
+	g_free(text);
 }
 /********************************/
 /* Remove goodBonds information */
 /********************************/
 void remove_bonds(){
-/*TODO*/
+	gint index;
+	gchar *text;
+	GUI_COMBOBOX_GET(uspex_gui.goodBonds,index);
+	if(index==-1) {/*nothing selected -> should never happen*/
+		GUI_COMBOBOX_SET(uspex_gui.goodBonds,0);
+		return;
+	}
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+	if (g_ascii_strcasecmp(text,"ADD GOODBOND") == 0){
+		/*can't delete this one*/
+		g_free(text);
+		return;
+	}
+	GUI_COMBOBOX_DEL(uspex_gui.goodBonds,index);
+	if(index-1<0) index=1;
+	GUI_COMBOBOX_SET(uspex_gui.goodBonds,index-1);
+	g_free(text);
 }
 
 
@@ -505,7 +692,7 @@ void remove_bonds(){
 /************************/
 void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 	gint from_page;
-	gchar *text;
+//	gchar *text;
 	/* some (few) values need to be updated from a page to another*/
 	GUI_NOTE_PAGE_NUMBER(notebook,from_page);
 	if(from_page==(gint)page_num) return;/*not moved*/
@@ -536,7 +723,7 @@ void uspex_gui_sync(){
 /***************************/
 gint save_uspex_calc(){
 #define DEBUG_USPEX_SAVE 0
-	FILE *save_fp;
+//	FILE *save_fp;
 	gchar *filename;
 	/*1-synchronize*/
 	uspex_gui_sync();
@@ -668,11 +855,11 @@ void gui_uspex_dialog(void){
 	gpointer dialog;
 	GUI_OBJ *frame, *vbox, *hbox, *table;
 	GUI_OBJ *notebook, *page, *button, *label;
-	GUI_OBJ *separator;
+//	GUI_OBJ *separator;
 	/* special */
 	struct model_pak *data;
-	struct core_pak *core;
-	gint idx;
+//	struct core_pak *core;
+//	gint idx;
 	gchar *tmp;
 /* checks */
 	data = sysenv.active_model;
@@ -738,7 +925,7 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 /* --- Type & System */
 	GUI_FRAME_NOTE(page,frame,"Type & System");
 /* create a table in the frame*/
-	GUI_TABLE_FRAME(frame,table,5,4);
+	GUI_TABLE_FRAME(frame,table,6,4);
 /* 1st line */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationMethod,"calcMethod: ",0,1,0,1);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"USPEX");
@@ -746,7 +933,7 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"VCNEB");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"PSO");
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USPEX\nSet the method of calculation.");
-GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"calcType: ",1,2,0,1);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"calcType: ",1,3,0,1);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"300");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"301");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"310");
@@ -757,44 +944,47 @@ GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"calcType: ",1,2,0,1);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"201");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-200");
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.\n(311) and (110) calculations may not be supported.");
-	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",2,3,0,1);
+	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",3,4,0,1);
 	GUI_SPIN_RANGE(uspex_gui._calctype_dim,-2.,3.);
 GUI_TOOLTIP(uspex_gui._calctype_dim,"Set the dimension of the system.\n3, 2, 1, and 0 are equilvalent to 3D, 2D, 1D, and 0D.\n-2 correspond to 2D crystals.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",3,4,0,1);
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",4,5,0,1);
 GUI_TOOLTIP(uspex_gui._calctype_mol,"Set the molecularity of the system.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",4,5,0,1);
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",5,6,0,1);
 GUI_TOOLTIP(uspex_gui._calctype_var,"Set the variability of chemical composition.");
 /* 2nd line */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.atomType,"atomType:",0,1,1,2);
 	GUI_COMBOBOX_ADD(uspex_gui.atomType,"ADD ATOMTYPE");
 GUI_TOOLTIP(uspex_gui.atomType,"atomType: Ch. 4.1 DEFAULT: none\nThis list regroups several tags:\natomType, numSpecies, and valences.");
 	uspex_gui._tmp_atom_typ=0;uspex_gui._tmp_atom_num=0;uspex_gui._tmp_atom_val=0;
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_typ,uspex_gui._tmp_atom_typ,"%3i","@Typ:",1,2,1,2);
-GUI_TOOLTIP(uspex_gui._atom_typ,"atomTyp: - DEFAULT: none\nAtomic number of current atom.");
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_num,uspex_gui._tmp_atom_num,"%3i","@Num:",2,3,1,2);
-GUI_TOOLTIP(uspex_gui._atom_num,"atomNum: - DEFAULT: none\nNumber of atoms of that type.");
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_val,uspex_gui._tmp_atom_val,"%3i","@Val:",3,4,1,2);
-GUI_TOOLTIP(uspex_gui._atom_val,"atomVal: - DEFAULT: auto\nValence of the current atom type.\nAutomatically determined if zero.");
-	GUI_2BUTTONS_TABLE(table,apply_atom,remove_atom,4,5,1,2);
+	strcpy(uspex_gui._tmp_atom_sym,elements[uspex_gui._tmp_atom_typ].symbol);
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_sym,uspex_gui._tmp_atom_sym,"%s","@Sym:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui._atom_sym,"atomSym: - DEFAULT: none\nAtomic symbol of current species.");
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_typ,uspex_gui._tmp_atom_typ,"%3i","@Typ:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui._atom_typ,"atomTyp: - DEFAULT: none\nAtomic number of current species.");
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_num,uspex_gui._tmp_atom_num,"%3i","@Num:",3,4,1,2);
+GUI_TOOLTIP(uspex_gui._atom_num,"atomNum: - DEFAULT: none\nNumber of atoms in current species.");
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_val,uspex_gui._tmp_atom_val,"%3i","@Val:",4,5,1,2);
+GUI_TOOLTIP(uspex_gui._atom_val,"atomVal: - DEFAULT: auto\nValence of the current species.\nAutomatically determined if zero.");
+	GUI_2BUTTONS_TABLE(table,apply_atom,remove_atom,5,6,1,2);
 /* 3rd line */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.goodBonds,"goodBonds:",0,1,2,3);
 	GUI_COMBOBOX_ADD(uspex_gui.goodBonds,"ADD GOODBOND");
 GUI_TOOLTIP(uspex_gui.goodBonds,"goodBonds: Ch. 4.1 DEFAULT: auto\nSet the minimum distance at which a bond is considered.");
-	GUI_TEXT_TABLE(table,uspex_gui._bond_d,uspex_gui._tmp_bond_d,"Bonds: ",1,2,2,3);
+	GUI_TEXT_TABLE(table,uspex_gui._bond_d,uspex_gui._tmp_bond_d,"Bonds: ",1,4,2,3);
 GUI_TOOLTIP(uspex_gui._bond_d,"Minimum bond distance between selected and others species.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",3,4,2,3);
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",4,5,2,3);
 GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
-	GUI_2BUTTONS_TABLE(table,apply_bonds,remove_bonds,4,5,2,3);
+	GUI_2BUTTONS_TABLE(table,apply_bonds,remove_bonds,5,6,2,3);
 /* 4th line */
-        GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,2,3,4);
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX Degree of order");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Structure difference");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"6: MAX Dielect. suscept.");
+        GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,3,3,4);
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy (stable phases)");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume (densest structure)");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness (hardest phase)");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX order (most order structure)");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Structure average difference");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"6: MAX Dielectric susceptibility");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"7: MAX Band gap");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"8: MAX Dielectric gap");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"8: MAX electric energy storage capacity");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"9: MAX Magnetization");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"10: MAX Structure quasientropy");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1101: MAX Bulk modulus");
@@ -809,21 +999,24 @@ GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1110: MAX S-wave velocity");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1111: MAX P-wave velocity");
 GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: 1(Enthalpy)\nSelect the properties to optimize.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMolecs",3,4,3,4);/*TODO: add function*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.anti_opt,NULL,"ANTI-OPT",3,4,3,4);/*not calling anything*/
+GUI_TOOLTIP(button,"anti-opt: - DEFAULT: FALSE\nIf set REVERSE the direction of optimization.\ni.e. MIN -> MAX & MAX -> MIN");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMolecs",4,5,3,4);/*not calling anything*/
 GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckConnect",4,5,3,4);/*TODO: add function*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckConnect",5,6,3,4);/*not calling anything*/
 GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
 
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optType,0,uspex_optimization_selected);
+	GUI_LOCK(uspex_gui._atom_typ);
 	populate_atomType();
-	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,NULL);/*TODO: add function*/
+	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,atomType_selected);
 	GUI_SPIN_SET(uspex_gui._calctype_dim,3.);
 	mol_toggle();
 	var_toggle();
-	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,NULL);/*TODO: add function*/
+	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
 	auto_bond_toggle();
 /* --- end frame */
 

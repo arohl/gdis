@@ -72,6 +72,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC._calctype_mol=FALSE;
 	_UC._calctype_var=FALSE;
 	_UC.optType=US_OT_ENTHALPY;
+	_UC.anti_opt=FALSE;
 	_UC._nspecies=0;
 	_UC.atomType=NULL;
 	_UC._var_nspecies=0;
@@ -329,6 +330,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		if (find_in_string("optType",line) != NULL) {
 			k=0;sscanf(line,"%i%*s",&(k));
+			if(k<0) {
+				_UC.anti_opt=TRUE;
+				k*=-1;
+			}
 			switch (k){
 			case 1:
 				_UC.optType=US_OT_ENTHALPY;
@@ -1011,6 +1016,7 @@ _CP(_calctype_dim);
 _CP(_calctype_mol);
 _CP(_calctype_var);
 _CP(optType);
+_CP(anti_opt);
 _CP(_nspecies);
 _COPY(atomType,_SRC._nspecies,gint);
 _CP(_var_nspecies);
@@ -1266,7 +1272,10 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		fprintf(vf,"???\t: calculationMethod (unsupported method)\n");
 	}
 	__OUT_INT(calculationType);
-	__OUT_INT(optType);
+	if(_UC.anti_opt) __OUT_INT(optType);
+	else {
+		fprintf(vf,"%i\t: optType\n",-1*_UC.optType);
+	}
 	__OUT_BK_INT(atomType,"EndAtomType",_UC._nspecies);
 	if(_UC._var_nspecies==1){
 		__OUT_BK_INT(numSpecies,"EndNumSpecies",_UC._nspecies);

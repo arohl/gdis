@@ -58,10 +58,12 @@ struct uspex_calc_gui{
 	GUI_OBJ *optType;
 	/*atoms definition: apply/remove*/
 	GUI_OBJ *atomType;
+	GUI_OBJ *_atom_sym;
 	GUI_OBJ *_atom_typ;
 	GUI_OBJ *_atom_num;
 	GUI_OBJ *_atom_val;
 	/*temporary value*/
+	gchar _tmp_atom_sym[3];
 	gint _tmp_atom_typ;
 	gint _tmp_atom_num;
 	gint _tmp_atom_val;
