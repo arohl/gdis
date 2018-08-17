@@ -80,6 +80,11 @@ struct uspex_calc_gui{
 	GUI_OBJ *initialPopSize;
 	GUI_OBJ *numGenerations;
 	GUI_OBJ *stopCrit;
+/*4.3 Survival of the fittest & Selection*/
+	GUI_OBJ *bestFrac;
+	GUI_OBJ *keepBestHM;
+	GUI_OBJ *reoptOld;
+
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;

@@ -104,6 +104,8 @@ void gui_uspex_init(struct model_pak *model){
 		if(uspex_gui.calc._calctype_var) uspex_gui.calc.stopCrit=uspex_gui.calc.maxAt;
 		else uspex_gui.calc.stopCrit=model->num_atoms;
 	}
+	if(uspex_gui.calc.keepBestHM==0) uspex_gui.calc.keepBestHM=(gint)(0.15*(uspex_gui.calc.populationSize));
+
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -1041,6 +1043,21 @@ GUI_TOOLTIP(uspex_gui.numGenerations,"numGenerations: Ch. 4.2 DEFAULT: 100\nMaxi
 	GUI_ENTRY_TABLE(table,uspex_gui.stopCrit,uspex_gui.calc.stopCrit,"%4i","STOP_CRIT:",3,4,0,1);
 GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number of generations.");
 /* --- end frame */
+/* --- Survival & Selection */
+        GUI_FRAME_NOTE(page,frame,"Survival & Selection");
+/* create a table in the frame*/
+        GUI_TABLE_FRAME(frame,table,4,1);
+/* 1st line */
+	GUI_ENTRY_TABLE(table,uspex_gui.bestFrac,uspex_gui.calc.bestFrac,"%.5f","BestFrac:",0,1,0,1);
+GUI_TOOLTIP(uspex_gui.bestFrac,"populationSize: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
+	GUI_ENTRY_TABLE(table,uspex_gui.keepBestHM,uspex_gui.calc.keepBestHM,"%3i","keepBestHM:",1,2,0,1);
+GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.reoptOld,NULL,"reoptOld",2,3,0,1);/*not calling anything*/
+GUI_TOOLTIP(button,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
+/* --- end frame */
+
+
+
 
 
 
