@@ -65,6 +65,8 @@ extern struct elem_pak elements[];
 void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	/*Initialize uspex_calc with model independant parameters.*/
 	_UC.name=NULL;
+	_UC.filename=NULL;
+	_UC.path=NULL;
 	_UC.special=0;
 	_UC.calculationMethod=US_CM_USPEX;
 	_UC.calculationType=300;
@@ -203,7 +205,7 @@ void free_uspex_parameters(uspex_calc_struct *uspex_calc){
 /************************************************************************/
 /* Read Parameters.txt and fill keywords of uspex_calc_struct structure */
 /************************************************************************/
-uspex_calc_struct *read_uspex_parameters(gchar *filename){
+uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	FILE *vf;
 	long int vfpos;
 	gchar *line=NULL;
@@ -219,21 +221,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename){
 	uspex_calc = g_malloc(sizeof(uspex_calc_struct));
 	init_uspex_parameters(uspex_calc);
 /*some lazy defines*/
-#define __NSPECIES(line) do{\
-	if(_UC._nspecies==0){\
-		ptr=&(line[0]);\
-		while(*ptr==' ') ptr++;\
-		_UC._nspecies=1;\
-		while(*ptr!='\0'){\
-			if(*ptr==' ') {\
-				_UC._nspecies++;ptr++;\
-				while(g_ascii_isgraph(*ptr)) ptr++;\
-			}else ptr++;\
-		}\
-	}\
-}while(0)
 #define __Q(a) #a
-
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
 	_UC.value=(k==1);\
@@ -265,6 +253,74 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename){
 	continue;\
 }
 
+	line = file_read_line(vf);
+/* +++ 1st PASS: get important numbers*/
+	while(line){
+		if (find_in_string("atomType",line) !=NULL){
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			_UC._nspecies=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					_UC._nspecies++;ptr++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			g_free(line);line = file_read_line(vf);/*this is the EndAtomType line*/
+			g_free(line);line = file_read_line(vf);
+			continue;
+		}
+if((find_in_string("abinitioCode",line)!=NULL)||(find_in_string("KresolStart",line)!=NULL)||(find_in_string("vacuumSize",line)!=NULL)){
+			/*FIXME: there seems to be no way to get the number of optimization step (_num_opt_steps):
+			 * abinitioCode -> can be only one value
+			 * KresolStart -> can be omitted
+			 * vacuumSize -> can be less than _num_opt_steps, also can be omitted
+			 * commandExecutable -> can be less than _num_opt_steps */
+			g_free(line);line = file_read_line(vf);
+			ptr=&(line[0]);
+			while(*ptr==' ') ptr++;
+			i=1;
+			while(*ptr!='\0'){
+				if(*ptr==' ') {
+					i++;ptr++;
+					while(g_ascii_isgraph(*ptr)) ptr++;
+				}else ptr++;
+			}
+			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
+			g_free(line);line = file_read_line(vf);
+			g_free(line);line = file_read_line(vf);
+			continue;
+		}
+		if(find_in_string("commandExecutable",line) != NULL){
+			/*count the number of lines before EndExecutable, and hope it does represent _num_opt_steps*/
+			i=0;
+			while(find_in_string("EndExecutable",line) == NULL){
+				i++;
+				g_free(line);line = file_read_line(vf);
+			}
+			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
+			g_free(line);line = file_read_line(vf);
+			continue;
+		}
+		/*no catch*/
+		g_free(line);line = file_read_line(vf);
+	}
+	g_free(line);
+	if(_UC._nspecies==0){/*this one is mandatory*/
+		if(safe_nspecies==0){
+			line = g_strdup_printf("ERROR: Can't read USPEX output: no atom information!\n");
+	                gui_text_show(ERROR, line);
+	                g_free(line);
+			fclose(vf);
+			return(NULL);
+		}else{
+			/*this should *not* be the way to obtain _nspecies, atomType is mandatory!*/
+			_UC._nspecies=safe_nspecies;
+		}
+	}
+	rewind(vf);
+/* +++ 2nd PASS: get everything*/
 	line = file_read_line(vf);
 	while(line){
 #if DEBUG_USPEX_READ
@@ -308,6 +364,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			}
 			_UC._calctype_dim=i;
 			j-=i*100;
+			if(j<0) j*=-1;
 			i=((int)(j/10))%10;
 			if((i<0)||(i>1)){
 				g_free(line);
@@ -407,8 +464,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		if (find_in_string("atomType",line) !=NULL){
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*look for atomType*/
 			_UC.atomType = g_malloc(_UC._nspecies*sizeof(gint));
 			for(i=0;i<_UC._nspecies;i++) _UC.atomType[i]=0;
@@ -432,8 +487,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		if (find_in_string("numSpecies",line) != NULL) {
 			vfpos=ftell(vf);/* flag */
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*1st get the total number of lines*/
 			_UC._var_nspecies=0;
 			do{
@@ -463,8 +516,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_DOUBLE(ExternalPressure)
 		if (find_in_string("valences",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*look for valences*/
 			_UC.valences = g_malloc(_UC._nspecies*sizeof(gint));
 			for(i=0;i<_UC._nspecies;i++) _UC.valences[i]=0;
@@ -483,8 +534,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		if (find_in_string("goodBonds",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*look for goodBonds*/
 			_UC.goodBonds = g_malloc(_UC._nspecies*_UC._nspecies*sizeof(gdouble));
 			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.goodBonds[i]=0.;
@@ -530,8 +579,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_BOOL(minVectorLength);
 		if (find_in_string("IonDistances",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*look for IonDistances*/
 			_UC.IonDistances = g_malloc(_UC._nspecies*_UC._nspecies*sizeof(gdouble));
 			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.IonDistances[i]=0.;
@@ -700,16 +747,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		if (find_in_string("abinitioCode",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*count number of optimization steps*/
-			ptr=&(line[0]);
-			while(*ptr==' ') ptr++;
-			_UC._num_opt_steps=1;
-			while(*ptr!='\0'){
-				if(*ptr==' ') {
-					_UC._num_opt_steps++;ptr++;
-					while(g_ascii_isgraph(*ptr)) ptr++;
-				}else ptr++;
-			}/*note that the METADYNAMICS parenthesis are ignored as well*/
 			/*look for abinitioCode*/
 			_UC.abinitioCode = g_malloc(_UC._num_opt_steps*sizeof(gint));
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.abinitioCode[i]=0;
@@ -746,9 +783,9 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		if (find_in_string("vacuumSize",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*in my understanding, there is also either 1 or _num_opt_steps values of vacuumSize*/
+			/*in my understanding, there is BETWEEN 1 to _num_opt_steps values of vacuumSize*/
 			_UC.vacuumSize = g_malloc(_UC._num_opt_steps*sizeof(gdouble));
-			for(i=0;i<_UC._num_opt_steps;i++) _UC.vacuumSize[i]=0.;
+			for(i=0;i<_UC._num_opt_steps;i++) _UC.vacuumSize[i]=10.;/*implicit is 10.*/
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
@@ -765,7 +802,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_INT(numParallelCalcs);
 		if (find_in_string("commandExecutable",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*there is 1<x<_num_opt_steps lines of commandExecutable*/
+			/*there is also 1<x<_num_opt_steps lines of commandExecutable?*/
 			j=1;
 			ptr = g_strdup(line);
 			_UC.commandExecutable = ptr;
@@ -835,8 +872,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_BOOL(symmetrize);
 		if (find_in_string("valenceElectr",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
-			/*if no _nspecies, get it now*/
-			__NSPECIES(line);
 			/*look for valenceElectr*/
 			_UC.valenceElectr = g_malloc(_UC._nspecies*sizeof(gint));
 			for(i=0;i<_UC._nspecies;i++) _UC.valenceElectr[i]=0;
@@ -991,7 +1026,6 @@ fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);
 #undef __GET_DOUBLE
 #undef __GET_STRING
 #undef __GET_CHARS
-#undef __NSPECIES
 }
 void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 #define _SRC (*src)
@@ -999,7 +1033,17 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 #define _CP(value) _DEST.value=_SRC.value
 #define _COPY(value,size,type) do{\
 	if((_SRC.value)!=NULL){\
+		if(_DEST.value!=NULL) g_free(_DEST.value);\
+		_DEST.value = g_malloc(size*sizeof(type));\
 		memcpy(_DEST.value,_SRC.value,size*sizeof(type));\
+	}else{\
+		_DEST.value=NULL;\
+	}\
+}while(0)
+#define _STRCP(value) do{\
+	if((_SRC.value)!=NULL){\
+		if(_DEST.value!=NULL) g_free(_DEST.value);\
+		_DEST.value = g_strdup(_SRC.value);\
 	}else{\
 		_DEST.value=NULL;\
 	}\
@@ -1009,6 +1053,9 @@ free_uspex_parameters(dest);
 init_uspex_parameters(dest);
 /*copy*/
 _CP(name);
+//_COPY(path,strlen(_SRC.path),gchar);
+_STRCP(filename);
+_STRCP(path);
 _CP(special);
 _CP(calculationMethod);
 _CP(calculationType);
@@ -1033,7 +1080,8 @@ _CP(stopCrit);
 _CP(bestFrac);
 _CP(keepBestHM);
 _CP(reoptOld);
-_COPY(symmetries,strlen(_SRC.symmetries),gchar);
+//_COPY(symmetries,strlen(_SRC.symmetries),gchar);
+_STRCP(symmetries);
 _CP(fracGene);
 _CP(fracRand);
 _CP(fracPerm);
@@ -1041,7 +1089,8 @@ _CP(fracAtomsMut);
 _CP(fracRotMut);
 _CP(fracLatMut);
 _CP(howManySwaps);
-_COPY(specificSwaps,strlen(_SRC.specificSwaps),gchar);
+//_COPY(specificSwaps,strlen(_SRC.specificSwaps),gchar);
+_STRCP(specificSwaps);
 _CP(mutationDegree);
 _CP(mutationRate);
 _CP(DisplaceInLatmutation);
@@ -1062,9 +1111,11 @@ _COPY(abinitioCode,_SRC._num_opt_steps,gint);
 _COPY(KresolStart,_SRC._num_opt_steps,gdouble);
 _COPY(vacuumSize,_SRC._num_opt_steps,gdouble);
 _CP(numParallelCalcs);
-_COPY(commandExecutable,strlen(_SRC.commandExecutable),gchar);
+//_COPY(commandExecutable,strlen(_SRC.commandExecutable),gchar);
+_STRCP(commandExecutable);/*unsure*/
 _CP(whichCluster);
-_COPY(remoteFolder,strlen(_SRC.remoteFolder),gchar);
+//_COPY(remoteFolder,strlen(_SRC.remoteFolder),gchar);
+_STRCP(remoteFolder);
 _CP(PhaseDiagram);
 _CP(RmaxFing);
 _CP(deltaFing);
@@ -1082,7 +1133,8 @@ _CP(symmetrize);
 _COPY(valenceElectr,_SRC._nspecies,gint);
 _CP(percSliceShift);
 _CP(dynamicalBestHM);
-_COPY(softMutOnly,strlen(_SRC.softMutOnly),gchar);
+//_COPY(softMutOnly,strlen(_SRC.softMutOnly),gchar);
+_STRCP(softMutOnly);
 _CP(maxDistHeredity);
 _CP(manyParents);
 _CP(minSlice);
@@ -1807,7 +1859,7 @@ if(job>-1){
 	fclose(vf);vf=NULL;
 /* --- READ Parameters.txt */
 	aux_file = g_strdup_printf("%s%s",res_folder,"Parameters.txt");
-	_UO.calc=read_uspex_parameters(aux_file);
+	_UO.calc=read_uspex_parameters(aux_file,num);
 	if(_UO.calc==NULL){
 		line = g_strdup_printf("ERROR: reading USPEX REAL Parameter.txt file!\n");
 		gui_text_show(ERROR, line);
@@ -1817,6 +1869,7 @@ if(job>-1){
 	}
 	g_free(aux_file);
 	uspex_calc=_UO.calc;
+	_UC.path=g_strdup(res_folder);
 /* --- CHECK type from Parameters.txt matches that of OUTPUT.TXT */
 	if((job!=-1)&&(job!=_UC.calculationType)){
 /*since VCNEB will fail here due to a non-unified OUTPUT.txt format
@@ -1826,8 +1879,6 @@ if(job>-1){
 		g_free(line);
 		goto uspex_fail;
 	}
-	/*special case: no nspecies information*/
-	if(_UC._nspecies==0) _UC._nspecies=num;
 if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 /* --- if calculationMethod={USPEX,META} */
 	g_free(model->basename);/*FIX: _VALGRIND_BUG_*/
@@ -2442,6 +2493,8 @@ fprintf(stdout,"#DBG: USPEX[VCNEB] Image %i: natoms=%i energy=%lf e=%lf\n",_UO.i
 }
 	/*g_free some data*/
 	g_free(res_folder);
+	/*update some properties*/
+	model->num_species=_UO.calc->_nspecies;
 
 	/*end*/
 	error_table_print_all();

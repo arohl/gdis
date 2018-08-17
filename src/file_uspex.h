@@ -83,6 +83,7 @@ typedef struct {
 typedef struct {
 /*additional controls*/
 	gchar *name;				/*the job name*/
+	gchar *path;				/*job path*/
 	gchar *filename;			/*corresponding filename*/
 	gint special;				/*special tag*/
 /*4.1 Type of run & System*/
@@ -274,7 +275,7 @@ typedef struct {
 /*methods of interest*/
 void init_uspex_parameters(uspex_calc_struct *uspex_calc);
 void free_uspex_parameters(uspex_calc_struct *uspex_calc);
-uspex_calc_struct *read_uspex_parameters(gchar *filename);
+uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies);
 void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest);
 gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc);
 

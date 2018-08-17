@@ -61,10 +61,10 @@ struct uspex_calc_gui uspex_gui;
 /* initialize gui values */
 /*************************/
 void gui_uspex_init(struct model_pak *model){
+	gint idx;
 	uspex_gui.cur_page=USPEX_PAGE_SET_I;
 	/*get atom information if not available*/
 	if(uspex_gui.calc.atomType==NULL){
-		gint idx;
 		GSList *list;
 		struct core_pak *core;
 		/*first get the _nspecies*/
@@ -94,6 +94,11 @@ void gui_uspex_init(struct model_pak *model){
 		uspex_gui.calc.valences = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
 		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
 	}
+	/*we NEED to check optional valences*/
+	if(uspex_gui.calc.valences==NULL){
+		uspex_gui.calc.valences = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
+		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
+	}
 	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
 	if(uspex_gui.calc.populationSize==0){
 		/*take a default */
@@ -105,7 +110,69 @@ void gui_uspex_init(struct model_pak *model){
 		else uspex_gui.calc.stopCrit=model->num_atoms;
 	}
 	if(uspex_gui.calc.keepBestHM==0) uspex_gui.calc.keepBestHM=(gint)(0.15*(uspex_gui.calc.populationSize));
-
+	if(uspex_gui.calc.symmetries==NULL){
+		switch(uspex_gui.calc._calctype_dim){
+		case 0:
+			uspex_gui.calc.symmetries=g_strdup("E C2 D2 C4 C3 C6 T S2 Ch1 Cv2 S4 S6 Ch3 Th Ch2 Ch4 D3 Ch6 O D4 Cv3 D6 Td Cv4 Dd3 Cv6 Oh C5 S5 S10 Cv5 Ch5 D5 Dd5 Dh5 I Ih");
+			break;
+		case 1:
+			uspex_gui.calc.symmetries=g_strdup("");
+			break;
+		case 2:
+			uspex_gui.calc.symmetries=g_strdup("2-17");
+			break;
+		case 3:
+		default:
+			uspex_gui.calc.symmetries=g_strdup("2-230");
+		}
+	}
+	if((uspex_gui.calc.fracPerm==0)&&(uspex_gui.calc._nspecies>1)) uspex_gui.calc.fracPerm=0.1;
+	if((uspex_gui.calc.fracRotMut==0)&&(uspex_gui.calc._calctype_mol)) uspex_gui.calc.fracRotMut=0.1;
+	if((uspex_gui.calc.fracLatMut==0)&&(uspex_gui.calc.optRelaxType!=1)) uspex_gui.calc.fracLatMut=0.1;
+	if((uspex_gui.calc.howManySwaps==0)&&(uspex_gui.calc._nspecies>1)){
+		if(uspex_gui.calc.specificSwaps==NULL){
+			gint i,j;
+			for(i=0;i<(uspex_gui.calc._nspecies-1);i++)
+				for(j=i+1;j<uspex_gui.calc._nspecies;j++)
+					uspex_gui.calc.howManySwaps+=MIN(uspex_gui.calc.numSpecies[i],uspex_gui.calc.numSpecies[j]);
+			uspex_gui.calc.howManySwaps*=0.5;
+		}else{
+			/*we need to count over only possible swaps*/
+			gint i,j;
+			gint n_swaps;
+			gint *specificSwaps;
+			gchar *ptr,*ptr2;
+			/*populate specificSwaps*/
+			/*1-count*/
+			ptr=uspex_gui.calc.specificSwaps;n_swaps=0;
+			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+			ptr2=ptr;
+			do{
+				j=g_ascii_strtod(ptr,&ptr2);
+				if(ptr2==ptr) break;
+				n_swaps++;
+				ptr=ptr2;
+			}while(1);
+			/*2-populate specificSwaps*/
+			specificSwaps = g_malloc(n_swaps*sizeof(gint));
+			ptr=uspex_gui.calc.specificSwaps;i=0;
+			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+			ptr2=ptr;
+			do{
+				j=g_ascii_strtod(ptr,&ptr2);
+				if(ptr2==ptr) break;
+				/*reg j*/
+				specificSwaps[i] = j;
+				ptr=ptr2;
+				i++;
+			}while(1);
+			for(i=0;i<n_swaps-1;i++)
+				for(j=i+1;j<n_swaps;j++)
+					uspex_gui.calc.howManySwaps+=MIN(uspex_gui.calc.numSpecies[i],uspex_gui.calc.numSpecies[j]);
+			uspex_gui.calc.howManySwaps*=0.5;
+			g_free(specificSwaps);
+		}
+	}
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -139,6 +206,9 @@ if((uspex_gui.calc.goodBonds!=NULL)&&(uspex_gui.auto_bonds)){
 	GUI_COMBOBOX_ADD(uspex_gui.goodBonds,"ADD GOODBOND");
 
 }
+/*************************/
+/* Refresh SV parameters */
+/*************************/
 /************************************************************/
 /* Load calculation setting from an included Parameters.txt */
 /************************************************************/
@@ -157,7 +227,7 @@ void load_parameters_dialog(void){
 			text=g_strdup_printf("%s",filename);
 			GUI_ENTRY_TEXT(uspex_gui.file_entry,text);
 			g_free(text);
-			test_calc = read_uspex_parameters(filename);
+			test_calc = read_uspex_parameters(filename,uspex_gui.calc._nspecies);
 			if(test_calc != NULL) {
 				/*unable to open Parameters.txt*/
 			}else{
@@ -695,7 +765,40 @@ void remove_bonds(){
 	GUI_COMBOBOX_SET(uspex_gui.goodBonds,index-1);
 	g_free(text);
 }
-
+/******************/
+/* toggle auto_SV */
+/******************/
+void toggle_auto_SV(void){
+	if(uspex_gui.auto_SV){
+		GUI_LOCK(uspex_gui.symmetries);
+		GUI_LOCK(uspex_gui.fracGene);
+		GUI_LOCK(uspex_gui.fracRand);
+		GUI_LOCK(uspex_gui.fracPerm);
+		GUI_LOCK(uspex_gui.fracAtomsMut);
+		GUI_LOCK(uspex_gui.fracRotMut);
+		GUI_LOCK(uspex_gui.fracLatMut);
+		GUI_LOCK(uspex_gui.howManySwaps);
+		GUI_LOCK(uspex_gui.specificSwaps);
+		GUI_LOCK(uspex_gui.mutationDegree);
+		GUI_LOCK(uspex_gui.mutationRate);
+		GUI_LOCK(uspex_gui.DisplaceInLatmutation);
+		GUI_LOCK(uspex_gui.AutoFrac);
+	}else{
+		GUI_UNLOCK(uspex_gui.symmetries);
+		GUI_UNLOCK(uspex_gui.fracGene);
+		GUI_UNLOCK(uspex_gui.fracRand);
+		GUI_UNLOCK(uspex_gui.fracPerm);
+		GUI_UNLOCK(uspex_gui.fracAtomsMut);
+		GUI_UNLOCK(uspex_gui.fracRotMut);
+		GUI_UNLOCK(uspex_gui.fracLatMut);
+		GUI_UNLOCK(uspex_gui.howManySwaps);
+		GUI_UNLOCK(uspex_gui.specificSwaps);
+		GUI_UNLOCK(uspex_gui.mutationDegree);
+		GUI_UNLOCK(uspex_gui.mutationRate);
+		GUI_UNLOCK(uspex_gui.DisplaceInLatmutation);
+		GUI_UNLOCK(uspex_gui.AutoFrac);
+	}
+}
 
 
 /************************/
@@ -881,7 +984,10 @@ void gui_uspex_dialog(void){
 		uspex_calc_struct *uspex_calc;
 		/*take GUI default from the opened USPEX output*/
 		free_uspex_parameters(&(uspex_gui.calc));
-		uspex_calc = read_uspex_parameters(_UO.calc->filename);
+		/*be careful to read Parameters.txt, specifically*/
+		title = g_strdup_printf("%s%s",_UO.calc->path,"Parameters.txt");
+		uspex_calc = read_uspex_parameters(title,data->num_species);
+		g_free(title);
 		if(uspex_calc){
 			uspex_gui.have_output=TRUE;
 			copy_uspex_parameters(uspex_calc,&(uspex_gui.calc));
@@ -915,7 +1021,7 @@ GUI_TOOLTIP(uspex_gui.name,"The model name will be used in USPEX files\nas well 
 	GUI_LABEL_BOX(hbox,label,"CONNECTED OUTPUT");
 if(uspex_gui.have_output){
 	uspex_output_struct *uspex_output=data->uspex;
-	tmp=g_strdup_printf("%s",_UO.calc->filename);
+	tmp=g_strdup_printf("%s%s",_UO.calc->path,"Parameters.txt");
 	GUI_TEXT_ENTRY(hbox,uspex_gui.file_entry,tmp,TRUE);
 	g_free(tmp);
 }else{
@@ -1023,7 +1129,7 @@ GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardnes
 	GUI_LOCK(uspex_gui._atom_typ);
 	populate_atomType();
 	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,atomType_selected);
-	GUI_SPIN_SET(uspex_gui._calctype_dim,3.);
+	GUI_SPIN_SET(uspex_gui._calctype_dim,(gdouble) uspex_gui.calc._calctype_dim);
 	mol_toggle();
 	var_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
@@ -1037,7 +1143,7 @@ GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardnes
 	GUI_ENTRY_TABLE(table,uspex_gui.populationSize,uspex_gui.calc.populationSize,"%4i","SIZE:",0,1,0,1);
 GUI_TOOLTIP(uspex_gui.populationSize,"populationSize: Ch. 4.2 DEFAULT: auto\nNumber of structures in each generation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.initialPopSize,uspex_gui.calc.initialPopSize,"%4i","INIT_SZ:",1,2,0,1);
-GUI_TOOLTIP(uspex_gui.populationSize,"initialPopSize: Ch. 4.2 DEFAULT: populationSize\nNumber of structures in initial generation.");
+GUI_TOOLTIP(uspex_gui.initialPopSize,"initialPopSize: Ch. 4.2 DEFAULT: populationSize\nNumber of structures in initial generation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.numGenerations,uspex_gui.calc.numGenerations,"%4i","N_GENE:",2,3,0,1);
 GUI_TOOLTIP(uspex_gui.numGenerations,"numGenerations: Ch. 4.2 DEFAULT: 100\nMaximum number of generations.");
 	GUI_ENTRY_TABLE(table,uspex_gui.stopCrit,uspex_gui.calc.stopCrit,"%4i","STOP_CRIT:",3,4,0,1);
@@ -1049,12 +1155,63 @@ GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number 
         GUI_TABLE_FRAME(frame,table,4,1);
 /* 1st line */
 	GUI_ENTRY_TABLE(table,uspex_gui.bestFrac,uspex_gui.calc.bestFrac,"%.5f","BestFrac:",0,1,0,1);
-GUI_TOOLTIP(uspex_gui.bestFrac,"populationSize: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
+GUI_TOOLTIP(uspex_gui.bestFrac,"bestFrac: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
 	GUI_ENTRY_TABLE(table,uspex_gui.keepBestHM,uspex_gui.calc.keepBestHM,"%3i","keepBestHM:",1,2,0,1);
 GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.calc.reoptOld,NULL,"reoptOld",2,3,0,1);/*not calling anything*/
 GUI_TOOLTIP(button,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
 /* --- end frame */
+/* --- Structure & Variation */
+        GUI_FRAME_NOTE(page,frame,"Structure & Variation");
+/* create a table in the frame*/
+        GUI_TABLE_FRAME(frame,table,5,3);
+/* 1st line */
+	GUI_TEXT_TABLE(table,uspex_gui.symmetries,uspex_gui.calc.symmetries,"symmetries: ",0,2,0,1);
+GUI_TOOLTIP(uspex_gui.symmetries,"symmetries: Ch. 4.4 DEFAULT: auto\nPossible space group for crystals,\nplane group for 2D crystals/surface\nor point group for clusters.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracGene,uspex_gui.calc.fracGene,"%.4f","fracGene:",2,3,0,1);
+GUI_TOOLTIP(uspex_gui.fracGene,"fracGene: Ch. 4.4 DEFAULT: 0.5\nRatio of structures obtained by heredity.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracRand,uspex_gui.calc.fracRand,"%.4f","fracRand:",3,4,0,1);
+GUI_TOOLTIP(uspex_gui.fracRand,"fracRand: Ch. 4.4 DEFAULT: 0.2\nRatio of structures obtained randomly.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracPerm,uspex_gui.calc.fracPerm,"%.4f","fracPerm:",4,5,0,1);
+GUI_TOOLTIP(uspex_gui.fracPerm,"fracPerm: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by permutation.");
+/* 2nd line */
+	GUI_ENTRY_TABLE(table,uspex_gui.fracAtomsMut,uspex_gui.calc.fracAtomsMut,"%.4f","fracAtomsMut:",0,1,1,2);
+GUI_TOOLTIP(uspex_gui.fracAtomsMut,"fracAtomsMut: Ch. 4.4 DEFAULT: 0.1\nRatio of structures obtained by softmutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracRotMut,uspex_gui.calc.fracRotMut,"%.4f","fracRotMut:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui.fracRotMut,"fracRotMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by mutation of molecular orientation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracLatMut,uspex_gui.calc.fracLatMut,"%.4f","fracLatMut:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui.fracLatMut,"fracLatMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by lattice mutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.howManySwaps,uspex_gui.calc.howManySwaps,"%3i","N_SWAPS:",3,4,1,2);
+GUI_TOOLTIP(uspex_gui.howManySwaps,"howManySwaps: Ch. 4.4 DEFAULT: auto\nNumber of pairwise swaps for permutation\ndistributed uniformly between [1,howManySwaps].");
+	GUI_TEXT_TABLE(table,uspex_gui.specificSwaps,uspex_gui.calc.specificSwaps,"SWAPS: ",4,5,1,2);
+GUI_TOOLTIP(uspex_gui.specificSwaps,"specificSwaps: Ch. 4.4 DEFAULT: blank\nWich atoms are allow to swap during permutation.");
+/* 3rd line */
+	GUI_ENTRY_TABLE(table,uspex_gui.mutationDegree,uspex_gui.calc.mutationDegree,"%.4f","mutationDegree:",0,1,2,3);
+GUI_TOOLTIP(uspex_gui.mutationDegree,"mutationDegree: Ch. 4.4 DEFAULT: auto\nMaximum displacement in softmutation (Ang).");
+	GUI_ENTRY_TABLE(table,uspex_gui.mutationRate,uspex_gui.calc.mutationRate,"%.4f","mutationRate:",1,2,2,3);
+GUI_TOOLTIP(uspex_gui.mutationRate,"mutationRate: Ch. 4.4 DEFAULT: 0.5\nStd. dev. of epsilon in strain matrix for lattice mutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.DisplaceInLatmutation,uspex_gui.calc.DisplaceInLatmutation,"%.4f","D_LATMUT:",2,3,2,3);
+GUI_TOOLTIP(uspex_gui.DisplaceInLatmutation,"DisplaceInLatmutation: Ch. 4.4 DEFAULT: 1.0\nSets softmutation as part of lattice mutation\nand gives maximum displacement (Ang).");
+	GUI_CHECK_TABLE(table,uspex_gui.AutoFrac,uspex_gui.calc.AutoFrac,NULL,"AutoFrac",3,4,2,3);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.AutoFrac,"AutoFrac: Ch. 4.4 DEFAULT: FALSE\nIf set variation parameters will be optimized during run.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_SV,toggle_auto_SV,"AUTO_SV",4,5,2,3);/*TODO: autoSV*/
+GUI_TOOLTIP(button,"AUTO_SV: use automatic values for all Structure and Variation Parameters.");
+/* initialize */
+	toggle_auto_SV();
+/* --- end frame */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

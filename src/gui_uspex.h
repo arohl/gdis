@@ -84,6 +84,21 @@ struct uspex_calc_gui{
 	GUI_OBJ *bestFrac;
 	GUI_OBJ *keepBestHM;
 	GUI_OBJ *reoptOld;
+/*4.4 Structure generation and variation operators*/
+	GUI_OBJ *symmetries;
+	GUI_OBJ *fracGene;
+	GUI_OBJ *fracRand;
+	GUI_OBJ *fracPerm;
+	GUI_OBJ *fracAtomsMut;
+	GUI_OBJ *fracRotMut;
+	GUI_OBJ *fracLatMut;
+	GUI_OBJ *howManySwaps;
+	GUI_OBJ *specificSwaps;
+	GUI_OBJ *mutationDegree;
+	GUI_OBJ *mutationRate;
+	GUI_OBJ *DisplaceInLatmutation;
+	GUI_OBJ *AutoFrac;
+	gboolean auto_SV;
 
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;
