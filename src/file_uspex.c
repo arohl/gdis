@@ -110,6 +110,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.MolCenters=NULL;
 	_UC.Latticevalues=NULL;
 	_UC.splitInto=NULL;
+	_UC._num_opt_steps=0;
 	_UC.abinitioCode=NULL;
 	_UC.KresolStart=NULL;
 	_UC.vacuumSize=NULL;
@@ -181,6 +182,8 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 void free_uspex_parameters(uspex_calc_struct *uspex_calc){
 	/*free the sub-structures, and set it back to init*/
 	g_free(_UC.name);
+	g_free(_UC.path);
+	g_free(_UC.filename);
 	g_free(_UC.atomType);
 	g_free(_UC.numSpecies);
 	g_free(_UC.valences);
