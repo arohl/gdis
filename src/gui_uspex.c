@@ -173,6 +173,10 @@ void gui_uspex_init(struct model_pak *model){
 			g_free(specificSwaps);
 		}
 	}
+	if(uspex_gui.calc.IonDistances==NULL){
+		uspex_gui.calc.IonDistances = g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
+		for(idx=0;idx<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;idx++) uspex_gui.calc.IonDistances[idx]=0.;/*no default*/
+	}
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -192,12 +196,15 @@ void populate_atomType(void){
 	}
 /*only update goodBonds if needed*/
 if((uspex_gui.calc.goodBonds!=NULL)&&(uspex_gui.auto_bonds)){
+	gchar *tmp;
 	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		line=g_strdup("");
+		tmp=g_strdup("");
+		line=tmp;
 		for(jdx=0;jdx<uspex_gui.calc._nspecies;jdx++){
-			line=g_strdup_printf("%s %5f",line,uspex_gui.calc.goodBonds[jdx+idx*uspex_gui.calc._nspecies]);
+			line=g_strdup_printf("%s %5f",tmp,uspex_gui.calc.goodBonds[jdx+idx*uspex_gui.calc._nspecies]);
+			g_free(tmp);tmp=line;
 		}
-		line=g_strdup_printf("%s\n",line);
+//		line=g_strdup_printf("%s\n",line);/* <- \n not needed*/
 		GUI_COMBOBOX_ADD(uspex_gui.goodBonds,line);
 	}
 }
@@ -264,9 +271,9 @@ void load_uspex_exe_dialog(void){
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
-/*****************************************/
+/******************************************/
 /* point to the path to run the USPEX job */
-/*****************************************/
+/******************************************/
 void uspex_path_dialog(void){
 	GUI_OBJ *file_chooser;
 	gint have_answer;
@@ -799,6 +806,407 @@ void toggle_auto_SV(void){
 		GUI_UNLOCK(uspex_gui.AutoFrac);
 	}
 }
+/**************************************/
+/* Apply changes to IonDistances line */
+/**************************************/
+void apply_distances(void){
+	gint index;
+	gchar *ptr,*ptr2;
+	gint i;
+	gint ndistval;
+	gdouble *distval=NULL;
+	gdouble *tmp=NULL;
+	gdouble dist;
+	/**/
+	GUI_COMBOBOX_GET(uspex_gui.IonDistances,index);
+	GUI_ENTRY_GET_TEXT(uspex_gui._distances,uspex_gui._tmp_distances);
+	/*get the number of distance values*/
+	ptr=&(uspex_gui._tmp_distances[0]);
+	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
+	ptr2=ptr;ndistval=0;
+	do{
+		dist=g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		ndistval++;
+		/*update array*/
+		tmp = g_malloc(ndistval*sizeof(gdouble));
+		if(distval){
+			for(i=0;i<ndistval-1;i++) tmp[i]=distval[i];
+			g_free(distval);
+		}
+		tmp[ndistval-1]=dist;
+		distval=tmp;
+		ptr=ptr2;
+	}while(1);
+	/*now prepare a *valid* update for IonDistances line*/
+	if(ndistval>=uspex_gui.calc._nspecies){
+		/*use only nspecies values*/
+		ptr2=g_strdup_printf("%4f",distval[0]);
+		ptr=ptr2;
+		for(i=1;i<uspex_gui.calc._nspecies;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,distval[i]);
+			g_free(ptr2);ptr2=ptr;
+		}
+	}else{
+		/*use first ndistval values, pad with zero*/
+		ptr2=g_strdup_printf("%4f",distval[0]);
+		ptr=ptr2;
+		for(i=1;i<ndistval;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,distval[i]);
+			g_free(ptr2);ptr2=ptr;
+		}
+		for(i=ndistval;i<uspex_gui.calc._nspecies;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,0.);
+			g_free(ptr2);ptr2=ptr;
+		}
+	}
+	g_free(distval);
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.IonDistances,index,ptr);
+	GUI_COMBOBOX_DEL(uspex_gui.IonDistances,index+1);
+	GUI_COMBOBOX_SET(uspex_gui.IonDistances,index);
+	g_free(ptr);
+}
+/************************************/
+/* Apply changes to MolCenters line */
+/************************************/
+void apply_centers(void){
+	gint index;
+	gchar *ptr,*ptr2;
+	gint i;
+	gint nmolval;
+	gdouble *molval=NULL;
+	gdouble *tmp=NULL;
+	gdouble val;
+	/**/
+	if(uspex_gui.calc._nmolecules==0) return;
+	GUI_COMBOBOX_GET(uspex_gui.MolCenters,index);
+	GUI_ENTRY_GET_TEXT(uspex_gui._centers,uspex_gui._tmp_centers);
+	/*get the number of molecular distance values*/
+	ptr=&(uspex_gui._tmp_centers[0]);
+	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
+	ptr2=ptr;nmolval=0;
+	do{
+		val=g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		nmolval++;
+		/*update array*/
+		tmp = g_malloc(nmolval*sizeof(gdouble));
+		if(molval){
+			for(i=0;i<nmolval-1;i++) tmp[i]=molval[i];
+			g_free(molval);
+		}
+		tmp[nmolval-1]=val;
+		molval=tmp;
+		ptr=ptr2;
+	}while(1);
+	/*now prepare a *valid* update for MolCenters line*/
+	if(nmolval>=uspex_gui.calc._nmolecules){
+		/*use only nmolecules values*/
+		ptr2=g_strdup_printf("%4f",molval[0]);
+		ptr=ptr2;
+		for(i=1;i<uspex_gui.calc._nmolecules;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,molval[i]);
+			g_free(ptr2);ptr2=ptr;
+		}
+	}else{
+		/*use first nmolval values, pad with zero*/
+		ptr2=g_strdup_printf("%4f",molval[0]);
+		ptr=ptr2;
+		for(i=1;i<nmolval;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,molval[i]);
+			g_free(ptr2);ptr2=ptr;
+		}
+		for(i=nmolval;i<uspex_gui.calc._nmolecules;i++){
+			ptr=g_strdup_printf("%s %4f",ptr2,0.);
+			g_free(ptr2);ptr2=ptr;
+		}
+	}
+	g_free(molval);
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.MolCenters,index,ptr);
+	GUI_COMBOBOX_DEL(uspex_gui.MolCenters,index+1);
+	GUI_COMBOBOX_SET(uspex_gui.MolCenters,index);
+	g_free(ptr);
+}
+/*********************/
+/* toggle auto_C_ion */
+/*********************/
+void toggle_auto_C_ion(void){
+	gint i,j;
+	gchar *text;
+	gchar *tamp;
+	if(uspex_gui.auto_C_ion){
+		/*automatic*/
+		GUI_LOCK(uspex_gui.IonDistances);
+		GUI_LOCK(uspex_gui._distances);
+	}else{
+		/*manual*/
+		GUI_UNLOCK(uspex_gui.IonDistances);
+		GUI_UNLOCK(uspex_gui._distances);
+		/*wipe IonDistances, rewrite*/
+		GUI_COMBOBOX_WIPE(uspex_gui.IonDistances);
+		for(i=0;i<uspex_gui.calc._nspecies;i++){
+			tamp=g_strdup_printf("%4f",uspex_gui.calc.IonDistances[i*uspex_gui.calc._nspecies]);
+			text=tamp;
+			for(j=1;j<uspex_gui.calc._nspecies;j++) {
+				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.IonDistances[j+i*uspex_gui.calc._nspecies]);
+				g_free(tamp);
+				tamp=text;
+			}
+			GUI_COMBOBOX_ADD(uspex_gui.IonDistances,text);
+			g_free(text);
+		}
+		GUI_COMBOBOX_SET(uspex_gui.IonDistances,0);
+	}
+}
+/*********************/
+/* toggle auto_C_mol */
+/*********************/
+void toggle_auto_C_lat(void){
+	if(uspex_gui.auto_C_lat){
+		GUI_LOCK(uspex_gui.minVectorLength);
+	}else{
+		GUI_UNLOCK(uspex_gui.minVectorLength);
+	}
+}
+/*********************************/
+/* Refresh the Constraints frame */
+/*********************************/
+void refresh_constraints(void){
+	gint i,j;
+	gchar *text;
+	gchar *tamp;
+	if(uspex_gui.calc._nmolecules>0){
+		/*refresh MolCenters*/
+		GUI_UNLOCK(uspex_gui.MolCenters);
+		GUI_UNLOCK(uspex_gui._centers);
+		/*wipe MolCenters, rewrite*/
+		GUI_COMBOBOX_WIPE(uspex_gui.MolCenters);
+		for(i=0;i<uspex_gui.calc._nmolecules;i++){
+			tamp=g_strdup_printf("%4f",uspex_gui.calc.MolCenters[i*uspex_gui.calc._nmolecules]);
+			text=tamp;
+			for(j=1;j<uspex_gui.calc._nmolecules;j++) {
+				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.MolCenters[j+i*uspex_gui.calc._nmolecules]);
+				g_free(tamp);
+				tamp=text;
+			}
+			GUI_COMBOBOX_ADD(uspex_gui.MolCenters,text);
+			g_free(text);
+		}
+		GUI_COMBOBOX_SET(uspex_gui.MolCenters,0);
+	}else{
+		GUI_LOCK(uspex_gui.MolCenters);
+		GUI_LOCK(uspex_gui._centers);
+	}
+	
+}
+/**************************/
+/* Selecting IonDistances */
+/**************************/
+void uspex_IonDistances_selected(GUI_OBJ *w){
+	gchar *text;
+	GUI_COMBOBOX_GET_TEXT(w,text);
+	GUI_ENTRY_TEXT(uspex_gui._distances,text);
+	g_free(text);
+}
+/************************/
+/* Selecting MolCenters */
+/************************/
+void uspex_MolCenters_selected(GUI_OBJ *w){
+	gchar *text;
+	GUI_COMBOBOX_GET_TEXT(w,text);
+	GUI_ENTRY_TEXT(uspex_gui._centers,text);
+	g_free(text);
+}
+/***************************************/
+/* Apply changes to Lattivevalues line */
+/***************************************/
+void apply_latticevalue(void){
+	gint index;
+	gchar *ptr,*ptr2;
+	gint i,format;
+	gint nlval=0;
+	gdouble *lval=NULL;
+	gdouble *tmp=NULL;
+	gdouble val;
+	GUI_COMBOBOX_GET(uspex_gui.Latticevalues,index);
+	GUI_ENTRY_GET_TEXT(uspex_gui._latticevalue,uspex_gui._tmp_latticevalue);
+	/*get the number of lattice values*/
+	ptr=&(uspex_gui._tmp_latticevalue[0]);
+	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
+	ptr2=ptr;nlval=0;
+	do{
+		val=g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		nlval++;
+		/*update array*/
+		tmp = g_malloc(nlval*sizeof(gdouble));
+		if(lval){
+			for(i=0;i<nlval-1;i++) tmp[i]=lval[i];
+			g_free(lval);
+		}
+		tmp[nlval-1]=val;
+		lval=tmp;
+		ptr=ptr2;
+	}while(1);
+	/*now prepare a *valid* update for Latticevalues line*/
+	if(nlval<1) return;/*invalid line*/
+	GUI_COMBOBOX_GET(uspex_gui._latticeformat,format);
+	switch(format){
+		case 1://lattice parameters
+			switch(nlval){
+			case 1:
+				ptr=g_strdup_printf("%4f %4f %4f",lval[0],0.,0.);
+				break;
+			case 2:
+				ptr=g_strdup_printf("%4f %4f %4f",lval[0],lval[1],0.);
+				break;
+			case 3:
+			default://might skip bad/extra values
+				ptr=g_strdup_printf("%4f %4f %4f",lval[0],lval[1],lval[2]);
+				break;
+			}
+			break;
+		case 2://crystal definition
+			if(nlval>=6){/*drop every values over the 6th*/
+				ptr=g_strdup_printf("%4f %4f %4f %4f %4f %4f",lval[0],lval[1],lval[2],lval[3],lval[4],lval[5]);
+			}else if(nlval==4){/*special definition*/
+				 ptr=g_strdup_printf("%4f %4f %4f %4f %4f %4f",lval[0],lval[1],0.,lval[2],lval[3],0.);
+			}else{/*zero padded*/
+				ptr2=g_strdup_printf("%4f",lval[0]);
+				for(i=1;i<nlval;i++) {
+					ptr=g_strdup_printf("%s %4f",ptr2,lval[i]);
+					g_free(ptr2);ptr2=ptr;
+				}
+				for(i=nlval;i<6;i++) {
+					ptr=g_strdup_printf("%s %4f",ptr2,0.);
+					g_free(ptr2);ptr2=ptr;
+				}
+			}
+			break;
+		case 0:
+		default:
+			/*any nlval>1 is valid*/
+			ptr2=g_strdup_printf("%4f",lval[0]);
+			ptr=ptr2;
+			for(i=1;i<nlval;i++) {
+				ptr=g_strdup_printf("%s %4f",ptr2,lval[i]);
+				g_free(ptr2);ptr2=ptr;
+			}
+	}
+	g_free(lval);
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.Latticevalues,index,ptr);
+	GUI_COMBOBOX_DEL(uspex_gui.Latticevalues,index+1);
+	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,index);
+	g_free(ptr);
+}
+/********************/
+/* toggle auto_lval */
+/********************/
+void toggle_auto_lval(void){
+	if(uspex_gui.auto_lval){
+		/*automatic*/
+		GUI_LOCK(uspex_gui.Latticevalues);
+		GUI_LOCK(uspex_gui._latticevalue);
+		GUI_LOCK(uspex_gui._latticeformat);
+	}else{
+		/*manual*/
+		GUI_UNLOCK(uspex_gui.Latticevalues);
+		GUI_UNLOCK(uspex_gui._latticevalue);
+		GUI_UNLOCK(uspex_gui._latticeformat);
+	}
+}
+/***************************/
+/* Selecting latticeformat */
+/***************************/
+void uspex_latticeformat_selected(GUI_OBJ *w){
+	gint index;
+	gchar *text;
+	GUI_COMBOBOX_GET(w,index);
+	GUI_COMBOBOX_WIPE(uspex_gui.Latticevalues);/*wipe in any case*/
+	switch (index){
+	case 1://lattice parameters
+		switch (uspex_gui.calc._nlatticevalues){
+		case 1:
+			text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[0],0.,0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+			break;
+		case 2:
+			text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[2],uspex_gui.calc.Latticevalues[3],0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+			break;
+		case 3:
+			text=g_strdup_printf("%4f %4f %4f",
+				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],uspex_gui.calc.Latticevalues[2]);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);text=g_strdup_printf("%4f %4f %4f",
+				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],uspex_gui.calc.Latticevalues[5]);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);text=g_strdup_printf("%4f %4f %4f",
+				uspex_gui.calc.Latticevalues[6],uspex_gui.calc.Latticevalues[7],uspex_gui.calc.Latticevalues[8]);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+			break;
+		default:
+			/*create an null lattice*/
+			text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+			break;
+		}
+		break;
+	case 2://crystal definition
+		if(uspex_gui.calc._nlatticevalues==6){
+			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",
+				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],uspex_gui.calc.Latticevalues[2],
+				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],uspex_gui.calc.Latticevalues[5]);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+		}else if(uspex_gui.calc._nlatticevalues==4){
+			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",
+				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],0.,
+				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+		}else{
+			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",0.,0.,0.,0.,0.,0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+		}
+		break;
+	case 0:
+	default:
+		/*ie. Volume(s)*/
+		if(uspex_gui.calc._nlatticevalues==0){
+			/*there was nothing but wants to add volume*/
+			text=g_strdup_printf("%4f",0.);
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+		}else{
+			gint i;
+			gchar *tamp;
+			tamp=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			text=tamp;
+			for (i=1;i<uspex_gui.calc._nlatticevalues;i++) {
+				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.Latticevalues[i]);
+				g_free(tamp);tamp=text;
+			}
+			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+			g_free(text);
+		}
+	}
+	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,0);
+}
 
 
 /************************/
@@ -1194,11 +1602,71 @@ GUI_TOOLTIP(uspex_gui.mutationRate,"mutationRate: Ch. 4.4 DEFAULT: 0.5\nStd. dev
 GUI_TOOLTIP(uspex_gui.DisplaceInLatmutation,"DisplaceInLatmutation: Ch. 4.4 DEFAULT: 1.0\nSets softmutation as part of lattice mutation\nand gives maximum displacement (Ang).");
 	GUI_CHECK_TABLE(table,uspex_gui.AutoFrac,uspex_gui.calc.AutoFrac,NULL,"AutoFrac",3,4,2,3);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui.AutoFrac,"AutoFrac: Ch. 4.4 DEFAULT: FALSE\nIf set variation parameters will be optimized during run.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_SV,toggle_auto_SV,"AUTO_SV",4,5,2,3);/*TODO: autoSV*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_SV,toggle_auto_SV,"AUTO_SV",4,5,2,3);
 GUI_TOOLTIP(button,"AUTO_SV: use automatic values for all Structure and Variation Parameters.");
 /* initialize */
 	toggle_auto_SV();
 /* --- end frame */
+/* --- Constraints */
+	GUI_FRAME_NOTE(page,frame,"Constraints");
+/* create a table in the frame*/
+	GUI_TABLE_FRAME(frame,table,6,2);
+/* 1st line */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.IonDistances,"IonDistance:",0,1,0,1);
+GUI_TOOLTIP(uspex_gui.IonDistances,"IonDistance: Ch. 4.5 DEFAULT: auto\nTriangular matrix of the minimum allowed\ninteratomic distances.");
+	GUI_ENTRY_TABLE(table,uspex_gui.curr_distance,uspex_gui._curr_distance,"%3i","CURRENT:",1,2,0,1);
+GUI_TOOLTIP(uspex_gui.curr_distance,"Current atom");
+GUI_LOCK(uspex_gui.curr_distance);
+	GUI_TEXT_TABLE(table,uspex_gui._distances,uspex_gui._tmp_distances,"DIST: ",2,3,0,1);
+GUI_TOOLTIP(uspex_gui._distances,"distances: minimum allowed distance from the current atom to others.");
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_distances,3,4,0,1);
+	GUI_ENTRY_TABLE(table,uspex_gui.minVectorLength,uspex_gui.calc.minVectorLength,"%.4f","MIN_VECT:",4,5,0,1);
+GUI_TOOLTIP(uspex_gui.minVectorLength,"minVectorLength: Ch. 4.5 DEFAULT: auto\nMinimum length of a new lattice parameter.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_ion,toggle_auto_C_ion,"AUTO_ION",5,6,0,1);
+GUI_TOOLTIP(button,"AUTO_ION: use automatic values for ion constraints.");
+/* 2nd line */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.MolCenters,"MolCenters:",0,1,1,2);
+GUI_TOOLTIP(uspex_gui.MolCenters,"MolCenters: Ch. 4.5 DEFAULT: none\nTriangular matrix of the minimum allowed\ndistances between molecules centers.");
+	GUI_ENTRY_TABLE(table,uspex_gui.curr_center,uspex_gui._curr_center,"%3i","CURRENT:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui.curr_center,"Current molecule");
+GUI_LOCK(uspex_gui.curr_center);
+	GUI_TEXT_TABLE(table,uspex_gui._centers,uspex_gui._tmp_centers,"CENTER:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui._centers,"centers: minimum allowed distance from the current molecule center to others.");
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_centers,3,4,1,2);
+	GUI_ENTRY_TABLE(table,uspex_gui.constraint_enhancement,uspex_gui.calc.constraint_enhancement,"%i","CE:",4,5,1,2);
+GUI_TOOLTIP(uspex_gui.constraint_enhancement,"constraint_enhancement: Ch. 4.5 DEFAULT: 1\nApply CE times the IonDistance constraints.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_lat,toggle_auto_C_lat,"AUTO_LAT",5,6,1,2);
+GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for minVectorLength.");
+/* initialize */
+	GUI_COMBOBOX_SETUP(uspex_gui.IonDistances,0,uspex_IonDistances_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.MolCenters,0,uspex_MolCenters_selected);
+	refresh_constraints();
+	toggle_auto_C_ion();
+	toggle_auto_C_lat();
+/* --- end frame */
+/* --- Cell */
+        GUI_FRAME_NOTE(page,frame,"Cell");
+/* create a table in the frame*/
+        GUI_TABLE_FRAME(frame,table,5,1);
+/* 1st line */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.Latticevalues,"Latticevalues:",0,1,0,1);
+GUI_TOOLTIP(uspex_gui.Latticevalues,"Latticevalues: Ch. 4.6 DEFAULT: auto\nInitial volume of the unit cell, or known lattice parameters.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui._latticeformat,"FORMAT:",1,2,0,1);
+	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Volumes");
+	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Lattice");
+	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Crystal");
+GUI_TOOLTIP(uspex_gui._latticeformat,"FORMAT: whether Lattice values correspond to a series of\nVolumes, lattive vectors, or crystallographic definition.");
+	GUI_TEXT_TABLE(table,uspex_gui._latticevalue,uspex_gui._tmp_latticevalue,"VALUES: ",2,3,0,1);
+GUI_TOOLTIP(uspex_gui._latticevalue,"VALUES: values of the current line of Latticevalues.");
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_latticevalue,3,4,0,1);
+	GUI_TEXT_TABLE(table,uspex_gui.splitInto,uspex_gui._tmp_splitInto,"splitInto:",4,5,0,1);
+GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.5 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_lval,toggle_auto_lval,"AUTO_LVAL",5,6,0,1);
+GUI_TOOLTIP(button,"AUTO_LVAL: use automatic value for Latticevalues.");
+/* initialize */
+	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,0,uspex_latticeformat_selected);
+/* --- end frame */
+
 
 
 

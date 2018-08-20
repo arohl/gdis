@@ -1816,7 +1816,7 @@ core_delete_all(model);
 	name=g_strdup_printf("%c",'\0');
         do{
 		ptr=ptr2;
-		ix=g_ascii_strtod(ptr,&ptr2);
+		ix=(gint)g_ascii_strtod(ptr,&ptr2);
 		if(ptr2==ptr) break;
 		while(*ptr3==' ') ptr3++;
 		sym[0]=*ptr3;

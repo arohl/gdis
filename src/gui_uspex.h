@@ -99,6 +99,30 @@ struct uspex_calc_gui{
 	GUI_OBJ *DisplaceInLatmutation;
 	GUI_OBJ *AutoFrac;
 	gboolean auto_SV;
+/*4.5 Constrains*/
+	GUI_OBJ *IonDistances;
+	GUI_OBJ *_distances;
+	gchar *_tmp_distances;
+	GUI_OBJ *curr_distance;
+	gint _curr_distance;
+	GUI_OBJ *minVectorLength;
+	GUI_OBJ *MolCenters;
+	GUI_OBJ *_centers;
+	gchar *_tmp_centers;
+	GUI_OBJ *curr_center;
+	gint _curr_center;
+	GUI_OBJ *constraint_enhancement;
+	gboolean auto_C_ion;
+	gboolean auto_C_lat;
+/*4.6 Cell*/
+	GUI_OBJ *Latticevalues;
+	GUI_OBJ *_latticeformat;
+	GUI_OBJ *_latticevalue;
+	gchar *_tmp_latticevalue;
+	GUI_OBJ *splitInto;
+	gchar *_tmp_splitInto;
+	gboolean auto_lval;
+
 
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;

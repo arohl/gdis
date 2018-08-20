@@ -473,7 +473,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=g_ascii_strtod(ptr,NULL);/*user provided Z number*/
+				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=(gint)g_ascii_strtod(ptr,NULL);/*user provided Z number*/
 				else _UC.atomType[i]=elem_symbol_test(ptr);/*try user provided symbol*/
 				if((_UC.atomType[i]<=0)||(_UC.atomType[i]>MAX_ELEMENTS-1)){/*invalid Z*/
 					_UC.atomType[i]=0;/*allow it for now*/
@@ -1031,6 +1031,7 @@ fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);
 #undef __GET_CHARS
 }
 void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
+gint i;
 #define _SRC (*src)
 #define _DEST (*dest)
 #define _CP(value) _DEST.value=_SRC.value
@@ -1039,6 +1040,15 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 		if(_DEST.value!=NULL) g_free(_DEST.value);\
 		_DEST.value = g_malloc(size*sizeof(type));\
 		memcpy(_DEST.value,_SRC.value,size*sizeof(type));\
+	}else{\
+		_DEST.value=NULL;\
+	}\
+}while(0)
+#define _DBLCP(value,size) do{\
+	if((_SRC.value)!=NULL){\
+		if(_DEST.value!=NULL) g_free(_DEST.value);\
+		_DEST.value = g_malloc(size*sizeof(gdouble));\
+		for(i=0;i<size;i++) _DEST.value[i]=_SRC.value[i];\
 	}else{\
 		_DEST.value=NULL;\
 	}\
@@ -1056,7 +1066,6 @@ free_uspex_parameters(dest);
 init_uspex_parameters(dest);
 /*copy*/
 _CP(name);
-//_COPY(path,strlen(_SRC.path),gchar);
 _STRCP(filename);
 _STRCP(path);
 _CP(special);
@@ -1073,7 +1082,7 @@ _CP(_var_nspecies);
 _COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
 _CP(ExternalPressure);
 _COPY(valences,_SRC._nspecies,gint);
-_COPY(goodBonds,(_SRC._nspecies*_SRC._nspecies),gdouble);
+_DBLCP(goodBonds,_SRC._nspecies*_SRC._nspecies);
 _CP(checkMolecules);
 _CP(checkConnectivity);
 _CP(populationSize);
@@ -1083,7 +1092,6 @@ _CP(stopCrit);
 _CP(bestFrac);
 _CP(keepBestHM);
 _CP(reoptOld);
-//_COPY(symmetries,strlen(_SRC.symmetries),gchar);
 _STRCP(symmetries);
 _CP(fracGene);
 _CP(fracRand);
@@ -1092,32 +1100,30 @@ _CP(fracAtomsMut);
 _CP(fracRotMut);
 _CP(fracLatMut);
 _CP(howManySwaps);
-//_COPY(specificSwaps,strlen(_SRC.specificSwaps),gchar);
 _STRCP(specificSwaps);
 _CP(mutationDegree);
 _CP(mutationRate);
 _CP(DisplaceInLatmutation);
 _CP(AutoFrac);
 _CP(minVectorLength);
-_COPY(IonDistances,(_SRC._nspecies*_SRC._nspecies),gdouble);
+_DBLCP(IonDistances,_SRC._nspecies*_SRC._nspecies);
 _CP(constraint_enhancement);
-_COPY(MolCenters,_SRC._nmolecules,gdouble);
+_CP(_nmolecules);
+_DBLCP(MolCenters,_SRC._nmolecules);
 if(_SRC._calctype_var){
-	_COPY(Latticevalues,_SRC._nlatticevalues,gdouble);
+	_DBLCP(Latticevalues,_SRC._nlatticevalues);
 }else{
-	if(_SRC._nlatticevalues==6) _COPY(Latticevalues,6,gdouble);
-	else if(_SRC._nlatticevalues<=3) _COPY(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues,gdouble);
-	else if(_SRC._nlatticevalues==1) _COPY(Latticevalues,1,gdouble);
+	if(_SRC._nlatticevalues==6) _DBLCP(Latticevalues,6);
+	else if(_SRC._nlatticevalues<=3) _DBLCP(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues);
+	else if(_SRC._nlatticevalues==1) _DBLCP(Latticevalues,1);
 }
 _COPY(splitInto,_SRC._nsplits,gint);
 _COPY(abinitioCode,_SRC._num_opt_steps,gint);
-_COPY(KresolStart,_SRC._num_opt_steps,gdouble);
-_COPY(vacuumSize,_SRC._num_opt_steps,gdouble);
+_DBLCP(KresolStart,_SRC._num_opt_steps);
+_DBLCP(vacuumSize,_SRC._num_opt_steps);
 _CP(numParallelCalcs);
-//_COPY(commandExecutable,strlen(_SRC.commandExecutable),gchar);
 _STRCP(commandExecutable);/*unsure*/
 _CP(whichCluster);
-//_COPY(remoteFolder,strlen(_SRC.remoteFolder),gchar);
 _STRCP(remoteFolder);
 _CP(PhaseDiagram);
 _CP(RmaxFing);
@@ -1136,7 +1142,6 @@ _CP(symmetrize);
 _COPY(valenceElectr,_SRC._nspecies,gint);
 _CP(percSliceShift);
 _CP(dynamicalBestHM);
-//_COPY(softMutOnly,strlen(_SRC.softMutOnly),gchar);
 _STRCP(softMutOnly);
 _CP(maxDistHeredity);
 _CP(manyParents);
@@ -1949,7 +1954,7 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 					/*get the correct jdx number*/
 					jdx=0;/*we reset jdx to cope with 'OUT OF ORDER' poscar species, if any*/
 					while((jdx<_UC._nspecies)&&(_UC.atomType[jdx]!=elem_symbol_test(ptr))) jdx++;
-					_UO.ind[ix].atoms[jdx]=g_ascii_strtod(ptr2,NULL);
+					_UO.ind[ix].atoms[jdx]=(gint)g_ascii_strtod(ptr2,NULL);
 					_UO.ind[ix].natoms+=_UO.ind[ix].atoms[jdx];
 					ptr++;ptr2++;
 					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
@@ -1969,7 +1974,7 @@ if((_UC.calculationMethod==US_CM_USPEX)||(_UC.calculationMethod==US_CM_META)){
 				ptr2=ptr;jdx=0;
 				do{/*get the number of each species (in the Parameters.txt order)*/
 /*_VALGRIND_BUG_:			_UO.ind[ix].atoms[jdx]=g_ascii_strtod(ptr,&ptr2);*/
-					probe=g_ascii_strtod(ptr,&ptr2);
+					probe=(gint)g_ascii_strtod(ptr,&ptr2);
 					if(ptr2==ptr) break;
 					_UO.ind[ix].atoms[jdx]=probe;
 					_UO.ind[ix].natoms+=_UO.ind[ix].atoms[jdx];
@@ -2353,7 +2358,7 @@ for(species_index=0;species_index<_UC._nspecies;species_index++){
 	natoms=1;/*there is at least one atom*/
 	ptr=&(line[0]);
 	do{
-		natoms+=g_ascii_strtod(ptr,&ptr2);
+		natoms+=(gint)g_ascii_strtod(ptr,&ptr2);
 		if(ptr2==ptr) break;
 		ptr=ptr2;
 	}while(1);
