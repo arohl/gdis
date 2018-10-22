@@ -21,17 +21,17 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* USPEX Parser:
- * The reading of USPEX result file is a little different:
- * 	1/ make a graph representing all structures energy levels vs.  generation numbers
- *		-> make each point on that graph clickable so that selecting a point will
- *		   open a new model containing the corresponding structure.
- *	2/ load the optimal structures as base model.
- *		-> each optimal structure, for each generation, is represented as a frame
- *		   in this model.
- * TODO:
- * 	1/ include other data plots:
- * 		- hardness / force vs. generation
- * 	2/ calculate some other properties...
+ * supported versions VER 10.1, VER 9.4.4
+ * All structure geometries are displayed "as an animation", additionally
+ * also some graphs are produced depending on the USPEX calculation type:
+ * Graph ALL    shows all structures energies vs generation number 
+ * Graph BEST   shows the best _fitness_ structures per generation
+ * Graph PATH   shows the image energies of VCNEB/TPS optimization
+ * Graph COMP_X shows the structure energy for each X atomic ratio
+ *
+ * All graphs are selectable, ie. selecting a value represented by
+ * a square on a graph will load the structure on the main display
+ *
  * */
 
 #include <stdio.h>
@@ -73,17 +73,28 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC._calctype_dim=3;
 	_UC._calctype_mol=FALSE;
 	_UC._calctype_var=FALSE;
+	_UC._calctype_mag=FALSE;	//VER 10.1
 	_UC.optType=US_OT_ENTHALPY;
+	_UC.new_optType=NULL;		//VER 10.1
 	_UC.anti_opt=FALSE;
 	_UC._nspecies=0;
 	_UC.atomType=NULL;
 	_UC._var_nspecies=0;
 	_UC.numSpecies=NULL;
+	_UC.magRatio[0]=0.1;		//VER 10.1
+	_UC.magRatio[1]=0.225;		//VER 10.1
+	_UC.magRatio[2]=0.225;		//VER 10.1
+	_UC.magRatio[3]=0.225;		//VER 10.1
+	_UC.magRatio[4]=0.225;		//VER 10.1
+	_UC.magRatio[5]=0.0;		//VER 10.1
+	_UC.magRatio[6]=0.0;		//VER 10.1
+	_UC.ldaU=NULL;			//VER 10.1
 	_UC.ExternalPressure=0.;
 	_UC.valences=NULL;
 	_UC.goodBonds=NULL;
 	_UC.checkMolecules=TRUE;
 	_UC.checkConnectivity=FALSE;
+	_UC.fitLimit=0.;		//VER 10.1
 	_UC.populationSize=0;
 	_UC.initialPopSize=0;
 	_UC.numGenerations=100;
@@ -94,10 +105,12 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.symmetries=NULL;
 	_UC.fracGene=0.5;
 	_UC.fracRand=0.2;
+	_UC.fracTopRand=0.2;		//VER 10.1
 	_UC.fracPerm=0.;
 	_UC.fracAtomsMut=0.1;
 	_UC.fracRotMut=0.;
 	_UC.fracLatMut=0.;
+	_UC.fracSpinMut=0.1;		//VER 10.1
 	_UC.howManySwaps=0;
 	_UC.specificSwaps=NULL;
 	_UC.mutationDegree=0;
@@ -129,6 +142,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.SymTolerance=0.1;
 	_UC.repeatForStatistics=1;
 	_UC.stopFitness=0.;
+	_UC.fixRndSeed=0;		//VER 10.1
 	_UC.collectForces=FALSE;
 	_UC.ordering_active=TRUE;
 	_UC.symmetrize=FALSE;
@@ -141,6 +155,12 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.minSlice=0.;
 	_UC.maxSlice=0.;
 	_UC.numberparents=2;
+	_UC.BoltzTraP_T_max=800.0;	//VER 10.1
+	_UC.BoltzTraP_T_delta=50.0;	//VER 10.1
+	_UC.BoltzTraP_T_efcut=0.15;	//VER 10.1
+	_UC.TE_T_interest=300.0;	//VER 10.1
+	_UC.TE_threshold=0.5;		//VER 10.1
+	_UC.TE_goal=US_BT_ZT;		//VER 10.1
 	_UC.thicknessS=2.0;
 	_UC.thicknessB=3.0;
 	_UC.reconstruct=1;
@@ -178,14 +198,33 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.pickupImages=NULL;
 	_UC.FormatType=2;/*MUST BE VASP FORMAT!*/
 	_UC.PrintStep=1;
+	_UC.numIterations=1000;		//VER 10.1
+	_UC.speciesSymbol=NULL;		//VER 10.1
+	_UC.mass=NULL;			//VER 10.1
+	_UC.amplitudeShoot[0]=0.1;	//VER 10.1
+	_UC.amplitudeShoot[1]=0.1;	//VER 10.1
+	_UC.magnitudeShoot[0]=1.05;	//VER 10.1
+	_UC.magnitudeShoot[1]=1.05;	//VER 10.1
+	_UC.shiftRatio=0.1;		//VER 10.1
+	_UC.orderParaType=TRUE;		//VER 10.1 NOTE: here we select fingerprint method as default!
+	_UC.opCriteria[0]=0.;		//VER 10.1
+	_UC.opCriteria[1]=0.;		//VER 10.1
+	_UC.cmdOrderParameter=NULL;			//VER 10.1
+	_UC.cmdEnthalpyTemperature=NULL;		//VER 10.1
+	_UC.orderParameterFile=g_strdup("fp.dat");	//VER 10.1
+	_UC.enthalpyTemperatureFile=g_strdup("HT.dat");	//VER 10.1
+	_UC.trajectoryFile=g_strdup("traj.dat");	//VER 10.1
+	_UC.MDrestartFile=g_strdup("traj.restart");	//VER 10.1
 }
 void free_uspex_parameters(uspex_calc_struct *uspex_calc){
 	/*free the sub-structures, and set it back to init*/
 	g_free(_UC.name);
 	g_free(_UC.path);
 	g_free(_UC.filename);
+	g_free(_UC.new_optType);	//VER 10.1
 	g_free(_UC.atomType);
 	g_free(_UC.numSpecies);
+	g_free(_UC.ldaU);		//VER 10.1
 	g_free(_UC.valences);
 	g_free(_UC.goodBonds);
 	g_free(_UC.symmetries);
@@ -203,6 +242,14 @@ void free_uspex_parameters(uspex_calc_struct *uspex_calc){
 	g_free(_UC.softMutOnly);
 	g_free(_UC.specificTrans);
 	g_free(_UC.pickupImages);
+	g_free(_UC.speciesSymbol);		//VER 10.1
+	g_free(_UC.mass);			//VER 10.1
+	g_free(_UC.cmdOrderParameter);		//VER 10.1
+	g_free(_UC.cmdEnthalpyTemperature);	//VER 10.1
+	g_free(_UC.orderParameterFile);		//VER 10.1
+	g_free(_UC.enthalpyTemperatureFile);	//VER 10.1
+	g_free(_UC.trajectoryFile);		//VER 10.1
+	g_free(_UC.MDrestartFile);		//VER 10.1
 	init_uspex_parameters(uspex_calc);
 }
 /************************************************************************/
@@ -223,8 +270,9 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	/**/
 	uspex_calc = g_malloc(sizeof(uspex_calc_struct));
 	init_uspex_parameters(uspex_calc);
-/*some lazy defines*/
+/*this should be promoted*/
 #define __Q(a) #a
+/*some lazy defines*/
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
 	_UC.value=(k==1);\
@@ -255,54 +303,39 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	g_free(ptr);g_free(line);line = file_read_line(vf);\
 	continue;\
 }
-
+#define __COUNT_NUM(pointer,count) while(*pointer!='\0'){\
+	while((!g_ascii_isdigit(*pointer))&&(*pointer!='\0')) pointer++;\
+	if(g_ascii_isdigit(*pointer)) count++;\
+	while(g_ascii_isgraph(*pointer)&&(*pointer!='\0')) pointer++;\
+}
+#define __COUNT_ALNUM(pointer,count) while(*pointer!='\0'){\
+	while((!g_ascii_isalnum(*pointer))&&(*pointer!='\0')) pointer++;\
+	if(g_ascii_isalnum(*pointer)) count++;\
+	while(g_ascii_isgraph(*pointer)&&(*pointer!='\0')) pointer++;\
+}
 	line = file_read_line(vf);
 /* +++ 1st PASS: get important numbers*/
 	while(line){
 		if (find_in_string("atomType",line) !=NULL){
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			ptr=&(line[0]);
-			while(*ptr==' ') ptr++;
-			_UC._nspecies=1;
-			while(*ptr!='\0'){
-				if(*ptr==' ') {
-					_UC._nspecies++;ptr++;
-					while(g_ascii_isgraph(*ptr)) ptr++;
-				}else ptr++;
-			}
+			/*NEW: more safe*/
+			_UC._nspecies=1;__COUNT_ALNUM(ptr,_UC._nspecies);
 			g_free(line);line = file_read_line(vf);/*this is the EndAtomType line*/
 			g_free(line);line = file_read_line(vf);
 			continue;
 		}
-if((find_in_string("abinitioCode",line)!=NULL)||(find_in_string("KresolStart",line)!=NULL)||(find_in_string("vacuumSize",line)!=NULL)){
-			/*FIXME: there seems to be no way to get the number of optimization step (_num_opt_steps):
-			 * abinitioCode -> can be only one value
-			 * KresolStart -> can be omitted
-			 * vacuumSize -> can be less than _num_opt_steps, also can be omitted
-			 * commandExecutable -> can be less than _num_opt_steps */
+		if(find_in_string("abinitioCode",line)!=NULL){
+		/*FIXME: in order to determine _num_opt_steps, *
+		 * the number of items in abinitioCode is read *
+		 * Even though 1 or VASP is stated as default. *
+		 * ie. abinitioCode CANNOT be omited.  --ovhpa */
 			g_free(line);line = file_read_line(vf);
 			ptr=&(line[0]);
-			while(*ptr==' ') ptr++;
-			i=1;
-			while(*ptr!='\0'){
-				if(*ptr==' ') {
-					i++;ptr++;
-					while(g_ascii_isgraph(*ptr)) ptr++;
-				}else ptr++;
-			}
+			/*NEW: more safe*/
+			i=0;__COUNT_NUM(ptr,i);
 			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
 			g_free(line);line = file_read_line(vf);
-			g_free(line);line = file_read_line(vf);
-			continue;
-		}
-		if(find_in_string("commandExecutable",line) != NULL){
-			/*count the number of lines before EndExecutable, and hope it does represent _num_opt_steps*/
-			i=0;
-			while(find_in_string("EndExecutable",line) == NULL){
-				i++;
-				g_free(line);line = file_read_line(vf);
-			}
-			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
 			g_free(line);line = file_read_line(vf);
 			continue;
 		}
@@ -323,14 +356,16 @@ if((find_in_string("abinitioCode",line)!=NULL)||(find_in_string("KresolStart",li
 		}
 	}
 	rewind(vf);
-/* +++ 2nd PASS: get everything*/
+/* +++ 2nd PASS: get everything else*/
 	line = file_read_line(vf);
 	while(line){
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 #endif
 		if (find_in_string("calculationMethod",line) != NULL) {
-			c='\0';sscanf(line,"%c%*s",&(c));
+			ptr=&(line[0]);
+			while(g_ascii_isgraph(*ptr)) ptr++;/*skip blank*/
+			c=*ptr;//sscanf(line,"%c%*s",&(c));
 			switch(c){
 			case 'u':
 			case 'U':/*USPEX method*/
@@ -338,17 +373,24 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				break;
 			case 'm':
 			case 'M':
-				_UC.calculationMethod=US_CM_META;
-				break;
+				/*MINHOP is unsupported*/
+				ptr++;if((*ptr=='i')||(*ptr=='I')) _UC.calculationMethod=US_CM_UNKNOWN;
+				else _UC.calculationMethod=US_CM_META;
+				break;		//VER 10.1
 			case 'v':
 			case 'V':
 				_UC.calculationMethod=US_CM_VCNEB;
 				break;
 			case 'p':
 			case 'P':
-				/*PSO method is not supported yet*/
 				_UC.calculationMethod=US_CM_PSO;
 				break;
+			case 'T':
+			case 't':
+				_UC.calculationMethod=US_CM_TPS;
+				break;		//VER 10.1
+			case 'C':
+			case 'c'://COPEX is unsupported VER 10.1
 			default:
 				_UC.calculationMethod=US_CM_UNKNOWN;
 			}
@@ -357,6 +399,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			continue;
 		}
 		if (find_in_string("calculationType",line) != NULL) {
+			/*VER 10.1 TODO check for 's' initial character*/
 			k=0;sscanf(line,"%i%*s",&(k));
 			j=k;
 			i=((int)(j/100))%10;
@@ -1031,7 +1074,7 @@ fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);
 #undef __GET_CHARS
 }
 void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
-gint i;
+	gint i;
 #define _SRC (*src)
 #define _DEST (*dest)
 #define _CP(value) _DEST.value=_SRC.value
@@ -1061,130 +1104,130 @@ gint i;
 		_DEST.value=NULL;\
 	}\
 }while(0)
-/*1st free / init the destination*/
-free_uspex_parameters(dest);
-init_uspex_parameters(dest);
-/*copy*/
-_CP(name);
-_STRCP(filename);
-_STRCP(path);
-_CP(special);
-_CP(calculationMethod);
-_CP(calculationType);
-_CP(_calctype_dim);
-_CP(_calctype_mol);
-_CP(_calctype_var);
-_CP(optType);
-_CP(anti_opt);
-_CP(_nspecies);
-_COPY(atomType,_SRC._nspecies,gint);
-_CP(_var_nspecies);
-_COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
-_CP(ExternalPressure);
-_COPY(valences,_SRC._nspecies,gint);
-_DBLCP(goodBonds,_SRC._nspecies*_SRC._nspecies);
-_CP(checkMolecules);
-_CP(checkConnectivity);
-_CP(populationSize);
-_CP(initialPopSize);
-_CP(numGenerations);
-_CP(stopCrit);
-_CP(bestFrac);
-_CP(keepBestHM);
-_CP(reoptOld);
-_STRCP(symmetries);
-_CP(fracGene);
-_CP(fracRand);
-_CP(fracPerm);
-_CP(fracAtomsMut);
-_CP(fracRotMut);
-_CP(fracLatMut);
-_CP(howManySwaps);
-_STRCP(specificSwaps);
-_CP(mutationDegree);
-_CP(mutationRate);
-_CP(DisplaceInLatmutation);
-_CP(AutoFrac);
-_CP(minVectorLength);
-_DBLCP(IonDistances,_SRC._nspecies*_SRC._nspecies);
-_CP(constraint_enhancement);
-_CP(_nmolecules);
-_DBLCP(MolCenters,_SRC._nmolecules);
-if(_SRC._calctype_var){
-	_DBLCP(Latticevalues,_SRC._nlatticevalues);
-}else{
-	if(_SRC._nlatticevalues==6) _DBLCP(Latticevalues,6);
-	else if(_SRC._nlatticevalues<=3) _DBLCP(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues);
-	else if(_SRC._nlatticevalues==1) _DBLCP(Latticevalues,1);
-}
-_COPY(splitInto,_SRC._nsplits,gint);
-_COPY(abinitioCode,_SRC._num_opt_steps,gint);
-_DBLCP(KresolStart,_SRC._num_opt_steps);
-_DBLCP(vacuumSize,_SRC._num_opt_steps);
-_CP(numParallelCalcs);
-_STRCP(commandExecutable);/*unsure*/
-_CP(whichCluster);
-_STRCP(remoteFolder);
-_CP(PhaseDiagram);
-_CP(RmaxFing);
-_CP(deltaFing);
-_CP(sigmaFing);
-_CP(antiSeedsActivation);
-_CP(antiSeedsMax);
-_CP(antiSeedsSigma);
-_CP(doSpaceGroup);
-_CP(SymTolerance);
-_CP(repeatForStatistics);
-_CP(stopFitness);
-_CP(collectForces);
-_CP(ordering_active);
-_CP(symmetrize);
-_COPY(valenceElectr,_SRC._nspecies,gint);
-_CP(percSliceShift);
-_CP(dynamicalBestHM);
-_STRCP(softMutOnly);
-_CP(maxDistHeredity);
-_CP(manyParents);
-_CP(minSlice);
-_CP(maxSlice);
-_CP(numberparents);
-_CP(thicknessS);
-_CP(thicknessB);
-_CP(reconstruct);
-_CP(firstGeneMax);
-_CP(minAt);
-_CP(maxAt);
-_CP(fracTrans);
-_CP(howManyTrans);
-_COPY(specificTrans,_SRC._nspetrans,gint);
-_CP(GaussianWidth);
-_CP(GaussianHeight);
-_CP(FullRelax);
-_CP(maxVectorLength);
-_CP(PSO_softMut);
-_CP(PSO_BestStruc);
-_CP(PSO_BestEver);
-_CP(vcnebType);
-_CP(_vcnebtype_method);
-_CP(_vcnebtype_img_num);
-_CP(_vcnebtype_spring);
-_CP(numImages);
-_CP(numSteps);
-_CP(optReadImages);
-_CP(optimizerType);
-_CP(optRelaxType);
-_CP(dt);
-_CP(ConvThreshold);
-_CP(VarPathLength);
-_CP(K_min);
-_CP(K_max);
-_CP(Kconstant);
-_CP(optFreezing);
-_CP(optMethodCIDI);
-_CP(startCIDIStep);
-_COPY(pickupImages,_SRC._npickimg,gint);
-_CP(FormatType);
-_CP(PrintStep);
+	/*1st free / init the destination*/
+	free_uspex_parameters(dest);
+	init_uspex_parameters(dest);
+	/*copy*/
+	_CP(name);
+	_STRCP(filename);
+	_STRCP(path);
+	_CP(special);
+	_CP(calculationMethod);
+	_CP(calculationType);
+	_CP(_calctype_dim);
+	_CP(_calctype_mol);
+	_CP(_calctype_var);
+	_CP(optType);
+	_CP(anti_opt);
+	_CP(_nspecies);
+	_COPY(atomType,_SRC._nspecies,gint);
+	_CP(_var_nspecies);
+	_COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
+	_CP(ExternalPressure);
+	_COPY(valences,_SRC._nspecies,gint);
+	_DBLCP(goodBonds,_SRC._nspecies*_SRC._nspecies);
+	_CP(checkMolecules);
+	_CP(checkConnectivity);
+	_CP(populationSize);
+	_CP(initialPopSize);
+	_CP(numGenerations);
+	_CP(stopCrit);
+	_CP(bestFrac);
+	_CP(keepBestHM);
+	_CP(reoptOld);
+	_STRCP(symmetries);
+	_CP(fracGene);
+	_CP(fracRand);
+	_CP(fracPerm);
+	_CP(fracAtomsMut);
+	_CP(fracRotMut);
+	_CP(fracLatMut);
+	_CP(howManySwaps);
+	_STRCP(specificSwaps);
+	_CP(mutationDegree);
+	_CP(mutationRate);
+	_CP(DisplaceInLatmutation);
+	_CP(AutoFrac);
+	_CP(minVectorLength);
+	_DBLCP(IonDistances,_SRC._nspecies*_SRC._nspecies);
+	_CP(constraint_enhancement);
+	_CP(_nmolecules);
+	_DBLCP(MolCenters,_SRC._nmolecules);
+	if(_SRC._calctype_var){
+		_DBLCP(Latticevalues,_SRC._nlatticevalues);
+	}else{
+		if(_SRC._nlatticevalues==6) _DBLCP(Latticevalues,6);
+		else if(_SRC._nlatticevalues<=3) _DBLCP(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues);
+		else if(_SRC._nlatticevalues==1) _DBLCP(Latticevalues,1);
+	}
+	_COPY(splitInto,_SRC._nsplits,gint);
+	_COPY(abinitioCode,_SRC._num_opt_steps,gint);
+	_DBLCP(KresolStart,_SRC._num_opt_steps);
+	_DBLCP(vacuumSize,_SRC._num_opt_steps);
+	_CP(numParallelCalcs);
+	_STRCP(commandExecutable);/*unsure*/
+	_CP(whichCluster);
+	_STRCP(remoteFolder);
+	_CP(PhaseDiagram);
+	_CP(RmaxFing);
+	_CP(deltaFing);
+	_CP(sigmaFing);
+	_CP(antiSeedsActivation);
+	_CP(antiSeedsMax);
+	_CP(antiSeedsSigma);
+	_CP(doSpaceGroup);
+	_CP(SymTolerance);
+	_CP(repeatForStatistics);
+	_CP(stopFitness);
+	_CP(collectForces);
+	_CP(ordering_active);
+	_CP(symmetrize);
+	_COPY(valenceElectr,_SRC._nspecies,gint);
+	_CP(percSliceShift);
+	_CP(dynamicalBestHM);
+	_STRCP(softMutOnly);
+	_CP(maxDistHeredity);
+	_CP(manyParents);
+	_CP(minSlice);
+	_CP(maxSlice);
+	_CP(numberparents);
+	_CP(thicknessS);
+	_CP(thicknessB);
+	_CP(reconstruct);
+	_CP(firstGeneMax);
+	_CP(minAt);
+	_CP(maxAt);
+	_CP(fracTrans);
+	_CP(howManyTrans);
+	_COPY(specificTrans,_SRC._nspetrans,gint);
+	_CP(GaussianWidth);
+	_CP(GaussianHeight);
+	_CP(FullRelax);
+	_CP(maxVectorLength);
+	_CP(PSO_softMut);
+	_CP(PSO_BestStruc);
+	_CP(PSO_BestEver);
+	_CP(vcnebType);
+	_CP(_vcnebtype_method);
+	_CP(_vcnebtype_img_num);
+	_CP(_vcnebtype_spring);
+	_CP(numImages);
+	_CP(numSteps);
+	_CP(optReadImages);
+	_CP(optimizerType);
+	_CP(optRelaxType);
+	_CP(dt);
+	_CP(ConvThreshold);
+	_CP(VarPathLength);
+	_CP(K_min);
+	_CP(K_max);
+	_CP(Kconstant);
+	_CP(optFreezing);
+	_CP(optMethodCIDI);
+	_CP(startCIDIStep);
+	_COPY(pickupImages,_SRC._npickimg,gint);
+	_CP(FormatType);
+	_CP(PrintStep);
 }
 
 /*****************************************/
