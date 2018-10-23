@@ -259,7 +259,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	FILE *vf;
 	long int vfpos;
 	gchar *line=NULL;
-	gchar *ptr;
+	gchar *ptr,*ptr2;
 	gchar c;
 	gint i,j,k;
 	uspex_calc_struct *uspex_calc;
@@ -313,6 +313,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	if(g_ascii_isalnum(*pointer)) count++;\
 	while(g_ascii_isgraph(*pointer)&&(*pointer!='\0')) pointer++;\
 }
+#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
 	line = file_read_line(vf);
 /* +++ 1st PASS: get important numbers*/
 	while(line){
@@ -320,7 +321,8 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			ptr=&(line[0]);
 			/*NEW: more safe*/
-			_UC._nspecies=1;__COUNT_ALNUM(ptr,_UC._nspecies);
+			_UC._nspecies=0;__COUNT_ALNUM(ptr,_UC._nspecies);
+			if(_UC._nspecies<1) _UC._nspecies=1;/*there is at least 1 species*/
 			g_free(line);line = file_read_line(vf);/*this is the EndAtomType line*/
 			g_free(line);line = file_read_line(vf);
 			continue;
@@ -335,7 +337,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 			/*NEW: more safe*/
 			i=0;__COUNT_NUM(ptr,i);
 			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
-			g_free(line);line = file_read_line(vf);
+			g_free(line);line = file_read_line(vf);/*this is the ENDabinit line*/
 			g_free(line);line = file_read_line(vf);
 			continue;
 		}
@@ -364,7 +366,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 #endif
 		if (find_in_string("calculationMethod",line) != NULL) {
 			ptr=&(line[0]);
-			while(g_ascii_isgraph(*ptr)) ptr++;/*skip blank*/
+			__SKIP_BLANK(ptr);
 			c=*ptr;//sscanf(line,"%c%*s",&(c));
 			switch(c){
 			case 'u':
@@ -399,110 +401,232 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			continue;
 		}
 		if (find_in_string("calculationType",line) != NULL) {
-			/*VER 10.1 TODO check for 's' initial character*/
-			k=0;sscanf(line,"%i%*s",&(k));
-			j=k;
-			i=((int)(j/100))%10;
+			ptr=&(line[0]);
+			_UC.calculationType=0;
+			__SKIP_BLANK(ptr);
+			if(*ptr=='-') {/*2D-crystal*/
+				j=-1;
+				ptr++;
+			}else j=1;
+			if((*ptr=='s')||(*ptr=='S')) {/*VER 10.1: magnetic*/
+				_UC._calctype_mag=TRUE;
+				_UC.calculationType=1000;
+				ptr++;
+			}
+			i=g_ascii_digit_value(*ptr);/*dimension*/
 			if((i!=-2)&&((i<0)||(i>3))) {
 				g_free(line);
 				line = file_read_line(vf);
 				continue;
 			}
 			_UC._calctype_dim=i;
-			j-=i*100;
-			if(j<0) j*=-1;
-			i=((int)(j/10))%10;
+			ptr++;
+			i=g_ascii_digit_value(*ptr);/*molecular*/
 			if((i<0)||(i>1)){
 				g_free(line);
 				line = file_read_line(vf);
 				continue;
 			}
 			_UC._calctype_mol=(i==1);
-			j-=i*10;
-			i=j%10;
+			ptr++;
+			i=g_ascii_digit_value(*ptr);/*variable*/
 			if((i<0)||(i>1)){
 				g_free(line);
 				line = file_read_line(vf);
 				continue;
 			}
 			_UC._calctype_var=(i==1);
-			_UC.calculationType=k;
+			_UC.calculationType+=(_UC._calctype_dim*100)+(_UC._calctype_mol*10)+_UC._calctype_var;
+			_UC.calculationType*=j;
 			g_free(line);
 			line = file_read_line(vf);
 			continue;
 		}
 		if (find_in_string("optType",line) != NULL) {
-			k=0;sscanf(line,"%i%*s",&(k));
-			if(k<0) {
-				_UC.anti_opt=TRUE;
-				k*=-1;
-			}
-			switch (k){
-			case 1:
-				_UC.optType=US_OT_ENTHALPY;
-				break;
-			case 2:
-				_UC.optType=US_OT_VOLUME;
-				break;
-			case 3:
-				_UC.optType=US_OT_HARDNESS;
-				break;
-			case 4:
-				_UC.optType=US_OT_ORDER;
-				break;
-			case 5:
-				_UC.optType=US_OT_DISTANCE;
-				break;
-			case 6:
-				_UC.optType=US_OT_DIELEC_S;
-				break;
-			case 7:
-				_UC.optType=US_OT_GAP;
-				break;
-			case 8:
-				_UC.optType=US_OT_DIELEC_GAP;
-				break;
-			case 9:
-				_UC.optType=US_OT_MAG;
-				break;
-			case 10:
-				_UC.optType=US_OT_QE;
-				break;
-			case 1101:
-				_UC.optType=US_OT_BULK_M;
-				break;
-			case 1102:
-				_UC.optType=US_OT_SHEAR_M;
-				break;
-			case 1103:
-				_UC.optType=US_OT_YOUNG_M;
-				break;
-			case 1104:
-				_UC.optType=US_OT_POISSON;
-				break;
-			case 1105:
-				_UC.optType=US_OT_PUGH_R;
-				break;
-			case 1106:
-				_UC.optType=US_OT_VICKERS_H;
-				break;
-			case 1107:
-				_UC.optType=US_OT_FRACTURE;
-				break;
-			case 1108:
-				_UC.optType=US_OT_DEBYE_T;
-				break;
-			case 1109:
-				_UC.optType=US_OT_SOUND_V;
-				break;
-			case 1110:
-				_UC.optType=US_OT_SWAVE_V;
-				break;
-			case 1111:
-				_UC.optType=US_OT_PWAVE_V;
-				break;
-			default:
-				_UC.optType=US_OT_UNKNOWN;
+			/*VER 10.1 has a new format !*/
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			if(g_ascii_isalpha(*ptr)){
+				if((*ptr=='m')||(*ptr=='M')){
+					/*could be Min max*/
+					j=0;
+					if((*(ptr+1)=='a')&&(*(ptr+2)=='x')) {
+						/*can be mag_moment -> checked x*/
+						j=1;
+						ptr+=4;
+					}
+					if(*(ptr+1)=='i') {
+						/*can be only Min*/
+						j=-1;
+						ptr+=4;
+					}
+				}
+				c=*ptr;
+				switch(c){
+				case 'E':
+				case 'e':
+					_UC.optType=US_OT_ENTHALPY;
+					if(j==1) _UC.anti_opt=TRUE;
+					break;
+				case 'v':
+				case 'V':
+					_UC.optType=US_OT_VOLUME;
+					if(j==1) _UC.anti_opt=TRUE;
+					break;
+				case 'h':
+				case 'H':
+					_UC.optType=US_OT_HARDNESS;
+					if(j==-1) _UC.anti_opt=TRUE;
+					break;
+				case 's':
+				case 'S':
+					_UC.optType=US_OT_ORDER;
+					if(j==-1) _UC.anti_opt=TRUE;
+					break;
+				case 'a':
+				case 'A':
+					_UC.optType=US_OT_DISTANCE;
+					if(j==-1) _UC.anti_opt=TRUE;
+					break;
+				case 'd':
+				case 'D':
+					if((*(ptr+1)=='e')||(*(ptr+1)=='E')){
+						/*VER 10.1 "density" replaces "aver_dist"*/
+						_UC.optType=US_OT_DISTANCE;
+						if(j==-1) _UC.anti_opt=TRUE;
+						break;
+					}else if((*(ptr+1)=='i')||(*(ptr+1)=='I')){
+						if((*(ptr+5)=='s')||(*(ptr+5)=='S')) _UC.optType=US_OT_DIELEC_S;
+						else if((*(ptr+5)=='g')||(*(ptr+5)=='G')) _UC.optType=US_OT_DIELEC_GAP;
+						else _UC.optType=US_OT_UNKNOWN;
+						if(j==-1) _UC.anti_opt=TRUE;
+					} else _UC.optType=US_OT_UNKNOWN;
+					break;
+				case 'g':
+				case 'G':
+					_UC.optType=US_OT_GAP;
+					break;
+				case 'b':
+				case 'B':
+					if((*(ptr+1)=='a')||(*(ptr+1)=='A')){
+						/*VER 10.1 "bandgap" replaces "gap"*/
+						_UC.optType=US_OT_GAP;
+						break;
+					} else if((*(ptr+1)=='i')||(*(ptr+1)=='I')){
+						_UC.optType=US_OT_2R;/*VER 10.1*/
+						break;
+					}
+				case 'm':
+				case 'M':
+					_UC.optType=US_OT_MAG;
+					break;
+				case 'q':
+				case 'Q':
+					_UC.optType=US_OT_QE;
+					break;
+				case 'z':
+				case 'Z':
+					_UC.optType=US_OT_ZT;
+					break;
+				case 'f':
+				case 'F':
+					_UC.optType=US_OT_Fphon;
+					break;
+				default:
+					_UC.optType=US_OT_UNKNOWN;
+				}
+			} else if(g_ascii_isdigit(*ptr)||(*ptr=='-')){
+				/*load optType*/
+				k=0;sscanf(ptr,"%i%*s",&(k));
+				if(k<0) {
+					_UC.anti_opt=TRUE;
+					k*=-1;
+				}
+				switch (k){
+				case 1:
+					_UC.optType=US_OT_ENTHALPY;
+					break;
+				case 2:
+					_UC.optType=US_OT_VOLUME;
+					break;
+				case 3:
+					_UC.optType=US_OT_HARDNESS;
+					break;
+				case 4:
+					_UC.optType=US_OT_ORDER;
+					break;
+				case 5:
+					_UC.optType=US_OT_DISTANCE;
+					break;
+				case 6:
+					_UC.optType=US_OT_DIELEC_S;
+					break;
+				case 7:
+					_UC.optType=US_OT_GAP;
+					break;
+				case 8:
+					_UC.optType=US_OT_DIELEC_GAP;
+					break;
+				case 9:
+					_UC.optType=US_OT_MAG;
+					break;
+				case 10:
+					_UC.optType=US_OT_QE;
+					break;
+				case 11:/*VER 10.1*/
+					_UC.optType=US_OT_2R;
+					break;
+				case 14:/*VER 10.1*/
+					_UC.optType=US_OT_ZT;
+					break;
+				case 17:/*VER 10.1*/
+					_UC.optType=US_OT_Fphon;
+					break;
+				case 1101:
+					_UC.optType=US_OT_BULK_M;
+					break;
+				case 1102:
+					_UC.optType=US_OT_SHEAR_M;
+					break;
+				case 1103:
+					_UC.optType=US_OT_YOUNG_M;
+					break;
+				case 1104:
+					_UC.optType=US_OT_POISSON;
+					break;
+				case 1105:
+					_UC.optType=US_OT_PUGH_R;
+					break;
+				case 1106:
+					_UC.optType=US_OT_VICKERS_H;
+					break;
+				case 1107:
+					_UC.optType=US_OT_FRACTURE;
+					break;
+				case 1108:
+					_UC.optType=US_OT_DEBYE_T;
+					break;
+				case 1109:
+					_UC.optType=US_OT_SOUND_V;
+					break;
+				case 1110:
+					_UC.optType=US_OT_SWAVE_V;
+					break;
+				case 1111:
+					_UC.optType=US_OT_PWAVE_V;
+					break;
+				default:
+					_UC.optType=US_OT_UNKNOWN;
+				}
+			} else _UC.optType=US_OT_UNKNOWN;
+			ptr=&(line[0]);
+			i=0;__COUNT_ALNUM(ptr,i);
+			if(i>1) {/*multiobjective optimization VER 10.1*/
+				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
+				_UC.new_optType=g_strdup(line);
+			}else{
+				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
+				_UC.new_optType=NULL;
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -515,8 +639,8 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nspecies;i++) _UC.atomType[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=(gint)g_ascii_strtod(ptr,NULL);/*user provided Z number*/
+				__SKIP_BLANK(ptr);
+				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=(gint)g_ascii_strtoull (ptr,NULL,10);/*user provided Z number*/
 				else _UC.atomType[i]=elem_symbol_test(ptr);/*try user provided symbol*/
 				if((_UC.atomType[i]<=0)||(_UC.atomType[i]>MAX_ELEMENTS-1)){/*invalid Z*/
 					_UC.atomType[i]=0;/*allow it for now*/
@@ -547,10 +671,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(j=0;j<_UC._var_nspecies;j++){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
-					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%i%*s",&(_UC.numSpecies[i+j*_UC._nspecies]));
-					ptr++;i++;
-					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					__SKIP_BLANK(ptr);
+					_UC.numSpecies[i+j*_UC._nspecies]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+					ptr=ptr2+1;
+					i++;
 				}
 				g_free(line);
 				line = file_read_line(vf);
@@ -559,18 +683,62 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			line = file_read_line(vf);
 			continue;
 		}
+		if (find_in_string("magRatio",line) != NULL) {
+			/*a 7 line ratio for magnetic orders VER 10.1*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			ptr=&(line[0]);
+			i=0;ptr2=ptr;
+			while((i<7)&&(*ptr!='\n')&&(*ptr!='\0')){
+				/*two fromat are accepted: number or number/number*/
+				__SKIP_BLANK(ptr);
+				_UC.magRatio[i]=g_ascii_strtod(ptr,&ptr2);
+				if(*ptr2=='/'){
+					ptr=ptr2;
+					_UC.magRatio[i]/=g_ascii_strtod(ptr,&ptr2);
+				}
+				ptr=ptr2+1;
+				i++;
+			}
+			for(;i<7;i++) _UC.magRatio[i]=0.;/*fill missing values, if any*/
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndMagRatio line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("ldaU",line) != NULL) {
+			/*an array of U values for LDA+U VER 10.1*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			ptr=&(line[0]);
+			i=0;__COUNT_NUM(ptr,i);
+			if(i>0){
+				ptr=&(line[0]);ptr2=ptr;j=0;
+				if(_UC.ldaU!=NULL) g_free(_UC.ldaU);
+				_UC.ldaU=g_malloc(i*sizeof(gdouble));
+				while((j<i)&&(*ptr!='\n')&&(*ptr!='\0')){
+					__SKIP_BLANK(ptr);
+					_UC.ldaU[j]=g_ascii_strtod(ptr,&ptr2);
+					ptr=ptr2+1;
+					j++;
+				}
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndLdaU*/
+			g_free(line);
+			line = file_read_line(vf);
+		}
 		__GET_DOUBLE(ExternalPressure)
 		if (find_in_string("valences",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*look for valences*/
 			_UC.valences = g_malloc(_UC._nspecies*sizeof(gint));
 			for(i=0;i<_UC._nspecies;i++) _UC.valences[i]=0;
-			ptr=&(line[0]);i=0;
+			ptr=&(line[0]);ptr2=ptr;i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(_UC.valences[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.valences[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the EndValences line*/
@@ -585,12 +753,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.goodBonds[i]=0.;
 			j=0;
 			while((j<_UC._nspecies)&&(find_in_string("EndGoodBonds",line)==NULL)){
-				ptr=&(line[0]);i=0;
+				ptr=&(line[0]);ptr2=ptr;i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
-					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(_UC.goodBonds[i+j*_UC._nspecies]));
-					ptr++;i++;
-					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					__SKIP_BLANK(ptr);
+					_UC.goodBonds[i+j*_UC._nspecies]=g_ascii_strtod(ptr,&ptr2);
+					ptr=ptr2+1;
+					i++;
 				}
 				j++;
 				g_free(line);
@@ -602,6 +770,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		__GET_BOOL(checkMolecules);
 		__GET_BOOL(checkConnectivity);
+		__GET_DOUBLE(fitLimit);/*VER 10.1*/
 		__GET_INT(populationSize);
 		__GET_INT(initialPopSize);
 		__GET_INT(numGenerations);
@@ -612,10 +781,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_STRING(symmetries);
 		__GET_DOUBLE(fracGene);
 		__GET_DOUBLE(fracRand);
+		__GET_DOUBLE(fracTopRand);/*VER 10.1*/
 		__GET_DOUBLE(fracPerm);
 		__GET_DOUBLE(fracAtomsMut);
 		__GET_DOUBLE(fracRotMut);
 		__GET_DOUBLE(fracLatMut);
+		__GET_DOUBLE(fracSpinMut);/*VER 10.1*/
 		__GET_INT(howManySwaps);
 		__GET_STRING(specificSwaps);
 		__GET_DOUBLE(mutationDegree);
@@ -630,12 +801,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nspecies*_UC._nspecies;i++) _UC.IonDistances[i]=0.;
 			j=0;
 			while((j<_UC._nspecies)&&(find_in_string("EndDistances",line)==NULL)){
-				ptr=&(line[0]);i=0;
+				ptr=&(line[0]);ptr2=ptr;i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
-					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(_UC.IonDistances[i+j*_UC._nspecies]));
-					ptr++;i++;
-					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+					__SKIP_BLANK(ptr);
+					_UC.IonDistances[i+j*_UC._nspecies]=g_ascii_strtod(ptr,&ptr2);
+					ptr=ptr2+1;
+					i++;
 				}
 				j++;
 				g_free(line);
@@ -650,28 +821,29 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*count number of molecules*/
 			ptr=&(line[0]);
-			while(*ptr==' ') ptr++;
-			_UC._nmolecules=1;
-			while(*ptr!='\0'){
-				if(*ptr==' ') {
-					_UC._nmolecules++;ptr++;
-					while(g_ascii_isgraph(*ptr)) ptr++;
-				}else ptr++;
-			}
-			_UC.MolCenters = g_malloc(_UC._nmolecules*_UC._nmolecules*sizeof(gdouble));
-			for(i=0;i<_UC._nmolecules;i++) _UC.MolCenters[i]=0.;
-			j=0;
-			while((j<_UC._nmolecules)&&(find_in_string("EndMol",line)==NULL)){
-				ptr=&(line[0]);i=0;
-				while((*ptr!='\n')&&(*ptr!='\0')){
-					if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-					sscanf(ptr,"%lf%*s",&(_UC.MolCenters[i+j*_UC._nmolecules]));
-					ptr++;i++;
-					while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
-				}
-				j++;
+			_UC._nmolecules=0;__COUNT_ALNUM(ptr,_UC._nmolecules);
+			if(_UC._nmolecules==0){
+				_UC._nmolecules=1;/*there is at least one molecule*/
+				_UC.MolCenters=g_malloc(1*sizeof(gdouble));
+				_UC.MolCenters[0]=0.;/*this is bound to fail anyway*/
 				g_free(line);
-				line = file_read_line(vf);
+				line = file_read_line(vf);/*this is the EndMol line*/
+			}else{
+				_UC.MolCenters = g_malloc(_UC._nmolecules*_UC._nmolecules*sizeof(gdouble));
+				for(i=0;i<_UC._nmolecules*_UC._nmolecules;i++) _UC.MolCenters[i]=0.;
+				j=0;
+				while((j<_UC._nmolecules)&&(find_in_string("EndMol",line)==NULL)){
+					ptr=&(line[0]);ptr2=ptr;i=0;
+					while((*ptr!='\n')&&(*ptr!='\0')){
+						__SKIP_BLANK(ptr);
+						_UC.MolCenters[i+j*_UC._nmolecules]=g_ascii_strtod(ptr,&ptr2);
+						ptr=ptr2+1;
+						i++;
+					}
+					j++;
+					g_free(line);
+					line = file_read_line(vf);
+				}
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -700,12 +872,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 					g_free(line);line = file_read_line(vf);/*go next line*/
-					ptr=&(line[0]);i=0;
+					ptr=&(line[0]);ptr2=ptr;i=0;
 					while((*ptr!='\n')&&(*ptr!='\0')){
-						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-						sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i]));
-						ptr++;i++;
-						while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+						__SKIP_BLANK(ptr);
+						_UC.Latticevalues[i]=g_ascii_strtod(ptr,&ptr2);
+						ptr=ptr2+1;
+						i++;
 					}
 				}else{/*varcomp but more than one line -> bad setting*/
 					g_free(line);
@@ -720,12 +892,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
 					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 					g_free(line);line = file_read_line(vf);/*go next line*/
-					ptr=&(line[0]);i=0;
+					ptr=&(line[0]);ptr2=ptr;i=0;
 					while((*ptr!='\n')&&(*ptr!='\0')){
-						if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-						sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i]));
-						ptr++;i++;
-						 while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+						__SKIP_BLANK(ptr);
+						_UC.Latticevalues[i]=g_ascii_strtod(ptr,&ptr2);
+						ptr=ptr2+1;
+						i++;
 					}
 				}else if((_UC._nlatticevalues<=3)&&(_UC._nlatticevalues>1)){/*lattice vectors*/
 					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*_UC._nlatticevalues*sizeof(gdouble));
@@ -735,12 +907,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					ptr=&(line[0]);
 					j=0;
 					while((j<_UC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
-						ptr=&(line[0]);i=0;
+						ptr=&(line[0]);ptr2=ptr;i=0;
 						while((*ptr!='\n')&&(*ptr!='\0')){
-							if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-							sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[i+j*_UC._nlatticevalues]));
-							ptr++;i++;
-							while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+							__SKIP_BLANK(ptr);
+							_UC.Latticevalues[i+j*_UC._nlatticevalues]=g_ascii_strtod(ptr,&ptr2);
+							ptr=ptr2+1;
+							i++;
 						}
 						j++;
 						g_free(line);
@@ -749,7 +921,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				}else if(_UC._nlatticevalues==1){/*only the volume value*/
 					_UC.Latticevalues = g_malloc(sizeof(gdouble));
 					_UC.Latticevalues[0]=0.;
-					sscanf(ptr,"%lf%*s",&(_UC.Latticevalues[0]));
+					_UC.Latticevalues[0]=g_ascii_strtod(ptr,NULL);
 					g_free(line);
 					line = file_read_line(vf);
 				}else{/*bad setting*/
@@ -763,6 +935,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			line = file_read_line(vf);
 			continue;
 		}
+		/*TODO: update III*/
 		if (find_in_string("splitInto",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*count number of splits*/
@@ -913,6 +1086,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		__GET_INT(repeatForStatistics);
 		__GET_DOUBLE(stopFitness);
+		__GET_INT(fixRndSeed);/*VER 10.1*/
 		__GET_BOOL(collectForces);
 		__GET_BOOL(ordering_active);
 		__GET_BOOL(symmetrize);
