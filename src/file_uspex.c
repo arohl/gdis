@@ -273,6 +273,8 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 /*this should be promoted*/
 #define __Q(a) #a
 /*some lazy defines*/
+#define __STRIP_EOL(line) for(i=0;i<strlen(line);i++) if(line[i]=='\n') line[i]='\0'
+#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
 	_UC.value=(k==1);\
@@ -291,7 +293,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 }
 #define __GET_STRING(value) if (find_in_string(__Q(value),line) != NULL) {\
 	g_free(line);line = file_read_line(vf);\
-	for(i=0;i<strlen(line);i++) if(line[i]=='\n') line[i]='\0';\
+	__STRIP_EOL(line);\
 	_UC.value=g_strdup(line);\
 	g_free(line);line = file_read_line(vf);\
 	g_free(line);line = file_read_line(vf);\
@@ -313,7 +315,6 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	if(g_ascii_isalnum(*pointer)) count++;\
 	while(g_ascii_isgraph(*pointer)&&(*pointer!='\0')) pointer++;\
 }
-#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
 	line = file_read_line(vf);
 /* +++ 1st PASS: get important numbers*/
 	_UC._nspecies=0;
@@ -381,25 +382,27 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				_UC.calculationMethod=US_CM_USPEX;
 				break;
 			case 'm':
-			case 'M':
-				/*MINHOP is unsupported*/
-				ptr++;if((*ptr=='i')||(*ptr=='I')) _UC.calculationMethod=US_CM_UNKNOWN;
+			case 'M':/*MINHOP (VER 10.1) or META methods*/
+				ptr++;
+				if((*ptr=='i')||(*ptr=='I')) _UC.calculationMethod=US_CM_MINHOP;
 				else _UC.calculationMethod=US_CM_META;
-				break;		//VER 10.1
+				break;
 			case 'v':
-			case 'V':
+			case 'V':/*VCNEB method*/
 				_UC.calculationMethod=US_CM_VCNEB;
 				break;
 			case 'p':
-			case 'P':
+			case 'P':/*PSO method*/
 				_UC.calculationMethod=US_CM_PSO;
 				break;
 			case 'T':
-			case 't':
+			case 't':/*TPS method VER 10.1*/
 				_UC.calculationMethod=US_CM_TPS;
-				break;		//VER 10.1
+				break;
 			case 'C':
-			case 'c'://COPEX is unsupported VER 10.1
+			case 'c':/*COPEX method VER 10.1*/
+				_UC.calculationMethod=US_CM_COPEX;
+				break;
 			default:
 				_UC.calculationMethod=US_CM_UNKNOWN;
 			}
@@ -450,9 +453,28 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			continue;
 		}
 		if (find_in_string("optType",line) != NULL) {
-			/*VER 10.1 has a new format !*/
+			/*VER 10.1 has a new format: 
+			  old format: "XXX : optType"
+			  new fromat: "% optType"
+			              "XXX XXX XXX"
+			              "%endOptType"*/
 			ptr=&(line[0]);
 			__SKIP_BLANK(ptr);
+			if(*ptr=='%'){/*switch to new optType*/
+				g_free(line);line = file_read_line(vf);/*go next line*/
+				__STRIP_EOL(line);
+				ptr=&(line[0]);
+				__SKIP_BLANK(ptr);
+				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
+				_UC.new_optType=g_strdup(ptr);
+			}else{/*old fashion optType*/
+				__STRIP_EOL(line);
+				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
+				_UC.new_optType=NULL;
+			}
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			/*in ANY case we still load the first value as old optType*/
 			if(g_ascii_isalpha(*ptr)){
 				if((*ptr=='m')||(*ptr=='M')){
 					/*could be Min max*/
@@ -626,18 +648,14 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					_UC.optType=US_OT_UNKNOWN;
 				}
 			} else _UC.optType=US_OT_UNKNOWN;
-			ptr=&(line[0]);
-			i=0;__COUNT_ALNUM(ptr,i);
-			if(i>1) {/*multiobjective optimization VER 10.1*/
-				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
-				_UC.new_optType=g_strdup(line);
-			}else{
-				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
-				_UC.new_optType=NULL;
+			if(_UC.new_optType!=NULL){
+				g_free(line);
+				line = file_read_line(vf);/*This is the EndOptType line*/
 			}
 			g_free(line);
 			line = file_read_line(vf);
 			continue;
+			/*TODO: assign a count of optType values in case of Multiobjective optimization*/
 		}
 		if (find_in_string("atomType",line) !=NULL){
 			g_free(line);line = file_read_line(vf);/*go next line*/
@@ -1025,7 +1043,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			continue;
 		}
 		__GET_INT(numParallelCalcs);
-/*UPDATE III*/
 		if (find_in_string("commandExecutable",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*there is also 1<x<_num_opt_steps lines of commandExecutable?*/
@@ -1374,6 +1391,8 @@ fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);
 #undef __GET_DOUBLE
 #undef __GET_STRING
 #undef __GET_CHARS
+#undef __COUNT_ALNUM
+#undef __COUNT_NUM
 }
 void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	gint i;
@@ -1419,17 +1438,28 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(_calctype_dim);
 	_CP(_calctype_mol);
 	_CP(_calctype_var);
+	_CP(_calctype_mag);/*VER 10.1*/
 	_CP(optType);
+	_STRCP(new_optType);/*VER 10.1*/
 	_CP(anti_opt);
 	_CP(_nspecies);
 	_COPY(atomType,_SRC._nspecies,gint);
 	_CP(_var_nspecies);
 	_COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
+	_CP(magRatio[0]);/*VER 10.1*/
+	_CP(magRatio[1]);/*VER 10.1*/
+	_CP(magRatio[2]);/*VER 10.1*/
+	_CP(magRatio[3]);/*VER 10.1*/
+	_CP(magRatio[4]);/*VER 10.1*/
+	_CP(magRatio[5]);/*VER 10.1*/
+	_CP(magRatio[6]);/*VER 10.1*/
+	_DBLCP(ldaU,_SRC._nspecies);/*VER 10.1*/
 	_CP(ExternalPressure);
 	_COPY(valences,_SRC._nspecies,gint);
 	_DBLCP(goodBonds,_SRC._nspecies*_SRC._nspecies);
 	_CP(checkMolecules);
 	_CP(checkConnectivity);
+	_CP(fitLimit);/*VER 10.1*/
 	_CP(populationSize);
 	_CP(initialPopSize);
 	_CP(numGenerations);
@@ -1440,10 +1470,12 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_STRCP(symmetries);
 	_CP(fracGene);
 	_CP(fracRand);
+	_CP(fracTopRand);/*VER 10.1*/
 	_CP(fracPerm);
 	_CP(fracAtomsMut);
 	_CP(fracRotMut);
 	_CP(fracLatMut);
+	_CP(fracSpinMut);/*VER 10.1*/
 	_CP(howManySwaps);
 	_STRCP(specificSwaps);
 	_CP(mutationDegree);
@@ -1481,6 +1513,7 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(SymTolerance);
 	_CP(repeatForStatistics);
 	_CP(stopFitness);
+	_CP(fixRndSeed);/*VER 10.1*/
 	_CP(collectForces);
 	_CP(ordering_active);
 	_CP(symmetrize);
@@ -1493,6 +1526,12 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(minSlice);
 	_CP(maxSlice);
 	_CP(numberparents);
+	_CP(BoltzTraP_T_max);/*VER 10.1*/
+	_CP(BoltzTraP_T_delta);/*VER 10.1*/
+	_CP(BoltzTraP_T_efcut);/*VER 10.1*/
+	_CP(TE_T_interest);/*VER 10.1*/
+	_CP(TE_threshold);/*VER 10.1*/
+	_CP(TE_goal);/*VER 10.1*/
 	_CP(thicknessS);
 	_CP(thicknessB);
 	_CP(reconstruct);
@@ -1530,8 +1569,24 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_COPY(pickupImages,_SRC._npickimg,gint);
 	_CP(FormatType);
 	_CP(PrintStep);
+	_CP(numIterations);/*VER 10.1*/
+	_STRCP(speciesSymbol);/*VER 10.1*/
+	_DBLCP(mass,_SRC._nspecies);/*VER 10.1*/
+	_CP(amplitudeShoot[0]);/*VER 10.1*/
+	_CP(amplitudeShoot[1]);/*VER 10.1*/
+	_CP(magnitudeShoot[0]);/*VER 10.1*/
+	_CP(magnitudeShoot[1]);/*VER 10.1*/
+	_CP(shiftRatio);/*VER 10.1*/
+	_CP(orderParaType);/*VER 10.1*/
+	_CP(opCriteria[0]);/*VER 10.1*/
+	_CP(opCriteria[1]);/*VER 10.1*/
+	_STRCP(cmdOrderParameter);/*VER 10.1*/
+	_STRCP(cmdEnthalpyTemperature);/*VER 10.1*/
+	_STRCP(orderParameterFile);/*VER 10.1*/
+	_STRCP(enthalpyTemperatureFile);/*VER 10.1*/
+	_STRCP(trajectoryFile);/*VER 10.1*/
+	_STRCP(MDrestartFile);/*VER 10.1*/
 }
-
 /*****************************************/
 /* OUTPUT a minimal uspex parameter file */
 /*****************************************/
@@ -1588,7 +1643,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	fprintf(vf,"%% %s\n",end_tag);\
 	is_w++;\
 }while(0)
-
+#define _CS(pre,tag,value) case pre##_##value: fprintf(vf,"%s\t :%s",__Q(value),__Q(tag));break
 	/**/
         FILE *vf,*dest;
         long int vfpos;
@@ -1607,6 +1662,12 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	}
 	if(_UC.numSpecies==NULL) {
 		line = g_strdup_printf("ERROR: USPEX - missing numSpecies!\n");
+		gui_text_show(ERROR, line);g_free(line);
+		return -5;
+	}
+	if(_UC.abinitioCode==NULL) {
+		/*NOTE abinitioCode has been made a requirement here to determine _num_opt_steps*/
+		line = g_strdup_printf("ERROR: USPEX - missing abinitioCode!\n");
 		gui_text_show(ERROR, line);g_free(line);
 		return -5;
 	}
@@ -1660,26 +1721,46 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	g_free(line);
 	/*always print:*/
 	switch(_UC.calculationMethod){
-	case US_CM_USPEX:
-		fprintf(vf,"USPEX\t: calculationMethod\n");
-		break;
-	case US_CM_META:
-		fprintf(vf,"META\t: calculationMethod\n");
-		break;
-	case US_CM_VCNEB:
-		fprintf(vf,"VCNEB\t: calculationMethod\n");
-		break;
-	case US_CM_PSO:
-		fprintf(vf,"PSO\t: calculationMethod\n");
-		break;
+	_CS(US_CM,calculationMethod,USPEX);
+	_CS(US_CM,calculationMethod,META);
+	_CS(US_CM,calculationMethod,VCNEB);
+	_CS(US_CM,calculationMethod,PSO);
+	_CS(US_CM,calculationMethod,TPS);/*VER 10.1*/
+	_CS(US_CM,calculationMethod,MINHOP);/*VER 10.1*/
+	_CS(US_CM,calculationMethod,COPEX);/*VER 10.1*/
 	case US_CM_UNKNOWN:
 	default:
 		fprintf(vf,"???\t: calculationMethod (unsupported method)\n");
 	}
-	__OUT_INT(calculationType);
-	if(_UC.anti_opt) __OUT_INT(optType);
-	else {
-		fprintf(vf,"%i\t: optType\n",-1*_UC.optType);
+	/*VER 10.1: new magnetic 's' prefix added*/
+	switch(_UC.calculationType){
+	_CS(US_CT,calculationType,300);
+	_CS(US_CT,calculationType,s300);
+	_CS(US_CT,calculationType,301);
+	_CS(US_CT,calculationType,s301);
+	_CS(US_CT,calculationType,310);
+	_CS(US_CT,calculationType,311);
+	_CS(US_CT,calculationType,000);
+	_CS(US_CT,calculationType,s000);
+	_CS(US_CT,calculationType,110);
+	_CS(US_CT,calculationType,200);
+	_CS(US_CT,calculationType,s200);
+	_CS(US_CT,calculationType,201);
+	_CS(US_CT,calculationType,s201);
+	case US_CT_m200: fprintf(vf,"-200\t: calculationType");break;
+	case US_CT_sm200: fprintf(vf,"-s200\t: calculationType");break;
+	default:
+		fprintf(vf,"???\t: calculationType (unsupported type)\n");
+	}
+	if(_UC.new_optType==NULL){
+		/*old fashion optType*/
+		if(_UC.anti_opt) __OUT_INT(optType);
+		else {
+			fprintf(vf,"%i\t: optType\n",-1*_UC.optType);
+		}
+	}else{
+		/*VER 10.1: new optType*/
+		__OUT_BK_STRING(new_optType,"EndOptType");
 	}
 	__OUT_BK_INT(atomType,"EndAtomType",_UC._nspecies);
 	if(_UC._var_nspecies==1){
@@ -1696,6 +1777,14 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		fprintf(vf,"%% EndNumSpecies\n");
 		is_w++;
 	}
+	if(_UC._calctype_mag){
+		/*VER 10.1: magnetic calculation -> MagRatio mandatory*/
+		__OUT_BK_DOUBLE(magRatio,"EndMagRatio",7);
+	}
+	if(_UC.ldaU!=NULL){
+		/*VER 10.1: LDA+U values per species*/
+		__OUT_BK_DOUBLE(ldaU,"EndLdaU",_UC._nspecies);
+	}
 	if(_UC.calculationMethod==US_CM_META) __OUT_DOUBLE(ExternalPressure);
 	if(_UC.ExternalPressure!=0.) __OUT_DOUBLE(ExternalPressure);
 	/*print when NOT default or unset*/
@@ -1703,6 +1792,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	if(_UC.goodBonds!=NULL) __OUT_TMAT_DOUBLE(goodBonds,"EndGoodBonds",_UC._nspecies);/*TODO: use of a single value is unsupported*/
 	if(!_UC.checkMolecules) __OUT_BOOL(checkMolecules);
 	if(_UC.checkConnectivity) __OUT_BOOL(checkConnectivity);
+	if(_UC.fitLimit!=0.) __OUT_DOUBLE(fitLimit);/*VER 10.1*/
 vfpos=ftell(vf);/* flag */
 is_w=0;
 	line=g_strdup_printf("*       POPULATION       *");
@@ -1730,6 +1820,7 @@ is_w=0;
 	if(_UC.symmetries!=NULL) __OUT_BK_STRING(symmetries,"endSymmetries");
 	if(_UC.fracGene!=0.5) __OUT_DOUBLE(fracGene);
 	if(_UC.fracRand!=0.2) __OUT_DOUBLE(fracRand);
+	if(_UC.fracTopRand!=0.2) __OUT_DOUBLE(fracTopRand);/*VER 10.1*/
 	if((_UC._nspecies>1)&&(_UC.fracPerm!=0.1)) __OUT_DOUBLE(fracPerm);
 	if((_UC._nspecies==1)&&(_UC.fracPerm!=0.)) __OUT_DOUBLE(fracPerm);
 	if(_UC.fracAtomsMut!=0.1) __OUT_DOUBLE(fracAtomsMut);
@@ -1743,6 +1834,7 @@ is_w=0;
 	}else{
 		if(_UC.fracLatMut!=0.1) __OUT_DOUBLE(fracLatMut);
 	}
+	if(_UC.fracSpinMut!=0.1) __OUT_DOUBLE(fracSpinMut);/*VER 10.1*/
 	if(_UC.howManySwaps!=0) __OUT_INT(howManySwaps);
 	if(_UC.specificSwaps!=NULL) __OUT_BK_STRING(specificSwaps,"EndSpecific");
 	if(_UC.mutationDegree!=0.) __OUT_DOUBLE(mutationDegree);
@@ -1823,10 +1915,9 @@ is_w=0;
 	line=g_strdup_printf("*       DEVELOPERS       *");	
 	__TITLE(line);
 	g_free(line);
-	if(_UC.repeatForStatistics!=1) {
-		__OUT_INT(repeatForStatistics);
-		if(_UC.stopFitness!=0.) __OUT_DOUBLE(stopFitness);
-	}
+	if(_UC.repeatForStatistics!=1) __OUT_INT(repeatForStatistics);
+	if(_UC.stopFitness!=0.) __OUT_DOUBLE(stopFitness);/*not necessarily used with repeatForStatistics?*/
+	if(_UC.fixRndSeed!=0) __OUT_INT(fixRndSeed);/*VER 10.1*/
 	if(_UC.collectForces) __OUT_BOOL(collectForces);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
@@ -1845,6 +1936,36 @@ is_w=0;
 	if(_UC.minSlice!=0.) __OUT_DOUBLE(minSlice);
 	if(_UC.maxSlice!=0.) __OUT_DOUBLE(maxSlice);
 	if(_UC.numberparents!=2) __OUT_INT(numberparents);
+if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+else vfpos=ftell(vf);/* flag */
+is_w=0;
+	line=g_strdup_printf("*       BOLTZTRAP       *");/*VER 10.1*/
+	__TITLE(line);
+	g_free(line);
+	if(_UC.BoltzTraP_T_max!=800.0) __OUT_DOUBLE(BoltzTraP_T_max);
+	if(_UC.BoltzTraP_T_delta!=50.0) __OUT_DOUBLE(BoltzTraP_T_delta);
+	if(_UC.BoltzTraP_T_efcut!=0.15) __OUT_DOUBLE(BoltzTraP_T_efcut);
+	if(_UC.TE_T_interest!=300.0) __OUT_DOUBLE(TE_T_interest);
+	if(_UC.TE_threshold!=0.5) __OUT_DOUBLE(TE_threshold);
+	if(_UC.TE_goal!=US_BT_ZT) {
+		switch (_UC.TE_goal){
+		case US_BT_ZT:/*we should never get there...*/
+			fprintf(vf,"ZT\t: TE_goal\n");is_w++;
+			break;
+		case US_BT_ZTxx:
+			fprintf(vf,"ZT_xx\t: TE_goal\n");is_w++;
+			break;
+		case US_BT_ZTyy:
+			fprintf(vf,"ZT_yy\t: TE_goal\n");is_w++;
+			break;
+		case US_BT_ZTzz:
+			fprintf(vf,"ZT_zz\t: TE_goal\n");is_w++;
+			break;
+		case US_BT_UNKNOWN:
+		default:
+			fprintf(vf,"???\t: TE_goal (unsupported keyword)\n");is_w++;
+		}
+	}
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -1881,7 +2002,7 @@ is_w=0;
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       PARTICLE SWARM OPTIMIZATION       *");
+	line=g_strdup_printf("*  PARTICLE SWARM OPTIMIZATION (PSO)  *");
 	__TITLE(line);
 	g_free(line);
 	if(_UC.PSO_softMut!=1.) __OUT_DOUBLE(PSO_softMut);
@@ -1890,7 +2011,9 @@ is_w=0;
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       VCNEB       *");
+	line=g_strdup_printf("*  VARIABLE-CELL NEB (VCNEB)  *");
+	__TITLE(line);
+	g_free(line);
 	if(_UC.vcnebType!=110) __OUT_INT(vcnebType);
 	if(_UC.numImages!=9) __OUT_INT(numImages);
 	if(_UC.numSteps!=200) __OUT_INT(numSteps);
@@ -1910,6 +2033,26 @@ is_w=0;
 	if(_UC.pickupImages!=NULL) __OUT_BK_INT(pickupImages,"EndPickupImages",_UC._npickimg);
 	if(_UC.FormatType!=2) __OUT_INT(FormatType);
 	if(_UC.PrintStep!=1) __OUT_INT(PrintStep);
+if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+else vfpos=ftell(vf);/* flag */
+is_w=0;
+	line=g_strdup_printf("*  TRANSITION PATH SAMPLING (TPS)  *");/*VER 10.1*/
+	__TITLE(line);
+	g_free(line);
+	if(_UC.numIterations!=1000) __OUT_INT(numIterations);
+	if(_UC.speciesSymbol!=NULL) __OUT_BK_STRING(speciesSymbol,"EndSpeciesSymbol");
+	if(_UC.mass!=NULL) __OUT_BK_DOUBLE(mass,"endMass",_UC._nspecies);
+	if((_UC.amplitudeShoot[0]!=0.10)&&(_UC.amplitudeShoot[1]!=0.10)) __OUT_BK_DOUBLE(amplitudeShoot,"EndAmplitudeShoot",2);
+	if((_UC.magnitudeShoot[0]!=1.05)&&(_UC.magnitudeShoot[1]!=1.05)) __OUT_BK_DOUBLE(magnitudeShoot,"EndMagnitudeShoot",2);
+	if(_UC.shiftRatio!=0.1) __OUT_DOUBLE(shiftRatio);
+	if(!_UC.orderParaType) __OUT_BOOL(orderParaType);
+	if((_UC.opCriteria[0]!=0.)&&(_UC.opCriteria[1]!=0.)) __OUT_BK_DOUBLE(opCriteria,"EndOpCriteria",2);
+	if(_UC.cmdOrderParameter!=NULL) __OUT_BK_STRING(cmdOrderParameter,"EndCmdOrderParameter");
+	if(_UC.cmdEnthalpyTemperature!=NULL) __OUT_BK_STRING(cmdEnthalpyTemperature,"EndCmdEnthalpyTemperature");
+	if(_UC.orderParameterFile!=NULL) __OUT_STRING(orderParameterFile);
+	if(_UC.enthalpyTemperatureFile!=NULL) __OUT_STRING(enthalpyTemperatureFile);
+	if(_UC.trajectoryFile!=NULL) __OUT_STRING(trajectoryFile);
+	if(_UC.MDrestartFile!=NULL) __OUT_STRING(MDrestartFile);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 	line=g_strdup_printf("*       END OF FILE       *");
