@@ -316,12 +316,13 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 #define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
 	line = file_read_line(vf);
 /* +++ 1st PASS: get important numbers*/
+	_UC._nspecies=0;
+	_UC._num_opt_steps=0;
 	while(line){
 		if (find_in_string("atomType",line) !=NULL){
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			ptr=&(line[0]);
-			/*NEW: more safe*/
-			_UC._nspecies=0;__COUNT_ALNUM(ptr,_UC._nspecies);
+			__COUNT_ALNUM(ptr,_UC._nspecies);/*NEW: more safe*/
 			if(_UC._nspecies<1) _UC._nspecies=1;/*there is at least 1 species*/
 			g_free(line);line = file_read_line(vf);/*this is the EndAtomType line*/
 			g_free(line);line = file_read_line(vf);
@@ -334,9 +335,8 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 		 * ie. abinitioCode CANNOT be omited.  --ovhpa */
 			g_free(line);line = file_read_line(vf);
 			ptr=&(line[0]);
-			/*NEW: more safe*/
-			i=0;__COUNT_NUM(ptr,i);
-			if(i>_UC._num_opt_steps) _UC._num_opt_steps=i;
+			__COUNT_NUM(ptr,_UC._num_opt_steps);/*NEW: more safe*/
+			if(_UC._num_opt_steps<1) _UC._num_opt_steps=1;/*there is at least one step*/
 			g_free(line);line = file_read_line(vf);/*this is the ENDabinit line*/
 			g_free(line);line = file_read_line(vf);
 			continue;
@@ -345,9 +345,9 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 		g_free(line);line = file_read_line(vf);
 	}
 	g_free(line);
-	if(_UC._nspecies==0){/*this one is mandatory*/
+	if(_UC._nspecies==0){/*mandatory*/
 		if(safe_nspecies==0){
-			line = g_strdup_printf("ERROR: Can't read USPEX output: no atom information!\n");
+			line = g_strdup_printf("ERROR: Can't read USPEX output: no usable atomType information!\n");
 	                gui_text_show(ERROR, line);
 	                g_free(line);
 			fclose(vf);
@@ -356,6 +356,13 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 			/*this should *not* be the way to obtain _nspecies, atomType is mandatory!*/
 			_UC._nspecies=safe_nspecies;
 		}
+	}
+	if(_UC._num_opt_steps==0){/*also mandatory*/
+		line = g_strdup_printf("ERROR: Can't read USPEX output: no usable abinitioCode information!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		fclose(vf);
+		return(NULL);
 	}
 	rewind(vf);
 /* +++ 2nd PASS: get everything else*/
@@ -935,7 +942,6 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			line = file_read_line(vf);
 			continue;
 		}
-		/*TODO: update III*/
 		if (find_in_string("splitInto",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*count number of splits*/
@@ -953,10 +959,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nsplits;i++) _UC.splitInto[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(_UC.splitInto[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.splitInto[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the EndSplitInto line*/
@@ -971,10 +977,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.abinitioCode[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if((*ptr==' ')||(*ptr=='(')) while((*ptr==' ')||(*ptr=='(')) ptr++;/*skip space(s) & parenthesis*/
-				sscanf(ptr,"%i%*s",&(_UC.abinitioCode[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end (skip ')' if any)*/
+				__SKIP_BLANK(ptr);
+				_UC.abinitioCode[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the ENDabinit line*/
@@ -989,10 +995,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.KresolStart[i]=0.;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%lf%*s",&(_UC.KresolStart[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.KresolStart[i]=g_ascii_strtod(ptr,&ptr2);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the Kresolend line*/
@@ -1007,10 +1013,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.vacuumSize[i]=10.;/*implicit is 10.*/
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%lf%*s",&(_UC.vacuumSize[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.vacuumSize[i]=g_ascii_strtod(ptr,&ptr2);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the endVacuumSize line*/
@@ -1019,6 +1025,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			continue;
 		}
 		__GET_INT(numParallelCalcs);
+/*UPDATE III*/
 		if (find_in_string("commandExecutable",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*there is also 1<x<_num_opt_steps lines of commandExecutable?*/
@@ -1056,9 +1063,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_BOOL(doSpaceGroup);
 		if (find_in_string("SymTolerance",line) != NULL) {
 			/*can be either a number or quantifier*/
-			if(g_ascii_isalpha(line[0])){
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			c=*ptr;
+			if(g_ascii_isalpha(c)){
 				/*Either high, medium, or low*/
-				switch(line[0]){
+				switch(c){
 				case 'H':
 				case 'h':
 					_UC.SymTolerance=0.05;
@@ -1078,7 +1088,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				}
 			}else{
 				/*get the number directly*/
-				sscanf(line,"%lf%*s",&(_UC.SymTolerance));
+				_UC.SymTolerance=g_ascii_strtod(ptr,NULL);
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -1097,10 +1107,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nspecies;i++) _UC.valenceElectr[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(_UC.valenceElectr[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.valenceElectr[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the endValenceElectr line*/
@@ -1116,6 +1126,45 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_DOUBLE(minSlice);
 		__GET_DOUBLE(maxSlice);
 		__GET_INT(numberparents);
+		__GET_DOUBLE(BoltzTraP_T_max);/*VER 10.1*/
+		__GET_DOUBLE(BoltzTraP_T_delta);/*VER 10.1*/
+		__GET_DOUBLE(BoltzTraP_T_efcut);/*VER 10.1*/
+		__GET_DOUBLE(TE_T_interest);/*VER 10.1*/
+		__GET_DOUBLE(TE_threshold);/*VER 10.1*/
+		if (find_in_string("TE_goal",line) != NULL) {
+			/*VER 10.1: figure of merit component*/
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			if(*ptr=='Z'){
+				ptr++;
+				if(*ptr=='T'){
+					ptr++;
+					if(*ptr=='_'){
+						ptr++;
+						c=*ptr;
+						switch(c){
+						case 'x':
+							_UC.TE_goal=US_BT_ZTxx;
+							break;
+						case 'y':
+							_UC.TE_goal=US_BT_ZTyy;
+							break;
+						case 'z':
+							_UC.TE_goal=US_BT_ZTzz;
+							break;
+						default:
+							_UC.TE_goal=US_BT_UNKNOWN;
+						}
+					}else{
+						_UC.TE_goal=US_BT_ZT;
+					}
+				}else{
+					_UC.TE_goal=US_BT_UNKNOWN;
+				}
+			}else{
+				 _UC.TE_goal=US_BT_UNKNOWN;
+			}
+		}
 		__GET_DOUBLE(thicknessS);
 		__GET_DOUBLE(thicknessB);
 		__GET_INT(reconstruct);
@@ -1140,10 +1189,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._nspetrans;i++) _UC.specificTrans[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(_UC.specificTrans[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.specificTrans[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the EndTransSpecific line*/
@@ -1219,10 +1268,10 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			for(i=0;i<_UC._npickimg;i++) _UC.pickupImages[i]=0;
 			ptr=&(line[0]);i=0;
 			while((*ptr!='\n')&&(*ptr!='\0')){
-				if(*ptr==' ') while(*ptr==' ') ptr++;/*skip space(s)*/
-				sscanf(ptr,"%i%*s",&(_UC.pickupImages[i]));
-				ptr++;i++;
-				while(g_ascii_isgraph(*ptr)) ptr++;/*go to next space/end*/
+				__SKIP_BLANK(ptr);
+				_UC.pickupImages[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
 			}
 			g_free(line);
 			line = file_read_line(vf);/*this is the EndPickupImages line*/
@@ -1232,6 +1281,85 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		}
 		__GET_INT(FormatType);
 		__GET_INT(PrintStep);
+		__GET_INT(numIterations);/*VER 10.1*/
+		__GET_STRING(speciesSymbol);/*VER 10.1 TODO: smart array*/
+		if (find_in_string("mass",line) != NULL) {
+			/*VER 10.1: n_species mass*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.mass=g_malloc(_UC._nspecies*sizeof(gdouble));
+			for(i=0;i<_UC._nspecies;i++) _UC.mass[i]=0.;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				__SKIP_BLANK(ptr);
+				_UC.mass[i]=g_ascii_strtod(ptr,&ptr2);
+				ptr=ptr2+1;
+				i++;
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndMass line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("amplitudeShoot",line) != NULL) {
+			/*VER 10.1: 2 amplitudeShoot*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.amplitudeShoot[0]=0.;
+			_UC.amplitudeShoot[1]=0.;
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			_UC.amplitudeShoot[0]=g_ascii_strtod(ptr,&ptr2);
+			ptr=ptr2+1;
+			__SKIP_BLANK(ptr);
+			_UC.amplitudeShoot[1]=g_ascii_strtod(ptr,&ptr2);
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndAmplitudeShoot*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		if (find_in_string("magnitudeShoot",line) != NULL) {
+			/*VER 10.1: 2 magnitudeShoot*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.magnitudeShoot[0]=0.;
+			_UC.magnitudeShoot[1]=0.;
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			_UC.magnitudeShoot[0]=g_ascii_strtod(ptr,&ptr2);
+			ptr=ptr2+1;
+			__SKIP_BLANK(ptr);
+			_UC.magnitudeShoot[1]=g_ascii_strtod(ptr,&ptr2);
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndMagnitudeShoot*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_DOUBLE(shiftRatio);/*VER 10.1*/
+		__GET_BOOL(orderParaType);/*VER 10.1*/
+		if (find_in_string("opCriteria",line) != NULL) {
+			/*VER 10.1: 2 opCriteria*/
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.opCriteria[0]=0.;
+			_UC.opCriteria[1]=0.;
+			ptr=&(line[0]);
+			__SKIP_BLANK(ptr);
+			_UC.opCriteria[0]=g_ascii_strtod(ptr,&ptr2);
+			ptr=ptr2+1;
+			__SKIP_BLANK(ptr);
+			_UC.opCriteria[1]=g_ascii_strtod(ptr,&ptr2);
+			g_free(line);
+			line = file_read_line(vf);/*this is the EndOpCriteria*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
+		__GET_STRING(cmdOrderParameter);/*VER 10.1*/
+		__GET_STRING(cmdEnthalpyTemperature);/*VER 10.1*/
+		__GET_CHARS(orderParameterFile);/*VER 10.1*/
+		__GET_CHARS(enthalpyTemperatureFile);/*VER 10.1*/
+		__GET_CHARS(trajectoryFile);/*VER 10.1*/
+		__GET_CHARS(MDrestartFile);/*VER 10.1*/
 		/*in case no match was done:*/
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG: PROBE FAIL LINE: %s",line);

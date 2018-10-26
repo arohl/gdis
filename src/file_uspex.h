@@ -84,9 +84,10 @@ typedef enum {
 } uspex_opt;
 typedef enum {
 	US_BT_ZT=0,				/*trace of BT figure of merit (ZT)*/
-	US_BT_ZTxx=0,				/*x diagonal component of ZT*/
-	US_BT_ZTyy=0,				/*y diagonal component of ZT*/
-	US_BT_ZTzz=0,				/*z diagonal component of ZT*/
+	US_BT_ZTxx=1,				/*x diagonal component of ZT*/
+	US_BT_ZTyy=2,				/*y diagonal component of ZT*/
+	US_BT_ZTzz=3,				/*z diagonal component of ZT*/
+	US_BT_UNKNOWN=-1,			/*invalid entry*/
 } uspex_bt_goal;
 typedef struct {
         gint gen;				/*generation of this individual*/
