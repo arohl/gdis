@@ -90,13 +90,17 @@ typedef enum {
 	US_BT_UNKNOWN=-1,			/*invalid entry*/
 } uspex_bt_goal;
 typedef struct {
+	gboolean have_data;			/*NEW: allow incomplete Individuals*/
+	gboolean have_struct;			/*NEW: allow incomplete gatheredPOSCARS*/
         gint gen;				/*generation of this individual*/
 	gint natoms;				/*number of atoms*/
 	gint *atoms;				/*number of atoms per species*/
         gdouble energy;				/*total energy*/
 	gdouble E;				/*reduce energy / atoms*/
-	gdouble fitness;			/*NEW: fitness*/
+	gdouble fitness;			/*fitness*/
         gdouble volume;				/*total volume*/
+	gdouble density;			/*NEW: density*/
+	gint symmetry;				/*NEW: Symmetry*/
 } uspex_individual;
 /* USPEX calculation structure */
 typedef struct {
@@ -294,25 +298,23 @@ typedef struct {
         gint version;
 	gint index;				/*index is the # of result folder*/
 	uspex_calc_struct *calc;
-        /* details */
-        gint dim;
-        gboolean mol;
-        gboolean var;
         /* optimization */
+	gboolean have_supercell;		/*NEW: deal with supecell automagic*/
         gboolean have_fitness;
 /*structures*/
         gint num_gen;
         gint num_struct;
-        gint *red_index;			/*in case not all structure are displayed (ie. META)*/
         gdouble min_E;
         gdouble max_E;
+	gdouble min_F;				/*NEW: fitness data*/
+	gdouble max_F;				/*NEW: fitness data*/
         uspex_individual *ind;
         gint num_best;
-        gint *best_ind;
+        gint *best_ind;				/*NEW: {ID - GEN} there can be several best in a generation*/
 /*interpretation*/
         gpointer graph;
         gpointer graph_best;
-        gpointer graph_comp;
+        gpointer *graph_comp;
 } uspex_output_struct;
 /* execution structure */
 typedef struct {

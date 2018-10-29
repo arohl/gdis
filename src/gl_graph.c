@@ -120,6 +120,7 @@ graph->ymax = 0.0;
 graph->xticks = 5;
 graph->yticks = 5;
 graph->size = 0;
+graph->color = NULL;
 graph->select = -1;
 graph->select_label = NULL;
 graph->set_list = NULL;
@@ -205,7 +206,9 @@ g_assert(graph != NULL);
 
 graph->wavelength = wavelength;
 }
-
+/********************************/
+/* regular selection of 1D data */
+/********************************/
 void graph_set_select(gdouble x, gchar *label, gpointer data)
 {
 gdouble n;
@@ -232,7 +235,6 @@ else
 printf("select -> %d : [0, %d]\n", graph->select, graph->size);
 */
 }
-
 /*****************************/
 /* add dependent data set(s) */
 /*****************************/
@@ -260,7 +262,6 @@ graph_init_y(x, graph);
 
 graph->set_list = g_slist_append(graph->set_list, ptr);
 }
-
 /*********************************/
 /* add borned (x,y) data (ovhpa) */
 /*********************************/
@@ -308,6 +309,14 @@ graph->ymax = y_max;
 graph->type=type;
 
 graph->set_list = g_slist_append(graph->set_list, ptr);
+}
+/**************************/
+/* set graph data "color" */
+/**************************/
+void graph_set_color(gchar *color,gpointer data){
+	struct graph_pak *graph = data;
+	if(graph->color!=NULL) g_free(graph->color);
+	graph->color=g_strdup(color);
 }
 /*********************************************/
 /* select a value in a GRAPH_FREQUENCY graph */
@@ -413,7 +422,7 @@ if((y>yy-3)&&(y<yy+3)){
 }
 }else{
 /*USPEX: more complex search*/
-j=0;n_struct=0;
+j=-1;n_struct=0;
 for (list=graph->set_list ; list ; list=g_slist_next(list))
   {
 	if(j>struct_sel) return;
@@ -570,6 +579,7 @@ void graph_draw_new(struct canvas_pak *canvas, struct graph_pak *graph){
 gint i, j, x, y, oldx, oldy, ox, oy, sx, sy;
 gint flag;
 gchar *text;
+gchar *color=&(graph->color[0]);
 gdouble *ptr;
 gdouble xf, yf, dx, dy;
 GSList *list;
@@ -957,7 +967,7 @@ switch (graph->type){
 	break;
 	case GRAPH_USPEX_BEST:
 	case GRAPH_USPEX:
-	xf += 1.;
+//	xf += 1.;
 	xf /= (gdouble) (graph->size);/*NOT size*/
 	x = ox + xf*dx;
 	yf -= graph->ymin;
@@ -966,6 +976,8 @@ switch (graph->type){
 	y = (gint) yf;
 	y *= -1;
 	y += oy;
+if(color!=NULL){
+  if(*color=='O'){
 	/*draw a rectangle*/
 	glBegin(GL_LINE_STRIP);
 	gl_vertex_window(x-2, y-2, canvas);
@@ -974,6 +986,29 @@ switch (graph->type){
 	gl_vertex_window(x-2, y+2, canvas);
 	gl_vertex_window(x-2, y-2, canvas);
 	glEnd();
+	color++;
+  }else if(*color=='X'){
+	/*draw a cross*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	glEnd();
+	color++;
+  }
+}else{
+	/*draw a default rectangle*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	gl_vertex_window(x-2, y-2, canvas);
+	glEnd();
+}
 	break;
 	case GRAPH_USPEX_2D:
 	xf -= graph->xmin;
@@ -985,6 +1020,8 @@ switch (graph->type){
 	y = (gint) yf;
 	y *= -1;
 	y += oy;
+if(color!=NULL){
+  if(*color=='O'){
 	/*draw a rectangle*/
 	glBegin(GL_LINE_STRIP);
 	gl_vertex_window(x-2, y-2, canvas);
@@ -993,6 +1030,29 @@ switch (graph->type){
 	gl_vertex_window(x-2, y+2, canvas);
 	gl_vertex_window(x-2, y-2, canvas);
 	glEnd();
+	color++;
+  }else if(*color=='X'){
+	/*draw a cross*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	glEnd();
+	color++;
+  }
+}else{
+	/*draw a default rectangle*/
+	glBegin(GL_LINE_STRIP);
+	gl_vertex_window(x-2, y-2, canvas);
+	gl_vertex_window(x+2, y-2, canvas);
+	gl_vertex_window(x+2, y+2, canvas);
+	gl_vertex_window(x-2, y+2, canvas);
+	gl_vertex_window(x-2, y-2, canvas);
+	glEnd();
+}
 	if((i == graph->select)&&(ptr[i] == graph->select_2)){
 		sx=x;
 		sy=y-1;
@@ -1117,7 +1177,7 @@ switch (graph->type){
 	  glEnd();
 	break;
 	case GRAPH_USPEX_BEST:
-	case GRAPH_USPEX_2D:/*TODO: add a 0.5 composition axis?*/
+	case GRAPH_USPEX_2D:
 	case GRAPH_USPEX:
 	case GRAPH_FREQUENCY:
 	case GRAPH_REGULAR:

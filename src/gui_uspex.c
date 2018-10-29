@@ -371,7 +371,7 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_var=TRUE;
 		break;
 	case 8://-200
-		uspex_gui.calc.calculationType=US_CT_M200;
+		uspex_gui.calc.calculationType=US_CT_m200;
 		uspex_gui.calc._calctype_dim=-2;
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=FALSE;
@@ -442,7 +442,7 @@ void _update_calculationType(){
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,6);break;
 	case US_CT_201:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,7);break;
-	case US_CT_M200:
+	case US_CT_m200:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,8);break;
 	case US_CT_300:
 	default:

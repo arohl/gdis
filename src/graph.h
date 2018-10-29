@@ -54,6 +54,7 @@ struct graph_pak
 	gdouble ymax;
 	/* NB: all sets are required to be <= size */
 	gint size;
+	gchar *color;/*size array of "color"*/
 	GSList *set_list;/*in case of 1D graph, set_list={x[,tag]} for 2D set_list={x,y[,tag]}*/
 	/* peak selection */
 	gint select;
@@ -63,6 +64,7 @@ struct graph_pak
 gpointer graph_new(const gchar *, struct model_pak *);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
+void graph_set_color(gchar *color,gpointer data);
 void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
 void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
 void graph_frequency_select(gint x, gint y, struct model_pak *model);
