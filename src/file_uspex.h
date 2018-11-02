@@ -91,7 +91,7 @@ typedef enum {
 } uspex_bt_goal;
 typedef struct {
 	gboolean have_data;			/*NEW: allow incomplete Individuals*/
-	gboolean have_struct;			/*NEW: allow incomplete gatheredPOSCARS*/
+	gint struct_number;			/*NEW: allow incomplete gatheredPOSCARS*/
         gint gen;				/*generation of this individual*/
 	gint natoms;				/*number of atoms*/
 	gint *atoms;				/*number of atoms per species*/

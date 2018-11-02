@@ -21,16 +21,47 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 typedef enum {
-        GRAPH_REGULAR=0,/*previous plain graph*/
-        GRAPH_FREQUENCY,/*impulse graph for frequency*/
-        GRAPH_BAND,/*kpoints/state energy graph */
-	GRAPH_DOS,/*interleave e,dos plot*/
-        GRAPH_BANDOS,/*dual BAND & DOS graph*/
-	GRAPH_USPEX,/*point graph with selectable*/
-	GRAPH_USPEX_BEST,/*linepoint graph with selectable*/
-	GRAPH_USPEX_COMP,/*composition vs energy, point with selectable*/
-	GRAPH_USPEX_2D,/*2D point graph with selectable*/
+        GRAPH_REGULAR=0,	/*previous plain graph*/
+        GRAPH_FREQUENCY,	/*impulse graph for frequency*/
+        GRAPH_BAND,		/*kpoints/state energy graph */
+	GRAPH_DOS,		/*interleave e,dos plot*/
+        GRAPH_BANDOS,		/*dual BAND & DOS graph*/
+	/*  NEW - graph: generic data types*/
+	GRAPH_IY_TYPE,		/*nx integer {x} + ny sets of {nx real y for all x}*/
+	GRAPH_XY_TYPE,		/*nx real    {x} + ny sets of {nx real y for all x}*/
+	GRAPH_IX_TYPE,		/*nx integer {x} + nx sets of {ny real y for one x}*/
+	GRAPH_XX_TYPE,		/*nx real    {x} + nx sets of {ny real y for one x}*/
 } graph_type;
+typedef enum {
+	/* NEW - graph: symbol shapes */
+	GRAPH_SYMB_NONE=0,
+	GRAPH_SYMB_CROSS,
+	GRAPH_SYMB_SQUARE,
+	GRAPH_SYMB_TRI_DN,
+	GRAPH_SYMB_TRI_UP,
+	GRAPH_SYMB_DIAM,
+} graph_symbol;
+typedef enum {
+	/* NEW - graph: line shapes */
+	GRAPH_LINE_NONE=0,	/*no lines*/
+	GRAPH_LINE_SINGLE,	/*single line*/
+	GRAPH_LINE_DASH,	/*dashed line*/
+	GRAPH_LINE_DOT,		/*dotted line*/
+	GRAPH_LINE_THICK,	/*thick line*/
+} graph_line;
+typedef struct {
+	gint x_size;            /*size of the x array*/
+	gdouble *x;             /* -> x array*/
+} g_data_x;
+typedef struct {
+	gint y_size;            /*size of a y array*/
+	gdouble *y;             /* -> y array*/
+	gint32 *idx;            /*index up to 2,147,483,647 (<0 = missing structure)*/
+	graph_type type;	/* NEW - type can change for each set! */
+	graph_symbol *symbol;	/*symbol for each data*/
+	graph_line line;	/*one line type per set*/
+	gdouble color;		/*TODO graph set color*/
+} g_data_y;
 /*******************/
 /* data structures */
 /*******************/
@@ -44,7 +75,7 @@ struct graph_pak
 	/* flags */
 	gint xlabel;
 	gint ylabel;
-	graph_type type;
+	graph_type type;	/*TODO eliminate this*/
 	/* graph layout */
 	gint xticks;
 	gint yticks;
@@ -54,17 +85,16 @@ struct graph_pak
 	gdouble ymax;
 	/* NB: all sets are required to be <= size */
 	gint size;
-	gchar *color;/*size array of "color"*/
-	GSList *set_list;/*in case of 1D graph, set_list={x[,tag]} for 2D set_list={x,y[,tag]}*/
+	GSList *set_list;/*in case of 1D graph, set_list={x[]} for other set_list={g_data_x,g_data_y[]}*/
 	/* peak selection */
 	gint select;
-	gdouble select_2;/*uspex peak selections require two index*/
+	gdouble select_2;/*peak selections for 2D graph*/
 	gchar *select_label;
 };
 gpointer graph_new(const gchar *, struct model_pak *);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
-void graph_set_color(gchar *color,gpointer data);
+void graph_set_color(gint size,gchar *color,gpointer data);
 void graph_add_data(gint, gdouble *, gdouble, gdouble, gpointer);
 void graph_add_borned_data(gint size,gdouble *x,gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gint type,gpointer data);
 void graph_frequency_select(gint x, gint y, struct model_pak *model);
@@ -87,6 +117,13 @@ gdouble graph_xmax(gpointer);
 gdouble graph_ymin(gpointer);
 gdouble graph_ymax(gpointer);
 gdouble graph_wavelength(gpointer);
+/* dat_graph interface */
+void dat_graph_set_x(g_data_x dx,gpointer pgraph);
+void dat_graph_add_y(g_data_y dy,gpointer pgraph);
+void dat_graph_set_limits(gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gpointer pgraph);
+void dat_graph_set_type(graph_type type,gpointer pgraph);
+void dat_graph_select(gint x, gint y, struct model_pak *model);
+
 
 /* TODO - relocate */
 gint anim_next_frame(struct model_pak *);

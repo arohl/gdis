@@ -175,6 +175,9 @@ gint read_xyz_frame(FILE *, struct model_pak *);
 gint read_dlpoly_frame(FILE *, struct model_pak *);
 gint read_dmol_frame(FILE *, struct model_pak *);
 
+/*NEW: track/update frames (TODO)*/
+gint update_frame_uspex(gint idx,struct model_pak *model);
+
 gint load_planes(gchar *, struct model_pak *);
 
 gint mark_trj_frames(struct model_pak *);
