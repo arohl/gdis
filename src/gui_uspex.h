@@ -55,14 +55,18 @@ struct uspex_calc_gui{
 	gdouble _dim;/*absurd spin on double*/
 	GUI_OBJ *_calctype_mol;
 	GUI_OBJ *_calctype_var;
+	GUI_OBJ *_calctype_mag;			/*VER 10.1*/
 	GUI_OBJ *optType;
+	gboolean have_new_opt;			/*VER 10.1*/
+	GUI_OBJ *new_optType;			/*VER 10.1*/
+	gchar *_tmp_new_optType;		/*VER 10.1*/
 	/*atoms definition: apply/remove*/
 	GUI_OBJ *atomType;
 	GUI_OBJ *_atom_sym;
 	GUI_OBJ *_atom_typ;
 	GUI_OBJ *_atom_num;
 	GUI_OBJ *_atom_val;
-	/*temporary value*/
+	/*temporary values*/
 	gchar _tmp_atom_sym[3];
 	gint _tmp_atom_typ;
 	gint _tmp_atom_num;

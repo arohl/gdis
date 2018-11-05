@@ -679,7 +679,8 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			line = file_read_line(vf);
 			continue;
 		}
-		if (find_in_string("numSpecies",line) != NULL) {
+		if (find_in_string("numSpeci",line) != NULL) {
+/*_BUG_ VER 10.1 EX26 has a typo (numSpecices instead of numSpecies)*/
 			vfpos=ftell(vf);/* flag */
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*1st get the total number of lines*/
@@ -687,7 +688,8 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			do{
 				g_free(line);line = file_read_line(vf);/*go next line*/
 				_UC._var_nspecies++;
-			}while(find_in_string("EndNumSpecies",line) == NULL);
+			}while(find_in_string("EndNumSpeci",line) == NULL);
+/*_BUG_ VER 10.1 EX26 has a consistent typo (EndNumSpecices instead of EndNumSpecies)*/
 			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 			g_free(line);/*FIX: _VALGRIND_BUG_*/
 			line = file_read_line(vf);/*first line of numSpecies*/
@@ -2977,13 +2979,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		for(idx=0;idx<_UO.num_struct;idx++){
 			if(!_UO.ind[idx].have_data) continue;
 			c_sum=0;for(ix=0;ix<_UO.calc->_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
-if(c_sum==0) {
-	fprintf(stdout,"Something stupid is going on!\n");
-	fprintf(stdout,"Ind %i atom: {",idx);
-	for(ix=0;ix<_UO.calc->_nspecies;ix++) fprintf(stdout,"%i ",_UO.ind[idx].atoms[ix]);
-	fprintf(stdout,"}\n");
-	continue;
-}
+			if(c_sum==0) continue;/*something stupid here!*/
 			compo=(gdouble)(_UO.ind[idx].atoms[species_index])/c_sum;
 			if((compo>=1.0)||(compo<=0.0)) {
 				continue;/*rejected*/

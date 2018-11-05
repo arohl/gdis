@@ -307,6 +307,13 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
 }while(0)
 /*Create a new cell with:
+ * 	 a delete button (button) connected on click to function (function).*/
+#define GUI_DELETE_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
+	button=gtk_button_new_from_stock(GTK_STOCK_DELETE);\
+	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+/*Create a new cell with:
  * 	 a boxed button of type APPLY connected on click to a function (function_1),
  * 	 a boxed button of type DELETE connected on click to a function (function_2).*/
 #define GUI_2BUTTONS_TABLE(table,function_1,function_2,l,r,t,b) do{\
