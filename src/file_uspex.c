@@ -120,6 +120,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.minVectorLength=0.;
 	_UC.IonDistances=NULL;
 	_UC.constraint_enhancement=TRUE;
+	_UC._nmolecules=0;
 	_UC.MolCenters=NULL;
 	_UC.Latticevalues=NULL;
 	_UC.splitInto=NULL;

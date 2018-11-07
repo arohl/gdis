@@ -62,7 +62,19 @@ struct uspex_calc_gui uspex_gui;
 /*************************/
 void gui_uspex_init(struct model_pak *model){
 	gint idx;
+	gchar *line;
 	uspex_gui.cur_page=USPEX_PAGE_SET_I;
+	/*prepare local values*/
+	uspex_gui._tmp_atom_typ=0;uspex_gui._tmp_atom_num=0;uspex_gui._tmp_atom_val=0;
+	strcpy(uspex_gui._tmp_atom_sym,elements[uspex_gui._tmp_atom_typ].symbol);
+
+	uspex_gui._tmp_specificTrans=NULL;
+	if(uspex_gui.calc._nspetrans>0) {
+		line=g_strdup("");
+		for(idx=0;idx<uspex_gui.calc._nspetrans;idx++) line=g_strdup_printf("%s %i",line,uspex_gui.calc.specificTrans[idx]);
+		uspex_gui._tmp_specificTrans=line;
+		line=NULL;
+	}
 	/*get atom information if not available*/
 	if(uspex_gui.calc.atomType==NULL){
 		GSList *list;
@@ -914,40 +926,6 @@ void opt_toggle(){
 		GUI_LOCK(uspex_gui.new_optType);
 	}
 }
-/******************/
-/* toggle auto_SV */
-/******************/
-void toggle_auto_SV(void){
-	if(uspex_gui.auto_SV){
-		GUI_LOCK(uspex_gui.symmetries);
-		GUI_LOCK(uspex_gui.fracGene);
-		GUI_LOCK(uspex_gui.fracRand);
-		GUI_LOCK(uspex_gui.fracPerm);
-		GUI_LOCK(uspex_gui.fracAtomsMut);
-		GUI_LOCK(uspex_gui.fracRotMut);
-		GUI_LOCK(uspex_gui.fracLatMut);
-		GUI_LOCK(uspex_gui.howManySwaps);
-		GUI_LOCK(uspex_gui.specificSwaps);
-		GUI_LOCK(uspex_gui.mutationDegree);
-		GUI_LOCK(uspex_gui.mutationRate);
-		GUI_LOCK(uspex_gui.DisplaceInLatmutation);
-		GUI_LOCK(uspex_gui.AutoFrac);
-	}else{
-		GUI_UNLOCK(uspex_gui.symmetries);
-		GUI_UNLOCK(uspex_gui.fracGene);
-		GUI_UNLOCK(uspex_gui.fracRand);
-		GUI_UNLOCK(uspex_gui.fracPerm);
-		GUI_UNLOCK(uspex_gui.fracAtomsMut);
-		GUI_UNLOCK(uspex_gui.fracRotMut);
-		GUI_UNLOCK(uspex_gui.fracLatMut);
-		GUI_UNLOCK(uspex_gui.howManySwaps);
-		GUI_UNLOCK(uspex_gui.specificSwaps);
-		GUI_UNLOCK(uspex_gui.mutationDegree);
-		GUI_UNLOCK(uspex_gui.mutationRate);
-		GUI_UNLOCK(uspex_gui.DisplaceInLatmutation);
-		GUI_UNLOCK(uspex_gui.AutoFrac);
-	}
-}
 /**************************************/
 /* Apply changes to IonDistances line */
 /**************************************/
@@ -1098,16 +1076,6 @@ void toggle_auto_C_ion(void){
 			g_free(text);
 		}
 		GUI_COMBOBOX_SET(uspex_gui.IonDistances,0);
-	}
-}
-/*********************/
-/* toggle auto_C_mol */
-/*********************/
-void toggle_auto_C_lat(void){
-	if(uspex_gui.auto_C_lat){
-		GUI_LOCK(uspex_gui.minVectorLength);
-	}else{
-		GUI_UNLOCK(uspex_gui.minVectorLength);
 	}
 }
 /*********************************/
@@ -1349,7 +1317,16 @@ void uspex_latticeformat_selected(GUI_OBJ *w){
 	}
 	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,0);
 }
-
+/***********************************/
+/* Toggle spacegroup determination */
+/***********************************/
+void SG_toggle(void){
+	if(uspex_gui.calc.doSpaceGroup){
+		GUI_UNLOCK(uspex_gui.SymTolerance);
+	}else{
+		GUI_LOCK(uspex_gui.SymTolerance);
+	}
+}
 
 /************************/
 /* Switch notebook page */
@@ -1584,7 +1561,6 @@ if(uspex_gui.have_output){
 	g_free(tmp);
 }else{
 	GUI_TEXT_ENTRY(hbox,uspex_gui.file_entry,"",TRUE);
-
 }
 GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation\nto fill the parameters of the current one.\nNOTE: all settings should be checked again. Carefully.");
 	GUI_OPEN_BUTTON_BOX(hbox,button,load_parameters_dialog);
@@ -1593,16 +1569,16 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 /* create notebook in frame */
 	GUI_NOTE_FRAME(frame,notebook);
 
-/*-----------------*/
-/* page 1 -> SET-I */
-/*-----------------*/
-	GUI_PAGE_NOTE(notebook,page,"SET-I");
+/*------------------*/
+/* page 1 -> SYSTEM */
+/*------------------*/
+	GUI_PAGE_NOTE(notebook,page,"SYSTEM");
+/* create a table in the page*/
+	GUI_TABLE_NOTE(page,table,17,4);
 /* --- Type & System */
-	GUI_FRAME_NOTE(page,frame,"Type & System");
-/* create a table in the frame*/
-	GUI_TABLE_FRAME(frame,table,6,7);
-/* 1st line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationMethod,"Method: ",0,1,0,1);
+	GUI_LABEL_TABLE(table,"Type & System",0,4,0,1);
+/* line 1 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationMethod,"Method: ",0,1,1,2);/*multiline*/
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"USPEX");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"META");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"VCNEB");
@@ -1610,7 +1586,7 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"TPS");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"MINHOP");
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USPEX\nSet the method of calculation.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"Type: ",1,2,0,1);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"Type: ",1,3,1,2);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"300");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s300");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"301");
@@ -1626,48 +1602,49 @@ GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USP
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s201");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-200");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-s200");
-GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.\n(311) and (110) calculations may not be supported.");
-	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",2,3,0,1);
+GUI_TOOLTIP(uspex_gui.calculationType,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.\n(311) and (110) calculations may not be supported.");
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_mag,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",3,4,1,2);
+GUI_TOOLTIP(uspex_gui._calctype_mag,"Set a magnetic calculation.");
+/* line 2 */
+	/*col 1: empty*/
+	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",1,2,2,3);
 	GUI_SPIN_RANGE(uspex_gui._calctype_dim,-2.,3.);
 GUI_TOOLTIP(uspex_gui._calctype_dim,"Set the dimension of the system.\n3, 2, 1, and 0 are equilvalent to 3D, 2D, 1D, and 0D.\n-2 correspond to 2D crystals.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",3,4,0,1);
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",2,3,2,3);
 GUI_TOOLTIP(uspex_gui._calctype_mol,"Set the molecularity of the system.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",4,5,0,1);
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",3,4,2,3);
 GUI_TOOLTIP(uspex_gui._calctype_var,"Set the variability of chemical composition.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_mag,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",5,6,0,1);
-GUI_TOOLTIP(uspex_gui._calctype_var,"Set a magnetic calculation.");
-/* 2nd line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.atomType,"atomType:",0,2,1,3);/*multiline*/
+/* line 3 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.atomType,"atomType:",0,1,3,4);/*multiline*/
 	GUI_COMBOBOX_ADD(uspex_gui.atomType,"ADD ATOMTYPE");
 GUI_TOOLTIP(uspex_gui.atomType,"atomType: Ch. 4.1 DEFAULT: none\nThis list regroups several tags:\natomType, numSpecies, and valences.");
-	uspex_gui._tmp_atom_typ=0;uspex_gui._tmp_atom_num=0;uspex_gui._tmp_atom_val=0;
-	strcpy(uspex_gui._tmp_atom_sym,elements[uspex_gui._tmp_atom_typ].symbol);
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_sym,uspex_gui._tmp_atom_sym,"%s","@Sym:",2,3,1,2);
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_sym,uspex_gui._tmp_atom_sym,"%s","@Sym:",1,2,3,4);
 GUI_TOOLTIP(uspex_gui._atom_sym,"atomSym: - DEFAULT: none\nAtomic symbol of current species.");
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_typ,uspex_gui._tmp_atom_typ,"%3i","@Z:",3,5,1,2);
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_typ,uspex_gui._tmp_atom_typ,"%3i","@Z:",2,3,3,4);
 GUI_TOOLTIP(uspex_gui._atom_typ,"atomTyp: - DEFAULT: none\nAtomic number of current species.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_atom,5,6,1,2);
-/*3rd line*/
-	/*col 0-2 is multiline*/
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_num,uspex_gui._tmp_atom_num,"%3i","@Num:",2,3,2,3);
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_atom,3,4,3,4);
+/* line 4 */
+	/*col 1: empty*/
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_num,uspex_gui._tmp_atom_num,"%3i","@Num:",1,2,4,5);
 GUI_TOOLTIP(uspex_gui._atom_num,"atomNum: - DEFAULT: none\nNumber of atoms in current species.");
-	GUI_ENTRY_TABLE(table,uspex_gui._atom_val,uspex_gui._tmp_atom_val,"%3i","@Val:",3,5,2,3);
+	GUI_ENTRY_TABLE(table,uspex_gui._atom_val,uspex_gui._tmp_atom_val,"%3i","@Val:",2,3,4,5);
 GUI_TOOLTIP(uspex_gui._atom_val,"atomVal: - DEFAULT: auto\nValence of the current species.\nAutomatically determined if zero.");
-	GUI_DELETE_BUTTON_TABLE(table,button,remove_atom,5,6,2,3);
-/* 4th line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.goodBonds,"goodBonds:",0,2,3,5);/*multiline*/
+	GUI_DELETE_BUTTON_TABLE(table,button,remove_atom,3,4,4,5);
+/* line 5 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.goodBonds,"goodBonds:",0,1,5,6);/*multiline*/
 	GUI_COMBOBOX_ADD(uspex_gui.goodBonds,"ADD GOODBOND");
 GUI_TOOLTIP(uspex_gui.goodBonds,"goodBonds: Ch. 4.1 DEFAULT: auto\nSet the minimum distance at which a bond is considered.");
-	GUI_TEXT_TABLE(table,uspex_gui._bond_d,uspex_gui._tmp_bond_d,"Bonds: ",2,5,3,4);
+	GUI_TEXT_TABLE(table,uspex_gui._bond_d,uspex_gui._tmp_bond_d,"Bonds: ",1,3,5,6);
 GUI_TOOLTIP(uspex_gui._bond_d,"Minimum bond distance between selected and others species.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_bonds,5,6,3,4);
-/* 5th line */
-	/*col 0-2 is multiline*/
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",4,5,4,5);
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_bonds,3,4,5,6);
+/* line 6 */
+	/*col 1: empty*/
+	/*col 2: empty*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",2,3,6,7);
 GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
-	GUI_DELETE_BUTTON_TABLE(table,button,remove_bonds,5,6,4,5);
-/* 6th line */
-        GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,2,5,7);/*multiline*/
+	GUI_DELETE_BUTTON_TABLE(table,button,remove_bonds,3,4,6,7);
+/* line 7 */
+        GUI_COMBOBOX_TABLE(table,uspex_gui.optType,"optType:",0,1,7,8);/*multiline*/
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy (stable phases)");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume (densest structure)");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness (hardest phase)");
@@ -1693,18 +1670,19 @@ GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1110: MAX S-wave velocity");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1111: MAX P-wave velocity");
 GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: 1(Enthalpy)\nSelect the properties to optimize.");
-	GUI_TEXT_TABLE(table,uspex_gui.new_optType,uspex_gui._tmp_new_optType,"NEW optType: ",2,5,5,6);
+	GUI_TEXT_TABLE(table,uspex_gui.new_optType,uspex_gui._tmp_new_optType,"NEW optType: ",1,3,7,8);
 GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: MIN_enthalpy\nSelect the properties to optimize in the new\nVER 10.1 USPEX format.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.have_new_opt,opt_toggle,"NEW",5,6,5,6);
+	GUI_CHECK_TABLE(table,button,uspex_gui.have_new_opt,opt_toggle,"NEW",3,4,7,8);
 GUI_TOOLTIP(button,"Use the VER 10.1 optType format.\nMandatory for multiobjective optimization.");
-/* 7th line */
-	/*col 0-2 is multiline*/
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.anti_opt,NULL,"ANTI-OPT",2,3,6,7);/*not calling anything*/
+/* line 8 */
+	/*col 1: empty*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.anti_opt,NULL,"ANTI-OPT",1,2,8,9);/*not calling anything*/
 GUI_TOOLTIP(button,"anti-opt: - DEFAULT: FALSE\nIf set REVERSE the direction of optimization.\ni.e. MIN -> MAX & MAX -> MIN");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMolecs",3,4,6,7);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMol",2,3,8,9);/*not calling anything*/
 GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckConnect",4,5,6,7);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckCon",3,4,8,9);/*not calling anything*/
 GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
+/* <- Ext Pressure, LDA+U, and magRation moved to p. III, II, and III, respectively.*/
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
@@ -1719,173 +1697,204 @@ GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardnes
 	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
 	auto_bond_toggle();
 	opt_toggle();
-/* --- end frame */
-/* --- Population */
-	GUI_FRAME_NOTE(page,frame,"Population");
-/* create a table in the frame*/
-	GUI_TABLE_FRAME(frame,table,4,1);
-/* 1st line */
-	GUI_ENTRY_TABLE(table,uspex_gui.populationSize,uspex_gui.calc.populationSize,"%4i","SIZE:",0,1,0,1);
-GUI_TOOLTIP(uspex_gui.populationSize,"populationSize: Ch. 4.2 DEFAULT: auto\nNumber of structures in each generation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.initialPopSize,uspex_gui.calc.initialPopSize,"%4i","INIT_SZ:",1,2,0,1);
-GUI_TOOLTIP(uspex_gui.initialPopSize,"initialPopSize: Ch. 4.2 DEFAULT: populationSize\nNumber of structures in initial generation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.numGenerations,uspex_gui.calc.numGenerations,"%4i","N_GENE:",2,3,0,1);
-GUI_TOOLTIP(uspex_gui.numGenerations,"numGenerations: Ch. 4.2 DEFAULT: 100\nMaximum number of generations.");
-	GUI_ENTRY_TABLE(table,uspex_gui.stopCrit,uspex_gui.calc.stopCrit,"%4i","STOP_CRIT:",3,4,0,1);
-GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number of generations.");
-/* --- end frame */
-/* --- Survival & Selection */
-        GUI_FRAME_NOTE(page,frame,"Survival & Selection");
-/* create a table in the frame*/
-        GUI_TABLE_FRAME(frame,table,4,1);
-/* 1st line */
-	GUI_ENTRY_TABLE(table,uspex_gui.bestFrac,uspex_gui.calc.bestFrac,"%.5f","BestFrac:",0,1,0,1);
-GUI_TOOLTIP(uspex_gui.bestFrac,"bestFrac: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
-	GUI_ENTRY_TABLE(table,uspex_gui.keepBestHM,uspex_gui.calc.keepBestHM,"%3i","keepBestHM:",1,2,0,1);
-GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.reoptOld,NULL,"reoptOld",2,3,0,1);/*not calling anything*/
-GUI_TOOLTIP(button,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
-/* --- end frame */
-/* --- Structure & Variation */
-        GUI_FRAME_NOTE(page,frame,"Structure & Variation");
-/* create a table in the frame*/
-        GUI_TABLE_FRAME(frame,table,5,3);
-/* 1st line */
-	GUI_TEXT_TABLE(table,uspex_gui.symmetries,uspex_gui.calc.symmetries,"symmetries: ",0,2,0,1);
-GUI_TOOLTIP(uspex_gui.symmetries,"symmetries: Ch. 4.4 DEFAULT: auto\nPossible space group for crystals,\nplane group for 2D crystals/surface\nor point group for clusters.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fracGene,uspex_gui.calc.fracGene,"%.4f","fracGene:",2,3,0,1);
-GUI_TOOLTIP(uspex_gui.fracGene,"fracGene: Ch. 4.4 DEFAULT: 0.5\nRatio of structures obtained by heredity.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fracRand,uspex_gui.calc.fracRand,"%.4f","fracRand:",3,4,0,1);
-GUI_TOOLTIP(uspex_gui.fracRand,"fracRand: Ch. 4.4 DEFAULT: 0.2\nRatio of structures obtained randomly.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fracPerm,uspex_gui.calc.fracPerm,"%.4f","fracPerm:",4,5,0,1);
-GUI_TOOLTIP(uspex_gui.fracPerm,"fracPerm: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by permutation.");
-/* 2nd line */
-	GUI_ENTRY_TABLE(table,uspex_gui.fracAtomsMut,uspex_gui.calc.fracAtomsMut,"%.4f","fracAtomsMut:",0,1,1,2);
-GUI_TOOLTIP(uspex_gui.fracAtomsMut,"fracAtomsMut: Ch. 4.4 DEFAULT: 0.1\nRatio of structures obtained by softmutation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fracRotMut,uspex_gui.calc.fracRotMut,"%.4f","fracRotMut:",1,2,1,2);
-GUI_TOOLTIP(uspex_gui.fracRotMut,"fracRotMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by mutation of molecular orientation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fracLatMut,uspex_gui.calc.fracLatMut,"%.4f","fracLatMut:",2,3,1,2);
-GUI_TOOLTIP(uspex_gui.fracLatMut,"fracLatMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by lattice mutation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.howManySwaps,uspex_gui.calc.howManySwaps,"%3i","N_SWAPS:",3,4,1,2);
-GUI_TOOLTIP(uspex_gui.howManySwaps,"howManySwaps: Ch. 4.4 DEFAULT: auto\nNumber of pairwise swaps for permutation\ndistributed uniformly between [1,howManySwaps].");
-	GUI_TEXT_TABLE(table,uspex_gui.specificSwaps,uspex_gui.calc.specificSwaps,"SWAPS: ",4,5,1,2);
-GUI_TOOLTIP(uspex_gui.specificSwaps,"specificSwaps: Ch. 4.4 DEFAULT: blank\nWich atoms are allow to swap during permutation.");
-/* 3rd line */
-	GUI_ENTRY_TABLE(table,uspex_gui.mutationDegree,uspex_gui.calc.mutationDegree,"%.4f","mutationDegree:",0,1,2,3);
-GUI_TOOLTIP(uspex_gui.mutationDegree,"mutationDegree: Ch. 4.4 DEFAULT: auto\nMaximum displacement in softmutation (Ang).");
-	GUI_ENTRY_TABLE(table,uspex_gui.mutationRate,uspex_gui.calc.mutationRate,"%.4f","mutationRate:",1,2,2,3);
-GUI_TOOLTIP(uspex_gui.mutationRate,"mutationRate: Ch. 4.4 DEFAULT: 0.5\nStd. dev. of epsilon in strain matrix for lattice mutation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.DisplaceInLatmutation,uspex_gui.calc.DisplaceInLatmutation,"%.4f","D_LATMUT:",2,3,2,3);
-GUI_TOOLTIP(uspex_gui.DisplaceInLatmutation,"DisplaceInLatmutation: Ch. 4.4 DEFAULT: 1.0\nSets softmutation as part of lattice mutation\nand gives maximum displacement (Ang).");
-	GUI_CHECK_TABLE(table,uspex_gui.AutoFrac,uspex_gui.calc.AutoFrac,NULL,"AutoFrac",3,4,2,3);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.AutoFrac,"AutoFrac: Ch. 4.4 DEFAULT: FALSE\nIf set variation parameters will be optimized during run.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_SV,toggle_auto_SV,"AUTO_SV",4,5,2,3);
-GUI_TOOLTIP(button,"AUTO_SV: use automatic values for all Structure and Variation Parameters.");
-/* initialize */
-	toggle_auto_SV();
-/* --- end frame */
-/* --- Constraints */
-	GUI_FRAME_NOTE(page,frame,"Constraints");
-/* create a table in the frame*/
-	GUI_TABLE_FRAME(frame,table,6,2);
-/* 1st line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.IonDistances,"IonDistance:",0,1,0,1);
+/* --- cell */
+	GUI_LABEL_TABLE(table,"Cell",0,4,9,10);
+/* line 10 */
+        GUI_COMBOBOX_TABLE(table,uspex_gui.Latticevalues,"Lattice:",0,1,10,11);/*multiline*/
+GUI_TOOLTIP(uspex_gui.Latticevalues,"Latticevalues: Ch. 4.6 DEFAULT: auto\nInitial volume of the unit cell, or known lattice parameters.");
+        GUI_TEXT_TABLE(table,uspex_gui._latticevalue,uspex_gui._tmp_latticevalue,"VALUES:",1,3,10,11);
+GUI_TOOLTIP(uspex_gui._latticevalue,"VALUES: values of the current line of Latticevalues.");
+        GUI_APPLY_BUTTON_TABLE(table,button,apply_latticevalue,3,4,10,11);
+/* line 11 */
+        /*col 1: empty*/
+        GUI_COMBOBOX_TABLE(table,uspex_gui._latticeformat,"FORMAT:",1,2,11,12);
+        GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Volumes");
+        GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Lattice");
+        GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Crystal");
+GUI_TOOLTIP(uspex_gui._latticeformat,"FORMAT: whether Lattice values correspond to a series of\nVolumes, lattive vectors, or crystallographic definition.");
+        GUI_TEXT_TABLE(table,uspex_gui.splitInto,uspex_gui._tmp_splitInto,"split:",2,3,11,12);
+GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.5 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
+        GUI_CHECK_TABLE(table,button,uspex_gui.auto_lval,toggle_auto_lval,"AUTO_LAT",3,4,11,12);
+GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for Latticevalues.");
+/* Constraints */
+	GUI_LABEL_TABLE(table,"Constraints",0,4,12,13);
+/* line 13 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.IonDistances,"Ion:",0,1,13,14);/*multiline*/
 GUI_TOOLTIP(uspex_gui.IonDistances,"IonDistance: Ch. 4.5 DEFAULT: auto\nTriangular matrix of the minimum allowed\ninteratomic distances.");
-	GUI_ENTRY_TABLE(table,uspex_gui.curr_distance,uspex_gui._curr_distance,"%3i","CURRENT:",1,2,0,1);
-GUI_TOOLTIP(uspex_gui.curr_distance,"Current atom");
-GUI_LOCK(uspex_gui.curr_distance);
-	GUI_TEXT_TABLE(table,uspex_gui._distances,uspex_gui._tmp_distances,"DIST: ",2,3,0,1);
+	GUI_TEXT_TABLE(table,uspex_gui._distances,uspex_gui._tmp_distances,"DIST: ",1,3,13,14);
 GUI_TOOLTIP(uspex_gui._distances,"distances: minimum allowed distance from the current atom to others.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_distances,3,4,0,1);
-	GUI_ENTRY_TABLE(table,uspex_gui.minVectorLength,uspex_gui.calc.minVectorLength,"%.4f","MIN_VECT:",4,5,0,1);
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_distances,3,4,13,14);
+/* line 14 */
+	/*col 1: empty*/
+	GUI_ENTRY_TABLE(table,uspex_gui.minVectorLength,uspex_gui.calc.minVectorLength,"%.4f","MV:",1,2,14,15);
 GUI_TOOLTIP(uspex_gui.minVectorLength,"minVectorLength: Ch. 4.5 DEFAULT: auto\nMinimum length of a new lattice parameter.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_ion,toggle_auto_C_ion,"AUTO_ION",5,6,0,1);
-GUI_TOOLTIP(button,"AUTO_ION: use automatic values for ion constraints.");
-/* 2nd line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.MolCenters,"MolCenters:",0,1,1,2);
-GUI_TOOLTIP(uspex_gui.MolCenters,"MolCenters: Ch. 4.5 DEFAULT: none\nTriangular matrix of the minimum allowed\ndistances between molecules centers.");
-	GUI_ENTRY_TABLE(table,uspex_gui.curr_center,uspex_gui._curr_center,"%3i","CURRENT:",1,2,1,2);
-GUI_TOOLTIP(uspex_gui.curr_center,"Current molecule");
-GUI_LOCK(uspex_gui.curr_center);
-	GUI_TEXT_TABLE(table,uspex_gui._centers,uspex_gui._tmp_centers,"CENTER:",2,3,1,2);
-GUI_TOOLTIP(uspex_gui._centers,"centers: minimum allowed distance from the current molecule center to others.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_centers,3,4,1,2);
-	GUI_ENTRY_TABLE(table,uspex_gui.constraint_enhancement,uspex_gui.calc.constraint_enhancement,"%i","CE:",4,5,1,2);
+	GUI_ENTRY_TABLE(table,uspex_gui.constraint_enhancement,uspex_gui.calc.constraint_enhancement,"%i","CE:",2,3,14,15);
 GUI_TOOLTIP(uspex_gui.constraint_enhancement,"constraint_enhancement: Ch. 4.5 DEFAULT: 1\nApply CE times the IonDistance constraints.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_lat,toggle_auto_C_lat,"AUTO_LAT",5,6,1,2);
-GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for minVectorLength.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_ion,toggle_auto_C_ion,"AUTO_ION",3,4,14,15);
+GUI_TOOLTIP(button,"AUTO_ION: use automatic values for ion constraints.");
+/* line 15 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.MolCenters,"Mol:",0,1,15,16);/*multiline*/
+GUI_TOOLTIP(uspex_gui.MolCenters,"MolCenters: Ch. 4.5 DEFAULT: none\nTriangular matrix of the minimum allowed\ndistances between molecules centers.");
+	GUI_TEXT_TABLE(table,uspex_gui._centers,uspex_gui._tmp_centers,"CENTER:",1,3,15,16);
+GUI_TOOLTIP(uspex_gui._centers,"centers: minimum allowed distance from the current molecule center to others.");
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_centers,3,4,15,16);
+/* line 16 */
+	/*col 1: empty*/
+	GUI_COMBOBOX_TABLE(table,uspex_gui._molModels,"Model:",1,3,16,17);/*NEW*/
+	GUI_COMBOBOX_ADD(uspex_gui._molModels,"UNDER CONSTRUCTION");
+GUI_TOOLTIP(uspex_gui._centers,"Associate each molecule with a GDIS model.");
+	/*col 4: empty*/
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.IonDistances,0,uspex_IonDistances_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.MolCenters,0,uspex_MolCenters_selected);
 	refresh_constraints();
 	toggle_auto_C_ion();
-	toggle_auto_C_lat();
+	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,1,uspex_latticeformat_selected);
+	uspex_latticeformat_selected(uspex_gui._latticeformat);
 /* --- end frame */
-/* --- Cell */
-        GUI_FRAME_NOTE(page,frame,"Cell");
-/* create a table in the frame*/
-        GUI_TABLE_FRAME(frame,table,5,1);
-/* 1st line */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.Latticevalues,"Latticevalues:",0,1,0,1);
-GUI_TOOLTIP(uspex_gui.Latticevalues,"Latticevalues: Ch. 4.6 DEFAULT: auto\nInitial volume of the unit cell, or known lattice parameters.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui._latticeformat,"FORMAT:",1,2,0,1);
-	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Volumes");
-	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Lattice");
-	GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Crystal");
-GUI_TOOLTIP(uspex_gui._latticeformat,"FORMAT: whether Lattice values correspond to a series of\nVolumes, lattive vectors, or crystallographic definition.");
-	GUI_TEXT_TABLE(table,uspex_gui._latticevalue,uspex_gui._tmp_latticevalue,"VALUES: ",2,3,0,1);
-GUI_TOOLTIP(uspex_gui._latticevalue,"VALUES: values of the current line of Latticevalues.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_latticevalue,3,4,0,1);
-	GUI_TEXT_TABLE(table,uspex_gui.splitInto,uspex_gui._tmp_splitInto,"splitInto:",4,5,0,1);
-GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.5 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_lval,toggle_auto_lval,"AUTO_LVAL",5,6,0,1);
-GUI_TOOLTIP(button,"AUTO_LVAL: use automatic value for Latticevalues.");
+
+/*---------------------*/
+/* page 2 -> STRUCTURE */
+/*---------------------*/
+	GUI_PAGE_NOTE(notebook,page,"STRUCTURE");
+/* create a table in the page*/
+        GUI_TABLE_NOTE(page,table,18,4);
+/* --- Population & selection */
+        GUI_LABEL_TABLE(table,"Population & selection",0,4,0,1);
+/* line 1 */
+	GUI_ENTRY_TABLE(table,uspex_gui.populationSize,uspex_gui.calc.populationSize,"%4i","SIZE:",0,1,1,2);
+GUI_TOOLTIP(uspex_gui.populationSize,"populationSize: Ch. 4.2 DEFAULT: auto\nNumber of structures in each generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.initialPopSize,uspex_gui.calc.initialPopSize,"%4i","INIT:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui.initialPopSize,"initialPopSize: Ch. 4.2 DEFAULT: populationSize\nNumber of structures in initial generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numGenerations,uspex_gui.calc.numGenerations,"%4i","NGEN:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui.numGenerations,"numGenerations: Ch. 4.2 DEFAULT: 100\nMaximum number of generations.");
+	GUI_ENTRY_TABLE(table,uspex_gui.stopCrit,uspex_gui.calc.stopCrit,"%4i","STOP:",3,4,1,2);
+GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number of generations.");
+/* line 2 */
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_nm,uspex_gui.calc.magRatio[0],"%.4f","N.M.:",0,1,2,3);
+GUI_TOOLTIP(uspex_gui.mag_nm,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a non-magnetic order.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmls,uspex_gui.calc.magRatio[1],"%.4f","FM-LS:",1,2,2,3);
+GUI_TOOLTIP(uspex_gui.mag_fmls,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low-spin ferromagnetic order.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_afml,uspex_gui.calc.magRatio[3],"%.4f","AFM-L:",2,3,2,3);
+GUI_TOOLTIP(uspex_gui.mag_afml,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low-spin antiferromagnetic order.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmlh,uspex_gui.calc.magRatio[5],"%.4f","FM-LH:",3,4,2,3);
+GUI_TOOLTIP(uspex_gui.mag_fmlh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed ferromagnetic order.");
+/* line 3 */
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",0,1,3,4);
+GUI_TOOLTIP(button,"Set a magnetic calculation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmhs,uspex_gui.calc.magRatio[2],"%.4f","FM-HS:",1,2,3,4);
+GUI_TOOLTIP(uspex_gui.mag_fmhs,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a high-spin ferromagnetic.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_afmh,uspex_gui.calc.magRatio[4],"%.4f","AFM-H:",2,3,3,4);
+GUI_TOOLTIP(uspex_gui.mag_afmh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a high-spin antiferromagnetic.");
+	GUI_ENTRY_TABLE(table,uspex_gui.mag_aflh,uspex_gui.calc.magRatio[6],"%.4f","AF-LH:",3,4,3,4);
+GUI_TOOLTIP(uspex_gui.mag_aflh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed antiferromagnetic.");
+/* line 4 */
+	GUI_ENTRY_TABLE(table,uspex_gui.bestFrac,uspex_gui.calc.bestFrac,"%.4f","Best:",0,1,4,5);
+GUI_TOOLTIP(uspex_gui.bestFrac,"bestFrac: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
+	GUI_ENTRY_TABLE(table,uspex_gui.keepBestHM,uspex_gui.calc.keepBestHM,"%3i","BestHM:",1,2,4,5);
+GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.reoptOld,NULL,"reopt",2,3,4,5);/*not calling anything*/
+GUI_TOOLTIP(button,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fitLimit,uspex_gui.calc.fitLimit,"%.4f","BestFIT:",3,4,4,5);
+GUI_TOOLTIP(uspex_gui.fitLimit,"fitLimit: Ch. 4.3 DEFAULT: none\nStop calculation when fitLimit fitness is reached.");
+/* --- Structure & Variation */
+	GUI_LABEL_TABLE(table,"Structure & Variation",0,4,5,6);
+/* line 6 */
+	GUI_TEXT_TABLE(table,uspex_gui.symmetries,uspex_gui.calc.symmetries,"symmetries: ",0,4,6,7);
+GUI_TOOLTIP(uspex_gui.symmetries,"symmetries: Ch. 4.4 DEFAULT: auto\nPossible space group for crystals,\nplane group for 2D crystals/surface\nor point group for clusters.");
+/* line 7 */
+	GUI_ENTRY_TABLE(table,uspex_gui.fracGene,uspex_gui.calc.fracGene,"%.4f","Heredity:",0,1,7,8);
+GUI_TOOLTIP(uspex_gui.fracGene,"fracGene: Ch. 4.4 DEFAULT: 0.5\nRatio of structures obtained by heredity.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracRand,uspex_gui.calc.fracRand,"%.4f","Random:",1,2,7,8);
+GUI_TOOLTIP(uspex_gui.fracRand,"fracRand: Ch. 4.4 DEFAULT: 0.2\nRatio of structures obtained randomly.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracTopRand,uspex_gui.calc.fracTopRand,"%.4f","TOPRand:",2,3,7,8);
+GUI_TOOLTIP(uspex_gui.fracTopRand,"fracTopRand: Ch. 4.4 DEFAULT: 0.2\nRatio of structures obtained by topological random generator.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracPerm,uspex_gui.calc.fracPerm,"%.4f","Permutation:",3,4,7,8);
+GUI_TOOLTIP(uspex_gui.fracPerm,"fracPerm: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by permutation.");
+/* line 8 */
+	GUI_ENTRY_TABLE(table,uspex_gui.fracAtomsMut,uspex_gui.calc.fracAtomsMut,"%.4f","AtmMut:",0,1,8,9);
+GUI_TOOLTIP(uspex_gui.fracAtomsMut,"fracAtomsMut: Ch. 4.4 DEFAULT: 0.1\nRatio of structures obtained by softmutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracRotMut,uspex_gui.calc.fracRotMut,"%.4f","RotMut:",1,2,8,9);
+GUI_TOOLTIP(uspex_gui.fracRotMut,"fracRotMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by mutation of molecular orientation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracLatMut,uspex_gui.calc.fracLatMut,"%.4f","LatMut:",2,3,8,9);
+GUI_TOOLTIP(uspex_gui.fracLatMut,"fracLatMut: Ch. 4.4 DEFAULT: auto\nRatio of structures obtained by lattice mutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.fracSpinMut,uspex_gui.calc.fracSpinMut,"%.4f","SpinMut:",3,4,8,9);
+GUI_TOOLTIP(uspex_gui.fracSpinMut,"fracSpinMut: Ch. 4.4 DEFAULT: 0.1\nRatio of structures obtained by spin mutation.");
+/* line 9 */
+	GUI_ENTRY_TABLE(table,uspex_gui.howManySwaps,uspex_gui.calc.howManySwaps,"%3i","NSwaps:",0,1,9,10);
+GUI_TOOLTIP(uspex_gui.howManySwaps,"howManySwaps: Ch. 4.4 DEFAULT: auto\nNumber of pairwise swaps for permutation\ndistributed uniformly between [1,howManySwaps].");
+	GUI_TEXT_TABLE(table,uspex_gui.specificSwaps,uspex_gui.calc.specificSwaps,"Swaps: ",1,4,9,10);
+GUI_TOOLTIP(uspex_gui.specificSwaps,"specificSwaps: Ch. 4.4 DEFAULT: blank\nWich atoms are allow to swap during permutation.");
+/* line 10 */
+	GUI_ENTRY_TABLE(table,uspex_gui.mutationDegree,uspex_gui.calc.mutationDegree,"%.4f","mutationDegree:",0,1,10,11);
+GUI_TOOLTIP(uspex_gui.mutationDegree,"mutationDegree: Ch. 4.4 DEFAULT: auto\nMaximum displacement in softmutation (Ang).");
+	GUI_ENTRY_TABLE(table,uspex_gui.mutationRate,uspex_gui.calc.mutationRate,"%.4f","mutationRate:",1,2,10,11);
+GUI_TOOLTIP(uspex_gui.mutationRate,"mutationRate: Ch. 4.4 DEFAULT: 0.5\nStd. dev. of epsilon in strain matrix for lattice mutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.DisplaceInLatmutation,uspex_gui.calc.DisplaceInLatmutation,"%.4f","D_LATMUT:",2,3,10,11);
+GUI_TOOLTIP(uspex_gui.DisplaceInLatmutation,"DisplaceInLatmutation: Ch. 4.4 DEFAULT: 1.0\nSets softmutation as part of lattice mutation\nand gives maximum displacement (Ang).");
+	GUI_CHECK_TABLE(table,uspex_gui.AutoFrac,uspex_gui.calc.AutoFrac,NULL,"AutoFrac",3,4,10,11);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.AutoFrac,"AutoFrac: Ch. 4.4 DEFAULT: FALSE\nIf set variation parameters will be optimized during run.");
+/* --- Fingerprint & Antiseeds */
+	GUI_LABEL_TABLE(table,"Fingerprint, antiseed, & spacegroup",0,4,11,12);
+/* line 12 */
+	GUI_LABEL_TABLE(table,"Fingerprint",0,1,12,13);
+	GUI_ENTRY_TABLE(table,uspex_gui.RmaxFing,uspex_gui.calc.RmaxFing,"%.4f","RMax:",1,2,12,13);
+GUI_TOOLTIP(uspex_gui.RmaxFing,"RmaxFing: Ch. 4.9 DEFAULT: 10.0\ncutoff distance (Ang.).");
+	GUI_ENTRY_TABLE(table,uspex_gui.deltaFing,uspex_gui.calc.deltaFing,"%.4f","delta:",2,3,12,13);
+GUI_TOOLTIP(uspex_gui.deltaFing,"deltaFing: Ch. 4.9 DEFAULT: 0.08\nDiscretization of the fingerprint function.");
+	GUI_ENTRY_TABLE(table,uspex_gui.sigmaFing,uspex_gui.calc.sigmaFing,"%.4f","sigma:",3,4,12,13);
+GUI_TOOLTIP(uspex_gui.sigmaFing,"sigmaFing: Ch. 4.9 DEFAULT: 0.03\nGaussian broadening of interatomic distance.");
+/* line 13 */
+	GUI_LABEL_TABLE(table,"Antiseed",0,1,13,14);
+	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsActivation,uspex_gui.calc.antiSeedsActivation,"%4i","Activation:",1,2,13,14);
+GUI_TOOLTIP(uspex_gui.antiSeedsActivation,"antiSeedsActivation: Ch. 4.10 DEFAULT: 5000\nGeneration at which antiseed is active.");
+	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsMax,uspex_gui.calc.antiSeedsMax,"%.4f","Max:",2,3,13,14);
+GUI_TOOLTIP(uspex_gui.antiSeedsMax,"antiSeedsMax: Ch. 4.10 DEFAULT: 0.000\nGaussian height in mean square deviation of the generation enthalpy\nAmong bestFrac structures, recommended value is 0.01.");
+	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsSigma,uspex_gui.calc.antiSeedsSigma,"%.4f","sigma:",3,4,13,14);
+GUI_TOOLTIP(uspex_gui.antiSeedsSigma,"antiSeedsSigma: Ch. 4.10 DEFAULT: 0.001\nGaussian width in average distances between generated structure\nAmong bestFrac structures, recommended calue is 0.005.");
+/* line 14 */
+	GUI_LABEL_TABLE(table,"Space group",0,1,14,15);
+	/*col 2: empty*/
+	GUI_CHECK_TABLE(table,uspex_gui.doSpaceGroup,uspex_gui.calc.doSpaceGroup,SG_toggle,"Active",2,3,14,15);
+GUI_TOOLTIP(uspex_gui.doSpaceGroup,"doSpaceGroup: Ch. 4.11 DEFAULT: TRUE\nActivate space group determination.");
+	GUI_ENTRY_TABLE(table,uspex_gui.SymTolerance,uspex_gui.calc.SymTolerance,"%.4f","TOL:",3,4,14,15);
+GUI_TOOLTIP(uspex_gui.SymTolerance,"SymTolerance: Ch. 4.11 DEFAULT: 0.10\nPrecision for symmetry determination.");
 /* initialize */
-	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,0,uspex_latticeformat_selected);
-/* --- end frame */
+	SG_toggle();
+/* --- Variable-composition */
+	GUI_LABEL_TABLE(table,"Variable-composition",0,4,15,16);
+/* line 16 */
+	GUI_ENTRY_TABLE(table,uspex_gui.firstGeneMax,uspex_gui.calc.firstGeneMax,"%4i","1st_Gen:",0,1,16,17);
+GUI_TOOLTIP(uspex_gui.firstGeneMax,"firstGeneMax: Ch. 5.5 DEFAULT: 11\nNumber of composition sampled in 1st generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.minAt,uspex_gui.calc.minAt,"%4i","min@:",1,2,16,17);
+GUI_TOOLTIP(uspex_gui.minAt,"minAt: Ch. 5.5 DEFAULT: none\nMinimum number of atoms (molecules) in unitcell\nfor the first generation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.maxAt,uspex_gui.calc.maxAt,"%4i","max@:",2,3,16,17);
+GUI_TOOLTIP(uspex_gui.maxAt,"maxAt: Ch. 5.5 DEFAULT: none\nMaximum number of atoms (molecules) in unitcell\nfor the first generation.");
+/*col 4: empty*/
+/* line 17 */
+	GUI_ENTRY_TABLE(table,uspex_gui.fracTrans,uspex_gui.calc.fracTrans,"%.4f","Trans:",0,1,17,18);
+GUI_TOOLTIP(uspex_gui.fracTrans,"fracTrans: Ch. 5.5 DEFAULT: 0.1\nratio of structures obtained by transmutation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.howManyTrans,uspex_gui.calc.howManyTrans,"%.4f","NTrans:",1,2,17,18);
+GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.5 DEFAULT: 0.2\nMaximum ratio of transmutated atoms in a structure.");
+	GUI_ENTRY_TABLE(table,uspex_gui.specificTrans,uspex_gui._tmp_specificTrans,"%s","Specific:",2,4,17,18);
+GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.5 DEFAULT: blank\nList of allowed transmutation.");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*------------------*/
-/* page 2 -> SET-II */
-/*------------------*/
-	GUI_PAGE_NOTE(notebook,page,"SET-II");
-/* --- end frame */
-
-/*---------------------*/
-/* page 3 -> SPECIFICS */
-/*---------------------*/
-	GUI_PAGE_NOTE(notebook,page,"SPECIFICS");
+/*-----------------------*/
+/* page 3 -> CALCULATION */
+/*-----------------------*/
+	GUI_PAGE_NOTE(notebook,page,"CALCULATION");
 /* --- end frame */
 
 /*--------------------*/
-/* page 4 -> ABINITIO */
+/* page 4 -> ADVANCED */
 /*--------------------*/
-	GUI_PAGE_NOTE(notebook,page,"AB INITIO");
+	GUI_PAGE_NOTE(notebook,page,"ADVANCED");
 /* --- end frame */
 
-/*----------------*/
-/* page 5 -> EXEC */
-/*----------------*/
-	GUI_PAGE_NOTE(notebook,page,"EXEC");
+/*--------------------*/
+/* page 5 -> SPECIFIC */
+/*--------------------*/
+	GUI_PAGE_NOTE(notebook,page,"SPECIFIC");
 /* --- end frame */
 
 /* --- Outside of notebook */

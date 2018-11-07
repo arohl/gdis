@@ -79,11 +79,19 @@ struct uspex_calc_gui{
 	/**/
 	//checkMolecules is auto-sync
 	//checkConnectivity is auto-sync
+	GUI_OBJ *fitLimit;			/*VER 10.1*/
 /*4.2 Population*/
 	GUI_OBJ *populationSize;
 	GUI_OBJ *initialPopSize;
 	GUI_OBJ *numGenerations;
 	GUI_OBJ *stopCrit;
+	GUI_OBJ *mag_nm;			/*VER 10.1*/
+	GUI_OBJ *mag_fmls;			/*VER 10.1*/
+	GUI_OBJ *mag_fmhs;			/*VER 10.1*/
+	GUI_OBJ *mag_afml;			/*VER 10.1*/
+	GUI_OBJ *mag_afmh;			/*VER 10.1*/
+	GUI_OBJ *mag_fmlh;			/*VER 10.1*/
+	GUI_OBJ *mag_aflh;			/*VER 10.1*/
 /*4.3 Survival of the fittest & Selection*/
 	GUI_OBJ *bestFrac;
 	GUI_OBJ *keepBestHM;
@@ -92,32 +100,34 @@ struct uspex_calc_gui{
 	GUI_OBJ *symmetries;
 	GUI_OBJ *fracGene;
 	GUI_OBJ *fracRand;
+	GUI_OBJ *fracTopRand;			/*VER 10.1*/
 	GUI_OBJ *fracPerm;
 	GUI_OBJ *fracAtomsMut;
 	GUI_OBJ *fracRotMut;
 	GUI_OBJ *fracLatMut;
+	GUI_OBJ *fracSpinMut;			/*VER 10.1*/
 	GUI_OBJ *howManySwaps;
 	GUI_OBJ *specificSwaps;
 	GUI_OBJ *mutationDegree;
 	GUI_OBJ *mutationRate;
 	GUI_OBJ *DisplaceInLatmutation;
 	GUI_OBJ *AutoFrac;
-	gboolean auto_SV;
 /*4.5 Constrains*/
 	GUI_OBJ *IonDistances;
 	GUI_OBJ *_distances;
 	gchar *_tmp_distances;
-	GUI_OBJ *curr_distance;
+//	GUI_OBJ *curr_distance;
 	gint _curr_distance;
 	GUI_OBJ *minVectorLength;
 	GUI_OBJ *MolCenters;
 	GUI_OBJ *_centers;
 	gchar *_tmp_centers;
-	GUI_OBJ *curr_center;
+//	GUI_OBJ *curr_center;
 	gint _curr_center;
 	GUI_OBJ *constraint_enhancement;
 	gboolean auto_C_ion;
 	gboolean auto_C_lat;
+	GUI_OBJ *_molModels;
 /*4.6 Cell*/
 	GUI_OBJ *Latticevalues;
 	GUI_OBJ *_latticeformat;
@@ -126,7 +136,27 @@ struct uspex_calc_gui{
 	GUI_OBJ *splitInto;
 	gchar *_tmp_splitInto;
 	gboolean auto_lval;
+/*4.9 fingerprint*/
+	GUI_OBJ *RmaxFing;
+	GUI_OBJ *deltaFing;
+	GUI_OBJ *sigmaFing;
+/*4.10 Antiseed*/
+	GUI_OBJ *antiSeedsActivation;
+	GUI_OBJ *antiSeedsMax;
+	GUI_OBJ *antiSeedsSigma;
+/*4.11 spacegroup*/
+	GUI_OBJ *doSpaceGroup;
+	GUI_OBJ *SymTolerance;
 
+
+/*5.5 variable composition*/
+	GUI_OBJ *firstGeneMax;
+	GUI_OBJ *minAt;
+	GUI_OBJ *maxAt;
+	GUI_OBJ *fracTrans;
+	GUI_OBJ *howManyTrans;
+	gchar *_tmp_specificTrans;
+	GUI_OBJ *specificTrans;
 
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;

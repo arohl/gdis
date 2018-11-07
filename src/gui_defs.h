@@ -131,10 +131,16 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	frame = gtk_frame_new(caption);\
 	gtk_box_pack_start(GTK_BOX(page),frame,FALSE,FALSE,0);\
 }while(0)
+/*create a new table (table) in a notebook page (page).*/
+#define GUI_TABLE_NOTE(page,table,row,col) do{\
+	table=gtk_table_new(row, col, FALSE);\
+	gtk_box_pack_start(GTK_BOX(page),table,TRUE,TRUE,0);\
+}while(0)
 /*Connect a switch-page even of a notebook (notebook) to a function (function) passing data (data).*/
 #define GUI_PAGE_CHANGE(notebook,function,data) do{\
 	g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(function),data);\
 }while(0)
+/*return page number*/
 #define GUI_NOTE_PAGE_NUMBER(notebook,number) do{\
 	number = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));\
 }while(0)
@@ -162,11 +168,18 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 /* TABLE INTERFACE:                                                                 */
 /* 	all of the *_TABLE() defines set a new table cell @l,r,t,b in table (table).*/
 /************************************************************************************/
+#define _ATTACH_TABLE(table,widget,l,r,t,b) gtk_table_attach_defaults(GTK_TABLE(table),widget,l,r,t,b)
+//gtk_table_attach(GTK_TABLE(table),widget,l,r,t,b,GTK_FILL,GTK_FILL,0,0)
 /*Create a new cell with:
  * 	 a label with text ("text")*/
 #define GUI_LABEL_TABLE(table,text,l,r,t,b) do{\
 	GtkWidget *_label = gtk_label_new(text);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_label,l,r,t,b);\
+	_ATTACH_TABLE(table,_label,l,r,t,b);\
+}while(0)
+/*Create a new frame with the text ("text")*/
+#define GUI_FRAME_TABLE(table,text,l,r,t,b) do{\
+	GtkWidget *_frame = gtk_frame_new(text);\
+	_ATTACH_TABLE(table,_frame,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  *	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
@@ -176,7 +189,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
         GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_TEXT_ENTRY(_hbox,entry,value,TRUE);\
-        gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  * 	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
@@ -189,14 +202,14 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	GUI_ENTRY(_hbox,entry,value,format,8);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  * 	 a new check button (check) with an initial value (value) connected to function (function) with text ("caption").*/
 #define GUI_CHECK_TABLE(table,check,value,function,caption,l,r,t,b) do{\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
 	check = gui_direct_check(caption,&(value),function,NULL,_hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  * 	 a boxed label (created with GUI_LABEL_BOX) with text ("caption"),
@@ -212,7 +225,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GUI_LABEL_BOX(_hbox,_label,caption);\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
 	GUI_REG_COMBO(hbox,combo,list,default_text,function);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  * 	 a separator (not boxed!).
@@ -232,7 +245,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         combobox=gtk_combo_box_text_new_with_entry();\
         gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combobox))),FALSE);\
         gtk_box_pack_start(GTK_BOX(_hbox),combobox,TRUE,TRUE,0);\
-        gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Add a new element with text ("text") in the combobox (combobox).
  * This have to be called AFTER GUI_COMBOBOX.*/
@@ -282,7 +295,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_SPIN_TABLE(table,spin,value,function,caption,l,r,t,b) do{\
 	GtkWidget *_hbox = gtk_hbox_new(FALSE, 0);\
 	spin = gui_direct_spin(caption,&(value),1.0,100.0,1.0,function,NULL,_hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Set spin (spin) within range [min,max] (min,max).*/
 #define GUI_SPIN_RANGE(spin,min,max) do{\
@@ -296,21 +309,21 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
  * 	 an open button (button) connected on click to function (function).*/
 #define GUI_OPEN_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
 	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);\
-	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+	_ATTACH_TABLE(table,button,l,r,t,b);\
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
 }while(0)
 /*Create a new cell with:
  * 	 an apply button (button) connected on click to function (function).*/
 #define GUI_APPLY_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
 	button=gtk_button_new_from_stock(GTK_STOCK_APPLY);\
-	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+	_ATTACH_TABLE(table,button,l,r,t,b);\
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
 }while(0)
 /*Create a new cell with:
  * 	 a delete button (button) connected on click to function (function).*/
 #define GUI_DELETE_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
 	button=gtk_button_new_from_stock(GTK_STOCK_DELETE);\
-	gtk_table_attach_defaults(GTK_TABLE(table),button,l,r,t,b);\
+	_ATTACH_TABLE(table,button,l,r,t,b);\
 	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
 }while(0)
 /*Create a new cell with:
@@ -322,7 +335,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GUI_NEW_SEPARATOR(_hbox,_sep);\
 	gui_stock_button(GTK_STOCK_APPLY,function_1,NULL,_hbox);\
 	gui_stock_button(GTK_STOCK_DELETE,function_2,NULL,_hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*left aligned labels*/
 /*Create a new cell with:
@@ -335,7 +348,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	GtkWidget *_label = gtk_label_new(caption);\
 	gtk_box_pack_start(GTK_BOX(_hbox),_label,FALSE,FALSE,0);\
 	GUI_NEW_SEPARATOR(_hbox,_separator);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_hbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /*Create a new cell with:
  * 	 a radio button (radio_1) with caption ("caption_1") connected to function (pointer_1)
@@ -345,7 +358,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	new_radio_group(0,_vbox,FF);\
 	radio_1 = add_radio_button(caption_1,(gpointer)pointer_1,NULL);\
 	radio_2 = add_radio_button(caption_2,(gpointer)pointer_2,NULL);\
-	gtk_table_attach_defaults(GTK_TABLE(table),_vbox,l,r,t,b);\
+	_ATTACH_TABLE(table,_vbox,l,r,t,b);\
 }while(0)
 /********************/
 /* GENERAL COMMANDS */
