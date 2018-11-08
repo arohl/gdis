@@ -31,11 +31,13 @@ The GNU GPL can also be found at http://www.gnu.org
 	else uspex_gui.calc.value=NULL;\
 }while(0)
 /*page numbers*/
-#define USPEX_PAGE_SET_I 1
-#define USPEX_PAGE_SET_II 2
-#define USPEX_PAGE_SPECIFICS 3
-#define USPEX_PAGE_ABINITIO 4
-#define USPEX_PAGE_EXEC 5
+#define USPEX_PAGE_SYSTEM 0
+#define USPEX_PAGE_STRUCTURES 1
+#define USPEX_PAGE_CALCULATION 2
+#define USPEX_PAGE_ADVANCED 3
+#define USPEX_PAGE_SPECIFIC 4
+/*fixed parameters*/
+#define USPEX_MAX_NUM_OPT_STEPS 32
 /* gui structure */
 struct uspex_calc_gui{
 	/*window information*/
@@ -56,6 +58,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *_calctype_mol;
 	GUI_OBJ *_calctype_var;
 	GUI_OBJ *_calctype_mag;			/*VER 10.1*/
+	GUI_OBJ *_calctype_mag_2;		/*VER 10.1*/
 	GUI_OBJ *optType;
 	gboolean have_new_opt;			/*VER 10.1*/
 	GUI_OBJ *new_optType;			/*VER 10.1*/
@@ -136,6 +139,29 @@ struct uspex_calc_gui{
 	GUI_OBJ *splitInto;
 	gchar *_tmp_splitInto;
 	gboolean auto_lval;
+/*4.7 restart*/
+	/*unsupported*/
+/*4.8 Ab initio*/
+	gdouble _tmp_num_opt_steps;/*because gtk_spin type is double*/
+	GUI_OBJ *_num_opt_steps;/*usually determined indirectly*/
+	gdouble _tmp_curr_step;/*because gtk_spin type is double*/
+	GUI_OBJ *_curr_step;
+	gboolean _tmp_isfull;
+	GUI_OBJ *abinitioCode;
+	gdouble _tmp_KresolStart;
+	GUI_OBJ *KresolStart;
+	gdouble _tmp_vacuumSize;
+	GUI_OBJ *vacuumSize;
+	GUI_OBJ *numParallelCalcs;
+	gchar *_tmp_commandExecutable;
+	GUI_OBJ *commandExecutable;
+	GUI_OBJ *whichCluster;
+	GUI_OBJ *remoteFolder;
+	//PhaseDiagram is auto-sync
+
+
+
+
 /*4.9 fingerprint*/
 	GUI_OBJ *RmaxFing;
 	GUI_OBJ *deltaFing;
@@ -147,8 +173,38 @@ struct uspex_calc_gui{
 /*4.11 spacegroup*/
 	GUI_OBJ *doSpaceGroup;
 	GUI_OBJ *SymTolerance;
+/*4.12 developers*/
+	GUI_OBJ *repeatForStatistics;
+	GUI_OBJ *stopFitness;
+	GUI_OBJ *fixRndSeed;
+//	GUI_OBJ *collectForces;
+/*4.13 seldom used*/
+//	GUI_OBJ *ordering_active;
+//	GUI_OBJ *symmetrize;
+	gchar *_tmp_valence_e;
+	GUI_OBJ *valenceElectr;
+	GUI_OBJ *percSliceShift;
+	GUI_OBJ *dynamicalBestHM;
+	GUI_OBJ *softMutOnly;
+	GUI_OBJ *maxDistHeredity;
+	GUI_OBJ *manyParents;
+	GUI_OBJ *minSlice;
+	GUI_OBJ *maxSlice;
+	GUI_OBJ *numberparents;
 
 
+
+/*5.2 BoltzTraP*/
+	GUI_OBJ *BoltzTraP_T_max;
+	GUI_OBJ *BoltzTraP_T_delta;
+	GUI_OBJ *BoltzTraP_T_efcut;
+	GUI_OBJ *TE_T_interest;
+	GUI_OBJ *TE_threshold;
+	GUI_OBJ *TE_goal;
+	gchar *_tmp_cmd_BoltzTraP;/*optional, and unused (for now)*/
+	GUI_OBJ *cmd_BoltzTraP;/*optional, and unused (for now)*/
+/*5.3 Surfaces*/
+/*5.4 Clusters*/
 /*5.5 variable composition*/
 	GUI_OBJ *firstGeneMax;
 	GUI_OBJ *minAt;
@@ -157,6 +213,28 @@ struct uspex_calc_gui{
 	GUI_OBJ *howManyTrans;
 	gchar *_tmp_specificTrans;
 	GUI_OBJ *specificTrans;
+/*5.6 metadynamics*/
+
+
+/*6.2 Transition Path Sampling*/
+	GUI_OBJ *numIterations;
+	GUI_OBJ *speciesSymbol;
+	gchar *_tmp_mass;
+	GUI_OBJ *mass;
+	GUI_OBJ *amplitudeShoot_AB;
+	GUI_OBJ *amplitudeShoot_BA;
+	GUI_OBJ *magnitudeShoot_success;
+	GUI_OBJ *magnitudeShoot_failure;
+	GUI_OBJ *shiftRatio;
+	GUI_OBJ *orderParaType;
+	GUI_OBJ *opCriteria_start;
+	GUI_OBJ *opCriteria_end;
+	GUI_OBJ *cmdOrderParameter;
+	GUI_OBJ *cmdEnthalpyTemperature;
+	GUI_OBJ *orderParameterFile;
+	GUI_OBJ *enthalpyTemperatureFile;
+	GUI_OBJ *trajectoryFile;
+	GUI_OBJ *MDrestartFile;
 
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;

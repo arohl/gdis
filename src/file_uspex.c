@@ -1498,6 +1498,7 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 		else if(_SRC._nlatticevalues==1) _DBLCP(Latticevalues,1);
 	}
 	_COPY(splitInto,_SRC._nsplits,gint);
+	_CP(_num_opt_steps);
 	_COPY(abinitioCode,_SRC._num_opt_steps,gint);
 	_DBLCP(KresolStart,_SRC._num_opt_steps);
 	_DBLCP(vacuumSize,_SRC._num_opt_steps);
