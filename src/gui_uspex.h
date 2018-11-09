@@ -44,12 +44,13 @@ struct uspex_calc_gui{
 	GUI_OBJ *window;
 	/*connection to calculation parameters*/
 	uspex_calc_struct calc;
-	/*actual GUI*/
+/*actual GUI*/
 	gint cur_page;
 	gboolean is_dirty;
 	GUI_OBJ *name;
 	GUI_OBJ *file_entry;
 	gboolean have_output;
+	GUI_OBJ *specific_page;/*because this page can be locked if nothing relevant*/
 /*4.1 Type of run & System*/
 	GUI_OBJ *calculationMethod;
 	GUI_OBJ *calculationType;
@@ -79,7 +80,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *_bond_d;
 	gchar *_tmp_bond_d;
 	gboolean auto_bonds;
-	/**/
 	//checkMolecules is auto-sync
 	//checkConnectivity is auto-sync
 	GUI_OBJ *fitLimit;			/*VER 10.1*/
@@ -119,13 +119,11 @@ struct uspex_calc_gui{
 	GUI_OBJ *IonDistances;
 	GUI_OBJ *_distances;
 	gchar *_tmp_distances;
-//	GUI_OBJ *curr_distance;
 	gint _curr_distance;
 	GUI_OBJ *minVectorLength;
 	GUI_OBJ *MolCenters;
 	GUI_OBJ *_centers;
 	gchar *_tmp_centers;
-//	GUI_OBJ *curr_center;
 	gint _curr_center;
 	GUI_OBJ *constraint_enhancement;
 	gboolean auto_C_ion;
@@ -158,10 +156,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *whichCluster;
 	GUI_OBJ *remoteFolder;
 	//PhaseDiagram is auto-sync
-
-
-
-
 /*4.9 fingerprint*/
 	GUI_OBJ *RmaxFing;
 	GUI_OBJ *deltaFing;
@@ -177,10 +171,10 @@ struct uspex_calc_gui{
 	GUI_OBJ *repeatForStatistics;
 	GUI_OBJ *stopFitness;
 	GUI_OBJ *fixRndSeed;
-//	GUI_OBJ *collectForces;
+	//collectForces is auto-sync
 /*4.13 seldom used*/
-//	GUI_OBJ *ordering_active;
-//	GUI_OBJ *symmetrize;
+	//ordering_active is auto-sync
+	//symmetrize is auto-sync
 	gchar *_tmp_valence_e;
 	GUI_OBJ *valenceElectr;
 	GUI_OBJ *percSliceShift;
@@ -191,7 +185,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *minSlice;
 	GUI_OBJ *maxSlice;
 	GUI_OBJ *numberparents;
-
 /*5.1 molecular*/
 	GUI_OBJ *mol_model;/*additional*/
 	GUI_OBJ *mol_model_button;/*additional*/
@@ -273,12 +266,17 @@ struct uspex_calc_gui{
 	GUI_OBJ *opCriteria_start;
 	GUI_OBJ *opCriteria_end;
 	GUI_OBJ *cmdOrderParameter;
+	GUI_OBJ *cmdOrderParameter_button;
 	GUI_OBJ *cmdEnthalpyTemperature;
+	GUI_OBJ *cmdEnthalpyTemperature_button;
 	GUI_OBJ *orderParameterFile;
+	GUI_OBJ *orderParameterFile_button;
 	GUI_OBJ *enthalpyTemperatureFile;
+	GUI_OBJ *enthalpyTemperatureFile_button;
 	GUI_OBJ *trajectoryFile;
+	GUI_OBJ *trajectoryFile_button;
 	GUI_OBJ *MDrestartFile;
-
+	GUI_OBJ *MDrestartFile_button;
 /* CALCUL */
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;

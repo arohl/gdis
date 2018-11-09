@@ -144,6 +144,14 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_NOTE_PAGE_NUMBER(notebook,number) do{\
 	number = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));\
 }while(0)
+/*hide a page*/
+#define GUI_NOTE_PAGE_HIDE(page) do{\
+	gtk_widget_hide(page);\
+}while(0)
+/*show a page*/
+#define GUI_NOTE_PAGE_SHOW(page) do{\
+	gtk_widget_show(page);\
+}while(0)
 /*******************/
 /* FRAME INTERFACE */
 /*******************/

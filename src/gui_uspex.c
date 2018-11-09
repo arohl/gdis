@@ -309,6 +309,20 @@ void uspex_path_dialog(void){
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
+/***************************/
+/* show/hide specific page */
+/***************************/
+void update_specific(void){
+	gboolean hide_specific=TRUE;
+	if((uspex_gui.calc.calculationMethod==US_CM_META)
+	  ||(uspex_gui.calc.calculationMethod==US_CM_VCNEB)
+	  ||(uspex_gui.calc.calculationMethod==US_CM_PSO))
+		hide_specific=FALSE;
+        hide_specific&=(uspex_gui.calc._calctype_mol==FALSE);
+        hide_specific&=(uspex_gui.calc._calctype_dim!=2);
+        if(!hide_specific) GUI_NOTE_PAGE_SHOW(uspex_gui.specific_page);
+        else GUI_NOTE_PAGE_HIDE(uspex_gui.specific_page);
+}
 /**************************************************/
 /* refresh the GUI with value from uspex_gui.calc */
 /**************************************************/
@@ -322,22 +336,145 @@ void uspex_gui_refresh(){
 void uspex_method_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
+	/*consequences*/
+/*META*/
+	GUI_LOCK(uspex_gui.ExternalPressure);
+	GUI_LOCK(uspex_gui.GaussianWidth);
+	GUI_LOCK(uspex_gui.GaussianHeight);
+	GUI_LOCK(uspex_gui.FullRelax);
+	GUI_LOCK(uspex_gui.maxVectorLength);
+	GUI_LOCK(uspex_gui.meta_model);
+	GUI_LOCK(uspex_gui.meta_model_button);
+/*VCNEB*/
+	GUI_LOCK(uspex_gui.vcnebType);
+	GUI_LOCK(uspex_gui._vcnebtype_method);
+	GUI_LOCK(uspex_gui._vcnebtype_img_num);
+	GUI_LOCK(uspex_gui._vcnebtype_spring);
+	GUI_LOCK(uspex_gui.numImages);
+	GUI_LOCK(uspex_gui.numSteps);
+	GUI_LOCK(uspex_gui.optReadImages);
+	GUI_LOCK(uspex_gui.optimizerType);
+	GUI_LOCK(uspex_gui.optRelaxType);
+	GUI_LOCK(uspex_gui.dt);
+	GUI_LOCK(uspex_gui.ConvThreshold);
+	GUI_LOCK(uspex_gui.VarPathLength);
+	GUI_LOCK(uspex_gui.K_min);
+	GUI_LOCK(uspex_gui.K_max);
+	GUI_LOCK(uspex_gui.Kconstant);
+	GUI_LOCK(uspex_gui.optFreezing);
+	GUI_LOCK(uspex_gui.optMethodCIDI);
+	GUI_LOCK(uspex_gui.startCIDIStep);
+	GUI_LOCK(uspex_gui.pickupImages);
+	GUI_LOCK(uspex_gui.FormatType);
+	GUI_LOCK(uspex_gui.PrintStep);
+	GUI_LOCK(uspex_gui.img_model);
+	GUI_LOCK(uspex_gui.img_model_button);
+/*PSO*/
+	GUI_LOCK(uspex_gui.PSO_softMut);
+	GUI_LOCK(uspex_gui.PSO_BestStruc);
+	GUI_LOCK(uspex_gui.PSO_BestEver);
+/*TPS*/
+	GUI_LOCK(uspex_gui.numIterations);
+	GUI_LOCK(uspex_gui.speciesSymbol);
+	GUI_LOCK(uspex_gui.mass);
+	GUI_LOCK(uspex_gui.amplitudeShoot_AB);
+	GUI_LOCK(uspex_gui.amplitudeShoot_BA);
+	GUI_LOCK(uspex_gui.magnitudeShoot_success);
+	GUI_LOCK(uspex_gui.magnitudeShoot_failure);
+	GUI_LOCK(uspex_gui.shiftRatio);
+	GUI_LOCK(uspex_gui.orderParaType);
+	GUI_LOCK(uspex_gui.opCriteria_start);
+	GUI_LOCK(uspex_gui.opCriteria_end);
+	GUI_LOCK(uspex_gui.cmdOrderParameter);
+	GUI_LOCK(uspex_gui.cmdOrderParameter_button);
+	GUI_LOCK(uspex_gui.cmdEnthalpyTemperature);
+	GUI_LOCK(uspex_gui.cmdEnthalpyTemperature_button);
+	GUI_LOCK(uspex_gui.orderParameterFile);
+	GUI_LOCK(uspex_gui.orderParameterFile_button);
+	GUI_LOCK(uspex_gui.enthalpyTemperatureFile);
+	GUI_LOCK(uspex_gui.enthalpyTemperatureFile_button);
+	GUI_LOCK(uspex_gui.trajectoryFile);
+	GUI_LOCK(uspex_gui.trajectoryFile_button);
+	GUI_LOCK(uspex_gui.MDrestartFile);
+	GUI_LOCK(uspex_gui.MDrestartFile_button);
+	/*check method*/
 	switch (index){
 	case 0://USPEX
 		uspex_gui.calc.calculationMethod = US_CM_USPEX;break;
 	case 1://META
-		uspex_gui.calc.calculationMethod = US_CM_META;break;
+		uspex_gui.calc.calculationMethod = US_CM_META;
+		GUI_UNLOCK(uspex_gui.ExternalPressure);
+		GUI_UNLOCK(uspex_gui.GaussianWidth);
+		GUI_UNLOCK(uspex_gui.GaussianHeight);
+		GUI_UNLOCK(uspex_gui.FullRelax);
+		GUI_UNLOCK(uspex_gui.maxVectorLength);
+		GUI_UNLOCK(uspex_gui.meta_model);
+		GUI_UNLOCK(uspex_gui.meta_model_button);
+		break;
 	case 2://VCNEB
-		uspex_gui.calc.calculationMethod = US_CM_VCNEB;break;
+		uspex_gui.calc.calculationMethod = US_CM_VCNEB;
+		GUI_UNLOCK(uspex_gui.vcnebType);
+		GUI_UNLOCK(uspex_gui._vcnebtype_method);
+		GUI_UNLOCK(uspex_gui._vcnebtype_img_num);
+		GUI_UNLOCK(uspex_gui._vcnebtype_spring);
+		GUI_UNLOCK(uspex_gui.numImages);
+		GUI_UNLOCK(uspex_gui.numSteps);
+		GUI_UNLOCK(uspex_gui.optReadImages);
+		GUI_UNLOCK(uspex_gui.optimizerType);
+		GUI_UNLOCK(uspex_gui.optRelaxType);
+		GUI_UNLOCK(uspex_gui.dt);
+		GUI_UNLOCK(uspex_gui.ConvThreshold);
+		GUI_UNLOCK(uspex_gui.VarPathLength);
+		GUI_UNLOCK(uspex_gui.K_min);
+		GUI_UNLOCK(uspex_gui.K_max);
+		GUI_UNLOCK(uspex_gui.Kconstant);
+		GUI_UNLOCK(uspex_gui.optFreezing);
+		GUI_UNLOCK(uspex_gui.optMethodCIDI);
+		GUI_UNLOCK(uspex_gui.startCIDIStep);
+		GUI_UNLOCK(uspex_gui.pickupImages);
+		GUI_UNLOCK(uspex_gui.FormatType);
+		GUI_UNLOCK(uspex_gui.PrintStep);
+		GUI_UNLOCK(uspex_gui.img_model);
+		GUI_UNLOCK(uspex_gui.img_model_button);
+		break;
 	case 3://PSO
-		uspex_gui.calc.calculationMethod = US_CM_PSO;break;
+		uspex_gui.calc.calculationMethod = US_CM_PSO;
+		GUI_UNLOCK(uspex_gui.PSO_softMut);
+		GUI_UNLOCK(uspex_gui.PSO_BestStruc);
+		GUI_UNLOCK(uspex_gui.PSO_BestEver);
+		break;
 	case 4://TPS
-		uspex_gui.calc.calculationMethod = US_CM_TPS;break;
-	case 5://MINHOP
+		uspex_gui.calc.calculationMethod = US_CM_TPS;
+		GUI_UNLOCK(uspex_gui.numIterations);
+		GUI_UNLOCK(uspex_gui.speciesSymbol);
+		GUI_UNLOCK(uspex_gui.mass);
+		GUI_UNLOCK(uspex_gui.amplitudeShoot_AB);
+		GUI_UNLOCK(uspex_gui.amplitudeShoot_BA);
+		GUI_UNLOCK(uspex_gui.magnitudeShoot_success);
+		GUI_UNLOCK(uspex_gui.magnitudeShoot_failure);
+		GUI_UNLOCK(uspex_gui.shiftRatio);
+		GUI_UNLOCK(uspex_gui.orderParaType);
+		GUI_UNLOCK(uspex_gui.opCriteria_start);
+		GUI_UNLOCK(uspex_gui.opCriteria_end);
+		GUI_UNLOCK(uspex_gui.cmdOrderParameter);
+		GUI_UNLOCK(uspex_gui.cmdOrderParameter_button);
+		GUI_UNLOCK(uspex_gui.cmdEnthalpyTemperature);
+		GUI_UNLOCK(uspex_gui.cmdEnthalpyTemperature_button);
+		GUI_UNLOCK(uspex_gui.orderParameterFile);
+		GUI_UNLOCK(uspex_gui.orderParameterFile_button);
+		GUI_UNLOCK(uspex_gui.enthalpyTemperatureFile);
+		GUI_UNLOCK(uspex_gui.enthalpyTemperatureFile_button);
+		GUI_UNLOCK(uspex_gui.trajectoryFile);
+		GUI_UNLOCK(uspex_gui.trajectoryFile_button);
+		GUI_UNLOCK(uspex_gui.MDrestartFile);
+		GUI_UNLOCK(uspex_gui.MDrestartFile_button);
+		break;
+	case 5://MINHOP -- no specific interface
 		uspex_gui.calc.calculationMethod = US_CM_MINHOP;break;
 	default://UNKNOWN
 		uspex_gui.calc.calculationMethod = US_CM_UNKNOWN;
 	}
+	update_specific();
 }
 /*****************************/
 /* selecting calculationType */
@@ -345,6 +482,19 @@ void uspex_method_selected(GUI_OBJ *w){
 void uspex_type_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
+	/*consequences*/
+/*molecular*/
+	GUI_LOCK(uspex_gui.mol_model);
+	GUI_LOCK(uspex_gui.mol_model_button);
+	GUI_LOCK(uspex_gui.num_mol);
+/*Surfaces*/
+	GUI_LOCK(uspex_gui.thicknessS);
+	GUI_LOCK(uspex_gui.thicknessB);
+	GUI_LOCK(uspex_gui.reconstruct);
+	GUI_LOCK(uspex_gui.StoichiometryStart);
+	GUI_LOCK(uspex_gui.substrate_model);
+	GUI_LOCK(uspex_gui.substrate_model_button);
+	/*check type*/
 	switch (index){
 	case 1://s300
 		uspex_gui.calc.calculationType=US_CT_s300;
@@ -373,6 +523,9 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
+		GUI_UNLOCK(uspex_gui.mol_model);
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 5://311
 		uspex_gui.calc.calculationType=US_CT_311;
@@ -380,6 +533,9 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=FALSE;
+		GUI_UNLOCK(uspex_gui.mol_model);
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 6://000
 		uspex_gui.calc.calculationType=US_CT_000;
@@ -401,6 +557,9 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
+		GUI_UNLOCK(uspex_gui.mol_model);
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 9://200
 		uspex_gui.calc.calculationType=US_CT_200;
@@ -408,6 +567,12 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
+		GUI_UNLOCK(uspex_gui.thicknessS);
+		GUI_UNLOCK(uspex_gui.thicknessB);
+		GUI_UNLOCK(uspex_gui.reconstruct);
+		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.substrate_model);
+		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 10://s200
 		uspex_gui.calc.calculationType=US_CT_s200;
@@ -415,6 +580,12 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=TRUE;
+		GUI_UNLOCK(uspex_gui.thicknessS);
+		GUI_UNLOCK(uspex_gui.thicknessB);
+		GUI_UNLOCK(uspex_gui.reconstruct);
+		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.substrate_model);
+		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 11://201
 		uspex_gui.calc.calculationType=US_CT_201;
@@ -422,6 +593,12 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=FALSE;
+		GUI_UNLOCK(uspex_gui.thicknessS);
+		GUI_UNLOCK(uspex_gui.thicknessB);
+		GUI_UNLOCK(uspex_gui.reconstruct);
+		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.substrate_model);
+		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 12://s201
 		uspex_gui.calc.calculationType=US_CT_s201;
@@ -429,6 +606,12 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=TRUE;
+		GUI_UNLOCK(uspex_gui.thicknessS);
+		GUI_UNLOCK(uspex_gui.thicknessB);
+		GUI_UNLOCK(uspex_gui.reconstruct);
+		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.substrate_model);
+		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 13://-200
 		uspex_gui.calc.calculationType=US_CT_m200;
@@ -460,6 +643,7 @@ void uspex_type_selected(GUI_OBJ *w){
 	else GUI_TOGGLE_OFF(uspex_gui._calctype_var);
 	if(uspex_gui.calc._calctype_mag) GUI_TOGGLE_ON(uspex_gui._calctype_mag);
 	else GUI_TOGGLE_OFF(uspex_gui._calctype_mag);
+	update_specific();
 }
 /**************************/
 /* update calculationType */
@@ -542,6 +726,7 @@ void _update_calculationType(){
 	default:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
 	}
+	update_specific();
 }
 /************************/
 /* update _calctype_dim */
@@ -1544,6 +1729,7 @@ void uspex_meta_model_selected(GUI_OBJ *w){
 void update_vcnebType(void){
 	gchar *text;
 	gint type=uspex_gui.calc._vcnebtype_method*100;
+	if(uspex_gui.calc.calculationMethod!=US_CM_VCNEB) return;
 	if(uspex_gui.calc._vcnebtype_img_num) type+=10;
 	if(uspex_gui.calc._vcnebtype_spring) type+=1;
 	uspex_gui.calc.vcnebType=type;
@@ -1758,17 +1944,12 @@ void load_substrate_model_file(void){
 
 
 
-
-
-
-
-
 /************************/
 /* Switch notebook page */
 /************************/
 void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 	gint from_page;
-//	gchar *text;
+	gint idx;
 	/* some (few) values need to be updated from a page to another*/
 	GUI_NOTE_PAGE_NUMBER(notebook,from_page);
 	if(from_page==(gint)page_num) return;/*not moved*/
@@ -1793,10 +1974,14 @@ void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 	} else if (page_num==USPEX_PAGE_ADVANCED){
 		/**/
 	} else if (page_num==USPEX_PAGE_SPECIFIC){
-		/**/
+		/*update meta_model_button*/
+		GUI_COMBOBOX_GET(uspex_gui.meta_model,idx);
+		if((uspex_gui.calc.calculationMethod==US_CM_META)&&(idx==0)) GUI_UNLOCK(uspex_gui.meta_model_button);
+		else GUI_LOCK(uspex_gui.meta_model_button);
+		/*update vcneb*/
+		update_vcnebType();
 	}
 	GUI_UNLOCK(page);
-	/*to be continued...*/
 }
 /****************************************************/
 /* convert current uspex_gui into uspex_calc_struct */
@@ -2128,19 +2313,6 @@ GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard bro
 	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckCon",3,4,8,9);/*not calling anything*/
 GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
 /* <- Ext Pressure, LDA+U, and magRation moved to p. III, II, and III, respectively.*/
-/* initialize */
-	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.optType,0,uspex_optimization_selected);
-	GUI_LOCK(uspex_gui._atom_typ);
-	populate_atomType();
-	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,atomType_selected);
-	GUI_SPIN_SET(uspex_gui._calctype_dim,(gdouble) uspex_gui.calc._calctype_dim);
-	mol_toggle();
-	var_toggle();
-	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
-	auto_bond_toggle();
-	opt_toggle();
 /* --- cell */
 	GUI_LABEL_TABLE(table,"Cell",0,4,9,10);
 /* line 10 */
@@ -2190,13 +2362,6 @@ GUI_TOOLTIP(uspex_gui._centers,"Associate each molecule with a GDIS model.");
 	/*col 4: empty*/
 /* line 17: empty */
 	GUI_LABEL_TABLE(table," ",0,4,17,18);
-/* initialize */
-	GUI_COMBOBOX_SETUP(uspex_gui.IonDistances,0,uspex_IonDistances_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.MolCenters,0,uspex_MolCenters_selected);
-	refresh_constraints();
-	toggle_auto_C_ion();
-	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,1,uspex_latticeformat_selected);
-	uspex_latticeformat_selected(uspex_gui._latticeformat);
 /* --- end page */
 
 /*---------------------*/
@@ -2305,8 +2470,6 @@ GUI_TOOLTIP(uspex_gui.antiSeedsSigma,"antiSeedsSigma: Ch. 4.10 DEFAULT: 0.001\nG
 GUI_TOOLTIP(uspex_gui.doSpaceGroup,"doSpaceGroup: Ch. 4.11 DEFAULT: TRUE\nActivate space group determination.");
 	GUI_ENTRY_TABLE(table,uspex_gui.SymTolerance,uspex_gui.calc.SymTolerance,"%.4f","TOL:",3,4,14,15);
 GUI_TOOLTIP(uspex_gui.SymTolerance,"SymTolerance: Ch. 4.11 DEFAULT: 0.10\nPrecision for symmetry determination.");
-/* initialize */
-	SG_toggle();
 /* --- Variable-composition */
 	GUI_LABEL_TABLE(table,"Variable-composition",0,4,15,16);
 /* line 16 */
@@ -2324,9 +2487,7 @@ GUI_TOOLTIP(uspex_gui.fracTrans,"fracTrans: Ch. 5.5 DEFAULT: 0.1\nFraction of st
 GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.5 DEFAULT: 0.2\nMaximum ratio of transmutated atoms in a structure.");
 	GUI_TEXT_TABLE(table,uspex_gui.specificTrans,uspex_gui._tmp_specificTrans,"Trans: ",2,4,17,18);
 GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.5 DEFAULT: blank\nList of allowed transmutation.");
-/* initialize */
-	mag_toggle();
-
+/* --- end page */
 
 /*-----------------------*/
 /* page 3 -> CALCULATION */
@@ -2389,11 +2550,6 @@ GUI_TOOLTIP(uspex_gui.remoteFolder,"remoteFolder: Ch. 4.8 DEFAULT: none\nExecuti
 
 
 for(idx=5;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
-
-
-
-
-
 /* --- end page */
 
 /*--------------------*/
@@ -2443,7 +2599,6 @@ GUI_TOOLTIP(uspex_gui.softMutOnly,"softMutOnly: Ch. ?.? DEFAULT: 0\nWhich/how ma
 GUI_TOOLTIP(uspex_gui.maxDistHeredity,"maxDistHeredity: Ch. 4.13 DEFAULT: 0.5\nMax fingerprint distance between structures chosen for heredity.");
 	GUI_ENTRY_TABLE(table,uspex_gui.numberparents,uspex_gui.calc.numberparents,"%i","NumP:",1,2,6,7);
 GUI_TOOLTIP(uspex_gui.numberparents,"numberparents: Ch. 4.13 DEFAULT: 2\nNumber of parents chosen for heredity\nfor cluster calculation.");
-
 	GUI_COMBOBOX_TABLE(table,uspex_gui.manyParents,"many_P:",2,4,6,7);
 	GUI_COMBOBOX_ADD(uspex_gui.manyParents,"0 - 2 parents,    1 slice each");
 	GUI_COMBOBOX_ADD(uspex_gui.manyParents,"1 - n structures, 1 slice each");
@@ -2500,41 +2655,37 @@ GUI_TOOLTIP(uspex_gui.magnitudeShoot_failure,"magnitudeShoot: Ch. 6.2 DEFAULT: 1
 /* line 14 */
 	GUI_TEXT_TABLE(table,uspex_gui.cmdOrderParameter,uspex_gui.calc.cmdOrderParameter,"cmdOP:",0,2,14,15);
 GUI_TOOLTIP(uspex_gui.cmdOrderParameter,"cmdOrderParameter: Ch. 6.2 DEFAULT: none\nUser-defined command for order parameter calculation.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_cmd_OP,2,3,14,15);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.cmdOrderParameter_button,load_cmd_OP,2,3,14,15);
 	GUI_ENTRY_TABLE(table,uspex_gui.opCriteria_start,uspex_gui.calc.opCriteria[0],"%.4f","SIM(start):",3,4,14,15);
 GUI_TOOLTIP(uspex_gui.opCriteria_start,"opCriteria: Ch. 6.2 DEFAULT: none\nAllowable degree of similarity between starting states.");
 /* line 15 */
 	GUI_TEXT_TABLE(table,uspex_gui.cmdEnthalpyTemperature,uspex_gui.calc.cmdEnthalpyTemperature,"cmdET:",0,2,15,16);
-GUI_TOOLTIP(uspex_gui.cmdEnthalpyTemperature,"cmdEnthalpyTemperature: Ch. 6.2 DEFAULT: Y\nUser-defined command for enthalpy/temperature\nextraction from the MD results.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_cmd_ET,2,3,15,16);
+GUI_TOOLTIP(uspex_gui.cmdEnthalpyTemperature,"cmdEnthalpyTemperature: Ch. 6.2 DEFAULT: none\nUser-defined command for enthalpy/temperature\nextraction from the MD results.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.cmdEnthalpyTemperature_button,load_cmd_ET,2,3,15,16);
 	GUI_ENTRY_TABLE(table,uspex_gui.opCriteria_end,uspex_gui.calc.opCriteria[1],"%.4f","SIM(end):",3,4,15,16);
 GUI_TOOLTIP(uspex_gui.opCriteria_end,"opCriteria: Ch. 6.2 DEFAULT: none\nAllowable degree of similarity between ending states.");
 /* line 16 */
 	GUI_TEXT_TABLE(table,uspex_gui.orderParameterFile,uspex_gui.calc.orderParameterFile,"OP_file:",0,1,16,17);
 GUI_TOOLTIP(uspex_gui.orderParameterFile,"orderParameterFile: Ch. 6.2 DEFAULT: fp.dat\nOrder parameter history file.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_OP_file,1,2,16,17);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.orderParameterFile_button,load_OP_file,1,2,16,17);
 	GUI_TEXT_TABLE(table,uspex_gui.enthalpyTemperatureFile,uspex_gui.calc.enthalpyTemperatureFile,"ET_file:",2,3,16,17);
 GUI_TOOLTIP(uspex_gui.enthalpyTemperatureFile,"enthalpyTemperatureFile: Ch. 6.2 DEFAULT: HT.dat\nEnthalpy and temperature history file.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_ET_file,3,4,16,17);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.enthalpyTemperatureFile_button,load_ET_file,3,4,16,17);
 /* line 17 */
 	GUI_TEXT_TABLE(table,uspex_gui.trajectoryFile,uspex_gui.calc.trajectoryFile,"traj_file:",0,1,17,18);
 GUI_TOOLTIP(uspex_gui.trajectoryFile,"trajectoryFile: Ch. 6.2 DEFAULT: traj.dat\nMD trajectory file.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_traj_file,1,2,17,18);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.trajectoryFile_button,load_traj_file,1,2,17,18);
 	GUI_TEXT_TABLE(table,uspex_gui.MDrestartFile,uspex_gui.calc.MDrestartFile,"MD_file:",2,3,17,18);
 GUI_TOOLTIP(uspex_gui.MDrestartFile,"MDrestartFile: Ch. 6.2 DEFAULT: traj.restart\nMD restart file.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_MDrestart_file,3,4,17,18);
-/* initialize */
-	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.TE_goal,0,uspex_TE_goal_selected);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.MDrestartFile_button,load_MDrestart_file,3,4,17,18);
 /* --- end page */
 
 /*--------------------*/
 /* page 5 -> SPECIFIC */
 /*--------------------*/
-	GUI_PAGE_NOTE(notebook,page,"SPECIFIC");
+	GUI_PAGE_NOTE(notebook,uspex_gui.specific_page,"SPECIFIC");
 /* create a table in the page*/
-	GUI_TABLE_NOTE(page,table,18,4);
+	GUI_TABLE_NOTE(uspex_gui.specific_page,table,18,4);
 /* --- Metadynamics */
 	GUI_LABEL_TABLE(table,"Metadynamics",0,4,0,1);
 /* line 1 */
@@ -2584,16 +2735,16 @@ GUI_TOOLTIP(uspex_gui._vcnebtype_spring,"Set whether spring constants should be 
 /* line 7 */
 	GUI_ENTRY_TABLE(table,uspex_gui.numImages,uspex_gui.calc.numImages,"%i","N_Img:",0,1,7,8);
 GUI_TOOLTIP(uspex_gui.numImages,"numImages: Ch. 6.1 DEFAULT: 9\nInitial number of images.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optReadImages,"Read_Img:",1,2,7,8);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optReadImages,"Img:",1,2,7,8);
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"0 - All structures are needed");
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"1 - Only initial and final");
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"2 - Initial and final + intermediates");
 GUI_TOOLTIP(uspex_gui.optReadImages,"optReadImages: Ch. 6.1 DEFAULT: 2\nSet the method for reading Images file.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optimizerType,"Opt_Type:",2,3,7,8);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optimizerType,"Opt:",2,3,7,8);
 	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"1 - Steepest Descent");
 	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"2 - Fast Inertial Relaxation Engine");
 GUI_TOOLTIP(uspex_gui.optimizerType,"optimizerType: Ch. 6.1 DEFAULT: 1\nSelect the optimization algorithm (SD or FIRE).");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optRelaxType,"RelaxType:",3,4,7,8);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optRelaxType,"Relax:",3,4,7,8);
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"1 - fixed cell, positions relaxed (=NEB)");
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"2 - cell lattice only (only for testing)");
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"3 - full, cell and positions relaxation.");
@@ -2670,7 +2821,33 @@ GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.3 DEFAULT: 1\nNumber of re
 GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
 /* line 17: empty*/
 	GUI_LABEL_TABLE(table," ",0,4,17,18);
-/* initialize */
+/* --- end page */
+
+/* initialize everything */
+	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optType,0,uspex_optimization_selected);
+	GUI_LOCK(uspex_gui._atom_typ);
+	populate_atomType();
+	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,atomType_selected);
+	GUI_SPIN_SET(uspex_gui._calctype_dim,(gdouble) uspex_gui.calc._calctype_dim);
+	mol_toggle();
+	var_toggle();
+	GUI_COMBOBOX_SETUP(uspex_gui.goodBonds,0,goodBonds_selected);
+	auto_bond_toggle();
+	opt_toggle();
+	uspex_method_selected(uspex_gui.calculationMethod);
+	GUI_COMBOBOX_SETUP(uspex_gui.IonDistances,0,uspex_IonDistances_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.MolCenters,0,uspex_MolCenters_selected);
+	refresh_constraints();
+	toggle_auto_C_ion();
+	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,1,uspex_latticeformat_selected);
+	uspex_latticeformat_selected(uspex_gui._latticeformat);
+	SG_toggle();
+	mag_toggle();
+	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.TE_goal,0,uspex_TE_goal_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.FullRelax,2,uspex_relax_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.meta_model,0,uspex_meta_model_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui._vcnebtype_method,0,uspex_vcneb_method_selected);
@@ -2684,10 +2861,6 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	update_vcnebType();
 	GUI_COMBOBOX_SETUP(uspex_gui.mol_model,0,uspex_mol_model_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.substrate_model,0,uspex_substrate_model_selected);
-/* --- end page */
-
-
-
 
 /* --- Outside of notebook */
 	GUI_FRAME_WINDOW(uspex_gui.window,frame);
@@ -2701,6 +2874,7 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 /* all done */
 	uspex_gui_refresh();/*refresh once more*/
 	GUI_SHOW(uspex_gui.window);/*display*/
+	update_specific();
 	sysenv.refresh_dialog=TRUE;
 }
 
