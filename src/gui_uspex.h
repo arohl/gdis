@@ -192,8 +192,10 @@ struct uspex_calc_gui{
 	GUI_OBJ *maxSlice;
 	GUI_OBJ *numberparents;
 
-
-
+/*5.1 molecular*/
+	GUI_OBJ *mol_model;/*additional*/
+	GUI_OBJ *mol_model_button;/*additional*/
+	GUI_OBJ *num_mol;/*additional*/
 /*5.2 BoltzTraP*/
 	GUI_OBJ *BoltzTraP_T_max;
 	GUI_OBJ *BoltzTraP_T_delta;
@@ -204,6 +206,13 @@ struct uspex_calc_gui{
 	gchar *_tmp_cmd_BoltzTraP;/*optional, and unused (for now)*/
 	GUI_OBJ *cmd_BoltzTraP;/*optional, and unused (for now)*/
 /*5.3 Surfaces*/
+	GUI_OBJ *thicknessS;
+	GUI_OBJ *thicknessB;
+	GUI_OBJ *reconstruct;
+	gchar *_tmp_StoichiometryStart;
+	GUI_OBJ *StoichiometryStart;/*almost undocumented*/
+	GUI_OBJ *substrate_model;/*additional*/
+	GUI_OBJ *substrate_model_button;/*additional*/
 /*5.4 Clusters*/
 /*5.5 variable composition*/
 	GUI_OBJ *firstGeneMax;
@@ -214,8 +223,42 @@ struct uspex_calc_gui{
 	gchar *_tmp_specificTrans;
 	GUI_OBJ *specificTrans;
 /*5.6 metadynamics*/
-
-
+	GUI_OBJ *ExternalPressure;
+	GUI_OBJ *GaussianWidth;
+	GUI_OBJ *GaussianHeight;
+	GUI_OBJ *FullRelax;
+	GUI_OBJ *maxVectorLength;
+	GUI_OBJ *meta_model;/*additional*/
+	GUI_OBJ *meta_model_button;/*additional*/
+/*5.7 Particle swarn optimization*/
+	GUI_OBJ *PSO_softMut;
+	GUI_OBJ *PSO_BestStruc;
+	GUI_OBJ *PSO_BestEver;
+/*6.1 Variable-Cell Nudged Elastic Band */
+	GUI_OBJ *vcnebType;
+	GUI_OBJ *_vcnebtype_method;
+	GUI_OBJ *_vcnebtype_img_num;
+	GUI_OBJ *_vcnebtype_spring;
+	GUI_OBJ *numImages;
+	GUI_OBJ *numSteps;
+	GUI_OBJ *optReadImages;
+	GUI_OBJ *optimizerType;
+	GUI_OBJ *optRelaxType;
+	GUI_OBJ *dt;
+	GUI_OBJ *ConvThreshold;
+	GUI_OBJ *VarPathLength;
+	GUI_OBJ *K_min;
+	GUI_OBJ *K_max;
+	GUI_OBJ *Kconstant;
+	GUI_OBJ *optFreezing;
+	GUI_OBJ *optMethodCIDI;
+	GUI_OBJ *startCIDIStep;
+	gchar *_tmp_pickupImages;
+	GUI_OBJ *pickupImages;
+	GUI_OBJ *FormatType;
+	GUI_OBJ *PrintStep;
+	GUI_OBJ *img_model;/*additional*/
+	GUI_OBJ *img_model_button;/*additional*/
 /*6.2 Transition Path Sampling*/
 	GUI_OBJ *numIterations;
 	GUI_OBJ *speciesSymbol;

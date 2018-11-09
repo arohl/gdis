@@ -1497,6 +1497,270 @@ void load_traj_file(){
 void load_MDrestart_file(){
 
 }
+/********************/
+/* select FullRelax */
+/********************/
+void uspex_relax_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 0:
+		uspex_gui.calc.FullRelax=0;
+		break;
+	case 1:
+		uspex_gui.calc.FullRelax=1;
+		break;
+	case 2:
+		/* fall through */
+	default:
+		uspex_gui.calc.FullRelax=2;
+	}
+}
+/****************************************/
+/* load metadynamics starting structure */
+/****************************************/
+void load_meta_start_file(void){
+
+}
+/*****************************/
+/* select metadynamics model */
+/*****************************/
+void uspex_meta_model_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		GUI_LOCK(uspex_gui.meta_model_button);
+		break;
+	case 0:
+		/* fall through */
+	default:
+		GUI_UNLOCK(uspex_gui.meta_model_button);
+	}
+}
+/*********************/
+/* update VCNEB Type */
+/*********************/
+void update_vcnebType(void){
+	gchar *text;
+	gint type=uspex_gui.calc._vcnebtype_method*100;
+	if(uspex_gui.calc._vcnebtype_img_num) type+=10;
+	if(uspex_gui.calc._vcnebtype_spring) type+=1;
+	uspex_gui.calc.vcnebType=type;
+	/*update uspex_gui.vcnebType */
+	text=g_strdup_printf("%3i",type);
+	GUI_ENTRY_TEXT(uspex_gui.vcnebType,text);
+	g_free(text);
+	/*consequences*/
+	if(uspex_gui.calc._vcnebtype_img_num) GUI_UNLOCK(uspex_gui.VarPathLength);
+	else GUI_LOCK(uspex_gui.VarPathLength);
+	if(uspex_gui.calc._vcnebtype_spring){
+		GUI_UNLOCK(uspex_gui.K_min);
+		GUI_UNLOCK(uspex_gui.K_max);
+		GUI_LOCK(uspex_gui.Kconstant);
+	}else{
+		GUI_LOCK(uspex_gui.K_min);
+		GUI_LOCK(uspex_gui.K_max);
+		GUI_UNLOCK(uspex_gui.Kconstant);
+	}
+}
+/***********************/
+/* select VCNEB method */
+/***********************/
+void uspex_vcneb_method_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		uspex_gui.calc._vcnebtype_method=2;
+		break;
+	case 0:
+		/* fall through */
+	default:
+		uspex_gui.calc._vcnebtype_method=1;
+	}
+	update_vcnebType();
+}
+/******************************/
+/* select VCNEB optReadImages */
+/******************************/
+void uspex_ReadImg_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 0:
+		uspex_gui.calc.optReadImages=0;
+		break;
+	case 1:
+		uspex_gui.calc.optReadImages=1;
+		break;
+	case 2:
+		/* fall through */
+	default:
+		uspex_gui.calc.optReadImages=2;
+	}
+}
+/*******************************/
+/* select VCNEB optimizer type */
+/*******************************/
+void uspex_optimizerType_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		uspex_gui.calc.optimizerType=2;
+	case 0:
+		/* fall through */
+	default:
+		uspex_gui.calc.optimizerType=1;
+	}
+}
+/********************************/
+/* select VCNEB relaxation type */
+/********************************/
+void uspex_RelaxType_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 0:
+		uspex_gui.calc.optRelaxType=1;
+		break;
+	case 1:
+		uspex_gui.calc.optRelaxType=2;
+		break;
+	case 2:
+		/* fall through */
+	default:
+		uspex_gui.calc.optRelaxType=3;
+	}
+}
+/*****************************/
+/* select VCNEB CI/DI method */
+/*****************************/
+void uspex_CIDI_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		uspex_gui.calc.optMethodCIDI=1;
+		break;
+	case 2:
+		uspex_gui.calc.optMethodCIDI=-1;
+		break;
+	case 3:
+		uspex_gui.calc.optMethodCIDI=2;
+		break;
+	case 0:
+		/* fall through */
+	default:
+		uspex_gui.calc.optMethodCIDI=0;
+	}
+	/*consequences*/
+	if(uspex_gui.calc.optMethodCIDI==0){
+		GUI_LOCK(uspex_gui.startCIDIStep);
+		GUI_LOCK(uspex_gui.pickupImages);
+	}else{
+		GUI_UNLOCK(uspex_gui.startCIDIStep);
+		GUI_UNLOCK(uspex_gui.pickupImages);
+	}
+}
+/***********************************/
+/* select VCNEB PATH output format */
+/***********************************/
+void uspex_FormatType_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 0:
+		uspex_gui.calc.FormatType=1;
+		break;
+	case 2:
+		uspex_gui.calc.FormatType=3;
+		break;
+	case 1:
+		/* fall through */
+	default:
+		uspex_gui.calc.FormatType=2;
+	}
+}
+/*****************************/
+/* select VCNEB Images model */
+/*****************************/
+void uspex_img_model_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		GUI_LOCK(uspex_gui.img_model_button);
+		break;
+	case 0:
+		/* fall through */
+	default:
+		GUI_UNLOCK(uspex_gui.img_model_button);
+	}
+}
+/*************************/
+/* load VCNEB Image file */
+/*************************/
+void load_img_model_file(void){
+
+}
+/**************************/
+/* select Molecular model */
+/**************************/
+void uspex_mol_model_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_UNLOCK(uspex_gui.num_mol);
+		break;
+	case 2:
+		GUI_LOCK(uspex_gui.mol_model_button);
+		GUI_LOCK(uspex_gui.num_mol);
+		break;
+	case 0:
+		/* fall through */
+	default:
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_LOCK(uspex_gui.num_mol);
+	}
+}
+/*******************************/
+/* load molecular model/folder */
+/*******************************/
+void load_mod_model_file(void){
+
+}
+/**********************************/
+/* select surface substrate model */
+/**********************************/
+void uspex_substrate_model_selected(GUI_OBJ *w){
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	switch (index){
+	case 1:
+		GUI_LOCK(uspex_gui.substrate_model_button);
+		break;
+	case 0:
+		/* fall through */
+	default:
+		GUI_UNLOCK(uspex_gui.substrate_model_button);
+	}
+}
+/********************************/
+/* load surface substrate model */
+/********************************/
+void load_substrate_model_file(void){
+
+}
+
+
+
+
+
+
 
 
 /************************/
@@ -2246,28 +2510,24 @@ GUI_TOOLTIP(uspex_gui.cmdEnthalpyTemperature,"cmdEnthalpyTemperature: Ch. 6.2 DE
 	GUI_ENTRY_TABLE(table,uspex_gui.opCriteria_end,uspex_gui.calc.opCriteria[1],"%.4f","SIM(end):",3,4,15,16);
 GUI_TOOLTIP(uspex_gui.opCriteria_end,"opCriteria: Ch. 6.2 DEFAULT: none\nAllowable degree of similarity between ending states.");
 /* line 16 */
-GUI_TEXT_TABLE(table,uspex_gui.orderParameterFile,uspex_gui.calc.orderParameterFile,"OP_file:",0,1,16,17);
+	GUI_TEXT_TABLE(table,uspex_gui.orderParameterFile,uspex_gui.calc.orderParameterFile,"OP_file:",0,1,16,17);
 GUI_TOOLTIP(uspex_gui.orderParameterFile,"orderParameterFile: Ch. 6.2 DEFAULT: fp.dat\nOrder parameter history file.");
-GUI_OPEN_BUTTON_TABLE(table,button,load_OP_file,1,2,16,17);
-GUI_TEXT_TABLE(table,uspex_gui.enthalpyTemperatureFile,uspex_gui.calc.enthalpyTemperatureFile,"ET_file:",2,3,16,17);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_OP_file,1,2,16,17);
+	GUI_TEXT_TABLE(table,uspex_gui.enthalpyTemperatureFile,uspex_gui.calc.enthalpyTemperatureFile,"ET_file:",2,3,16,17);
 GUI_TOOLTIP(uspex_gui.enthalpyTemperatureFile,"enthalpyTemperatureFile: Ch. 6.2 DEFAULT: HT.dat\nEnthalpy and temperature history file.");
-GUI_OPEN_BUTTON_TABLE(table,button,load_ET_file,3,4,16,17);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_ET_file,3,4,16,17);
 /* line 17 */
-GUI_TEXT_TABLE(table,uspex_gui.trajectoryFile,uspex_gui.calc.trajectoryFile,"traj_file:",0,1,17,18);
+	GUI_TEXT_TABLE(table,uspex_gui.trajectoryFile,uspex_gui.calc.trajectoryFile,"traj_file:",0,1,17,18);
 GUI_TOOLTIP(uspex_gui.trajectoryFile,"trajectoryFile: Ch. 6.2 DEFAULT: traj.dat\nMD trajectory file.");
-GUI_OPEN_BUTTON_TABLE(table,button,load_traj_file,1,2,17,18);
-GUI_TEXT_TABLE(table,uspex_gui.MDrestartFile,uspex_gui.calc.MDrestartFile,"MD_file:",2,3,17,18);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_traj_file,1,2,17,18);
+	GUI_TEXT_TABLE(table,uspex_gui.MDrestartFile,uspex_gui.calc.MDrestartFile,"MD_file:",2,3,17,18);
 GUI_TOOLTIP(uspex_gui.MDrestartFile,"MDrestartFile: Ch. 6.2 DEFAULT: traj.restart\nMD restart file.");
-GUI_OPEN_BUTTON_TABLE(table,button,load_MDrestart_file,3,4,17,18);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_MDrestart_file,3,4,17,18);
 /* initialize */
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.TE_goal,0,uspex_TE_goal_selected);
 /* --- end page */
-
-
-
-
 
 /*--------------------*/
 /* page 5 -> SPECIFIC */
@@ -2278,13 +2538,156 @@ GUI_OPEN_BUTTON_TABLE(table,button,load_MDrestart_file,3,4,17,18);
 /* --- Metadynamics */
 	GUI_LABEL_TABLE(table,"Metadynamics",0,4,0,1);
 /* line 1 */
-
-
-for(idx=1;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
-
-
-
+	GUI_ENTRY_TABLE(table,uspex_gui.ExternalPressure,uspex_gui.calc.ExternalPressure,"%.4f","ExtP:",0,1,1,2);
+GUI_TOOLTIP(uspex_gui.ExternalPressure,"ExternalPressure: Ch. 4.1, 5.6 DEFAULT: none\nExternal pressure (GPa) for calculation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.maxVectorLength,uspex_gui.calc.maxVectorLength,"%.4f","MaxV:",1,2,1,2);
+GUI_TOOLTIP(uspex_gui.maxVectorLength,"maxVectorLength: Ch. 5.6 DEFAULT: none\nAdd a correction force to keep cell length below this setting.");
+	GUI_ENTRY_TABLE(table,uspex_gui.GaussianWidth,uspex_gui.calc.GaussianWidth,"%.4f","GaussW:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui.GaussianWidth,"GaussianWidth: Ch. 5.6 DEFAULT: AUTO\nWidth of Gaussian added to PES to accelerate phase transition.\nRecommended values is 0.10~0.15L (L = minimum cell length).");
+	GUI_ENTRY_TABLE(table,uspex_gui.GaussianHeight,uspex_gui.calc.GaussianHeight,"%.4f","GaussH:",3,4,1,2);
+GUI_TOOLTIP(uspex_gui.GaussianHeight,"GaussianHeight: Ch. 5.6 DEFAULT: AUTO\nHeight of Gaussian added to PES to accelerate phase transition.\nRecommended values is L.dh^2.G with L = average cell length,\ndh = GaussW, and G = shear modulus.");
+/* line 2 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.meta_model,"MODEL:",0,2,2,3);
+	GUI_COMBOBOX_ADD(uspex_gui.meta_model,"From POSCAR FILE");
+	GUI_COMBOBOX_ADD(uspex_gui.meta_model,"UNDER CONSTRUCTION");
+GUI_TOOLTIP(uspex_gui.meta_model,"Select the model from which metadynamics is started.\nA good structure, relaxed at ExtP is necessary.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.meta_model_button,load_meta_start_file,2,3,2,3);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.FullRelax,"Relax:",3,4,2,3);
+	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"0 - No full relaxation (fix cells)");
+	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"1 - Relax only the best structures");
+	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"2 - Relax all different structures");
+GUI_TOOLTIP(uspex_gui.FullRelax,"FullRelax: Ch. 5.6 DEFAULT: 2\nPerform full relaxation of which structures for analysis.\nRecommended value is 2.");
+/* --- Particles Swarm optimization */
+	GUI_LABEL_TABLE(table,"Particles Swarm optimization",0,4,3,4);
+/* line 4 */
+	/*col 1: empty*/
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_softMut,uspex_gui.calc.PSO_softMut,"%.4f","SoftMut:",1,2,4,5);
+GUI_TOOLTIP(uspex_gui.PSO_softMut,"PSO_softMut: Ch. 5.7 DEFAULT: 1\nSoft mutation weight.");
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestStruc,uspex_gui.calc.PSO_BestStruc,"%.4f","BestStruct:",2,3,4,5);
+GUI_TOOLTIP(uspex_gui.PSO_BestStruc,"PSO_BestStruc: Ch. 5.7 DEFAULT: 1\nWeight of heredity with best position of a given PSO particle.");
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestEver,uspex_gui.calc.PSO_BestEver,"%.4f","BestEver:",3,4,4,5);
+GUI_TOOLTIP(uspex_gui.PSO_BestEver,"PSO_BestEver: Ch. 5.7 DEFAULT: 1\nWeight of heredity with globally best PSO particle.");
+/* --- Variable-cell nudged elastic band */
+	GUI_LABEL_TABLE(table,"Variable-cell nudged elastic band",0,4,5,6);
+/* line 6 */
+	GUI_ENTRY_TABLE(table,uspex_gui.vcnebType,uspex_gui.calc.vcnebType,"%3i","VC-NEB:",0,1,6,7);
+GUI_TOOLTIP(uspex_gui.vcnebType,"vcnebType: Ch. 6.1 DEFAULT: 110\nType of VC-NEB calculation.");
+	GUI_LOCK(uspex_gui.vcnebType);/*not directly modifiable*/
+	GUI_COMBOBOX_TABLE(table,uspex_gui._vcnebtype_method,"Method:",1,2,6,7);
+	GUI_COMBOBOX_ADD(uspex_gui._vcnebtype_method,"1 - VC-NEB method");
+	GUI_COMBOBOX_ADD(uspex_gui._vcnebtype_method,"2 - simple relaxation");
+GUI_TOOLTIP(uspex_gui._vcnebtype_method,"Choose between VC-NEB method and simple structure relaxation.");
+	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_img_num,uspex_gui.calc._vcnebtype_img_num,update_vcnebType,"Var_Image",2,3,6,7);
+GUI_TOOLTIP(uspex_gui._vcnebtype_img_num,"Set whether number of images should be kept fixed.");
+	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_spring,uspex_gui.calc._vcnebtype_spring,update_vcnebType,"Var_Spring",3,4,6,7);
+GUI_TOOLTIP(uspex_gui._vcnebtype_spring,"Set whether spring constants should be kept fixed.");
+/* line 7 */
+	GUI_ENTRY_TABLE(table,uspex_gui.numImages,uspex_gui.calc.numImages,"%i","N_Img:",0,1,7,8);
+GUI_TOOLTIP(uspex_gui.numImages,"numImages: Ch. 6.1 DEFAULT: 9\nInitial number of images.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optReadImages,"Read_Img:",1,2,7,8);
+	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"0 - All structures are needed");
+	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"1 - Only initial and final");
+	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"2 - Initial and final + intermediates");
+GUI_TOOLTIP(uspex_gui.optReadImages,"optReadImages: Ch. 6.1 DEFAULT: 2\nSet the method for reading Images file.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optimizerType,"Opt_Type:",2,3,7,8);
+	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"1 - Steepest Descent");
+	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"2 - Fast Inertial Relaxation Engine");
+GUI_TOOLTIP(uspex_gui.optimizerType,"optimizerType: Ch. 6.1 DEFAULT: 1\nSelect the optimization algorithm (SD or FIRE).");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optRelaxType,"RelaxType:",3,4,7,8);
+	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"1 - fixed cell, positions relaxed (=NEB)");
+	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"2 - cell lattice only (only for testing)");
+	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"3 - full, cell and positions relaxation.");
+GUI_TOOLTIP(uspex_gui.optRelaxType,"optRelaxType: Ch. 6.1 DEFAULT: 3>\nStructure relaxation mode.");
+/* line 8 */
+	GUI_ENTRY_TABLE(table,uspex_gui.numSteps,uspex_gui.calc.numSteps,"%4i","N_Step:",0,1,8,9);
+GUI_TOOLTIP(uspex_gui.numSteps,"numSteps: Ch. 6.1 DEFAULT: 600\nMaximum VC-NEB step iterations.\nA value of at least 500 is recommended.");
+	GUI_ENTRY_TABLE(table,uspex_gui.dt,uspex_gui.calc.dt,"%.4f","dt:",1,2,8,9);
+GUI_TOOLTIP(uspex_gui.dt,"dt: Ch. 6.1 DEFAULT: 0.05\nTime step for structure relaxation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.ConvThreshold,uspex_gui.calc.ConvThreshold,"%.4f","Conv:",2,3,8,9);
+GUI_TOOLTIP(uspex_gui.ConvThreshold,"ConvThreshold: Ch. 6.1 DEFAULT: 0.003\nHalting condition (ev/Ang.) for RMS forces on images.");
+	GUI_ENTRY_TABLE(table,uspex_gui.VarPathLength,uspex_gui.calc.VarPathLength,"%.4f","PathLength:",3,4,8,9);
+GUI_TOOLTIP(uspex_gui.VarPathLength,"VarPathLength: Ch. 6.1 DEFAULT: AUTO\nCriterion to determine image creation/deletion for variable image method.\nif L>1.5*criterion image is added\nif L<0.5*criterion image is deleted\nL=length between two neighbor images.");
+/* line 9 */
+	GUI_CHECK_TABLE(table,uspex_gui.optFreezing,uspex_gui.calc.optFreezing,NULL,"Freeze_Img",0,1,9,10);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.optFreezing,"optFreezing: Ch. 6.1 DEFAULT: FALSE\nActivate freezing of Image structure when ConvThreshold is reached.");
+	GUI_ENTRY_TABLE(table,uspex_gui.K_min,uspex_gui.calc.K_min,"%.4f","Kmin:",1,2,9,10);
+GUI_TOOLTIP(uspex_gui.K_min,"K_min: Ch. 6.1 DEFAULT: 5\nMinimum spring constant (eV/Ang.^2).");
+	GUI_ENTRY_TABLE(table,uspex_gui.K_max,uspex_gui.calc.K_max,"%.4f","Kmax:",2,3,9,10);
+GUI_TOOLTIP(uspex_gui.K_max,"K_max: Ch. 6.1 DEFAULT: 5\nMaximum spring constant (eV/Ang.^2).");
+	GUI_ENTRY_TABLE(table,uspex_gui.Kconstant,uspex_gui.calc.Kconstant,"%.4f","Kcte:",3,4,9,10);
+GUI_TOOLTIP(uspex_gui.Kconstant,"Kconstant: Ch. 6.1 DEFAULT: 5\nFixed spring constant (eV/Ang.^2).");
+/* line 10 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optMethodCIDI,"CI/DI:",0,1,10,11);
+	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 0 - No CI/DI method will be used");
+	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 1 - single CI on highest energy TS");
+	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI,"-1 - Single DI on lowest  energy LM");
+	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 2 - Multi-CI/DI on provided  TS/LM");
+GUI_TOOLTIP(uspex_gui.optMethodCIDI,"optMethodCIDI: Ch. 6.1 DEFAULT: 0\nOption for Climbing-Image (CI) and Descending-Image (DI).");
+	GUI_ENTRY_TABLE(table,uspex_gui.startCIDIStep,uspex_gui.calc.startCIDIStep,"%i","Start CI/DI:",1,2,10,11);
+GUI_TOOLTIP(uspex_gui.startCIDIStep,"startCIDIStep: Ch. 6.1 DEFAULT: 100\nStarting step for CI/DI method.");
+	GUI_TEXT_TABLE(table,uspex_gui.pickupImages,uspex_gui._tmp_pickupImages,"Pickup:",2,3,10,11);
+GUI_TOOLTIP(uspex_gui.pickupImages,"pickupImages: Ch. 6.1 DEFAULT: AUTO\nNumber/which images to be picked up for CI/DI method.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.FormatType,"Format:",3,4,10,11);
+	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"1 - XCRYSTDENS format (.xsf)");
+	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"2 - VASP v5 (POSCAR) format.");
+	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"3 - XYZ format with lattice.");
+GUI_TOOLTIP(uspex_gui.FormatType,"FormatType: Ch. 6.1 DEFAULT: 2\nFormat of structures in PATH output directory.");
+/* line 11 */
+	GUI_ENTRY_TABLE(table,uspex_gui.PrintStep,uspex_gui.calc.PrintStep,"%i","PrintStep:",0,1,11,12);
+GUI_TOOLTIP(uspex_gui.PrintStep,"PrintStep: Ch. 6.1 DEFAULT: 1\nSave restart file every PrintStep times.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.img_model,"Model:",1,3,11,12);
+	GUI_COMBOBOX_ADD(uspex_gui.img_model,"From Images file");
+	GUI_COMBOBOX_ADD(uspex_gui.img_model,"UNDER CONSTRUCTION");
+GUI_TOOLTIP(uspex_gui.img_model,"Select the original Images model.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.img_model_button,load_img_model_file,3,4,11,12);
+/* --- Molecules */
+	GUI_LABEL_TABLE(table,"Molecules",0,4,12,13);
+/* line 13 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_model,"MODEL:",0,2,13,14);
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_1 file");
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_x folder");
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"UNDER CONSTRUCTION");
+GUI_TOOLTIP(uspex_gui.mol_model,"Select the model(s) for molecular calculation.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.mol_model_button,load_mod_model_file,2,3,13,14);
+	GUI_ENTRY_TABLE(table,uspex_gui.num_mol,uspex_gui.calc._nmolecules,"%i","N_Mol:",3,4,13,14);
+GUI_TOOLTIP(uspex_gui.num_mol,"number of molecules in the system.");
+/* --- Surfaces */
+	GUI_LABEL_TABLE(table,"Surfaces",0,4,14,15);
+/* line 15 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",0,2,15,16);
+	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"From VASP5 POSCAR file");
+	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"UNDER CONSTRUCTION");
+GUI_TOOLTIP(uspex_gui.substrate_model,"Select the model to use as a substrate\nie. without buffer, surface, and vacuum region.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,2,3,15,16);
+GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",3,4,15,16);
+GUI_TOOLTIP(uspex_gui.thicknessS,"thicknessS: Ch. 5.3 DEFAULT: 2.0\nThickness (Ang.) of the surface region.");
+/* line 16 */
+	GUI_TEXT_TABLE(table,uspex_gui.StoichiometryStart,uspex_gui._tmp_StoichiometryStart,"Stoichio:",0,2,16,17);
+GUI_TOOLTIP(uspex_gui.StoichiometryStart,"StoichiometryStart: Ch. 5.3 DEFAULT: ?\nDefine the initial stoichiometry of the bulk.");
+	GUI_ENTRY_TABLE(table,uspex_gui.reconstruct,uspex_gui.calc.reconstruct,"%i","N_Surf:",2,3,16,17);
+GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.3 DEFAULT: 1\nNumber of replication of the surface cell.");
+	GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,16,17);
+GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
+/* line 17: empty*/
+	GUI_LABEL_TABLE(table," ",0,4,17,18);
+/* initialize */
+	GUI_COMBOBOX_SETUP(uspex_gui.FullRelax,2,uspex_relax_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.meta_model,0,uspex_meta_model_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui._vcnebtype_method,0,uspex_vcneb_method_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optReadImages,2,uspex_ReadImg_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optimizerType,0,uspex_optimizerType_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optRelaxType,2,uspex_RelaxType_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optMethodCIDI,0,uspex_CIDI_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.FormatType,0,uspex_FormatType_selected);
+	uspex_CIDI_selected(uspex_gui.optMethodCIDI);
+	GUI_COMBOBOX_SETUP(uspex_gui.img_model,0,uspex_img_model_selected);
+	update_vcnebType();
+	GUI_COMBOBOX_SETUP(uspex_gui.mol_model,0,uspex_mol_model_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.substrate_model,0,uspex_substrate_model_selected);
 /* --- end page */
+
+
+
 
 /* --- Outside of notebook */
 	GUI_FRAME_WINDOW(uspex_gui.window,frame);
