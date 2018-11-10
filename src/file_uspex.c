@@ -2304,7 +2304,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	/* results */
 	FILE *f_src;
 	FILE *f_dest;
-	gint natoms;
+	gint natoms=0;
 	gchar *atoms;
 	uspex_output_struct *uspex_output;
 	uspex_calc_struct *uspex_calc;
@@ -3224,6 +3224,20 @@ else{
 		g_free(line);
 		line = file_read_line(vf);
 	}
+	/*get the total number of atoms*/
+	rewind(vf);
+	for(idx=0;idx<6;idx++){
+		line = file_read_line(vf);
+		g_free(line);
+	}
+	natoms=1;/*there is at least one atom*/
+	ptr=&(line[0]);
+	do{
+		natoms+=(gint)g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		ptr=ptr2;
+	}while(1);
+	/*all done*/
 	fclose(vf);
 }
 /* --- read energies from the Energy file */
