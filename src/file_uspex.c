@@ -2491,7 +2491,6 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		g_free(line);
 		line = file_read_line(vf);
 	}
-//	atom_per_supercell=0;
 	ptr=&(line[0]);
 	atom_n=g_malloc(_UO.calc->_nspecies*sizeof(gint));
 	natoms=0;
@@ -2501,7 +2500,6 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		/*we also need a ratio for supercell calculations*/
 		atom_n[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
 		natoms+=atom_n[jdx];
-//		atom_per_supercell+=;
 		ptr=ptr2+1;
 		jdx++;
 	}
@@ -2574,13 +2572,10 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	}
 	/*exept for META, _UO.ind[0] will contain no data!*/
 /* +++ load Individuals*/
-	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
-		 aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
-	else aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
+/* ^^^ NEW: everyone reads Individuals first, then Individuals_relaxed (if exists)*/
+	aux_file = g_strdup_printf("%s%s",res_folder,"Individuals");
 	if(read_individuals_uspex(aux_file,model)!=0) {
-		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
-			line = g_strdup_printf("ERROR: reading USPEX Individuals_relaxed file!\n");
-		else line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
+		line = g_strdup_printf("ERROR: reading USPEX Individuals_relaxed file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
 		g_free(aux_file);
@@ -2590,11 +2585,21 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	if(_UO.have_supercell){
 		/*rescale atoms,natoms in case of a supercell calculation NOTE: first supercell has to be [1,1,1]*/
 		for(idx=0;idx<_UO.num_struct;idx++) {
-			for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
-			_UO.ind[idx].natoms*=natoms;
+		for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
+		_UO.ind[idx].natoms*=natoms;
 		}
 	}
 	g_free(atom_n);
+	aux_file = g_strdup_printf("%s%s",res_folder,"Individuals_relaxed");
+	if(read_individuals_uspex(aux_file,model)!=0) {
+		/*failure to load Individuals_relaxed is not an error, thus not fatal*/
+		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP)){
+			line = g_strdup_printf("WARNING: error reading USPEX Individuals_relaxed file!\n");
+			gui_text_show(WARNING, line);
+			g_free(line);
+		}
+	}
+	g_free(aux_file);
 	n_data=0;for(idx=0;idx<_UO.num_struct;idx++) if(_UO.ind[idx].have_data) n_data++;
 /* +++ get gatherPOSCARS information for have_data=FALSE (is any)*/
 	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
