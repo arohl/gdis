@@ -37,7 +37,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define USPEX_PAGE_ADVANCED 3
 #define USPEX_PAGE_SPECIFIC 4
 /*fixed parameters*/
-#define USPEX_MAX_NUM_OPT_STEPS 32
+#define USPEX_MAX_NUM_OPT_STEPS 16
 /* gui structure */
 struct uspex_calc_gui{
 	/*window information*/
@@ -138,7 +138,10 @@ struct uspex_calc_gui{
 	gchar *_tmp_splitInto;
 	gboolean auto_lval;
 /*4.7 restart*/
-	/*unsupported*/
+	GUI_OBJ *pickUpYN;
+	GUI_OBJ *pickUpGen;
+	GUI_OBJ *pickUpFolder;
+	gboolean restart_cleanup;
 /*4.8 Ab initio*/
 	gdouble _tmp_num_opt_steps;/*because gtk_spin type is double*/
 	GUI_OBJ *_num_opt_steps;/*usually determined indirectly*/
@@ -150,6 +153,15 @@ struct uspex_calc_gui{
 	GUI_OBJ *KresolStart;
 	gdouble _tmp_vacuumSize;
 	GUI_OBJ *vacuumSize;
+	gboolean auto_step;
+	gchar *_tmp_ai_input;
+	GUI_OBJ *ai_input;
+	gchar *_tmp_ai_opt;
+	GUI_OBJ *ai_opt;
+	GUI_OBJ *ai_generate;
+	GUI_OBJ *ai_spe;
+	gchar *_tmp_ai_pot;
+	GUI_OBJ *ai_pot;
 	GUI_OBJ *numParallelCalcs;
 	gchar *_tmp_commandExecutable;
 	GUI_OBJ *commandExecutable;

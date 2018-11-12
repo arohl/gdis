@@ -169,7 +169,9 @@ typedef struct {
 	gint 		_nsplits;		/*HIDDEN: number of splits*/
 	gint 		*splitInto;		/*number of subcells into which unit cell is split*/
 /*4.7 Restart*/
-			/*Restart is unsupported*/
+	gboolean 	pickUpYN;		/*select whether to perform a restart (deprecated)*/
+	gint 		pickUpGen;		/*generation from which to restart from*/
+	gint 		pickUpFolder;		/*result forder index from which to restart from*/
 /*4.8 Ab initio calculations*/
 	gint		_num_opt_steps;		/*HIDDEN: number of optimization steps*/
 	gint 		*abinitioCode;		/*calculation code used for each optimization steps*/

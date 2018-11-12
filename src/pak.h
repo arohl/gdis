@@ -153,6 +153,9 @@ gchar *gamess_path;
 gchar *vasp_exe;
 gchar *vasp_path;
 
+gchar *uspex_exe;
+gchar *uspex_path;
+
 gchar *mpirun_exe;
 gchar *mpirun_path;
 

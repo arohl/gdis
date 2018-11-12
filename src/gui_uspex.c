@@ -192,6 +192,8 @@ void gui_uspex_init(struct model_pak *model){
 		uspex_gui.calc.IonDistances = g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
 		for(idx=0;idx<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;idx++) uspex_gui.calc.IonDistances[idx]=0.;/*no default*/
 	}
+	if(uspex_gui.calc._calctype_dim==3) uspex_gui.calc.doSpaceGroup=TRUE;
+	else uspex_gui.calc.doSpaceGroup=FALSE;
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -1540,7 +1542,7 @@ void SG_toggle(void){
 /* change the total number of optimisation steps */
 /*************************************************/
 void spin_update_num_opt_steps(void){
-
+	gint i=(gint)uspex_gui._tmp_num_opt_steps;
 
 
 	/*update current step range*/
@@ -1550,6 +1552,16 @@ void spin_update_num_opt_steps(void){
 /* change the current step */
 /***************************/
 void spin_update_curr_step(void){
+	gint i=(gint)uspex_gui._tmp_curr_step;
+	/*update step information*/
+
+
+
+}
+/********************/
+/* toggle auto_step */
+/********************/
+void toggle_auto_step(void){
 
 }
 /********************************/
@@ -1558,10 +1570,46 @@ void spin_update_curr_step(void){
 void toggle_isfull(void){
 
 }
-/***************************************/
-/* define an ab initio code executable */
-/***************************************/
+/********************************/
+/* select AI code for this step */
+/********************************/
+void uspex_ai_selected(GUI_OBJ *w){
+
+}
+/****************************/
+/* load input for this step */
+/****************************/
+void load_ai_input_dialog(void){
+
+}
+/*********************************************/
+/* load option file (optional) for this step */
+/*********************************************/
+void load_ai_opt_dialog(void){
+
+}
+/*****************************************************/
+/* define an ab initio code executable for this step */
+/*****************************************************/
 void load_abinito_exe_dialog(void){
+
+}
+/**********************************************/
+/* generate input/optional file for this step */
+/**********************************************/
+void generate_step(void){
+
+}
+/**************************/
+/* Apply step information */
+/**************************/
+void apply_step(void){
+
+}
+/*************************************************/
+/* load (pseudo-)potential file for this species */
+/*************************************************/
+void load_ai_pot_dialog(){
 
 }
 /************************************/
@@ -2194,6 +2242,9 @@ if(uspex_gui.have_output){
 }
 GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation\nto fill the parameters of the current one.\nNOTE: all settings should be checked again. Carefully.");
 	GUI_OPEN_BUTTON_BOX(hbox,button,load_parameters_dialog);
+/*update job_path <- default to current directory!*/
+	if(uspex_gui.calc.job_path!=NULL) g_free(uspex_gui.calc.job_path);
+	uspex_gui.calc.job_path=g_strdup_printf("%s",sysenv.cwd);
 /* create frame in box */
 	GUI_FRAME_WINDOW(uspex_gui.window,frame);
 /* create notebook in frame */
@@ -2501,19 +2552,15 @@ GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.5 DEFAULT: blank\nList
 	GUI_SPIN_TABLE(table,uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps,spin_update_num_opt_steps,"N_STEPS",0,1,1,2);
 	GUI_SPIN_RANGE(uspex_gui._num_opt_steps,1.,(gdouble)USPEX_MAX_NUM_OPT_STEPS);
 GUI_TOOLTIP(uspex_gui._num_opt_steps,"Set the number of optimisation steps.\nIncluding fixed-cells and full relaxation steps.");
-	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",1,2,1,2);
-GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
-	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,1,2);
-GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,1,2);/*not calling anything*/
-GUI_TOOLTIP(button,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
-/* line 2 */
-	GUI_SPIN_TABLE(table,uspex_gui._curr_step,uspex_gui._tmp_curr_step,spin_update_curr_step,"STEPS #",0,1,2,3);
+	GUI_SPIN_TABLE(table,uspex_gui._curr_step,uspex_gui._tmp_curr_step,spin_update_curr_step,"STEPS #",1,2,1,2);
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
 GUI_TOOLTIP(uspex_gui._curr_step,"Select current optimisation step number.");
-	GUI_CHECK_TABLE(table,button,uspex_gui._tmp_isfull,toggle_isfull,"Relax_full",1,2,2,3);
-GUI_TOOLTIP(button,"Set the current step as a full relaxation.\nThis implies a mix between fixed and full relaxations.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",2,4,2,3);
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_step,toggle_auto_step,"AUTO STEP",2,3,1,2);
+GUI_TOOLTIP(button,"For GULP- or VASP-based USPEX calculations (3~5 steps),\nuse a series of automatic settings for input.\nUser specific PS file is still needed!");
+	GUI_CHECK_TABLE(table,button,uspex_gui._tmp_isfull,toggle_isfull,"Relax_full",3,4,1,2);
+GUI_TOOLTIP(button,"Set the current step as a full relaxation.\nUseful only with a mix between fixed and full relaxations.");
+/* line 2 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",0,2,2,3);
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"1  - VASP");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"2  - SIESTA");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"3  - GULP");
@@ -2531,25 +2578,60 @@ GUI_TOOLTIP(button,"Set the current step as a full relaxation.\nThis implies a m
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"15 - DFTB");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"16 - Gaussian");
 GUI_TOOLTIP(uspex_gui.abinitioCode,"abinitioCode: Ch. 4.8 DEFAULT: 1\nCode used for the calculations in this step.");
-/* line 3 */
-	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui._tmp_KresolStart,"%.4f","Kresol:",0,1,3,4);
+	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui._tmp_KresolStart,"%.4f","Kresol:",2,3,2,3);
 GUI_TOOLTIP(uspex_gui.KresolStart,"KresolStart: Ch. 4.8 DEFAULT: 0.2-0.08\nReciprocal-space resolution for this optimization step (2*pi/Ang).");
-	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui._tmp_vacuumSize,"%.4f","vacuum:",1,2,3,4);
+	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui._tmp_vacuumSize,"%.4f","vacuum:",3,4,2,3);
 GUI_TOOLTIP(uspex_gui.vacuumSize,"vacuumSize: Ch. 4.8 DEFAULT: 10.0\nVacuum size (Ang.) between neighbor atoms from adjacent unit cells.\nFor cluster, 2D-crystal, and surfaces only.");
-	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable,"EXE:",2,3,3,4);
-GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_abinito_exe_dialog,3,4,3,4);
+/* line 3 */
+	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input,"INP:",0,1,3,4);
+GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile name as to end with *_N where N is the step number.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_input_dialog,1,2,3,4);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt,"OPT:",2,3,3,4);
+GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_opt_dialog,3,4,3,4);
 /* line 4 */
-	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"CALC:",0,1,4,5);
-GUI_TOOLTIP(uspex_gui.job_path,"Select USPEX calculation folder.\nThe folder will contain result* folder.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_job_path,1,2,4,5);
-	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"REMT:",2,3,4,5);
+	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable,"EXE:",0,1,4,5);
+GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_abinito_exe_dialog,1,2,4,5);
+	GUI_BUTTON_TABLE(table,uspex_gui.ai_generate,"Generate",generate_step,2,3,4,5);
+GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nFor now, limited to VASP and GULP.");
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,4,5);
+GUI_TOOLTIP(button,"Apply changes to this step (only).");
+/* line 5 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_spe,"Species:",0,1,5,6);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_pot,uspex_gui._tmp_ai_pot,"POT:",1,3,5,6);
+GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_pot_dialog,3,4,5,6);
+/* --- USPEX launch */
+	GUI_LABEL_TABLE(table,"USPEX launch",0,4,6,7);
+/* line 7 */
+	/*col 1: empty*/
+	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",1,2,7,8);
+GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
+	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,7,8);
+GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.\n");
+	GUI_CHECK_TABLE(table,button,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
+GUI_TOOLTIP(button,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
+/* line 8 */
+	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,8,9);
+GUI_TOOLTIP(uspex_gui.job_path,"Select USPEX calculation folder.\nThis folder is where run_uspex will be launched\nand result will be read by GDIS.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_job_path,1,2,8,9);
+	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,8,9);
 GUI_TOOLTIP(uspex_gui.remoteFolder,"remoteFolder: Ch. 4.8 DEFAULT: none\nExecution folder on the distant computer.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,4,5);
-
-
-
-for(idx=5;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,8,9);
+/* --- Restart */
+	GUI_LABEL_TABLE(table,"Restart",0,4,9,10);	
+/* line 10 */
+	GUI_CHECK_TABLE(table,uspex_gui.pickUpYN,uspex_gui.calc.pickUpYN,NULL,"RESTART",0,1,10,11);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.pickUpYN,"pickUpYN: deprecated DEFAULT: 0\nSet to restart a calculation, deprecated on version <= 10.");
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpGen,uspex_gui.calc.pickUpGen,"%i","GEN:",1,2,10,11);
+GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the generation at which USPEX should restart.\nA new calculation is started for 0 (default).");
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,10,11);
+GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
+	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,10,11);/*not calling anything*/
+GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, 0PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
+/* reserved for future use */
+	for(idx=11;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
 /* --- end page */
 
 /*--------------------*/
@@ -2844,6 +2926,11 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,1,uspex_latticeformat_selected);
 	uspex_latticeformat_selected(uspex_gui._latticeformat);
 	SG_toggle();
+	/*calculation*/
+
+/*per optimization step*/
+	GUI_COMBOBOX_SETUP(uspex_gui.abinitioCode,0,uspex_ai_selected);/*ai means ab initio, not...*/
+
 	mag_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);

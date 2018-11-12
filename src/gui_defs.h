@@ -314,6 +314,13 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin),value);\
 }while(0)
 /*Create a new cell with:
+ * 	 a button (button) with label "text" connected on click to function (function)*/
+#define GUI_BUTTON_TABLE(table,button,text,function,l,r,t,b) do{\
+	button=gtk_button_new_with_label (text);\
+	_ATTACH_TABLE(table,button,l,r,t,b);\
+	g_signal_connect(GTK_OBJECT(button),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
+}while(0)
+/*Create a new cell with:
  * 	 an open button (button) connected on click to function (function).*/
 #define GUI_OPEN_BUTTON_TABLE(table,button,function,l,r,t,b) do{\
 	button=gtk_button_new_from_stock(GTK_STOCK_OPEN);\
