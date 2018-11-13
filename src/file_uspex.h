@@ -46,6 +46,7 @@ typedef enum{
         US_CT_311=311,				/*bulk crystals; mol; var*/
         US_CT_000=0,				/*nanoparticles; no-mol; no-var*/
 	US_CT_s000=1000,			/*+magnetic VER 10.1*/
+	US_CT_001=1,				/*+cluster VER 10.1*/
         US_CT_110=110,				/*polymers;	 no-mol; no-var*/
         US_CT_200=200,				/*surfaces; 	 no-mol; no-var*/
 	US_CT_s200=1200,			/*+magnetic VER 10.1*/

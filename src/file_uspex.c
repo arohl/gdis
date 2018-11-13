@@ -96,7 +96,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.checkConnectivity=FALSE;
 	_UC.fitLimit=0.;		//VER 10.1
 	_UC.populationSize=0;
-	_UC.initialPopSize=0;
+	_UC.initialPopSize=-1;/*zero actually have a meaning*/
 	_UC.numGenerations=100;
 	_UC.stopCrit=0;
 	_UC.bestFrac=0.7;
@@ -266,6 +266,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	gchar *ptr,*ptr2;
 	gchar c;
 	gint i,j,k;
+	guint n_size;
 	uspex_calc_struct *uspex_calc;
 	/*tests*/
 	if(filename==NULL) return NULL;
@@ -694,16 +695,24 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				_UC._var_nspecies++;
 			}while(find_in_string("EndNumSpeci",line) == NULL);
 /*_BUG_ VER 10.1 EX26 has a consistent typo (EndNumSpecices instead of EndNumSpecies)*/
+/*_BUG_ when _cactype_mol=TRUE numSpecies actually refer to a number of molecules, and thus depends on _nmolecules*/
+if((_UC._calctype_mol)&&(_UC._nmolecules==0)){
+	/*numSpecies refer to molecules, but _nmolecules has not been calculated.*/
+	ptr=&(line[0]);
+	__COUNT_ALNUM(ptr,_UC._nmolecules);
+}
 			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 			g_free(line);/*FIX: _VALGRIND_BUG_*/
 			line = file_read_line(vf);/*first line of numSpecies*/
-			_UC.numSpecies = g_malloc(_UC._nspecies*_UC._var_nspecies*sizeof(gint));
-			for(i=0;i<_UC._nspecies*_UC._var_nspecies;i++) _UC.numSpecies[i]=0;
+if(_UC._calctype_mol) n_size=_UC._nmolecules;
+else n_size=_UC._nspecies;
+			_UC.numSpecies = g_malloc(n_size*_UC._var_nspecies*sizeof(gint));
+			for(i=0;i<n_size*_UC._var_nspecies;i++) _UC.numSpecies[i]=0;
 			for(j=0;j<_UC._var_nspecies;j++){
 				ptr=&(line[0]);i=0;
 				while((*ptr!='\n')&&(*ptr!='\0')){
 					__SKIP_BLANK(ptr);
-					_UC.numSpecies[i+j*_UC._nspecies]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+					_UC.numSpecies[i+j*n_size]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
 					ptr=ptr2+1;
 					i++;
 				}
@@ -724,7 +733,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				__SKIP_BLANK(ptr);
 				_UC.magRatio[i]=g_ascii_strtod(ptr,&ptr2);
 				if(*ptr2=='/'){
-					ptr=ptr2;
+					ptr=ptr2+1;
 					_UC.magRatio[i]/=g_ascii_strtod(ptr,&ptr2);
 				}
 				ptr=ptr2+1;
@@ -824,7 +833,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		__GET_DOUBLE(mutationRate);
 		__GET_DOUBLE(DisplaceInLatmutation);
 		__GET_BOOL(AutoFrac);
-		__GET_BOOL(minVectorLength);
+		__GET_DOUBLE(minVectorLength);
 		if (find_in_string("IonDistances",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*look for IonDistances*/
@@ -1008,6 +1017,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			_UC.abinitioCode = g_malloc(_UC._num_opt_steps*sizeof(gint));
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.abinitioCode[i]=0;
 			ptr=&(line[0]);i=0;
+/*TODO: deal with META parenthesis here!*/
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				__SKIP_BLANK(ptr);
 				_UC.abinitioCode[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
@@ -1638,13 +1648,15 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 /*because there is no constant logic in end_tag, we need to supply it*/
 #define __OUT_BK_INT(value,end_tag,number) do{\
 	fprintf(vf,"%% %s\n",__Q(value));\
-	for(i=0;i<(number);i++) fprintf(vf,"%i ",_UC.value[i]);\
+	fprintf(vf,"%i",_UC.value[0]);\
+	for(i=1;i<(number);i++) fprintf(vf," %i",_UC.value[i]);\
 	fprintf(vf,"\n");fprintf(vf,"%% %s\n",end_tag);\
 	is_w++;\
 }while(0)
 #define __OUT_BK_DOUBLE(value,end_tag,number) do{\
         fprintf(vf,"%% %s\n",__Q(value));\
-        for(i=0;i<(number);i++) fprintf(vf,"%.5f ",_UC.value[i]);\
+	fprintf(vf,"%.5f",_UC.value[0]);\
+        for(i=1;i<(number);i++) fprintf(vf," %.5f",_UC.value[i]);\
         fprintf(vf,"\n");fprintf(vf,"%% %s\n",end_tag);\
 	is_w++;\
 }while(0)
@@ -1657,7 +1669,8 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 #define __OUT_TMAT_DOUBLE(value,end_tag,number) do{\
 	fprintf(vf,"%% %s\n",__Q(value));\
 	for(i=0;i<(number);i++) {\
-		for(j=0;j<(number);j++) fprintf(vf,"%.5f ",_UC.value[j+i*(number)]);\
+		fprintf(vf,"%.5f",_UC.value[i*(number)]);\
+		for(j=1;j<(number);j++) fprintf(vf," %.5f",_UC.value[j+i*(number)]);\
 		fprintf(vf,"\n");\
 	}\
 	fprintf(vf,"%% %s\n",end_tag);\
@@ -1692,10 +1705,10 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		gui_text_show(ERROR, line);g_free(line);
 		return -5;
 	}
+/*this is not an error as per EX22*/
 	if((_UC.ExternalPressure==0.)&&(_UC.calculationMethod==US_CM_META)) {
-		line = g_strdup_printf("ERROR: USPEX - META calculation but ExternalPressure is 0.!\n");
-		gui_text_show(ERROR, line);g_free(line);
-		return -5;
+		line = g_strdup_printf("WARNING: USPEX - META calculation but ExternalPressure is 0.!\n");
+		gui_text_show(WARNING, line);g_free(line);
 	}
 	if((_UC._calctype_mol)&&(_UC._nmolecules>1)&&(_UC.MolCenters==NULL)) {
 		line = g_strdup_printf("ERROR: USPEX - molecular calculation but missing MolCenters!\n");
@@ -1707,18 +1720,18 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		gui_text_show(ERROR, line);g_free(line);
 		return -5;
 	}
+/*this is not an error as per EX14, EX19, EX22*/
 	if((_UC._calctype_var)&&(_UC.minAt==0)){
-		line = g_strdup_printf("ERROR: USPEX - varcomp calculation but missing minAt!\n");
-		gui_text_show(ERROR, line);g_free(line);
-		return -5;
+		line = g_strdup_printf("WARNING: USPEX - varcomp calculation but missing minAt!\n");
+		gui_text_show(WARNING, line);g_free(line);
 	}
+/*this is not an error as per EX19*/
 	if((_UC._calctype_var)&&(_UC.maxAt==0)){
-		line = g_strdup_printf("ERROR: USPEX - varcomp calculation but missing maxAt!\n");
-		gui_text_show(ERROR, line);g_free(line);
-		return -5;
+		line = g_strdup_printf("WARNING: USPEX - varcomp calculation but missing maxAt!\n");
+		gui_text_show(WARNING, line);g_free(line);
 	}
-	if((_UC.calculationMethod==US_CM_META)&&(_UC.maxVectorLength=0.)){
-		line = g_strdup_printf("ERROR: USPEX - META calculation but missong maxVectorLength!\n");
+	if((_UC.calculationMethod==US_CM_META)&&(_UC.maxVectorLength==0.)){
+		line = g_strdup_printf("ERROR: USPEX - META calculation but missing maxVectorLength!\n");
 		gui_text_show(ERROR, line);g_free(line);
 		return -5;
 	}
@@ -1739,7 +1752,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	line=g_strdup_printf("* CALCULATION: %s *",_UC.name);
 	__TITLE(line);
 	g_free(line);
-	line=g_strdup_printf("*       TYPE OF RUN AND SYSTEM       *");
+	line=g_strdup_printf("*      TYPE OF RUN AND SYSTEM            *");
 	__TITLE(line);
 	g_free(line);
 	/*always print:*/
@@ -1755,6 +1768,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	default:
 		fprintf(vf,"???\t: calculationMethod (unsupported method)\n");
 	}
+if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS)){
 	/*VER 10.1: new magnetic 's' prefix added*/
 	switch(_UC.calculationType){
 	_CS(US_CT,calculationType,300);
@@ -1765,6 +1779,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	_CS(US_CT,calculationType,311);
 	_CS(US_CT,calculationType,000);
 	_CS(US_CT,calculationType,s000);
+	_CS(US_CT,calculationType,001);
 	_CS(US_CT,calculationType,110);
 	_CS(US_CT,calculationType,200);
 	_CS(US_CT,calculationType,s200);
@@ -1775,6 +1790,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	default:
 		fprintf(vf,"???\t: calculationType (unsupported type)\n");
 	}
+if(_UC.calculationMethod != US_CM_MINHOP){
 	if(_UC.new_optType==NULL){
 		/*old fashion optType*/
 		if(!_UC.anti_opt) __OUT_INT(optType);
@@ -1785,18 +1801,35 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		/*VER 10.1: new optType*/
 		__OUT_BK_STRING(new_optType,"EndOptType");
 	}
-	__OUT_BK_INT(atomType,"EndAtomType",_UC._nspecies);
+}/*MINHOP don't require optType*/
+}/*VCNEB,TPS don't require calculationType,optType*/
+	/*NEW: use symbols*/
+	fprintf(vf,"%% atomType\n");
+	fprintf(vf,"%s",elements[_UC.atomType[0]].symbol);/*there is at least 1 atomType*/
+	for(i=1;i<(_UC._nspecies);i++) fprintf(vf," %s",elements[_UC.atomType[i]].symbol);
+	fprintf(vf,"\n");fprintf(vf,"%% EndAtomType\n");
 	if(_UC._var_nspecies==1){
-		__OUT_BK_INT(numSpecies,"EndNumSpecies",_UC._nspecies);
+		if(_UC._calctype_mol) __OUT_BK_INT(numSpecies,"EndNumSpecies",_UC._nmolecules);
+		else __OUT_BK_INT(numSpecies,"EndNumSpecies",_UC._nspecies);
 		is_w++;
 	}else{
+		/*numSpecies can be set as a variable composition molecules block? - I think yes*/
 		fprintf(vf,"%% numSpecies\n");
+if(_UC._calctype_mol){
+		for(i=0;i<_UC._var_nspecies;i++){
+			for(j=0;j<_UC._nmolecules;j++){
+				fprintf(vf,"%i ",_UC.numSpecies[j+i*_UC._nmolecules]);
+			}
+			fprintf(vf,"\n");
+		}
+}else{
 		for(i=0;i<_UC._var_nspecies;i++){
 			for(j=0;j<_UC._nspecies;j++){
 				fprintf(vf,"%i ",_UC.numSpecies[j+i*_UC._nspecies]);
 			}
 			fprintf(vf,"\n");
 		}
+}
 		fprintf(vf,"%% EndNumSpecies\n");
 		is_w++;
 	}
@@ -1809,7 +1842,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 		__OUT_BK_DOUBLE(ldaU,"EndLdaU",_UC._nspecies);
 	}
 	if(_UC.calculationMethod==US_CM_META) __OUT_DOUBLE(ExternalPressure);
-	if(_UC.ExternalPressure!=0.) __OUT_DOUBLE(ExternalPressure);
+	else if(_UC.ExternalPressure!=0.) __OUT_DOUBLE(ExternalPressure);
 	/*print when NOT default or unset*/
 	/*do not print valences if all of them are zero*/
 	zero_check=FALSE;for(i=0;i<_UC._nspecies;i++) zero_check|=(_UC.valences[i]!=0);
@@ -1820,17 +1853,23 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
 	if(_UC.fitLimit!=0.) __OUT_DOUBLE(fitLimit);/*VER 10.1*/
 vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       POPULATION       *");
+	line=g_strdup_printf("*               POPULATION               *");
 	__TITLE(line);
 	g_free(line);
+if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS)){
 	if(_UC.populationSize!=0) __OUT_INT(populationSize);
-	if((_UC.initialPopSize!=0)&&(_UC.initialPopSize!=_UC.populationSize)) __OUT_INT(initialPopSize);
+	if((_UC.initialPopSize>=0)&&(_UC.initialPopSize!=_UC.populationSize)) __OUT_INT(initialPopSize);
 	if(_UC.numGenerations!=100) __OUT_INT(numGenerations);
-	if(_UC.stopCrit!=0) __OUT_INT(stopCrit);
+	/*default stopCrit*/
+	if(_UC._calctype_var) i=_UC.maxAt;
+	else {/*given the number numSpecies meaning, this should be revised*/
+		i=0;for(j=0;j<_UC._nspecies;j++) i+=_UC.numSpecies[j];
+	}
+	if((_UC.stopCrit!=i)&&(_UC.stopCrit!=0)) __OUT_INT(stopCrit);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       SURVIVAL OF THE FITTEST & SELECTION       *");
+	line=g_strdup_printf("*       SURVIVAL & SELECTION       *");
 	__TITLE(line);
 	g_free(line);
 	if(_UC.bestFrac!=0.7) __OUT_DOUBLE(bestFrac);
@@ -1841,7 +1880,7 @@ is_w=0;
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;	
-	line=g_strdup_printf("*       STRUCTURE GENERATION & VARIATION OPERATORS       *");
+	line=g_strdup_printf("*          VARIATION OPERATORS           *");
 	__TITLE(line);
 	g_free(line);
 	if(_UC.symmetries!=NULL) __OUT_BK_STRING(symmetries,"endSymmetries");
@@ -1873,6 +1912,7 @@ is_w=0;
 	if(_UC.mutationRate!=0.5) __OUT_DOUBLE(mutationRate);
 	if(_UC.DisplaceInLatmutation!=1.0) __OUT_DOUBLE(DisplaceInLatmutation);
 	if(_UC.AutoFrac) __OUT_BOOL(AutoFrac);
+}/*VCNEB,TPS don't require POPULATION, SURVIVAL & SELECTION, or VARIATION OPERATORS information*/
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -1891,6 +1931,7 @@ is_w=0;
 	line=g_strdup_printf("*       CELL       *");
 	__TITLE(line);
 	g_free(line);
+if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS)){
 	if(_UC.Latticevalues!=NULL){
 		if(_UC._calctype_var) {
 			/*should be 1 line*/
@@ -1901,6 +1942,7 @@ is_w=0;
 		}
 	}
 	if(_UC.splitInto!=NULL) __OUT_BK_INT(splitInto,"EndSplitInto",_UC._nsplits);
+}/*VCNEB,TPS don't require CELL information*/
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -1913,14 +1955,15 @@ is_w=0;
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       AB INITIO CALCULATION       *");
+	line=g_strdup_printf("*   DETAILS OF AB INITIO CALCULATIONS   *");
 	__TITLE(line);
 	g_free(line);
 	if(_UC.abinitioCode!=NULL) __OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 	if(_UC.KresolStart!=NULL) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
 	if(_UC.vacuumSize!=NULL) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
 	if(_UC.numParallelCalcs!=1) __OUT_INT(numParallelCalcs);
-	__OUT_BK_STRING(commandExecutable,"EndExecutable");/*mandatory block*/
+/*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
+	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
 	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
 	if((_UC.whichCluster==2)&&(_UC.remoteFolder!=NULL)) __OUT_STRING(remoteFolder);
 	if(_UC.PhaseDiagram) __OUT_BOOL(PhaseDiagram);
@@ -1985,6 +2028,7 @@ is_w=0;
 	line=g_strdup_printf("*       BOLTZTRAP       *");/*VER 10.1*/
 	__TITLE(line);
 	g_free(line);
+if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS)){
 	if(_UC.BoltzTraP_T_max!=800.0) __OUT_DOUBLE(BoltzTraP_T_max);
 	if(_UC.BoltzTraP_T_delta!=50.0) __OUT_DOUBLE(BoltzTraP_T_delta);
 	if(_UC.BoltzTraP_T_efcut!=0.15) __OUT_DOUBLE(BoltzTraP_T_efcut);
@@ -2025,10 +2069,9 @@ is_w=0;
 	__TITLE(line);
 	g_free(line);
 	if(_UC.firstGeneMax!=11) __OUT_INT(firstGeneMax);
-	if(_UC._calctype_var){/*mandatory if varcomp*/
-		__OUT_INT(minAt);
-		__OUT_INT(maxAt);
-	}
+	/*minAt and maxAt are authorized outside of variable composition*/
+	if(_UC.minAt!=0) __OUT_INT(minAt);
+	if(_UC.maxAt!=0) __OUT_INT(maxAt);
 	if(_UC.fracTrans!=0.1) __OUT_DOUBLE(fracTrans);
 	if(_UC.howManyTrans!=0.2) __OUT_DOUBLE(howManyTrans);
 	if(_UC.specificTrans!=NULL) __OUT_BK_INT(specificTrans,"EndTransSpecific",_UC._nspetrans);
@@ -2051,6 +2094,7 @@ is_w=0;
 	if(_UC.PSO_softMut!=1.) __OUT_DOUBLE(PSO_softMut);
 	if(_UC.PSO_BestStruc!=1.) __OUT_DOUBLE(PSO_BestStruc);
 	if(_UC.PSO_BestEver!=1.) __OUT_DOUBLE(PSO_BestEver);
+}/*VCNEB,TPS don't require BOLTZTRAP, SURFACES, VARCOMP, METADYNAMICS, or PSO information*/
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
