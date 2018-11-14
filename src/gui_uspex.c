@@ -197,6 +197,19 @@ void gui_uspex_init(struct model_pak *model){
 	}
 	if(uspex_gui.calc._calctype_dim==3) uspex_gui.calc.doSpaceGroup=TRUE;
 	else uspex_gui.calc.doSpaceGroup=FALSE;
+	/*calculation steps specific*/
+	if(uspex_gui.calc.KresolStart==NULL) {
+		uspex_gui.calc.KresolStart=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
+		uspex_gui.calc.KresolStart[0]=0.2;
+		for(idx=1;idx<uspex_gui.calc._num_opt_steps;idx++) 
+			uspex_gui.calc.KresolStart[idx]=0.2-(gdouble)(idx)*(0.2-0.08)/(uspex_gui.calc._num_opt_steps-1);
+	}
+	if(uspex_gui.calc.vacuumSize==NULL) {
+		uspex_gui.calc.vacuumSize=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
+		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc.vacuumSize[idx]=10.;
+	}
+	if(uspex_gui.calc.commandExecutable!=NULL) uspex_gui._tmp_commandExecutable=g_strdup(&uspex_gui.calc.commandExecutable[0]);
+	/*set everything for an update*/
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -1768,9 +1781,40 @@ void spin_update_num_opt_steps(void){
 /***************************/
 void spin_update_curr_step(void){
 	gint i=(gint)uspex_gui._tmp_curr_step;
+	gint index;
+	gchar *text;
+	gchar *ptr;
 	/*update step information*/
+	
+	uspex_gui._tmp_isfixed=uspex_gui.calc._isfixed[i-1];
+	GUI_COMBOBOX_SET(uspex_gui.abinitioCode,uspex_gui.calc.abinitioCode[i-1]);
+	text=g_strdup_printf("%.4lf",uspex_gui.calc.KresolStart[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.KresolStart,text);
+	g_free(text);
+	text=g_strdup_printf("%.4lf",uspex_gui.calc.vacuumSize[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.vacuumSize,text);
+	g_free(text);
 
-
+	if(uspex_gui.calc._isCmdList){
+		/*we have 1 cmd per step*/
+		text=g_strdup(uspex_gui.calc.commandExecutable);
+		index=1;
+		while((index<i)&&(*text!='\0')){
+			if(*text=='\n') index++;
+			text++;
+		}
+		if(*text=='\0') {
+			g_free(text);
+			text=g_strdup("N/A");
+			GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
+			g_free(text);
+		}else {
+			ptr=text+1;
+			while((*ptr!='\0')&&(*ptr!='\n')) ptr++;
+			*ptr='\0';/*correct the termination*/
+			GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
+		}
+	}
 
 }
 /********************/
@@ -1782,13 +1826,14 @@ void toggle_auto_step(void){
 /********************************/
 /* toggle full/fixed relaxation */
 /********************************/
-void toggle_isfull(void){
-
+void toggle_isfixed(void){
+	/*nothing for now*/
 }
 /********************************/
 /* select AI code for this step */
 /********************************/
 void uspex_ai_selected(GUI_OBJ *w){
+	/*TODO: trigger VASP-only + BoltzTraP + ...*/
 
 }
 /****************************/
@@ -1819,6 +1864,87 @@ void generate_step(void){
 /* Apply step information */
 /**************************/
 void apply_step(void){
+	gint i=(gint)uspex_gui._tmp_curr_step;
+	gint index;
+	gchar *text;
+	gchar *ptr;
+	gchar *ptr2;
+	/*REG step values*/
+	uspex_gui.calc._isfixed[i-1]=uspex_gui._tmp_isfixed;
+	GUI_COMBOBOX_GET(uspex_gui.abinitioCode,uspex_gui.calc.abinitioCode[i-1]);
+	GUI_REG_VAL(uspex_gui.KresolStart,uspex_gui.calc.KresolStart[i-1],"%lf");
+	GUI_REG_VAL(uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[i-1],"%lf");
+	
+	if(uspex_gui.calc._isCmdList){
+		/*we have 1 cmd per step*/
+		ptr=uspex_gui.calc.commandExecutable;
+		index=1;
+		while((index<i)&&(*ptr!='\0')){
+			if(*ptr=='\n') index++;
+			ptr++;
+		}
+		if(*ptr=='\0'){/*is an error*/
+			/*just paste the command at the end of the array*/
+			GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
+			text=g_strdup_printf("%s\n%s",uspex_gui.calc.commandExecutable,ptr);
+			g_free(ptr);
+			g_free(uspex_gui.calc.commandExecutable);
+			uspex_gui.calc.commandExecutable=text;
+		}else{
+			/*we need to replace that part of uspex_gui.calc.commandExecutable*/
+			ptr2=ptr+1;
+			while((*ptr2!='\n')&&(*ptr2!='\0')) ptr2++;
+			*ptr='\0';/*ie cut here*/
+			GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
+			text=g_strdup_printf("%s\n%s\n%s",uspex_gui.calc.commandExecutable,ptr,ptr2);
+			g_free(ptr);
+			g_free(ptr2);
+			g_free(uspex_gui.calc.commandExecutable);
+			uspex_gui.calc.commandExecutable=text;
+		}
+	}else{
+		/*we have 1 command at all!*/
+		GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
+		ptr2=uspex_gui.calc.commandExecutable;
+		while((*ptr!='\0')&&(*ptr2!='\0')&&((*ptr)==(*ptr2))) {
+			ptr++;
+			ptr2++;
+		}
+		if ((*ptr)!=(*ptr2)){
+			/*we have a new command*/
+			if(i==1){
+				/*new first command, easy*/
+				GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
+				for(index=1;index<uspex_gui.calc._num_opt_steps;index++){
+					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
+					g_free(ptr);
+					ptr=text;
+				}
+				g_free(uspex_gui.calc.commandExecutable);
+				uspex_gui.calc.commandExecutable=ptr;
+			}else{
+				ptr=g_strdup(uspex_gui.calc.commandExecutable);
+				for(index=1;index<(i-1);index++){/*REPEAT before step*/
+					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
+					g_free(ptr);
+					ptr=text;
+				}/*COPY*/
+				GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr2);
+				text=g_strdup_printf("%s\n%s",ptr,ptr2);
+				g_free(ptr);
+				g_free(ptr2);
+				ptr=text;
+				for(index=i;index<uspex_gui.calc._num_opt_steps;index++){/*REPEAT after step*/
+					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
+					g_free(ptr);
+					ptr=text;
+				}
+				g_free(uspex_gui.calc.commandExecutable);
+				uspex_gui.calc.commandExecutable=ptr;
+			}
+			uspex_gui.calc._isCmdList=TRUE;/*change to reflect new orientation*/
+		}
+	}/*false alarm*/
 
 }
 /*************************************************/
@@ -2773,10 +2899,11 @@ GUI_TOOLTIP(uspex_gui._num_opt_steps,"Set the number of optimisation steps.\nInc
 GUI_TOOLTIP(uspex_gui._curr_step,"Select current optimisation step number.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.auto_step,toggle_auto_step,"AUTO STEP",2,3,1,2);
 GUI_TOOLTIP(button,"For GULP- or VASP-based USPEX calculations (3~5 steps),\nuse a series of automatic settings for input.\nUser specific PS file is still needed!");
-	GUI_CHECK_TABLE(table,button,uspex_gui._tmp_isfull,toggle_isfull,"Relax_full",3,4,1,2);
-GUI_TOOLTIP(button,"Set the current step as a full relaxation.\nUseful only with a mix between fixed and full relaxations.");
+	GUI_CHECK_TABLE(table,uspex_gui._isfixed,uspex_gui._tmp_isfixed,toggle_isfixed,"Relax_fixed",3,4,1,2);
+GUI_TOOLTIP(button,"Set the current step as a fixed relaxation.\nUseful only with a mix between fixed and full relaxations.");
 /* line 2 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",0,2,2,3);
+	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"0  - NONE");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"1  - VASP");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"2  - SIESTA");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"3  - GULP");
@@ -2794,9 +2921,9 @@ GUI_TOOLTIP(button,"Set the current step as a full relaxation.\nUseful only with
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"15 - DFTB");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"16 - Gaussian");
 GUI_TOOLTIP(uspex_gui.abinitioCode,"abinitioCode: Ch. 4.8 DEFAULT: 1\nCode used for the calculations in this step.");
-	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui._tmp_KresolStart,"%.4f","Kresol:",2,3,2,3);
+	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui.calc.KresolStart[0],"%.4f","Kresol:",2,3,2,3);
 GUI_TOOLTIP(uspex_gui.KresolStart,"KresolStart: Ch. 4.8 DEFAULT: 0.2-0.08\nReciprocal-space resolution for this optimization step (2*pi/Ang).");
-	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui._tmp_vacuumSize,"%.4f","vacuum:",3,4,2,3);
+	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[0],"%.4f","vacuum:",3,4,2,3);
 GUI_TOOLTIP(uspex_gui.vacuumSize,"vacuumSize: Ch. 4.8 DEFAULT: 10.0\nVacuum size (Ang.) between neighbor atoms from adjacent unit cells.\nFor cluster, 2D-crystal, and surfaces only.");
 /* line 3 */
 	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input,"INP:",0,1,3,4);
@@ -3146,6 +3273,9 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 
 /*per optimization step*/
 	GUI_COMBOBOX_SETUP(uspex_gui.abinitioCode,0,uspex_ai_selected);/*ai means ab initio, not...*/
+	
+	spin_update_curr_step();
+	uspex_ai_selected(uspex_gui.abinitioCode);
 
 	mag_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);

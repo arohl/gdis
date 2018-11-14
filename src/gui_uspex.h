@@ -147,11 +147,10 @@ struct uspex_calc_gui{
 	GUI_OBJ *_num_opt_steps;/*usually determined indirectly*/
 	gdouble _tmp_curr_step;/*because gtk_spin type is double*/
 	GUI_OBJ *_curr_step;
-	gboolean _tmp_isfull;
+	gboolean _tmp_isfixed;
+	GUI_OBJ *_isfixed;
 	GUI_OBJ *abinitioCode;
-	gdouble _tmp_KresolStart;
 	GUI_OBJ *KresolStart;
-	gdouble _tmp_vacuumSize;
 	GUI_OBJ *vacuumSize;
 	gboolean auto_step;
 	gchar *_tmp_ai_input;

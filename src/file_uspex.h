@@ -180,6 +180,8 @@ typedef struct {
 	gdouble 	*KresolStart;		/*reciprocal-space resolution (2*pi*ang-1) for k-points generation*/
 	gdouble		*vacuumSize;		/*amount of vacuum added at each optimization step*/
 	gint 		numParallelCalcs;	/*number of structure relaxations at a time (in parallel)*/
+	gint 		numProcessors;		/*how many processors per calculation - undocumented*/
+	gboolean 	_isCmdList;		/*HIDDEN: switch between only 1 commandExecutable and 1 per optimization steps*/
 	gchar 		*commandExecutable;	/*executable file/command for each optimization step*/
 	gint		whichCluster;		/*type of job-submission*/
 	gchar 		*remoteFolder;		/*remote folder where calculation is performed (whichCluster=2)*/

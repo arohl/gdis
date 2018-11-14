@@ -133,6 +133,8 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.KresolStart=NULL;
 	_UC.vacuumSize=NULL;
 	_UC.numParallelCalcs=1;
+	_UC.numProcessors=1;/*undocumented*/
+	_UC._isCmdList=FALSE;/*default is only 1 commandExecutable*/
 	_UC.commandExecutable=NULL;
 	_UC.whichCluster=0;
 	_UC.remoteFolder=NULL;
@@ -280,7 +282,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 /*this should be promoted*/
 #define __Q(a) #a
 /*some lazy defines*/
-#define __STRIP_EOL(line) for(i=0;i<strlen(line);i++) if(line[i]=='\n') line[i]='\0'
+#define __STRIP_EOL(line) for(i=0;i<strlen(line);i++) if((line[i]=='\r')||(line[i]=='\n')) line[i]='\0'
 #define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
@@ -1087,6 +1089,7 @@ while((*ptr!='\n')&&(*ptr!='\0')){
 			continue;
 		}
 		__GET_INT(numParallelCalcs);
+		__GET_INT(numProcessors);/*undocumented*/
 		if (find_in_string("commandExecutable",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*there is also 1<x<_num_opt_steps lines of commandExecutable?*/
@@ -1103,6 +1106,7 @@ while((*ptr!='\n')&&(*ptr!='\0')){
 				ptr = _UC.commandExecutable;
 				j++;
 			}
+			_UC._isCmdList=(j>2);
 			/*remove last '\n'*/
 			j = strlen(_UC.commandExecutable);
 			ptr = &(_UC.commandExecutable[j]);
@@ -1550,6 +1554,8 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_DBLCP(KresolStart,_SRC._num_opt_steps);
 	_DBLCP(vacuumSize,_SRC._num_opt_steps);
 	_CP(numParallelCalcs);
+	_CP(numProcessors);
+	_CP(_isCmdList);
 	_STRCP(commandExecutable);/*unsure*/
 	_CP(whichCluster);
 	_STRCP(remoteFolder);
@@ -1998,9 +2004,15 @@ is_w=0;
         is_w++;
 //__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 }
-	if(_UC.KresolStart!=NULL) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
-	if(_UC.vacuumSize!=NULL) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
-	if(_UC.numParallelCalcs!=1) __OUT_INT(numParallelCalcs);
+/*do not print KresolStart if linearly = {0.2~0.08}*/
+zero_check=(_UC.KresolStart[0]!=0.2);
+for(i=1;i<_UC._num_opt_steps;i++) zero_check|=(_UC.KresolStart[i]!=(0.2-(gdouble)(i)*(0.2-0.08)/(_UC._num_opt_steps-1)));
+	if(zero_check && (_UC.KresolStart!=NULL)) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
+/*do not print vacuumSize if all of them are 10. (default)*/
+zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=(_UC.vacuumSize[i]!=10.0);
+	if(zero_check && (_UC.vacuumSize!=NULL)) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
+	if(_UC.numParallelCalcs>1) __OUT_INT(numParallelCalcs);
+	if(_UC.numProcessors>1) __OUT_INT(numProcessors);
 /*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
 	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
 	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
