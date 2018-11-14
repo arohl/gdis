@@ -209,6 +209,13 @@ void gui_uspex_init(struct model_pak *model){
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc.vacuumSize[idx]=10.;
 	}
 	if(uspex_gui.calc.commandExecutable!=NULL) uspex_gui._tmp_commandExecutable=g_strdup(&uspex_gui.calc.commandExecutable[0]);
+	uspex_gui.auto_step=TRUE;/*auto step is ON by default*/
+	uspex_gui._tmp_ai_spe=NULL;
+/**/
+	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);
+	uspex_gui._potentials=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._potentials[idx]=NULL;
+
 	/*set everything for an update*/
 	uspex_gui.is_dirty=TRUE;
 }
@@ -1821,7 +1828,23 @@ void spin_update_curr_step(void){
 /* toggle auto_step */
 /********************/
 void toggle_auto_step(void){
-
+	if(uspex_gui.auto_step){
+		GUI_LOCK(uspex_gui.ai_input);
+		GUI_LOCK(uspex_gui.ai_input_button);
+		GUI_LOCK(uspex_gui.ai_opt);
+		GUI_LOCK(uspex_gui.ai_opt_button);
+		GUI_LOCK(uspex_gui.ai_spe);
+		GUI_LOCK(uspex_gui.ai_pot);
+		GUI_LOCK(uspex_gui.ai_pot_button);
+	}else{
+		GUI_UNLOCK(uspex_gui.ai_input);
+		GUI_UNLOCK(uspex_gui.ai_input_button);
+		GUI_UNLOCK(uspex_gui.ai_opt);
+		GUI_UNLOCK(uspex_gui.ai_opt_button);
+		GUI_UNLOCK(uspex_gui.ai_spe);
+		GUI_UNLOCK(uspex_gui.ai_pot);
+		GUI_UNLOCK(uspex_gui.ai_pot_button);
+	}
 }
 /********************************/
 /* toggle full/fixed relaxation */
@@ -1947,11 +1970,140 @@ void apply_step(void){
 	}/*false alarm*/
 
 }
+/***************************************************************/
+/* populate the species array for (pseudo-)potential definition */
+/***************************************************************/
+void populate_spe(void){
+	gint idx;
+	gchar *line;
+	/*this only contain atom information*/
+	GUI_COMBOBOX_WIPE(uspex_gui.ai_spe);
+	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+		line=g_strdup_printf("%s",elements[uspex_gui.calc.atomType[idx]].symbol);
+		GUI_COMBOBOX_ADD(uspex_gui.ai_spe,line);
+		g_free(line);
+	}
+}
+/************************************************************/
+/* Selection of a species for (pseudo-)potential definition */
+/************************************************************/
+void ai_spe_selected(GUI_OBJ *w){
+	gchar *text;
+	gint index;
+	GUI_COMBOBOX_GET(w,index);
+	/**/
+	if(uspex_gui._tmp_ai_spe!=NULL) g_free(uspex_gui._tmp_ai_spe);
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_spe,uspex_gui._tmp_ai_spe);
+	/*show corresponding information*/
+	if(uspex_gui._potentials[index]!=NULL){
+		text=g_strdup_printf("%s",uspex_gui._potentials[index]);
+		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
+		g_free(text);
+	}else{/*print nothing*/
+		text=g_strdup("N/A");
+		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
+		g_free(text);
+	}
+}
+/*********************************/
+/* change the potential manually */
+/*********************************/
+void change_ai_pot(void){
+	gchar *text;
+	gint index;
+	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
+	if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
+	GUI_ENTRY_GET_TEXT(uspex_gui.ai_pot,text);
+	uspex_gui._potentials[index]=g_strdup(text);
+	g_free(text);
+}
 /*************************************************/
 /* load (pseudo-)potential file for this species */
 /*************************************************/
 void load_ai_pot_dialog(){
-
+        GUI_OBJ *file_chooser;
+        gint have_answer;
+        gchar *filename;
+        gchar *text;
+	gchar *type;
+	gchar *filter;
+        /**/
+	switch (uspex_gui.calc.abinitioCode[0]){
+	case 2:/*SIESTA*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.psf",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X.psf");
+		filter=g_strdup("*.psf");
+		break;
+	case 3:/*GULP*/
+		/*no specific format*/
+	case 4:/*LAMMPS*/
+		/*many formats*/
+	case 5:/*ORCA*/
+		/*no specific format*/
+	case 6:/*DMACRYS <- should require a user-made Specific folder!*/
+		/*no specific format*/
+	case 7:/*CP2K*/
+		/*no specific format*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X potential");
+		filter=g_strdup("*");
+		break;
+	case 8:/*Q.E.*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.UPF",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X.UPF");
+		filter=g_strdup("*.UPF");
+		break;
+	case 9:/*FHI-aims*/
+		/*no idea*/
+	case 10:/*ATK*/
+		/*many formats (vps, pao)*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X potential");
+		filter=g_strdup("*");
+		break;
+	case 11:/*CASTEP*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.usp",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X.usp");
+		filter=g_strdup("*.usp");
+		break;
+	case 12:/*Tinker*/
+		/*no specific format*/
+	case 13:/*MOPAC*/
+		/*no specific format*/
+	case 14:/*BoltzTraP*/
+		/*no specific format*/
+	case 15:/*DFTB*/
+		/*no idea*/
+	case 16:/*Gaussian*/
+		/*no specific format*/
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("X potential");
+		filter=g_strdup("*");
+		break;
+	case 1:/*VASP*/
+		/* fall through */
+	default:
+		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("POTCAR_%s",uspex_gui._tmp_ai_spe);
+		else type=g_strdup("POTCAR_X");
+		filter=g_strdup("POTCAR*");
+	}
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select potential information",filter,type);
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			gint index;
+			GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
+			if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
+			uspex_gui._potentials[index]=g_strdup(text);
+			g_free(text);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
+	g_free(type);g_free(filter);
 }
 /************************************/
 /* set the uspex calculation folder */
@@ -2331,8 +2483,6 @@ void load_substrate_model_file(void){
 
 }
 
-
-
 /************************/
 /* Switch notebook page */
 /************************/
@@ -2377,6 +2527,166 @@ void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 /****************************************************/
 void uspex_gui_sync(){
 	/* sync start here */
+	USPEX_REG_TEXT(name);
+	/*calculationMethod is special*/
+	/*calculationType is special*/
+	uspex_gui.calc._calctype_dim=(gint)uspex_gui._dim;
+	//_calctype_mol already sync
+	//_calctype_var already sync
+	//_calctype_mag already sync
+	/*optType is special*/
+	if(uspex_gui.have_new_opt) USPEX_REG_TEXT(new_optType);
+	//anti_opt is already sync
+	/*recalculate n_species*/
+	/*atomType is special*/
+	/*recalculate _var_nspecies*/
+	/*numSpecies is special TODO*/
+	/*magRatio is special*/
+	if(uspex_gui.calc._calctype_mag){
+		GUI_REG_VAL(uspex_gui.mag_nm,uspex_gui.calc.magRatio[0],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_fmls,uspex_gui.calc.magRatio[1],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_fmhs,uspex_gui.calc.magRatio[2],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_afml,uspex_gui.calc.magRatio[3],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_afmh,uspex_gui.calc.magRatio[4],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_fmlh,uspex_gui.calc.magRatio[5],"%lf");
+		GUI_REG_VAL(uspex_gui.mag_aflh,uspex_gui.calc.magRatio[6],"%lf");
+	}
+	/*ldaU is missing TODO*/
+	/*ExternalPressure is only in META -> TODO*/
+	if(uspex_gui.calc.calculationMethod==US_CM_META) USPEX_REG_VAL(ExternalPressure,"%lf");
+	/*valences is special*/
+	/*goodBonds is special*/
+	//checkMolecules is already sync
+	//checkConnectivity is already sync
+	USPEX_REG_VAL(fitLimit,"%lf");
+	USPEX_REG_VAL(populationSize,"%i");
+	USPEX_REG_VAL(initialPopSize,"%i");
+	USPEX_REG_VAL(numGenerations,"%i");
+	USPEX_REG_VAL(stopCrit,"%i");
+	USPEX_REG_VAL(bestFrac,"%lf");
+	USPEX_REG_VAL(keepBestHM,"%i");
+	//reoptOld is already sync
+	/*symmetries is special*/
+	USPEX_REG_VAL(fracGene,"%lf");
+	USPEX_REG_VAL(fracRand,"%lf");
+	USPEX_REG_VAL(fracTopRand,"%lf");
+	USPEX_REG_VAL(fracPerm,"%lf");
+	USPEX_REG_VAL(fracAtomsMut,"%lf");
+	USPEX_REG_VAL(fracRotMut,"%lf");
+	USPEX_REG_VAL(fracLatMut,"%lf");
+	USPEX_REG_VAL(fracSpinMut,"%lf");
+	USPEX_REG_VAL(howManySwaps,"%i");
+	USPEX_REG_TEXT(specificSwaps);
+	USPEX_REG_VAL(mutationDegree,"%lf");
+	USPEX_REG_VAL(mutationRate,"%lf");
+	USPEX_REG_VAL(DisplaceInLatmutation,"%lf");
+	//AutoFrac is already sync
+	/*IonDistances is special*/
+	USPEX_REG_VAL(minVectorLength,"%lf");
+	USPEX_REG_VAL(constraint_enhancement,"%i");
+	/*MolCenters is special*/
+	/*Latticevalues is special*/
+	/*splitInto is special*/
+	//pickUpYN is already sync
+	USPEX_REG_VAL(pickUpGen,"%i");
+	USPEX_REG_VAL(pickUpFolder,"%i");
+	uspex_gui.calc._num_opt_steps=(gint)uspex_gui._tmp_num_opt_steps;
+	/*abinitioCode is special*/
+	/*KresolStart is special*/
+	/*vacuumSize is special*/
+	/*_isfixed is special*/
+	USPEX_REG_VAL(numParallelCalcs,"%i");
+	/*commandExecutable is special*/
+	USPEX_REG_VAL(whichCluster,"%i");
+	USPEX_REG_TEXT(remoteFolder);
+	//PhaseDiagram is already sync
+	USPEX_REG_VAL(RmaxFing,"%lf");
+	USPEX_REG_VAL(deltaFing,"%lf");
+	USPEX_REG_VAL(sigmaFing,"%lf");
+	USPEX_REG_VAL(antiSeedsActivation,"%i");
+	USPEX_REG_VAL(antiSeedsMax,"%lf");
+	USPEX_REG_VAL(antiSeedsSigma,"%lf");
+	//doSpaceGroup is already sync
+	USPEX_REG_VAL(SymTolerance,"%lf");
+	USPEX_REG_VAL(repeatForStatistics,"%i");
+	USPEX_REG_VAL(stopFitness,"%lf");
+	USPEX_REG_VAL(fixRndSeed,"%i");
+	//collectForces is already sync
+	//ordering_active is already sync
+	//symmetrize is already sync
+	/*valenceElectr is special*/
+	USPEX_REG_VAL(percSliceShift,"%lf");
+	/*dynamicalBestHM is special*/
+	USPEX_REG_TEXT(softMutOnly);
+	USPEX_REG_VAL(maxDistHeredity,"%lf");
+	/*manyParents is special*/
+	USPEX_REG_VAL(minSlice,"%lf");
+	USPEX_REG_VAL(maxSlice,"%lf");
+	USPEX_REG_VAL(numberparents,"%i");
+	/*_nmolecules is special TODO*/
+	USPEX_REG_VAL(BoltzTraP_T_max,"%lf");
+	USPEX_REG_VAL(BoltzTraP_T_delta,"%lf");
+	USPEX_REG_VAL(BoltzTraP_T_efcut,"%lf");
+	USPEX_REG_VAL(TE_T_interest,"%lf");
+	USPEX_REG_VAL(TE_threshold,"%lf");
+	/*TE_goal is special*/
+	USPEX_REG_VAL(thicknessS,"%lf");
+	USPEX_REG_VAL(thicknessB,"%lf");
+	USPEX_REG_VAL(reconstruct,"%i");
+	/*StoichiometryStart is special*/
+	USPEX_REG_VAL(firstGeneMax,"%i");
+	USPEX_REG_VAL(minAt,"%i");
+	USPEX_REG_VAL(maxAt,"%i");
+	USPEX_REG_VAL(fracTrans,"%lf");
+	USPEX_REG_VAL(howManyTrans,"%lf");
+	/*specificTrans is special*/
+	//ExternalPressure is already sync
+	USPEX_REG_VAL(GaussianWidth,"%lf");
+	USPEX_REG_VAL(GaussianHeight,"%lf");
+	/*FullRelax is special*/
+	USPEX_REG_VAL(maxVectorLength,"%lf");
+	USPEX_REG_VAL(PSO_softMut,"%lf");
+	USPEX_REG_VAL(PSO_BestStruc,"%lf");
+	USPEX_REG_VAL(PSO_BestEver,"%lf");
+	USPEX_REG_VAL(vcnebType,"%i");
+	/*_vcnebtype_method is special*/
+	//_vcnebtype_img_num is already sync
+	//_vcnebtype_spring is already sync
+	USPEX_REG_VAL(numImages,"%i");
+	USPEX_REG_VAL(numSteps,"%i");
+	/*optReadImages is special*/
+	/*optimizerType is special*/
+	/*optRelaxType is special*/
+	USPEX_REG_VAL(dt,"%lf");
+	USPEX_REG_VAL(ConvThreshold,"%lf");
+	USPEX_REG_VAL(VarPathLength,"%lf");
+	USPEX_REG_VAL(K_min,"%lf");
+	USPEX_REG_VAL(K_max,"%lf");
+	USPEX_REG_VAL(Kconstant,"%lf");
+	//optFreezing is already sync
+	/*optMethodCIDI is special*/
+	USPEX_REG_VAL(startCIDIStep,"%i");
+	/*pickupImages is special*/
+	/*FormatType is special*/
+	USPEX_REG_VAL(PrintStep,"%i");
+	USPEX_REG_VAL(numIterations,"%i");
+	USPEX_REG_TEXT(speciesSymbol);
+	/*mass is special*/
+	GUI_REG_VAL(uspex_gui.amplitudeShoot_AB,uspex_gui.calc.amplitudeShoot[0],"%lf");
+	GUI_REG_VAL(uspex_gui.amplitudeShoot_BA,uspex_gui.calc.amplitudeShoot[1],"%lf");
+	GUI_REG_VAL(uspex_gui.magnitudeShoot_success,uspex_gui.calc.magnitudeShoot[0],"%lf");
+	GUI_REG_VAL(uspex_gui.magnitudeShoot_failure,uspex_gui.calc.magnitudeShoot[1],"%lf");
+	USPEX_REG_VAL(shiftRatio,"%lf");
+	//orderParaType is already sync
+	GUI_REG_VAL(uspex_gui.opCriteria_start,uspex_gui.calc.opCriteria[0],"%lf");
+	GUI_REG_VAL(uspex_gui.opCriteria_end,uspex_gui.calc.opCriteria[1],"%lf");
+	USPEX_REG_TEXT(cmdOrderParameter);
+	USPEX_REG_TEXT(cmdEnthalpyTemperature);
+	USPEX_REG_TEXT(orderParameterFile);
+	USPEX_REG_TEXT(enthalpyTemperatureFile);
+	USPEX_REG_TEXT(trajectoryFile);
+	USPEX_REG_TEXT(MDrestartFile);
+	USPEX_REG_TEXT(job_path);
 }
 /***************************/
 /* save current parameters */
@@ -2799,7 +3109,7 @@ GUI_TOOLTIP(uspex_gui.bestFrac,"bestFrac: Ch. 4.3 DEFAULT: 0.7\nFraction of curr
 GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
 	GUI_CHECK_TABLE(table,uspex_gui.reoptOld,uspex_gui.calc.reoptOld,NULL,"reopt",2,3,4,5);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui.reoptOld,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
-	GUI_ENTRY_TABLE(table,uspex_gui.fitLimit,uspex_gui.calc.fitLimit,"%.4f","BestFIT:",3,4,4,5);
+	GUI_ENTRY_TABLE(table,uspex_gui.fitLimit,uspex_gui.calc.fitLimit,"%.4f","fitLimit:",3,4,4,5);
 GUI_TOOLTIP(uspex_gui.fitLimit,"fitLimit: Ch. 4.3 DEFAULT: none\nStop calculation when fitLimit fitness is reached.");
 /* --- Structure & Variation */
 	GUI_LABEL_TABLE(table,"Structure & Variation",0,4,5,6);
@@ -2898,9 +3208,9 @@ GUI_TOOLTIP(uspex_gui._num_opt_steps,"Set the number of optimisation steps.\nInc
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
 GUI_TOOLTIP(uspex_gui._curr_step,"Select current optimisation step number.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.auto_step,toggle_auto_step,"AUTO STEP",2,3,1,2);
-GUI_TOOLTIP(button,"For GULP- or VASP-based USPEX calculations (3~5 steps),\nuse a series of automatic settings for input.\nUser specific PS file is still needed!");
+GUI_TOOLTIP(button,"This indicates that user have a \"Specific\" directory containing\nall necessary calculation files:\nginput_N, goptions_N for GULP (for each N step)\nINCAR_N, POTCAR_X for VASP (for each step N and species X)");
 	GUI_CHECK_TABLE(table,uspex_gui._isfixed,uspex_gui._tmp_isfixed,toggle_isfixed,"Relax_fixed",3,4,1,2);
-GUI_TOOLTIP(button,"Set the current step as a fixed relaxation.\nUseful only with a mix between fixed and full relaxations.");
+GUI_TOOLTIP(uspex_gui._isfixed,"Set the current step as a fixed relaxation.\nUseful only with a mix between fixed and full relaxations.");
 /* line 2 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",0,2,2,3);
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"0  - NONE");
@@ -2928,23 +3238,24 @@ GUI_TOOLTIP(uspex_gui.vacuumSize,"vacuumSize: Ch. 4.8 DEFAULT: 10.0\nVacuum size
 /* line 3 */
 	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input,"INP:",0,1,3,4);
 GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile name as to end with *_N where N is the step number.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_input_dialog,1,2,3,4);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_input_button,load_ai_input_dialog,1,2,3,4);
 	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt,"OPT:",2,3,3,4);
 GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_opt_dialog,3,4,3,4);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_opt_button,load_ai_opt_dialog,3,4,3,4);
 /* line 4 */
 	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable,"EXE:",0,1,4,5);
 GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
 	GUI_OPEN_BUTTON_TABLE(table,button,load_abinito_exe_dialog,1,2,4,5);
 	GUI_BUTTON_TABLE(table,uspex_gui.ai_generate,"Generate",generate_step,2,3,4,5);
-GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nFor now, limited to VASP and GULP.");
+GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nUnavailable (for now) m(_ _)m");
 	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,4,5);
 GUI_TOOLTIP(button,"Apply changes to this step (only).");
 /* line 5 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_spe,"Species:",0,1,5,6);
-	GUI_TEXT_TABLE(table,uspex_gui.ai_pot,uspex_gui._tmp_ai_pot,"POT:",1,3,5,6);
-GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_ai_pot_dialog,3,4,5,6);
+GUI_TOOLTIP(uspex_gui.ai_spe,"Select species for (pseudo-)potential information.");
+	GUI_TEXT_TABLE(table,uspex_gui.ai_pot,uspex_gui._potentials[0],"POT:",1,3,5,6);
+GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.\nFor pair- and molecules-potential, do not mind the \"per-species\".");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_pot_button,load_ai_pot_dialog,3,4,5,6);
 /* --- USPEX launch */
 	GUI_LABEL_TABLE(table,"USPEX launch",0,4,6,7);
 /* line 7 */
@@ -3273,10 +3584,16 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 
 /*per optimization step*/
 	GUI_COMBOBOX_SETUP(uspex_gui.abinitioCode,0,uspex_ai_selected);/*ai means ab initio, not...*/
-	
 	spin_update_curr_step();
 	uspex_ai_selected(uspex_gui.abinitioCode);
-
+	GUI_LOCK(uspex_gui.ai_generate);/*Use of GDIS to prepare specific calculation parameter is Unavailable for now (TODO)*/
+	GUI_LOCK(uspex_gui.ai_spe);
+	populate_spe();
+	GUI_UNLOCK(uspex_gui.ai_spe);
+	GUI_COMBOBOX_SETUP(uspex_gui.ai_spe,0,ai_spe_selected);
+	ai_spe_selected(uspex_gui.ai_spe);
+	toggle_auto_step();
+	GUI_ENTRY_ACTIVATE(uspex_gui.ai_pot,change_ai_pot,NULL);
 	mag_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);

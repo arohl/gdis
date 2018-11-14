@@ -127,7 +127,6 @@ struct uspex_calc_gui{
 	gint _curr_center;
 	GUI_OBJ *constraint_enhancement;
 	gboolean auto_C_ion;
-	gboolean auto_C_lat;
 	GUI_OBJ *_molModels;
 /*4.6 Cell*/
 	GUI_OBJ *Latticevalues;
@@ -155,12 +154,17 @@ struct uspex_calc_gui{
 	gboolean auto_step;
 	gchar *_tmp_ai_input;
 	GUI_OBJ *ai_input;
+	GUI_OBJ *ai_input_button;
 	gchar *_tmp_ai_opt;
 	GUI_OBJ *ai_opt;
+	GUI_OBJ *ai_opt_button;
 	GUI_OBJ *ai_generate;
+	gchar *_tmp_ai_spe;
 	GUI_OBJ *ai_spe;
+	gchar **_potentials;
 	gchar *_tmp_ai_pot;
 	GUI_OBJ *ai_pot;
+	GUI_OBJ *ai_pot_button;
 	GUI_OBJ *numParallelCalcs;
 	gchar *_tmp_commandExecutable;
 	GUI_OBJ *commandExecutable;

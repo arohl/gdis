@@ -228,6 +228,7 @@ typedef struct {
 	gdouble		thicknessS;		/*thickness (Ang) of the surface (ie adatoms) surface region*/
 	gdouble		thicknessB;		/*thickness (Ang) of the buffer (no adatoms) surface region*/
 	gint		reconstruct;		/*max number of multiplication of the surface cell (for reconstruction)*/
+	gint 		*StoichiometryStart;	/*starting stoichiometry (undocumented)*/
 /*VER 10.1 - 5.4 Clusters*/
 			/*no keyword in this section (selection by calculationType)*/
 /*5.5 Variable composition (previously 5.3)*/
