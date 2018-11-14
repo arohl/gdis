@@ -129,6 +129,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.pickUpFolder=0;
 	_UC._num_opt_steps=0;
 	_UC.abinitioCode=NULL;
+	_UC._isfixed=NULL;
 	_UC.KresolStart=NULL;
 	_UC.vacuumSize=NULL;
 	_UC.numParallelCalcs=1;
@@ -238,6 +239,7 @@ void free_uspex_parameters(uspex_calc_struct *uspex_calc){
 	g_free(_UC.Latticevalues);
 	g_free(_UC.splitInto);
 	g_free(_UC.abinitioCode);
+	g_free(_UC._isfixed);
 	g_free(_UC.KresolStart);
 	g_free(_UC.vacuumSize);
 	g_free(_UC.commandExecutable);
@@ -1018,12 +1020,30 @@ else n_size=_UC._nspecies;
 			for(i=0;i<_UC._num_opt_steps;i++) _UC.abinitioCode[i]=0;
 			ptr=&(line[0]);i=0;
 /*TODO: deal with META parenthesis here!*/
+_UC._isfixed = g_malloc(_UC._num_opt_steps*sizeof(gboolean));
+for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=TRUE;
+i=0;n_size=0;
+while((*ptr!='\n')&&(*ptr!='\0')){
+	__SKIP_BLANK(ptr);
+	if(*ptr=='(') {
+		n_size=1;
+		ptr++;
+	}
+	if(n_size==0) _UC._isfixed[i]=TRUE;
+	else _UC._isfixed[i]=FALSE;
+	_UC.abinitioCode[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+	if(*ptr2==')') n_size=0;
+	ptr=ptr2+1;
+	i++;
+}
+/*
 			while((*ptr!='\n')&&(*ptr!='\0')){
 				__SKIP_BLANK(ptr);
 				_UC.abinitioCode[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
 				ptr=ptr2+1;
 				i++;
 			}
+*/
 			g_free(line);
 			line = file_read_line(vf);/*this is the ENDabinit line*/
 			g_free(line);
@@ -1526,6 +1546,7 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(pickUpFolder);
 	_CP(_num_opt_steps);
 	_COPY(abinitioCode,_SRC._num_opt_steps,gint);
+	_COPY(_isfixed,_SRC._num_opt_steps,gboolean);
 	_DBLCP(KresolStart,_SRC._num_opt_steps);
 	_DBLCP(vacuumSize,_SRC._num_opt_steps);
 	_CP(numParallelCalcs);
@@ -1958,7 +1979,25 @@ is_w=0;
 	line=g_strdup_printf("*   DETAILS OF AB INITIO CALCULATIONS   *");
 	__TITLE(line);
 	g_free(line);
-	if(_UC.abinitioCode!=NULL) __OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
+	if(_UC.abinitioCode!=NULL) {
+/*NEW: deals with parenthesis*/
+        fprintf(vf,"%% abinitioCode\n");
+	if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
+	else fprintf(vf,"%i",_UC.abinitioCode[0]);
+        for(i=1;i<(_UC._num_opt_steps);i++) {
+		if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
+			if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
+			else fprintf(vf," %i)",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
+		}else{
+			fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
+		}
+	}
+        if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
+	else fprintf(vf,")\n");/*terminate on non fixed*/
+	fprintf(vf,"%% ENDabinit\n");
+        is_w++;
+//__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
+}
 	if(_UC.KresolStart!=NULL) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
 	if(_UC.vacuumSize!=NULL) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
 	if(_UC.numParallelCalcs!=1) __OUT_INT(numParallelCalcs);

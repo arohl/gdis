@@ -176,6 +176,7 @@ typedef struct {
 /*4.8 Ab initio calculations*/
 	gint		_num_opt_steps;		/*HIDDEN: number of optimization steps*/
 	gint 		*abinitioCode;		/*calculation code used for each optimization steps*/
+	gboolean 	*_isfixed;		/*HIDDEN: deal with parenthesis*/
 	gdouble 	*KresolStart;		/*reciprocal-space resolution (2*pi*ang-1) for k-points generation*/
 	gdouble		*vacuumSize;		/*amount of vacuum added at each optimization step*/
 	gint 		numParallelCalcs;	/*number of structure relaxations at a time (in parallel)*/
