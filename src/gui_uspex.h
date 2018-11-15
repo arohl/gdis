@@ -75,6 +75,12 @@ struct uspex_calc_gui{
 	gint _tmp_atom_typ;
 	gint _tmp_atom_num;
 	gint _tmp_atom_val;
+	/*numSpecies block*/
+	GUI_OBJ *numSpecies;
+	gchar *_tmp_blockSpecies;
+	GUI_OBJ *blockSpecies;
+	GUI_OBJ *Species_apply_button;
+	GUI_OBJ *Species_delete_button;
 	/*bond definition: apply/auto*/
 	GUI_OBJ *goodBonds;
 	GUI_OBJ *_bond_d;
@@ -83,6 +89,8 @@ struct uspex_calc_gui{
 	//checkMolecules is auto-sync
 	//checkConnectivity is auto-sync
 	GUI_OBJ *fitLimit;			/*VER 10.1*/
+	gchar *_tmp_ldaU;			/*VER 10.1*/
+	GUI_OBJ *ldaU;				/*VER 10.1*/
 /*4.2 Population*/
 	GUI_OBJ *populationSize;
 	GUI_OBJ *initialPopSize;

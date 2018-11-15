@@ -107,7 +107,7 @@ typedef struct {
 typedef struct {
 /*additional controls*/
 	gchar *name;				/*the job name*/
-	gchar *path;				/*job path*/
+	gchar *path;				/*original job path*/
 	gchar *filename;			/*corresponding filename*/
 	gint special;				/*special tag*/
 /*4.1 Type of run & System*/

@@ -122,6 +122,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.constraint_enhancement=TRUE;
 	_UC._nmolecules=0;
 	_UC.MolCenters=NULL;
+	_UC._nlatticevalues=0;
 	_UC.Latticevalues=NULL;
 	_UC.splitInto=NULL;
 	_UC.pickUpYN=FALSE;
@@ -283,7 +284,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 #define __Q(a) #a
 /*some lazy defines*/
 #define __STRIP_EOL(line) for(i=0;i<strlen(line);i++) if((line[i]=='\r')||(line[i]=='\n')) line[i]='\0'
-#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*ptr!='\0')) ptr++
+#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*(pointer)!='\0')) pointer++
 #define __GET_BOOL(value) if (find_in_string(__Q(value),line)!=NULL){\
 	k=0;sscanf(line,"%i%*s",&(k));\
 	_UC.value=(k==1);\
@@ -1871,9 +1872,11 @@ if(_UC._calctype_mol){
 	if(_UC.calculationMethod==US_CM_META) __OUT_DOUBLE(ExternalPressure);
 	else if(_UC.ExternalPressure!=0.) __OUT_DOUBLE(ExternalPressure);
 	/*print when NOT default or unset*/
+if(_UC.valences!=NULL){
 	/*do not print valences if all of them are zero*/
 	zero_check=FALSE;for(i=0;i<_UC._nspecies;i++) zero_check|=(_UC.valences[i]!=0);
 	if(zero_check && (_UC.valences!=NULL)) __OUT_BK_INT(valences,"endValences",_UC._nspecies);
+}
 	if(_UC.goodBonds!=NULL) __OUT_TMAT_DOUBLE(goodBonds,"EndGoodBonds",_UC._nspecies);/*TODO: use of a single value is unsupported*/
 	if(!_UC.checkMolecules) __OUT_BOOL(checkMolecules);
 	if(_UC.checkConnectivity) __OUT_BOOL(checkConnectivity);
@@ -1947,9 +1950,11 @@ is_w=0;
 	__TITLE(line);
 	g_free(line);
 	if(_UC.minVectorLength!=0.) __OUT_DOUBLE(minVectorLength);
+if(_UC.IonDistances!=NULL){
 	/*do not print IonDistances if all of them are zero*/
 	zero_check=FALSE;for(i=0;i<_UC._nspecies;i++) zero_check|=(_UC.IonDistances[i]!=0.0);
 	if(zero_check && (_UC.IonDistances!=NULL)) __OUT_TMAT_DOUBLE(IonDistances,"EndDistances",_UC._nspecies);
+}
 	if(!_UC.constraint_enhancement) __OUT_BOOL(constraint_enhancement);
 	if(_UC.MolCenters!=NULL) __OUT_TMAT_DOUBLE(MolCenters,"EndMol",_UC._nmolecules);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -1993,7 +1998,7 @@ is_w=0;
         for(i=1;i<(_UC._num_opt_steps);i++) {
 		if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
 			if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
-			else fprintf(vf," %i)",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
+			else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
 		}else{
 			fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
 		}
