@@ -143,7 +143,7 @@ struct uspex_calc_gui{
 	gchar *_tmp_latticevalue;
 	GUI_OBJ *splitInto;
 	gchar *_tmp_splitInto;
-	gboolean auto_lval;
+	gboolean auto_C_lat;
 /*4.7 restart*/
 	GUI_OBJ *pickUpYN;
 	GUI_OBJ *pickUpGen;

@@ -212,10 +212,17 @@ void gui_uspex_init(struct model_pak *model){
 	if(uspex_gui.calc.IonDistances==NULL){
 		uspex_gui.calc.IonDistances = g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
 		for(idx=0;idx<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;idx++) uspex_gui.calc.IonDistances[idx]=0.;/*no default*/
+		uspex_gui.auto_C_ion=TRUE;
 	}
 	if(uspex_gui.calc.Latticevalues==NULL){
-		if(uspex_gui.calc._nlatticevalues==0) uspex_gui.calc._nlatticevalues=1;
-		uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlatticevalues)*sizeof(gdouble));
+		if(uspex_gui.calc._nlattice_line==0) {
+			uspex_gui.calc._nlattice_line=1;
+			uspex_gui.calc._nlattice_vals=1;
+		}
+		uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+		uspex_gui.auto_C_lat=TRUE;
+	}else{
+		uspex_gui.auto_C_lat=FALSE;
 	}
 	if(uspex_gui.calc._calctype_dim==3) uspex_gui.calc.doSpaceGroup=TRUE;
 	else uspex_gui.calc.doSpaceGroup=FALSE;
@@ -354,6 +361,22 @@ void uspex_path_dialog(void){
 		}
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
+}
+/***********************************************/
+/* check the possible format for latticevalues */
+/***********************************************/
+void check_latticevalues_format(void){
+	gint index;
+        if(uspex_gui.auto_C_lat) return;/*no need to care*/
+	GUI_COMBOBOX_GET(uspex_gui._latticeformat,index);
+        GUI_COMBOBOX_WIPE(uspex_gui._latticeformat);/*wipe in any case*/
+        GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Volumes");/*this is always ok*/
+        if((!uspex_gui.calc._calctype_var)&&((uspex_gui.calc._calctype_dim==3)||(uspex_gui.calc._calctype_dim==-2))){
+                GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Lattice");
+                GUI_COMBOBOX_ADD(uspex_gui._latticeformat,"Crystal");
+        }else{
+		if(index!=0) GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);
+	}
 }
 /***************************************************/
 /* show/hide specific page + lock/unlock mechanism */
@@ -529,9 +552,11 @@ if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.DisplaceInLatmutation);
 		GUI_UNLOCK(uspex_gui.AutoFrac);
 /*CELL*/
+if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.Latticevalues);
 		GUI_UNLOCK(uspex_gui._latticeformat);
 		GUI_UNLOCK(uspex_gui._latticevalue);
+}
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
@@ -608,9 +633,11 @@ if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.DisplaceInLatmutation);
 		GUI_UNLOCK(uspex_gui.AutoFrac);
 /*CELL*/
+if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.Latticevalues);
 		GUI_UNLOCK(uspex_gui._latticeformat);
 		GUI_UNLOCK(uspex_gui._latticevalue);
+}
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
@@ -715,6 +742,7 @@ if(uspex_gui.calc._calctype_var){
 	default:
 		break;
 	}
+	check_latticevalues_format();
 	/*last, hide specifc page if needed*/
 	hide_specific=TRUE;
 	if((uspex_gui.calc.calculationMethod==US_CM_META)
@@ -1494,7 +1522,7 @@ void delete_block_species(void){
 	}
 	GUI_COMBOBOX_DEL(uspex_gui.numSpecies,index);
 	if(index-1<0) index=1;
-	GUI_COMBOBOX_SET(uspex_gui.goodBonds,index-1);
+	GUI_COMBOBOX_SET(uspex_gui.numSpecies,index-1);
 	g_free(text);
 }
 /*********************/
@@ -1541,18 +1569,8 @@ void apply_bonds(){
 	}else{
 		/*modify*/
 		GUI_COMBOBOX_DEL(uspex_gui.goodBonds,index+1);
-		g_free(text);
-		/*select "ADD GOODBOND" (for convenience)*/
 		GUI_COMBOBOX_SET(uspex_gui.goodBonds,index);
-		GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
-		while(g_ascii_strcasecmp(text,"ADD GOODBOND") != 0){
-			g_free(text);
-			index++;
-			GUI_COMBOBOX_SET(uspex_gui.goodBonds,index);
-			GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
-		}
 	}
-	g_free(text);
 }
 /********************************/
 /* Remove goodBonds information */
@@ -1582,8 +1600,10 @@ void remove_bonds(){
 void opt_toggle(){
 	if(uspex_gui.have_new_opt){
 		GUI_UNLOCK(uspex_gui.new_optType);
+		GUI_LOCK(uspex_gui.optType);
 	}else{
 		GUI_LOCK(uspex_gui.new_optType);
+		GUI_UNLOCK(uspex_gui.optType);
 	}
 }
 /**************************************/
@@ -1792,88 +1812,58 @@ void uspex_MolCenters_selected(GUI_OBJ *w){
 /***************************************/
 void apply_latticevalue(void){
 	gint index;
-	gchar *ptr,*ptr2;
-	gint i,format;
-	gint nlval=0;
-	gdouble *lval=NULL;
-	gdouble *tmp=NULL;
-	gdouble val;
+	gint nvals;
+	gchar *ptr;
+	gchar *ptr2;
 	GUI_COMBOBOX_GET(uspex_gui.Latticevalues,index);
+	if(uspex_gui._tmp_latticevalue!=NULL) g_free(uspex_gui._tmp_latticevalue);
 	GUI_ENTRY_GET_TEXT(uspex_gui._latticevalue,uspex_gui._tmp_latticevalue);
-	/*get the number of lattice values*/
-	ptr=&(uspex_gui._tmp_latticevalue[0]);
-	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
-	ptr2=ptr;nlval=0;
-	do{
-		val=g_ascii_strtod(ptr,&ptr2);
-		if(ptr2==ptr) break;
-		nlval++;
-		/*update array*/
-		tmp = g_malloc(nlval*sizeof(gdouble));
-		if(lval){
-			for(i=0;i<nlval-1;i++) tmp[i]=lval[i];
-			g_free(lval);
-		}
-		tmp[nlval-1]=val;
-		lval=tmp;
-		ptr=ptr2;
-	}while(1);
-	/*now prepare a *valid* update for Latticevalues line*/
-	if(nlval<1) return;/*invalid line*/
-	GUI_COMBOBOX_GET(uspex_gui._latticeformat,format);
-	switch(format){
-		case 1://lattice parameters
-			switch(nlval){
-			case 1:
-				ptr=g_strdup_printf("%4f %4f %4f",lval[0],0.,0.);
-				break;
-			case 2:
-				ptr=g_strdup_printf("%4f %4f %4f",lval[0],lval[1],0.);
-				break;
-			case 3:
-			default://might skip bad/extra values
-				ptr=g_strdup_printf("%4f %4f %4f",lval[0],lval[1],lval[2]);
-				break;
-			}
-			break;
-		case 2://crystal definition
-			if(nlval>=6){/*drop every values over the 6th*/
-				ptr=g_strdup_printf("%4f %4f %4f %4f %4f %4f",lval[0],lval[1],lval[2],lval[3],lval[4],lval[5]);
-			}else if(nlval==4){/*special definition*/
-				 ptr=g_strdup_printf("%4f %4f %4f %4f %4f %4f",lval[0],lval[1],0.,lval[2],lval[3],0.);
-			}else{/*zero padded*/
-				ptr2=g_strdup_printf("%4f",lval[0]);
-				for(i=1;i<nlval;i++) {
-					ptr=g_strdup_printf("%s %4f",ptr2,lval[i]);
-					g_free(ptr2);ptr2=ptr;
-				}
-				for(i=nlval;i<6;i++) {
-					ptr=g_strdup_printf("%s %4f",ptr2,0.);
-					g_free(ptr2);ptr2=ptr;
-				}
-			}
-			break;
-		case 0:
-		default:
-			/*any nlval>1 is valid*/
-			ptr2=g_strdup_printf("%4f",lval[0]);
-			ptr=ptr2;
-			for(i=1;i<nlval;i++) {
-				ptr=g_strdup_printf("%s %4f",ptr2,lval[i]);
-				g_free(ptr2);ptr2=ptr;
-			}
-	}
-	g_free(lval);
-	GUI_COMBOBOX_ADD_TEXT(uspex_gui.Latticevalues,index,ptr);
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.Latticevalues,index,uspex_gui._tmp_latticevalue);
 	GUI_COMBOBOX_DEL(uspex_gui.Latticevalues,index+1);
 	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,index);
-	g_free(ptr);
+/*keep track of vals*/
+	if(uspex_gui.calc._nlattice_line>1){
+		/*matrix has to be rectangular*/
+		ptr=uspex_gui._tmp_latticevalue;
+		nvals=0;
+		while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+		while((*ptr!='\0')&&(nvals<uspex_gui.calc._nlattice_vals)){
+			/**/
+			uspex_gui.calc.Latticevalues[nvals+index*uspex_gui.calc._nlattice_line]=g_ascii_strtod(ptr,&ptr2);
+			ptr=ptr2+1;
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+			nvals++;
+		}
+	}else{
+		/*we need to count the number of elements*/
+		ptr=uspex_gui._tmp_latticevalue;
+		nvals=0;
+		while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+		while((*ptr!='\0')&&(*ptr!='\n')){
+			nvals++;
+			while(g_ascii_isgraph(*ptr)) ptr++;/*to next space EOL*/
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;/*to next item*/
+		}
+		/*wipe and replace*/
+		uspex_gui.calc._nlattice_vals=nvals;
+		if(uspex_gui.calc.Latticevalues!=NULL) uspex_gui.calc.Latticevalues=g_malloc(nvals*sizeof(gdouble));
+		for(index=0;index<nvals;index++) uspex_gui.calc.Latticevalues[index]=0.;
+		ptr=uspex_gui._tmp_latticevalue;
+		nvals=0;
+		while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+		while((*ptr!='\0')&&(nvals<uspex_gui.calc._nlattice_vals)){
+			uspex_gui.calc.Latticevalues[nvals]=g_ascii_strtod(ptr,&ptr2);
+			ptr=ptr2+1;
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+			nvals++;
+		}
+	}
 }
 /********************/
-/* toggle auto_lval */
+/* toggle auto_C_lat */
 /********************/
-void toggle_auto_lval(void){
-	if(uspex_gui.auto_lval){
+void toggle_auto_C_lat(void){
+	if(uspex_gui.auto_C_lat){
 		/*automatic*/
 		GUI_LOCK(uspex_gui.Latticevalues);
 		GUI_LOCK(uspex_gui._latticevalue);
@@ -1890,92 +1880,144 @@ void toggle_auto_lval(void){
 /***************************/
 void uspex_latticeformat_selected(GUI_OBJ *w){
 	gint index;
+	gint idx;
+	gint jdx;
 	gchar *text;
+	gchar *tmp;
 	GUI_COMBOBOX_GET(w,index);
+	if(index==-1) return;/*nothing selected*/
 	GUI_COMBOBOX_WIPE(uspex_gui.Latticevalues);/*wipe in any case*/
-	switch (index){
-	case 1://lattice parameters
-		switch (uspex_gui.calc._nlatticevalues){
-		case 1:
-			text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[0],0.,0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+	/*new: we select based on current information*/
+	if(uspex_gui.calc._calctype_var){
+		/*only Volume*/
+		if(uspex_gui.calc._nlattice_line!=1) uspex_gui.calc._nlattice_line=1;
+		if(uspex_gui.calc._nlattice_vals>0){
+			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			for(idx=0;idx<uspex_gui.calc._nlattice_vals;idx++) {
+				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				g_free(text);
+				text=tmp;
+			}
+		}else{
+			uspex_gui.calc._nlattice_vals=1;
+			if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
+			uspex_gui.calc.Latticevalues=g_malloc(1*sizeof(gdouble));
+			uspex_gui.calc.Latticevalues[0]=0.;
+			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+		}
+		GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+		g_free(text);
+	}else{
+		/*for now, switching from one type to another wipe everything TODO crystal <-> lattice*/
+		switch (index){
+		case 1://lattice parameters
+			if((uspex_gui.calc._calctype_dim==3)&&(uspex_gui.calc._nlattice_line==3)&&(uspex_gui.calc._nlattice_vals==3)){
+				/*do not wipe*/
+			}else if((uspex_gui.calc._calctype_dim==2)&&(uspex_gui.calc._nlattice_line==2)&&(uspex_gui.calc._nlattice_vals==2)){
+				/*do not wipe*/
+			}else{
+				/*wipe*/
+				if(uspex_gui.calc._calctype_dim==3){
+					uspex_gui.calc._nlattice_line=3;
+					uspex_gui.calc._nlattice_vals=3;
+				}else{
+					uspex_gui.calc._nlattice_line=2;
+					uspex_gui.calc._nlattice_vals=2;
+				}
+				if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
+uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+				for(idx=0;idx<uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals;idx++)
+					uspex_gui.calc.Latticevalues[idx]=0.;
+			}
+			/*fill up lines*/
+			for(jdx=0;jdx<uspex_gui.calc._nlattice_line;jdx++){
+				text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[jdx*uspex_gui.calc._nlattice_vals]);
+				for(idx=1;idx<uspex_gui.calc._nlattice_vals;idx++){
+					tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx+jdx*uspex_gui.calc._nlattice_vals]);
+					g_free(text);
+					text=tmp;
+				}
+				GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
+				g_free(text);
+			}
+			break;
+		case 2://crystal definition
+			if((uspex_gui.calc._calctype_dim==3)&&(uspex_gui.calc._nlattice_line==1)&&(uspex_gui.calc._nlattice_vals==6)){
+				/*do not wipe*/
+			}else if((uspex_gui.calc._calctype_dim==2)&&(uspex_gui.calc._nlattice_line==1)&&(uspex_gui.calc._nlattice_vals==3)){
+				/*do not wipe*/
+			}else{
+				/*wipe, also enforce "standard" crystal definition
+				 *ie. a, b, c, alpha, beta, gamma	-- OVHPA*/
+				uspex_gui.calc._nlattice_line=1;
+				uspex_gui.calc._nlattice_vals=6;
+				if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
+uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+				for(idx=0;idx<uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals;idx++)
+					uspex_gui.calc.Latticevalues[idx]=0.;
+			}
+			/*fill up the line*/
+			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			for(idx=0;idx<uspex_gui.calc._nlattice_vals;idx++){
+				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				g_free(text);
+				text=tmp;
+			}
 			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
 			g_free(text);
 			break;
-		case 2:
-			text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);text=g_strdup_printf("%4f %4f %4f",uspex_gui.calc.Latticevalues[2],uspex_gui.calc.Latticevalues[3],0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-			break;
-		case 3:
-			text=g_strdup_printf("%4f %4f %4f",
-				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],uspex_gui.calc.Latticevalues[2]);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);text=g_strdup_printf("%4f %4f %4f",
-				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],uspex_gui.calc.Latticevalues[5]);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);text=g_strdup_printf("%4f %4f %4f",
-				uspex_gui.calc.Latticevalues[6],uspex_gui.calc.Latticevalues[7],uspex_gui.calc.Latticevalues[8]);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-			break;
+		case 0://volume definition
+			/* pass through */
 		default:
-			/*create an null lattice*/
-			text=g_strdup_printf("%4f %4f %4f",0.,0.,0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-			break;
-		}
-		break;
-	case 2://crystal definition
-		if(uspex_gui.calc._nlatticevalues==6){
-			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",
-				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],uspex_gui.calc.Latticevalues[2],
-				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],uspex_gui.calc.Latticevalues[5]);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-		}else if(uspex_gui.calc._nlatticevalues==4){
-			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",
-				uspex_gui.calc.Latticevalues[0],uspex_gui.calc.Latticevalues[1],0.,
-				uspex_gui.calc.Latticevalues[3],uspex_gui.calc.Latticevalues[4],0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-		}else{
-			text=g_strdup_printf("%4f %4f %4f %4f %4f %4f",0.,0.,0.,0.,0.,0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-		}
-		break;
-	case 0:
-	default:
-		/*ie. Volume(s)*/
-		if(uspex_gui.calc._nlatticevalues==0){
-			/*there was nothing but wants to add volume*/
-			text=g_strdup_printf("%4f",0.);
-			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
-			g_free(text);
-		}else{
-			gint i;
-			gchar *tamp;
-			tamp=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
-			text=tamp;
-			for (i=1;i<uspex_gui.calc._nlatticevalues;i++) {
-				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.Latticevalues[i]);
-				g_free(tamp);tamp=text;
+			if(uspex_gui.calc._nlattice_line==1){
+				/*do not wipe*/
+			}else{
+				/*wipe*/
+				uspex_gui.calc._nlattice_line=1;
+				uspex_gui.calc._nlattice_vals=1;
+				if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
+uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+				uspex_gui.calc.Latticevalues[0]=0.;
+			}
+			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			for(idx=1;idx<uspex_gui.calc._nlattice_vals;idx++){
+				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				g_free(text);
+				text=tmp;
 			}
 			GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
 			g_free(text);
 		}
 	}
-	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,0);
+	GUI_COMBOBOX_SET(uspex_gui.Latticevalues,0);/*always go to the first one*/
+}
+/**********************************************/
+/* Guess which is the format of LatticeValues */
+/**********************************************/
+void set_lattice_format(){
+	if(uspex_gui.auto_C_lat) return;/*no need*/
+	if(uspex_gui.calc._calctype_var){
+		GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);
+		return;
+	}
+	if(uspex_gui.calc._nlattice_line>1) {
+		GUI_COMBOBOX_SET(uspex_gui._latticeformat,1);/*lattice*/
+		return;
+	}
+	switch(uspex_gui.calc._nlattice_vals){
+	case 3:
+		if(uspex_gui.calc._calctype_dim==-2) 
+			GUI_COMBOBOX_SET(uspex_gui._latticeformat,2);/*crystal*/
+		else GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);/*volume*/
+		return;
+	case 6:
+		if((uspex_gui.calc._calctype_dim==-2)||(uspex_gui.calc._calctype_dim==3)) 
+			GUI_COMBOBOX_SET(uspex_gui._latticeformat,2);/*crystal*/
+		else GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);/*volume*/
+		return;
+	default:
+		GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);/*Volume by default*/
+	}
 }
 /***********************************/
 /* Toggle spacegroup determination */
@@ -2803,6 +2845,7 @@ void uspex_gui_sync(){
 			g_free(text);
 			GUI_COMBOBOX_GET_TEXT(uspex_gui.numSpecies,text);
 		}
+		g_free(text);
 		GUI_COMBOBOX_SET(uspex_gui.numSpecies,index);/*PULL index*/
 		/*now get valences from atomType*/
 		GUI_COMBOBOX_GET(uspex_gui.atomType,index);/*PUSH index*/
@@ -2869,7 +2912,37 @@ void uspex_gui_sync(){
 	}
 	g_free(text);
 	USPEX_REG_VAL(ExternalPressure,"%lf");
-	/*goodBonds is special*/
+if(!uspex_gui.auto_bonds){
+	GUI_COMBOBOX_GET(uspex_gui.goodBonds,index);/*PUSH index*/
+	GUI_COMBOBOX_SET(uspex_gui.goodBonds,0);
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+	if((g_ascii_strcasecmp(text,"ADD GOODBOND") != 0)){
+		/*there is something to update*/
+		if(uspex_gui.calc.goodBonds!=NULL) g_free(uspex_gui.calc.goodBonds);
+		uspex_gui.calc.goodBonds=g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
+		ptr=text;jdx=0;
+		while((jdx<uspex_gui.calc._nspecies)&&(g_ascii_strcasecmp(text,"ADD GOODBOND") != 0)){
+			ptr=text;
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+			idx=0;
+			while((idx<uspex_gui.calc._nspecies)&&(*ptr!='\0')){
+				uspex_gui.calc.goodBonds[idx+jdx*uspex_gui.calc._nspecies]=g_ascii_strtod(ptr,&ptr2);
+				ptr=ptr2+1;
+				while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+				idx++;
+			}
+			jdx++;
+			GUI_COMBOBOX_SET(uspex_gui.goodBonds,jdx);
+			g_free(text);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.goodBonds,text);
+		}
+		g_free(text);
+	}
+	GUI_COMBOBOX_SET(uspex_gui.goodBonds,index);/*PULL index*/
+}else{
+	if(uspex_gui.calc.goodBonds!=NULL) g_free(uspex_gui.calc.goodBonds);
+	uspex_gui.calc.goodBonds=NULL;
+}
 	//checkMolecules is already sync
 	//checkConnectivity is already sync
 	USPEX_REG_VAL(fitLimit,"%lf");
@@ -2880,7 +2953,7 @@ void uspex_gui_sync(){
 	USPEX_REG_VAL(bestFrac,"%lf");
 	USPEX_REG_VAL(keepBestHM,"%i");
 	//reoptOld is already sync
-	/*symmetries is special*/
+	USPEX_REG_TEXT(symmetries);
 	USPEX_REG_VAL(fracGene,"%lf");
 	USPEX_REG_VAL(fracRand,"%lf");
 	USPEX_REG_VAL(fracTopRand,"%lf");
@@ -2899,7 +2972,12 @@ void uspex_gui_sync(){
 	USPEX_REG_VAL(minVectorLength,"%lf");
 	USPEX_REG_VAL(constraint_enhancement,"%i");
 	/*MolCenters is special*/
-	/*Latticevalues is special*/
+if(uspex_gui.auto_C_lat){
+	if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
+	uspex_gui.calc.Latticevalues=NULL;
+	uspex_gui.calc._nlattice_line=0;
+	uspex_gui.calc._nlattice_vals=0;
+}
 	/*splitInto is special*/
 	//pickUpYN is already sync
 	USPEX_REG_VAL(pickUpGen,"%i");
@@ -3358,7 +3436,7 @@ GUI_TOOLTIP(uspex_gui._latticevalue,"VALUES: values of the current line of Latti
 GUI_TOOLTIP(uspex_gui._latticeformat,"FORMAT: whether Lattice values correspond to a series of\nVolumes, lattive vectors, or crystallographic definition.");
         GUI_TEXT_TABLE(table,uspex_gui.splitInto,uspex_gui._tmp_splitInto,"split:",1,3,12,13);
 GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.5 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
-        GUI_CHECK_TABLE(table,button,uspex_gui.auto_lval,toggle_auto_lval,"AUTO_LAT",3,4,12,13);
+        GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_lat,toggle_auto_C_lat,"AUTO_LAT",3,4,12,13);
 GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for Latticevalues.");
 /* Constraints */
 	GUI_LABEL_TABLE(table,"Constraints",0,4,13,14);
@@ -3886,7 +3964,7 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 /* initialize everything */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,uspex_gui.calc.calculationMethod,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,uspex_gui.calc.calculationType,uspex_type_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.optType,uspex_gui.calc.optType,uspex_optimization_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.optType,uspex_gui.calc.optType-1,uspex_optimization_selected);
 	GUI_LOCK(uspex_gui._atom_typ);
 	populate_atomType();
 	GUI_COMBOBOX_SETUP(uspex_gui.atomType,uspex_gui.calc._nspecies,atomType_selected);
@@ -3901,8 +3979,9 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui.MolCenters,0,uspex_MolCenters_selected);
 	refresh_constraints();
 	toggle_auto_C_ion();
-	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,1,uspex_latticeformat_selected);
-	uspex_latticeformat_selected(uspex_gui._latticeformat);
+	GUI_COMBOBOX_SETUP(uspex_gui._latticeformat,0,uspex_latticeformat_selected);
+	set_lattice_format();
+	toggle_auto_C_lat();
 	SG_toggle();
 	set_numSpecies();
 	GUI_COMBOBOX_SETUP(uspex_gui.numSpecies,0,uspex_numSpecies_selected);

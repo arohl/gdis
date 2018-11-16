@@ -165,7 +165,8 @@ typedef struct {
 	gint 		_nmolecules;		/*HIDDEN: number of molecules*/
 	gdouble		*MolCenters;		/*triangular-matrix of minimal distances between centers of molecules*/
 /*4.6 Cell*/
-	gint 		_nlatticevalues;	/*HIDDEN: number of lines in Latticevalues*/
+	gint 		_nlattice_line;		/*HIDDEN: number of lines in Latticevalues*/
+	gint		_nlattice_vals;		/*HIDDEN: number of elements per lines*/
 	gdouble 	*Latticevalues;		/*initial volume/parameter of the unit cell*/
 	gint 		_nsplits;		/*HIDDEN: number of splits*/
 	gint 		*splitInto;		/*number of subcells into which unit cell is split*/

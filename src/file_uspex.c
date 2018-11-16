@@ -122,7 +122,8 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.constraint_enhancement=TRUE;
 	_UC._nmolecules=0;
 	_UC.MolCenters=NULL;
-	_UC._nlatticevalues=0;
+	_UC._nlattice_line=0;
+	_UC._nlattice_vals=0;
 	_UC.Latticevalues=NULL;
 	_UC.splitInto=NULL;
 	_UC.pickUpYN=FALSE;
@@ -901,80 +902,65 @@ else n_size=_UC._nspecies;
 			/*count first line number of items*/
 			ptr=&(line[0]);
 			while(*ptr==' ') ptr++;
-			_UC._nlatticevalues=1;
+			_UC._nlattice_vals=1;
 			while(*ptr!='\0'){
 				if(*ptr==' ') {
-					_UC._nlatticevalues++;ptr++;
+					_UC._nlattice_vals++;ptr++;
 					while(g_ascii_isgraph(*ptr)) ptr++;
 				}else ptr++;
 			}
-			/*depending on varcomp*/
-			if(_UC._calctype_var){
-				/*varcomp calculation: should be only one line*/
+			/*count the number of lines*/
+			_UC._nlattice_line=1;
+			while(find_in_string("Endvalues",line) != NULL){
+				_UC._nlattice_line++;
 				g_free(line);line = file_read_line(vf);/*go next line*/
-				if(find_in_string("Endvalues",line) != NULL){/*only volumes values*/
-					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
-					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-					g_free(line);line = file_read_line(vf);/*go next line*/
-					ptr=&(line[0]);ptr2=ptr;i=0;
-					while((*ptr!='\n')&&(*ptr!='\0')){
-						__SKIP_BLANK(ptr);
-						_UC.Latticevalues[i]=g_ascii_strtod(ptr,&ptr2);
-						ptr=ptr2+1;
-						i++;
-					}
-				}else{/*varcomp but more than one line -> bad setting*/
-					g_free(line);
-					line = g_strdup_printf("ERROR: USPEX bad Latticevalues volumes settings in varcomp Parameters.txt!\n");
-					gui_text_show(ERROR, line);
-					g_free(line);line = file_read_line(vf);/*go next line*/
-				}
+			}
+			g_free(line);fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+			/*Issue some warning on undefined cases*/
+			line = g_strdup_printf("WARNING: USPEX BAD Latticevalues parameter!\n");
+			if(_UC._calctype_var){
+				if((_UC._nlattice_line>1)||(_UC._nlattice_vals!=_UC._var_nspecies))
+					gui_text_show(WARNING, line);
 			}else{
-				/*NOT varcomp calculation: should be a crystal definition*/
-				if(_UC._nlatticevalues==6){/*crystal definition -- should we test for Endvalues?*/
-					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
-					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-					g_free(line);line = file_read_line(vf);/*go next line*/
-					ptr=&(line[0]);ptr2=ptr;i=0;
-					while((*ptr!='\n')&&(*ptr!='\0')){
-						__SKIP_BLANK(ptr);
-						_UC.Latticevalues[i]=g_ascii_strtod(ptr,&ptr2);
-						ptr=ptr2+1;
-						i++;
-					}
-				}else if((_UC._nlatticevalues<=3)&&(_UC._nlatticevalues>1)){/*lattice vectors*/
-					_UC.Latticevalues = g_malloc(_UC._nlatticevalues*_UC._nlatticevalues*sizeof(gdouble));
-					for(i=0;i<_UC._nlatticevalues*_UC._nlatticevalues;i++) _UC.Latticevalues[i]=0.;
-					fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-					g_free(line);line = file_read_line(vf);/*go next line*/
-					ptr=&(line[0]);
-					j=0;
-					while((j<_UC._nlatticevalues)&&(find_in_string("Endvalues",line)==NULL)){
-						ptr=&(line[0]);ptr2=ptr;i=0;
-						while((*ptr!='\n')&&(*ptr!='\0')){
-							__SKIP_BLANK(ptr);
-							_UC.Latticevalues[i+j*_UC._nlatticevalues]=g_ascii_strtod(ptr,&ptr2);
-							ptr=ptr2+1;
-							i++;
+				switch(_UC._nlattice_line){
+					case 1:
+						switch(_UC._nlattice_vals){
+							case 1:
+								break;/*always ok*/
+							case 6:
+								if(_UC._calctype_dim==3) break;
+							case 3:
+								if(_UC._calctype_dim==2) break;
+							case 0:/*cannot happen*/
+							default:
+							gui_text_show(WARNING, line);
 						}
-						j++;
-						g_free(line);
-						line = file_read_line(vf);
-					}
-				}else if(_UC._nlatticevalues==1){/*only the volume value*/
-					_UC.Latticevalues = g_malloc(sizeof(gdouble));
-					_UC.Latticevalues[0]=0.;
-					_UC.Latticevalues[0]=g_ascii_strtod(ptr,NULL);
-					g_free(line);
-					line = file_read_line(vf);
-				}else{/*bad setting*/
-					g_free(line);
-					line = g_strdup_printf("ERROR: USPEX bad Latticevalues setting in Parameters.txt!\n");
-					gui_text_show(ERROR, line);
-					g_free(line);line = file_read_line(vf);/*go next line*/
+						break;
+					case 2:
+						if(_UC._nlattice_vals!=2) gui_text_show(WARNING, line);
+						break;
+					case 3:
+						if(_UC._nlattice_vals!=3) gui_text_show(WARNING, line);
+						break;
+					default:
+						gui_text_show(WARNING, line);
 				}
+			}
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.Latticevalues = g_malloc(_UC._nlattice_vals*_UC._nlattice_line*sizeof(gdouble));
+			for(j=0;j<_UC._nlattice_vals*_UC._nlattice_line;j++) _UC.Latticevalues[j]=0.;
+			j=0;
+			while(find_in_string("Endvalues",line) == NULL){
+				ptr=&(line[0]);
+				i=0;
+				while((*ptr!='\n')&&(*ptr!='\0')){
+					__SKIP_BLANK(ptr);
+					_UC.Latticevalues[i+j*_UC._nlattice_line]=g_ascii_strtod(ptr,&ptr2);
+					ptr=ptr2+1;
+					i++;
+				}
+				j++;
+				g_free(line);line = file_read_line(vf);
 			}
 			g_free(line);
 			line = file_read_line(vf);
@@ -1536,14 +1522,14 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(constraint_enhancement);
 	_CP(_nmolecules);
 	_DBLCP(MolCenters,_SRC._nmolecules);
-	_CP(_nlatticevalues);
-	if(_SRC._calctype_var){
-		_DBLCP(Latticevalues,_SRC._nlatticevalues);
-	}else{
-		if(_SRC._nlatticevalues==6) _DBLCP(Latticevalues,6);
-		else if(_SRC._nlatticevalues<=3) _DBLCP(Latticevalues,_SRC._nlatticevalues*_SRC._nlatticevalues);
-		else if(_SRC._nlatticevalues==1) _DBLCP(Latticevalues,1);
-	}
+	_CP(_nlattice_line);
+	_CP(_nlattice_vals);
+if(_SRC._nlattice_line==0){
+	_CP(Latticevalues);/*ie copy "NULL"*/
+}else{
+	if(_SRC._calctype_var) _DBLCP(Latticevalues,_SRC._nlattice_vals);
+	else _DBLCP(Latticevalues,_SRC._nlattice_line*_SRC._nlattice_vals);
+}
 	_CP(_nsplits);
 	_COPY(splitInto,_SRC._nsplits,gint);
 	_CP(pickUpYN);
@@ -1964,13 +1950,13 @@ is_w=0;
 	__TITLE(line);
 	g_free(line);
 if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS)){
-	if(_UC.Latticevalues!=NULL){
+	if((_UC._nlattice_line>0)&&(_UC.Latticevalues!=NULL)){
 		if(_UC._calctype_var) {
 			/*should be 1 line*/
-			__OUT_BK_DOUBLE(Latticevalues,"Endvalues",_UC._nlatticevalues);
-		}else{/*more than one line if 1<_UC._nlatticevalues<=3*/
-			if((_UC._nlatticevalues>1)&&(_UC._nlatticevalues<=3)) __OUT_TMAT_DOUBLE(Latticevalues,"Endvalues",_UC._nlatticevalues);
-			else __OUT_BK_DOUBLE(Latticevalues,"Endvalues",_UC._nlatticevalues);
+			__OUT_BK_DOUBLE(Latticevalues,"Endvalues",_UC._nlattice_vals);
+		}else{/*if more than one line -> rectangular matrix*/
+			if(_UC._nlattice_line>1) __OUT_TMAT_DOUBLE(Latticevalues,"Endvalues",_UC._nlattice_vals);
+			else __OUT_BK_DOUBLE(Latticevalues,"Endvalues",_UC._nlattice_vals);
 		}
 	}
 	if(_UC.splitInto!=NULL) __OUT_BK_INT(splitInto,"EndSplitInto",_UC._nsplits);
