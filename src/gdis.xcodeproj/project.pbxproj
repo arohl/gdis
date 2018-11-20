@@ -215,6 +215,8 @@
 		49B57D201A9B861500205B78 /* example12.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF41A9B853100205B78 /* example12.got */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
 		49D696DC1A9C2F3300239D39 /* test_surf.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D696DB1A9C2F1C00239D39 /* test_surf.got */; };
+		49D7BF6821A38C7400B5881C /* file_uspex.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D7BF6621A38C7400B5881C /* file_uspex.c */; };
+		49D7BF6921A38C7400B5881C /* file_uspex.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7BF6721A38C7400B5881C /* file_uspex.h */; };
 		49DCE35C1A050B040048BD5C /* libintl.8.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35B1A050B040048BD5C /* libintl.8.dylib */; };
 		49DCE35E1A050B220048BD5C /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35D1A050B220048BD5C /* libiconv.2.dylib */; };
 		49DCE3601A050B390048BD5C /* libatk-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */; };
@@ -613,6 +615,8 @@
 		49B57D1E1A9B853100205B78 /* zno_beta.res */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zno_beta.res; sourceTree = "<group>"; };
 		49D234271A84D31600319538 /* file_mol2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_mol2.c; sourceTree = "<group>"; };
 		49D696DB1A9C2F1C00239D39 /* test_surf.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_surf.got; sourceTree = "<group>"; };
+		49D7BF6621A38C7400B5881C /* file_uspex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_uspex.c; sourceTree = "<group>"; };
+		49D7BF6721A38C7400B5881C /* file_uspex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = file_uspex.h; sourceTree = "<group>"; };
 		49DCE35B1A050B040048BD5C /* libintl.8.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libintl.8.dylib; path = /opt/local/lib/libintl.8.dylib; sourceTree = "<absolute>"; };
 		49DCE35D1A050B220048BD5C /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = /opt/local/lib/libiconv.2.dylib; sourceTree = "<absolute>"; };
 		49DCE35F1A050B390048BD5C /* libatk-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libatk-1.0.0.dylib"; path = "/opt/local/lib/libatk-1.0.0.dylib"; sourceTree = "<absolute>"; };
@@ -724,6 +728,7 @@
 				49884EDD1A07BC9B00B54AD9 /* file_povray.c */,
 				493D4F081A749B4F00F8D944 /* file_qe.c */,
 				49884EDE1A07BC9B00B54AD9 /* file_rietica.c */,
+				49D7BF6621A38C7400B5881C /* file_uspex.c */,
 				4993D3DB2044155C0025E74F /* file_vasp.c */,
 				49884EDF1A07BC9B00B54AD9 /* file_xml.c */,
 				49884EE01A07BC9B00B54AD9 /* file_xtl.c */,
@@ -1035,6 +1040,7 @@
 				49884E2F1A07BC6600B54AD9 /* ff_pak.h */,
 				49884E301A07BC6600B54AD9 /* ff.h */,
 				49884E311A07BC6600B54AD9 /* file.h */,
+				49D7BF6721A38C7400B5881C /* file_uspex.h */,
 				49178CB8208D91C900CF0B32 /* file_vasp.h */,
 				49884E321A07BC6600B54AD9 /* gamess.h */,
 				49884E331A07BC6600B54AD9 /* gdis.h */,
@@ -1131,6 +1137,7 @@
 				49884E9D1A07BC6600B54AD9 /* opengl.h in Headers */,
 				49884E831A07BC6600B54AD9 /* gtkglarea.h in Headers */,
 				49884E9A1A07BC6600B54AD9 /* molsurf.h in Headers */,
+				49D7BF6921A38C7400B5881C /* file_uspex.h in Headers */,
 				49884E8F1A07BC6600B54AD9 /* library.h in Headers */,
 				49884E9E1A07BC6600B54AD9 /* pak.h in Headers */,
 				49884EAD1A07BC6600B54AD9 /* test.h in Headers */,
@@ -1311,6 +1318,7 @@
 				49884F7A1A07BC9B00B54AD9 /* gui_surface.c in Sources */,
 				49178CBF208D929500CF0B32 /* gui_plots.c in Sources */,
 				49884F4E1A07BC9B00B54AD9 /* file_gromacs.c in Sources */,
+				49D7BF6821A38C7400B5881C /* file_uspex.c in Sources */,
 				49884F591A07BC9B00B54AD9 /* file.c in Sources */,
 				49884F981A07BC9B00B54AD9 /* sgio.c in Sources */,
 				49884F3A1A07BC9B00B54AD9 /* error.c in Sources */,
