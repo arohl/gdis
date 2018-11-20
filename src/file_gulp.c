@@ -1873,6 +1873,12 @@ printf("code: %d, context: %d\n", code, context);
             model->construct_pbc = TRUE;
             model->periodic = 1;
             matrix_lattice_init(model);
+            g_strfreev(buff);
+/* check for optimisation flags */
+/* At the moment just skips so input file can be read successfully */
+            buff = scan_get_tokens(scan, &num_tokens);
+            if ((buff[0][0] != '0' || buff[0][0] != '1' ) && num_tokens != 1)
+              scan_put_line(scan);
             }
           break;
 
@@ -1911,8 +1917,14 @@ printf("code: %d, context: %d\n", code, context);
               model->periodic = 2;
               matrix_lattice_init(model);
               }
+            g_strfreev(buff);
+/* check for optimisation flags */
+/* At the moment just skips so input file can be read successfully */
+            buff = scan_get_tokens(scan, &num_tokens);
+            if ((buff[0][0] != '0' || buff[0][0] != '1' ) && num_tokens != 2)
+              scan_put_line(scan);
             }
-          break;
+         break;
 
         case CELL:
 /* get next line if insufficient tokens */
@@ -1977,6 +1989,7 @@ printf("code: %d, context: %d\n", code, context);
             vec3[2] = str_to_float(*(buff+2));
             model->periodic++;
             }
+          g_strfreev(buff);
           if (model->periodic == 3)
             {
 /* use the supplied lattice matrix */
@@ -1986,6 +1999,11 @@ printf("code: %d, context: %d\n", code, context);
             model->construct_pbc = TRUE;
             matrix_lattice_init(model);
             }
+/* check for optimisation flags */
+/* At the moment just skips so input file can be read successfully */
+          buff = scan_get_tokens(scan, &num_tokens);
+          if ((buff[0][0] != '0' || buff[0][0] != '1' ) && num_tokens != 6)
+            scan_put_line(scan);
           break;
 
 /* NB: errors -> break (not return) so we cope with empty regions */
