@@ -1013,12 +1013,13 @@ else n_size=_UC._nspecies;
 /*TODO: deal with META parenthesis here!*/
 _UC._isfixed = g_malloc(_UC._num_opt_steps*sizeof(gboolean));
 for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=TRUE;
-i=0;n_size=0;
+j=0;i=0;n_size=0;
 while((*ptr!='\n')&&(*ptr!='\0')){
 	__SKIP_BLANK(ptr);
 	if(*ptr=='(') {
 		n_size=1;
 		ptr++;
+		j++;
 	}
 	if(n_size==0) _UC._isfixed[i]=TRUE;
 	else _UC._isfixed[i]=FALSE;
@@ -1027,6 +1028,8 @@ while((*ptr!='\n')&&(*ptr!='\0')){
 	ptr=ptr2+1;
 	i++;
 }
+/*funny thing: if they are all true means they are all false*/
+if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 			g_free(line);
 			line = file_read_line(vf);/*this is the ENDabinit line*/
 			g_free(line);
@@ -1990,21 +1993,30 @@ is_w=0;
 	g_free(line);
 	if(_UC.abinitioCode!=NULL) {
 /*NEW: deals with parenthesis*/
-        fprintf(vf,"%% abinitioCode\n");
-	if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
-	else fprintf(vf,"%i",_UC.abinitioCode[0]);
-        for(i=1;i<(_UC._num_opt_steps);i++) {
-		if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
-			if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
-			else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
-		}else{
-			fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
+/*if they are all false means the are all true*/
+zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=_UC._isfixed[i];
+if(!zero_check) 
+	for(i=0;i<_UC._num_opt_steps;i++)
+	       	_UC._isfixed[i]=TRUE;
+	        fprintf(vf,"%% abinitioCode\n");
+		if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
+		else fprintf(vf,"%i",_UC.abinitioCode[0]);
+	        for(i=1;i<(_UC._num_opt_steps);i++) {
+			if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
+				if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
+				else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
+			}else{
+				fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
+			}
 		}
-	}
-        if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
-	else fprintf(vf,")\n");/*terminate on non fixed*/
-	fprintf(vf,"%% ENDabinit\n");
-        is_w++;
+	        if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
+		else fprintf(vf,")\n");/*terminate on non fixed*/
+		fprintf(vf,"%% ENDabinit\n");
+/*restore previous values*/
+if(!zero_check)
+	for(i=0;i<_UC._num_opt_steps;i++)
+		_UC._isfixed[i]=FALSE;
+	        is_w++;
 //__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 }
 /*do not print KresolStart if linearly = {0.2~0.08}*/
