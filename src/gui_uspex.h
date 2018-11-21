@@ -126,8 +126,6 @@ struct uspex_calc_gui{
 /*4.5 Constrains*/
 	GUI_OBJ *IonDistances;
 	GUI_OBJ *_distances;
-	gchar *_tmp_distances;
-	gint _curr_distance;
 	GUI_OBJ *minVectorLength;
 	GUI_OBJ *MolCenters;
 	GUI_OBJ *_centers;

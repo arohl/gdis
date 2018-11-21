@@ -1932,13 +1932,13 @@ is_w=0;
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
-	line=g_strdup_printf("*       CONSTRAINTS       *");
+	line=g_strdup_printf("*             CONSTRAINTS              *");
 	__TITLE(line);
 	g_free(line);
 	if(_UC.minVectorLength!=0.) __OUT_DOUBLE(minVectorLength);
 if(_UC.IonDistances!=NULL){
 	/*do not print IonDistances if all of them are zero*/
-	zero_check=FALSE;for(i=0;i<_UC._nspecies;i++) zero_check|=(_UC.IonDistances[i]!=0.0);
+	zero_check=FALSE;for(i=0;i<(_UC._nspecies*_UC._nspecies);i++) zero_check|=(_UC.IonDistances[i]!=0.0);
 	if(zero_check && (_UC.IonDistances!=NULL)) __OUT_TMAT_DOUBLE(IonDistances,"EndDistances",_UC._nspecies);
 }
 	if(!_UC.constraint_enhancement) __OUT_BOOL(constraint_enhancement);

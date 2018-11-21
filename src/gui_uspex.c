@@ -1611,60 +1611,35 @@ void opt_toggle(){
 /**************************************/
 void apply_distances(void){
 	gint index;
-	gchar *ptr,*ptr2;
-	gint i;
-	gint ndistval;
-	gdouble *distval=NULL;
-	gdouble *tmp=NULL;
-	gdouble dist;
+	gchar *text;
+	gchar *ptr;
+	gchar *ptr2;
+	gint idx;
 	/**/
 	GUI_COMBOBOX_GET(uspex_gui.IonDistances,index);
-	GUI_ENTRY_GET_TEXT(uspex_gui._distances,uspex_gui._tmp_distances);
-	/*get the number of distance values*/
-	ptr=&(uspex_gui._tmp_distances[0]);
-	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
-	ptr2=ptr;ndistval=0;
-	do{
-		dist=g_ascii_strtod(ptr,&ptr2);
+	GUI_ENTRY_GET_TEXT(uspex_gui._distances,text);
+	/*there is _nspecies values per line (and _nspecies lines)*/
+	ptr=&(text[0]);
+	while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+	ptr2=ptr;idx=0;
+	while(*ptr!='\0'){
+		uspex_gui.calc.IonDistances[index*(uspex_gui.calc._nspecies)+idx]=g_ascii_strtod(ptr,&ptr2);
 		if(ptr2==ptr) break;
-		ndistval++;
-		/*update array*/
-		tmp = g_malloc(ndistval*sizeof(gdouble));
-		if(distval){
-			for(i=0;i<ndistval-1;i++) tmp[i]=distval[i];
-			g_free(distval);
-		}
-		tmp[ndistval-1]=dist;
-		distval=tmp;
-		ptr=ptr2;
-	}while(1);
-	/*now prepare a *valid* update for IonDistances line*/
-	if(ndistval>=uspex_gui.calc._nspecies){
-		/*use only nspecies values*/
-		ptr2=g_strdup_printf("%4f",distval[0]);
-		ptr=ptr2;
-		for(i=1;i<uspex_gui.calc._nspecies;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,distval[i]);
-			g_free(ptr2);ptr2=ptr;
-		}
-	}else{
-		/*use first ndistval values, pad with zero*/
-		ptr2=g_strdup_printf("%4f",distval[0]);
-		ptr=ptr2;
-		for(i=1;i<ndistval;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,distval[i]);
-			g_free(ptr2);ptr2=ptr;
-		}
-		for(i=ndistval;i<uspex_gui.calc._nspecies;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,0.);
-			g_free(ptr2);ptr2=ptr;
-		}
+		ptr=ptr2+1;
+		idx++;
+		if(idx>=uspex_gui.calc._nspecies) break;
 	}
-	g_free(distval);
-	GUI_COMBOBOX_ADD_TEXT(uspex_gui.IonDistances,index,ptr);
+	/*now refresch IonDistances line*/
+	text=g_strdup_printf("%.4lf",uspex_gui.calc.IonDistances[0]);
+	for(idx=1;idx<uspex_gui.calc._nspecies;idx++){
+		ptr=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.IonDistances[index*(uspex_gui.calc._nspecies)+idx]);
+		g_free(text);
+		text=ptr;
+	}
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.IonDistances,index,text);
 	GUI_COMBOBOX_DEL(uspex_gui.IonDistances,index+1);
 	GUI_COMBOBOX_SET(uspex_gui.IonDistances,index);
-	g_free(ptr);
+	g_free(text);
 }
 /************************************/
 /* Apply changes to MolCenters line */
@@ -1702,22 +1677,22 @@ void apply_centers(void){
 	/*now prepare a *valid* update for MolCenters line*/
 	if(nmolval>=uspex_gui.calc._nmolecules){
 		/*use only nmolecules values*/
-		ptr2=g_strdup_printf("%4f",molval[0]);
+		ptr2=g_strdup_printf("%.4lf",molval[0]);
 		ptr=ptr2;
 		for(i=1;i<uspex_gui.calc._nmolecules;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,molval[i]);
+			ptr=g_strdup_printf("%s %.4lf",ptr2,molval[i]);
 			g_free(ptr2);ptr2=ptr;
 		}
 	}else{
 		/*use first nmolval values, pad with zero*/
-		ptr2=g_strdup_printf("%4f",molval[0]);
+		ptr2=g_strdup_printf("%.4lf",molval[0]);
 		ptr=ptr2;
 		for(i=1;i<nmolval;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,molval[i]);
+			ptr=g_strdup_printf("%s %.4lf",ptr2,molval[i]);
 			g_free(ptr2);ptr2=ptr;
 		}
 		for(i=nmolval;i<uspex_gui.calc._nmolecules;i++){
-			ptr=g_strdup_printf("%s %4f",ptr2,0.);
+			ptr=g_strdup_printf("%s %.4lf",ptr2,0.);
 			g_free(ptr2);ptr2=ptr;
 		}
 	}
@@ -1745,10 +1720,10 @@ void toggle_auto_C_ion(void){
 		/*wipe IonDistances, rewrite*/
 		GUI_COMBOBOX_WIPE(uspex_gui.IonDistances);
 		for(i=0;i<uspex_gui.calc._nspecies;i++){
-			tamp=g_strdup_printf("%4f",uspex_gui.calc.IonDistances[i*uspex_gui.calc._nspecies]);
+			tamp=g_strdup_printf("%.4lf",uspex_gui.calc.IonDistances[i*uspex_gui.calc._nspecies]);
 			text=tamp;
 			for(j=1;j<uspex_gui.calc._nspecies;j++) {
-				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.IonDistances[j+i*uspex_gui.calc._nspecies]);
+				text=g_strdup_printf("%s %.4lf",tamp,uspex_gui.calc.IonDistances[j+i*uspex_gui.calc._nspecies]);
 				g_free(tamp);
 				tamp=text;
 			}
@@ -1772,10 +1747,10 @@ void refresh_constraints(void){
 		/*wipe MolCenters, rewrite*/
 		GUI_COMBOBOX_WIPE(uspex_gui.MolCenters);
 		for(i=0;i<uspex_gui.calc._nmolecules;i++){
-			tamp=g_strdup_printf("%4f",uspex_gui.calc.MolCenters[i*uspex_gui.calc._nmolecules]);
+			tamp=g_strdup_printf("%.4lf",uspex_gui.calc.MolCenters[i*uspex_gui.calc._nmolecules]);
 			text=tamp;
 			for(j=1;j<uspex_gui.calc._nmolecules;j++) {
-				text=g_strdup_printf("%s %4f",tamp,uspex_gui.calc.MolCenters[j+i*uspex_gui.calc._nmolecules]);
+				text=g_strdup_printf("%s %.4lf",tamp,uspex_gui.calc.MolCenters[j+i*uspex_gui.calc._nmolecules]);
 				g_free(tamp);
 				tamp=text;
 			}
@@ -1892,9 +1867,9 @@ void uspex_latticeformat_selected(GUI_OBJ *w){
 		/*only Volume*/
 		if(uspex_gui.calc._nlattice_line!=1) uspex_gui.calc._nlattice_line=1;
 		if(uspex_gui.calc._nlattice_vals>0){
-			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			text=g_strdup_printf("%.4lf",uspex_gui.calc.Latticevalues[0]);
 			for(idx=0;idx<uspex_gui.calc._nlattice_vals;idx++) {
-				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				tmp=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.Latticevalues[idx]);
 				g_free(text);
 				text=tmp;
 			}
@@ -1903,7 +1878,7 @@ void uspex_latticeformat_selected(GUI_OBJ *w){
 			if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
 			uspex_gui.calc.Latticevalues=g_malloc(1*sizeof(gdouble));
 			uspex_gui.calc.Latticevalues[0]=0.;
-			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			text=g_strdup_printf("%.4lf",uspex_gui.calc.Latticevalues[0]);
 		}
 		GUI_COMBOBOX_ADD(uspex_gui.Latticevalues,text);
 		g_free(text);
@@ -1931,9 +1906,9 @@ uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.c
 			}
 			/*fill up lines*/
 			for(jdx=0;jdx<uspex_gui.calc._nlattice_line;jdx++){
-				text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[jdx*uspex_gui.calc._nlattice_vals]);
+				text=g_strdup_printf("%.4lf",uspex_gui.calc.Latticevalues[jdx*uspex_gui.calc._nlattice_vals]);
 				for(idx=1;idx<uspex_gui.calc._nlattice_vals;idx++){
-					tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx+jdx*uspex_gui.calc._nlattice_vals]);
+					tmp=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.Latticevalues[idx+jdx*uspex_gui.calc._nlattice_vals]);
 					g_free(text);
 					text=tmp;
 				}
@@ -1957,9 +1932,9 @@ uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.c
 					uspex_gui.calc.Latticevalues[idx]=0.;
 			}
 			/*fill up the line*/
-			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			text=g_strdup_printf("%.4lf",uspex_gui.calc.Latticevalues[0]);
 			for(idx=0;idx<uspex_gui.calc._nlattice_vals;idx++){
-				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				tmp=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.Latticevalues[idx]);
 				g_free(text);
 				text=tmp;
 			}
@@ -1979,9 +1954,9 @@ uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.c
 uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
 				uspex_gui.calc.Latticevalues[0]=0.;
 			}
-			text=g_strdup_printf("%4f",uspex_gui.calc.Latticevalues[0]);
+			text=g_strdup_printf("%.4lf",uspex_gui.calc.Latticevalues[0]);
 			for(idx=1;idx<uspex_gui.calc._nlattice_vals;idx++){
-				tmp=g_strdup_printf("%s %4f",text,uspex_gui.calc.Latticevalues[idx]);
+				tmp=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.Latticevalues[idx]);
 				g_free(text);
 				text=tmp;
 			}
@@ -2969,6 +2944,10 @@ if(!uspex_gui.auto_bonds){
 	USPEX_REG_VAL(DisplaceInLatmutation,"%lf");
 	//AutoFrac is already sync
 	/*IonDistances is special*/
+if(uspex_gui.auto_C_ion){
+	if(uspex_gui.calc.IonDistances!=NULL) g_free(uspex_gui.calc.IonDistances);
+	uspex_gui.calc.IonDistances=NULL;
+}
 	USPEX_REG_VAL(minVectorLength,"%lf");
 	USPEX_REG_VAL(constraint_enhancement,"%i");
 	/*MolCenters is special*/
@@ -2983,10 +2962,10 @@ if(uspex_gui.auto_C_lat){
 	USPEX_REG_VAL(pickUpGen,"%i");
 	USPEX_REG_VAL(pickUpFolder,"%i");
 	uspex_gui.calc._num_opt_steps=(gint)uspex_gui._tmp_num_opt_steps;
-	/*abinitioCode is special*/
-	/*KresolStart is special*/
-	/*vacuumSize is special*/
-	/*_isfixed is special*/
+	//abinitioCode is already sync
+	//KresolStart is already sync
+	//vacuumSize is already sync
+	//_isfixed is already sync
 	USPEX_REG_VAL(numParallelCalcs,"%i");
 	/*commandExecutable is special*/
 	USPEX_REG_VAL(whichCluster,"%i");
@@ -3008,10 +2987,12 @@ if(uspex_gui.auto_C_lat){
 	//symmetrize is already sync
 	/*valenceElectr is special*/
 	USPEX_REG_VAL(percSliceShift,"%lf");
-	/*dynamicalBestHM is special*/
+	GUI_COMBOBOX_GET(uspex_gui.dynamicalBestHM,index);
+	uspex_gui.calc.dynamicalBestHM=index;
 	USPEX_REG_TEXT(softMutOnly);
 	USPEX_REG_VAL(maxDistHeredity,"%lf");
-	/*manyParents is special*/
+	GUI_COMBOBOX_GET(uspex_gui.manyParents,index);
+	uspex_gui.calc.manyParents=index;
 	USPEX_REG_VAL(minSlice,"%lf");
 	USPEX_REG_VAL(maxSlice,"%lf");
 	USPEX_REG_VAL(numberparents,"%i");
@@ -3443,7 +3424,7 @@ GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for Latticevalues.");
 /* line 14 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.IonDistances,"Ion:",0,1,14,15);/*multiline*/
 GUI_TOOLTIP(uspex_gui.IonDistances,"IonDistance: Ch. 4.5 DEFAULT: auto\nTriangular matrix of the minimum allowed\ninteratomic distances.");
-	GUI_TEXT_TABLE(table,uspex_gui._distances,uspex_gui._tmp_distances,"DIST: ",1,3,14,15);
+	GUI_TEXT_TABLE(table,uspex_gui._distances," ","DIST: ",1,3,14,15);
 GUI_TOOLTIP(uspex_gui._distances,"distances: minimum allowed distance from the current atom to others.");
 	GUI_APPLY_BUTTON_TABLE(table,button,apply_distances,3,4,14,15);
 /* line 15 */
@@ -3962,8 +3943,8 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 /* --- end page */
 
 /* initialize everything */
-	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,uspex_gui.calc.calculationMethod,uspex_method_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,uspex_gui.calc.calculationType,uspex_type_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
+	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optType,uspex_gui.calc.optType-1,uspex_optimization_selected);
 	GUI_LOCK(uspex_gui._atom_typ);
 	populate_atomType();
