@@ -125,6 +125,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC._nlattice_line=0;
 	_UC._nlattice_vals=0;
 	_UC.Latticevalues=NULL;
+	_UC._nsplits=0;
 	_UC.splitInto=NULL;
 	_UC.pickUpYN=FALSE;
 	_UC.pickUpGen=0;
@@ -173,6 +174,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.thicknessS=2.0;
 	_UC.thicknessB=3.0;
 	_UC.reconstruct=1;
+	_UC.StoichiometryStart=NULL;/*almost undocumented*/
 	_UC.firstGeneMax=11;
 	_UC.minAt=0;
 	_UC.maxAt=0;
@@ -1025,14 +1027,6 @@ while((*ptr!='\n')&&(*ptr!='\0')){
 	ptr=ptr2+1;
 	i++;
 }
-/*
-			while((*ptr!='\n')&&(*ptr!='\0')){
-				__SKIP_BLANK(ptr);
-				_UC.abinitioCode[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
-				ptr=ptr2+1;
-				i++;
-			}
-*/
 			g_free(line);
 			line = file_read_line(vf);/*this is the ENDabinit line*/
 			g_free(line);
@@ -1220,6 +1214,23 @@ while((*ptr!='\n')&&(*ptr!='\0')){
 		__GET_DOUBLE(thicknessS);
 		__GET_DOUBLE(thicknessB);
 		__GET_INT(reconstruct);
+		if (find_in_string("StoichiometryStart",line) != NULL) {
+			g_free(line);line = file_read_line(vf);/*go next line*/
+			_UC.StoichiometryStart=g_malloc(_UC._nspecies*sizeof(gint));
+			for(i=0;i<_UC._nspecies;i++) _UC.StoichiometryStart[i]=0;
+			ptr=&(line[0]);i=0;
+			while((*ptr!='\n')&&(*ptr!='\0')){
+				__SKIP_BLANK(ptr);
+				_UC.StoichiometryStart[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				ptr=ptr2+1;
+				i++;
+			}
+			g_free(line);
+			line = file_read_line(vf);/*this is the endStoichiometryStart line*/
+			g_free(line);
+			line = file_read_line(vf);
+			continue;
+		}
 		__GET_INT(firstGeneMax);
 		__GET_INT(minAt);
 		__GET_INT(maxAt);
@@ -1579,6 +1590,7 @@ if(_SRC._nlattice_line==0){
 	_CP(thicknessS);
 	_CP(thicknessB);
 	_CP(reconstruct);
+	_COPY(StoichiometryStart,_SRC._nspecies,gint);
 	_CP(firstGeneMax);
 	_CP(minAt);
 	_CP(maxAt);
@@ -1959,7 +1971,7 @@ if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS))
 			else __OUT_BK_DOUBLE(Latticevalues,"Endvalues",_UC._nlattice_vals);
 		}
 	}
-	if(_UC.splitInto!=NULL) __OUT_BK_INT(splitInto,"EndSplitInto",_UC._nsplits);
+	if((_UC._nsplits>1)&&(_UC.splitInto!=NULL)) __OUT_BK_INT(splitInto,"EndSplitInto",_UC._nsplits);
 }/*VCNEB,TPS don't require CELL information*/
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
@@ -2104,6 +2116,7 @@ is_w=0;
 	if(_UC.thicknessS!=2.0) __OUT_DOUBLE(thicknessS);
 	if(_UC.thicknessB!=3.0) __OUT_DOUBLE(thicknessB);
 	if(_UC.reconstruct!=1) __OUT_INT(reconstruct);
+	if(_UC.StoichiometryStart!=NULL) __OUT_BK_INT(StoichiometryStart,"endStoichiometryStart",_UC._nspecies);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -2143,6 +2156,7 @@ is_w=0;
 	line=g_strdup_printf("*  VARIABLE-CELL NEB (VCNEB)  *");
 	__TITLE(line);
 	g_free(line);
+if(_UC.calculationMethod==US_CM_VCNEB){
 	if(_UC.vcnebType!=110) __OUT_INT(vcnebType);
 	if(_UC.numImages!=9) __OUT_INT(numImages);
 	if(_UC.numSteps!=200) __OUT_INT(numSteps);
@@ -2162,6 +2176,7 @@ is_w=0;
 	if(_UC.pickupImages!=NULL) __OUT_BK_INT(pickupImages,"EndPickupImages",_UC._npickimg);
 	if(_UC.FormatType!=2) __OUT_INT(FormatType);
 	if(_UC.PrintStep!=1) __OUT_INT(PrintStep);
+}
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;

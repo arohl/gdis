@@ -138,7 +138,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *_latticevalue;
 	gchar *_tmp_latticevalue;
 	GUI_OBJ *splitInto;
-	gchar *_tmp_splitInto;
 	gboolean auto_C_lat;
 /*4.7 restart*/
 	GUI_OBJ *pickUpYN;
@@ -169,6 +168,7 @@ struct uspex_calc_gui{
 	gchar *_tmp_ai_pot;
 	GUI_OBJ *ai_pot;
 	GUI_OBJ *ai_pot_button;
+	GUI_OBJ *numProcessors;
 	GUI_OBJ *numParallelCalcs;
 	gchar *_tmp_commandExecutable;
 	GUI_OBJ *commandExecutable;
@@ -194,7 +194,6 @@ struct uspex_calc_gui{
 /*4.13 seldom used*/
 	//ordering_active is auto-sync
 	//symmetrize is auto-sync
-	gchar *_tmp_valence_e;
 	GUI_OBJ *valenceElectr;
 	GUI_OBJ *percSliceShift;
 	GUI_OBJ *dynamicalBestHM;
@@ -218,6 +217,7 @@ struct uspex_calc_gui{
 	gboolean *_tmp_mols_gulp;
 	GUI_OBJ *mol_apply_button;
 /*5.2 BoltzTraP*/
+	gboolean have_ZT;
 	GUI_OBJ *BoltzTraP_T_max;
 	GUI_OBJ *BoltzTraP_T_delta;
 	GUI_OBJ *BoltzTraP_T_efcut;
@@ -230,7 +230,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *thicknessS;
 	GUI_OBJ *thicknessB;
 	GUI_OBJ *reconstruct;
-	gchar *_tmp_StoichiometryStart;
 	GUI_OBJ *StoichiometryStart;/*almost undocumented*/
 	GUI_OBJ *substrate_model;/*additional*/
 	GUI_OBJ *substrate_model_button;/*additional*/
@@ -241,7 +240,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *maxAt;
 	GUI_OBJ *fracTrans;
 	GUI_OBJ *howManyTrans;
-	gchar *_tmp_specificTrans;
 	GUI_OBJ *specificTrans;
 /*5.6 metadynamics*/
 	GUI_OBJ *ExternalPressure;
@@ -274,7 +272,6 @@ struct uspex_calc_gui{
 	GUI_OBJ *optFreezing;
 	GUI_OBJ *optMethodCIDI;
 	GUI_OBJ *startCIDIStep;
-	gchar *_tmp_pickupImages;
 	GUI_OBJ *pickupImages;
 	GUI_OBJ *FormatType;
 	GUI_OBJ *PrintStep;
@@ -283,7 +280,6 @@ struct uspex_calc_gui{
 /*6.2 Transition Path Sampling*/
 	GUI_OBJ *numIterations;
 	GUI_OBJ *speciesSymbol;
-	gchar *_tmp_mass;
 	GUI_OBJ *mass;
 	GUI_OBJ *amplitudeShoot_AB;
 	GUI_OBJ *amplitudeShoot_BA;
