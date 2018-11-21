@@ -129,11 +129,9 @@ struct uspex_calc_gui{
 	GUI_OBJ *minVectorLength;
 	GUI_OBJ *MolCenters;
 	GUI_OBJ *_centers;
-	gchar *_tmp_centers;
-	gint _curr_center;
+	GUI_OBJ *_centers_button;
 	GUI_OBJ *constraint_enhancement;
 	gboolean auto_C_ion;
-	GUI_OBJ *_molModels;
 /*4.6 Cell*/
 	GUI_OBJ *Latticevalues;
 	GUI_OBJ *_latticeformat;
@@ -206,10 +204,19 @@ struct uspex_calc_gui{
 	GUI_OBJ *minSlice;
 	GUI_OBJ *maxSlice;
 	GUI_OBJ *numberparents;
-/*5.1 molecular*/
-	GUI_OBJ *mol_model;/*additional*/
-	GUI_OBJ *mol_model_button;/*additional*/
-	GUI_OBJ *num_mol;/*additional*/
+/*5.1 molecular: ADDITIONAL*/
+	GUI_OBJ *mol_model;
+	GUI_OBJ *mol_model_button;
+	gdouble _tmp_num_mol;
+	GUI_OBJ *num_mol;
+	GUI_OBJ *mol_gdis;
+	gdouble _tmp_curr_mol;
+	GUI_OBJ *curr_mol;
+	gboolean mol_as_gulp;
+	GUI_OBJ *mol_gulp;
+	gint *_tmp_mols_gdis;
+	gboolean *_tmp_mols_gulp;
+	GUI_OBJ *mol_apply_button;
 /*5.2 BoltzTraP*/
 	GUI_OBJ *BoltzTraP_T_max;
 	GUI_OBJ *BoltzTraP_T_delta;

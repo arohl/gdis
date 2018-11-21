@@ -127,6 +127,15 @@ void gui_uspex_init(struct model_pak *model){
 		for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
 	}
 	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
+	if(uspex_gui.calc._nmolecules<1) uspex_gui.calc._nmolecules=1;
+	uspex_gui._tmp_num_mol=(gdouble)uspex_gui.calc._nmolecules;
+	uspex_gui._tmp_curr_mol=1.;
+	uspex_gui._tmp_mols_gdis=g_malloc(uspex_gui.calc._nmolecules*sizeof(gint));
+	uspex_gui._tmp_mols_gulp=g_malloc(uspex_gui.calc._nmolecules*sizeof(gboolean));
+	for(idx=0;idx<uspex_gui.calc._nmolecules;idx++){
+		uspex_gui._tmp_mols_gdis[idx]=0;
+		uspex_gui._tmp_mols_gulp[idx]=FALSE;
+	}
 	if(uspex_gui.calc.ldaU!=NULL){
 		/*we have 1<n<_nspecies U values*/
 		line=g_strdup("");
@@ -424,9 +433,16 @@ void update_specific(void){
 	GUI_LOCK(uspex_gui._latticevalue);
 	GUI_LOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
-	GUI_LOCK(uspex_gui.mol_model);
-	GUI_LOCK(uspex_gui.mol_model_button);
-	GUI_LOCK(uspex_gui.num_mol);
+GUI_LOCK(uspex_gui.MolCenters);
+GUI_LOCK(uspex_gui._centers);
+GUI_LOCK(uspex_gui._centers_button);
+GUI_LOCK(uspex_gui.mol_model);
+GUI_LOCK(uspex_gui.num_mol);
+GUI_LOCK(uspex_gui.mol_model_button);
+GUI_LOCK(uspex_gui.mol_gdis);
+GUI_LOCK(uspex_gui.curr_mol);
+GUI_LOCK(uspex_gui.mol_gulp);
+GUI_LOCK(uspex_gui.mol_apply_button);
 /*BoltzTraP*/
 	GUI_LOCK(uspex_gui.BoltzTraP_T_max);
 	GUI_LOCK(uspex_gui.BoltzTraP_T_delta);
@@ -560,9 +576,17 @@ if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
-		GUI_UNLOCK(uspex_gui.mol_model);
-		GUI_UNLOCK(uspex_gui.mol_model_button);
-		GUI_UNLOCK(uspex_gui.num_mol);
+GUI_UNLOCK(uspex_gui.MolCenters);
+GUI_UNLOCK(uspex_gui._centers);
+GUI_UNLOCK(uspex_gui._centers_button);
+GUI_UNLOCK(uspex_gui.mol_model);
+GUI_LOCK(uspex_gui.num_mol);
+GUI_LOCK(uspex_gui.mol_model_button);
+GUI_LOCK(uspex_gui.mol_gdis);
+GUI_LOCK(uspex_gui.curr_mol);
+GUI_LOCK(uspex_gui.mol_gulp);
+GUI_LOCK(uspex_gui.mol_apply_button);
+GUI_COMBOBOX_SET(uspex_gui.mol_model,0);
 }
 /*BoltzTraP*/
 		GUI_UNLOCK(uspex_gui.BoltzTraP_T_max);
@@ -641,9 +665,17 @@ if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
-		GUI_UNLOCK(uspex_gui.mol_model);
-		GUI_UNLOCK(uspex_gui.mol_model_button);
-		GUI_UNLOCK(uspex_gui.num_mol);
+GUI_UNLOCK(uspex_gui.MolCenters);
+GUI_UNLOCK(uspex_gui._centers);
+GUI_UNLOCK(uspex_gui._centers_button);
+GUI_UNLOCK(uspex_gui.mol_model);
+GUI_LOCK(uspex_gui.num_mol);
+GUI_LOCK(uspex_gui.mol_model_button);
+GUI_LOCK(uspex_gui.mol_gdis);
+GUI_LOCK(uspex_gui.curr_mol);
+GUI_LOCK(uspex_gui.mol_gulp);
+GUI_LOCK(uspex_gui.mol_apply_button);
+GUI_COMBOBOX_SET(uspex_gui.mol_model,0);
 }
 /*BoltzTraP*/
 		GUI_UNLOCK(uspex_gui.BoltzTraP_T_max);
@@ -799,18 +831,6 @@ void uspex_method_selected(GUI_OBJ *w){
 void uspex_type_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
-	/*consequences*/
-/*molecular*/
-	GUI_LOCK(uspex_gui.mol_model);
-	GUI_LOCK(uspex_gui.mol_model_button);
-	GUI_LOCK(uspex_gui.num_mol);
-/*Surfaces*/
-	GUI_LOCK(uspex_gui.thicknessS);
-	GUI_LOCK(uspex_gui.thicknessB);
-	GUI_LOCK(uspex_gui.reconstruct);
-	GUI_LOCK(uspex_gui.StoichiometryStart);
-	GUI_LOCK(uspex_gui.substrate_model);
-	GUI_LOCK(uspex_gui.substrate_model_button);
 	/*check type*/
 	switch (index){
 	case 1://s300
@@ -840,9 +860,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
-		GUI_UNLOCK(uspex_gui.mol_model);
-		GUI_UNLOCK(uspex_gui.mol_model_button);
-		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 5://311
 		uspex_gui.calc.calculationType=US_CT_311;
@@ -850,9 +867,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=FALSE;
-		GUI_UNLOCK(uspex_gui.mol_model);
-		GUI_UNLOCK(uspex_gui.mol_model_button);
-		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 6://000
 		uspex_gui.calc.calculationType=US_CT_000;
@@ -881,9 +895,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=TRUE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
-		GUI_UNLOCK(uspex_gui.mol_model);
-		GUI_UNLOCK(uspex_gui.mol_model_button);
-		GUI_UNLOCK(uspex_gui.num_mol);
 		break;
 	case 10://200
 		uspex_gui.calc.calculationType=US_CT_200;
@@ -891,12 +902,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=FALSE;
-		GUI_UNLOCK(uspex_gui.thicknessS);
-		GUI_UNLOCK(uspex_gui.thicknessB);
-		GUI_UNLOCK(uspex_gui.reconstruct);
-		GUI_UNLOCK(uspex_gui.StoichiometryStart);
-		GUI_UNLOCK(uspex_gui.substrate_model);
-		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 11://s200
 		uspex_gui.calc.calculationType=US_CT_s200;
@@ -904,12 +909,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=TRUE;
-		GUI_UNLOCK(uspex_gui.thicknessS);
-		GUI_UNLOCK(uspex_gui.thicknessB);
-		GUI_UNLOCK(uspex_gui.reconstruct);
-		GUI_UNLOCK(uspex_gui.StoichiometryStart);
-		GUI_UNLOCK(uspex_gui.substrate_model);
-		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 12://201
 		uspex_gui.calc.calculationType=US_CT_201;
@@ -917,12 +916,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=FALSE;
-		GUI_UNLOCK(uspex_gui.thicknessS);
-		GUI_UNLOCK(uspex_gui.thicknessB);
-		GUI_UNLOCK(uspex_gui.reconstruct);
-		GUI_UNLOCK(uspex_gui.StoichiometryStart);
-		GUI_UNLOCK(uspex_gui.substrate_model);
-		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 13://s201
 		uspex_gui.calc.calculationType=US_CT_s201;
@@ -930,12 +923,6 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_mol=FALSE;
 		uspex_gui.calc._calctype_var=TRUE;
 		uspex_gui.calc._calctype_mag=TRUE;
-		GUI_UNLOCK(uspex_gui.thicknessS);
-		GUI_UNLOCK(uspex_gui.thicknessB);
-		GUI_UNLOCK(uspex_gui.reconstruct);
-		GUI_UNLOCK(uspex_gui.StoichiometryStart);
-		GUI_UNLOCK(uspex_gui.substrate_model);
-		GUI_UNLOCK(uspex_gui.substrate_model_button);
 		break;
 	case 14://-200
 		uspex_gui.calc.calculationType=US_CT_m200;
@@ -1630,7 +1617,7 @@ void apply_distances(void){
 		if(idx>=uspex_gui.calc._nspecies) break;
 	}
 	/*now refresch IonDistances line*/
-	text=g_strdup_printf("%.4lf",uspex_gui.calc.IonDistances[0]);
+	text=g_strdup_printf("%.4lf",uspex_gui.calc.IonDistances[index*(uspex_gui.calc._nspecies)]);
 	for(idx=1;idx<uspex_gui.calc._nspecies;idx++){
 		ptr=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.IonDistances[index*(uspex_gui.calc._nspecies)+idx]);
 		g_free(text);
@@ -1646,61 +1633,36 @@ void apply_distances(void){
 /************************************/
 void apply_centers(void){
 	gint index;
-	gchar *ptr,*ptr2;
-	gint i;
-	gint nmolval;
-	gdouble *molval=NULL;
-	gdouble *tmp=NULL;
-	gdouble val;
+	gchar *text;
+	gchar *ptr;
+	gchar *ptr2;
+	gint idx;
 	/**/
 	if(uspex_gui.calc._nmolecules==0) return;
 	GUI_COMBOBOX_GET(uspex_gui.MolCenters,index);
-	GUI_ENTRY_GET_TEXT(uspex_gui._centers,uspex_gui._tmp_centers);
-	/*get the number of molecular distance values*/
-	ptr=&(uspex_gui._tmp_centers[0]);
-	while(*ptr==' ') ptr++;/*skip leading white space, if any*/
-	ptr2=ptr;nmolval=0;
-	do{
-		val=g_ascii_strtod(ptr,&ptr2);
+	GUI_ENTRY_GET_TEXT(uspex_gui._centers,text);
+	/*there is _nmolecules values per line (and _nmolecules lines)*/
+	ptr=&(text[0]);
+	while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+	ptr2=ptr;idx=0;
+	while(*ptr!='\0'){
+		uspex_gui.calc.MolCenters[index*(uspex_gui.calc._nmolecules)+idx]=g_ascii_strtod(ptr,&ptr2);
 		if(ptr2==ptr) break;
-		nmolval++;
-		/*update array*/
-		tmp = g_malloc(nmolval*sizeof(gdouble));
-		if(molval){
-			for(i=0;i<nmolval-1;i++) tmp[i]=molval[i];
-			g_free(molval);
-		}
-		tmp[nmolval-1]=val;
-		molval=tmp;
-		ptr=ptr2;
-	}while(1);
-	/*now prepare a *valid* update for MolCenters line*/
-	if(nmolval>=uspex_gui.calc._nmolecules){
-		/*use only nmolecules values*/
-		ptr2=g_strdup_printf("%.4lf",molval[0]);
-		ptr=ptr2;
-		for(i=1;i<uspex_gui.calc._nmolecules;i++){
-			ptr=g_strdup_printf("%s %.4lf",ptr2,molval[i]);
-			g_free(ptr2);ptr2=ptr;
-		}
-	}else{
-		/*use first nmolval values, pad with zero*/
-		ptr2=g_strdup_printf("%.4lf",molval[0]);
-		ptr=ptr2;
-		for(i=1;i<nmolval;i++){
-			ptr=g_strdup_printf("%s %.4lf",ptr2,molval[i]);
-			g_free(ptr2);ptr2=ptr;
-		}
-		for(i=nmolval;i<uspex_gui.calc._nmolecules;i++){
-			ptr=g_strdup_printf("%s %.4lf",ptr2,0.);
-			g_free(ptr2);ptr2=ptr;
-		}
+		ptr=ptr2+1;
+		idx++;
+		if(idx>=uspex_gui.calc._nmolecules) break;
 	}
-	g_free(molval);
-	GUI_COMBOBOX_ADD_TEXT(uspex_gui.MolCenters,index,ptr);
+	/*now refresh MolCenters line*/
+	text=g_strdup_printf("%.4lf",uspex_gui.calc.MolCenters[index*(uspex_gui.calc._nmolecules)]);
+	for(idx=1;idx<uspex_gui.calc._nmolecules;idx++){
+		ptr=g_strdup_printf("%s %.4lf",text,uspex_gui.calc.MolCenters[index*(uspex_gui.calc._nmolecules)+idx]);
+		g_free(text);
+		text=ptr;
+	}
+	GUI_COMBOBOX_ADD_TEXT(uspex_gui.MolCenters,index,text);
 	GUI_COMBOBOX_DEL(uspex_gui.MolCenters,index+1);
 	GUI_COMBOBOX_SET(uspex_gui.MolCenters,index);
-	g_free(ptr);
+	g_free(text);
 }
 /*********************/
 /* toggle auto_C_ion */
@@ -2344,12 +2306,6 @@ void load_ai_pot_dialog(){
 	GUI_KILL_OPEN_DIALOG(file_chooser);
 	g_free(type);g_free(filter);
 }
-/************************************/
-/* set the uspex calculation folder */
-/************************************/
-void load_job_path(void){
-
-}
 /******************************************************************/
 /* sets a remote folder (in case it can be set by a local folder) */
 /******************************************************************/
@@ -2671,6 +2627,29 @@ void uspex_img_model_selected(GUI_OBJ *w){
 void load_img_model_file(void){
 
 }
+/*****************************************/
+/* initialize molecular models from GDIS */
+/*****************************************/
+void init_uspex_gdis_mol(void){
+	gint index;
+	gchar *text;
+	GSList *list;
+	struct model_pak *data;
+	/*WIPE MODEL*/
+	GUI_COMBOBOX_WIPE(uspex_gui.mol_gdis);
+	index=0;
+	for(list=sysenv.mal;list;list=g_slist_next(list)){
+		data = list->data;
+		/*to be registered, a model must have a molecule*/
+		if(g_slist_length(data->moles)>0) {
+			text=g_strdup_printf("%i: %s",index,data->basename);
+			GUI_COMBOBOX_ADD(uspex_gui.mol_gdis,text);
+			g_free(text);
+		}
+		index++;
+	}
+	GUI_COMBOBOX_SET(uspex_gui.mol_gdis,uspex_gui._tmp_mols_gdis[0]);
+}
 /**************************/
 /* select Molecular model */
 /**************************/
@@ -2678,26 +2657,121 @@ void uspex_mol_model_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
-	case 1:
-		GUI_UNLOCK(uspex_gui.mol_model_button);
+	case 1:/*from folder*/
 		GUI_UNLOCK(uspex_gui.num_mol);
+		GUI_UNLOCK(uspex_gui.mol_model_button);
+		GUI_LOCK(uspex_gui.mol_gdis);
+		GUI_LOCK(uspex_gui.curr_mol);
+		GUI_LOCK(uspex_gui.mol_gulp);
+		GUI_LOCK(uspex_gui.mol_apply_button);
 		break;
-	case 2:
+	case 2:/*from gdis*/
+		GUI_UNLOCK(uspex_gui.num_mol);
 		GUI_LOCK(uspex_gui.mol_model_button);
-		GUI_LOCK(uspex_gui.num_mol);
+		GUI_UNLOCK(uspex_gui.mol_gdis);
+		GUI_UNLOCK(uspex_gui.curr_mol);
+		GUI_UNLOCK(uspex_gui.mol_gulp);
+		GUI_UNLOCK(uspex_gui.mol_apply_button);
 		break;
-	case 0:
+	case 0:/*already provided*/
 		/* fall through */
 	default:
-		GUI_UNLOCK(uspex_gui.mol_model_button);
 		GUI_LOCK(uspex_gui.num_mol);
+		GUI_LOCK(uspex_gui.mol_model_button);
+		GUI_LOCK(uspex_gui.mol_gdis);
+		GUI_LOCK(uspex_gui.curr_mol);
+		GUI_LOCK(uspex_gui.mol_gulp);
+		GUI_LOCK(uspex_gui.mol_apply_button);
 	}
 }
 /*******************************/
 /* load molecular model/folder */
 /*******************************/
-void load_mod_model_file(void){
+void load_mol_model_folder(void){
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_FOLDER(uspex_gui.window,file_chooser,"Select MOL_x folder");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			/*save that path as mol_model #1*/
+			GUI_COMBOBOX_ADD_TEXT(uspex_gui.mol_model,1,text);
+			GUI_COMBOBOX_DEL(uspex_gui.mol_model,2);
+			GUI_COMBOBOX_SET(uspex_gui.mol_model,1);
+			g_free(text);
+			g_free(filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
+}
+/******************************/
+/* update number of molecules */
+/******************************/
+void spin_update_num_mol(void){
+	gint idx;
+	gint i=uspex_gui._tmp_num_mol;
+	gint *tmp_i;
+	gboolean *tmp_b;
+	/**/
+	tmp_i=g_malloc(i*sizeof(gint));
+	tmp_b=g_malloc(i*sizeof(gboolean));
+	if(i<uspex_gui.calc._nmolecules){
+		/*reduction*/
+		for(idx=0;idx<i;idx++) {
+			tmp_i[idx]=uspex_gui._tmp_mols_gdis[idx];
+			tmp_b[idx]=uspex_gui._tmp_mols_gulp[idx];
+		}
+	}else{
+		/*augmentation*/
+		for(idx=0;idx<uspex_gui.calc._nmolecules;idx++) {
+			tmp_i[idx]=uspex_gui._tmp_mols_gdis[idx];
+			tmp_b[idx]=uspex_gui._tmp_mols_gulp[idx];
+		}
+		/*in case we increase more than one time <- should not happen*/
+		for(idx=uspex_gui.calc._nmolecules;idx<i;idx++){
+			tmp_i[idx]=0;
+			tmp_b[idx]=FALSE;
+		}
+	}
+	g_free(uspex_gui._tmp_mols_gdis);
+	uspex_gui._tmp_mols_gdis=tmp_i;
+	g_free(uspex_gui._tmp_mols_gulp);
+	uspex_gui._tmp_mols_gulp=tmp_b;
+	uspex_gui.calc._nmolecules=i;
+	GUI_SPIN_RANGE(uspex_gui.curr_mol,1.,(gdouble)i);
+}
+/***********************/
+/* Select a GDIS model */
+/***********************/
+void uspex_gdis_mol_selected(GUI_OBJ *w){
 
+}
+/***************************/
+/* update current molecule */
+/***************************/
+void spin_update_curr_mol(void){
+	gint i=uspex_gui._tmp_curr_mol;
+	GUI_COMBOBOX_SET(uspex_gui.mol_gdis,uspex_gui._tmp_mols_gdis[i]);
+	if(uspex_gui._tmp_mols_gulp[i]){
+		GUI_TOGGLE_ON(uspex_gui.mol_gulp);
+	}else{
+		GUI_TOGGLE_OFF(uspex_gui.mol_gulp);
+	}
+}
+/*****************/
+/* apply gdis mol*/
+/*****************/
+void apply_gdis_mol(void){
+	gint i=uspex_gui._tmp_curr_mol;
+	gint index;
+	GUI_COMBOBOX_GET(uspex_gui.mol_gdis,index);
+	uspex_gui._tmp_mols_gdis[i]=index;
+	uspex_gui._tmp_mols_gulp[i]=uspex_gui.mol_as_gulp;
 }
 /**********************************/
 /* select surface substrate model */
@@ -2943,14 +3017,16 @@ if(!uspex_gui.auto_bonds){
 	USPEX_REG_VAL(mutationRate,"%lf");
 	USPEX_REG_VAL(DisplaceInLatmutation,"%lf");
 	//AutoFrac is already sync
-	/*IonDistances is special*/
 if(uspex_gui.auto_C_ion){
 	if(uspex_gui.calc.IonDistances!=NULL) g_free(uspex_gui.calc.IonDistances);
 	uspex_gui.calc.IonDistances=NULL;
 }
 	USPEX_REG_VAL(minVectorLength,"%lf");
 	USPEX_REG_VAL(constraint_enhancement,"%i");
-	/*MolCenters is special*/
+if(uspex_gui.calc._nmolecules==0){
+	if(uspex_gui.calc.MolCenters!=NULL) g_free(uspex_gui.calc.MolCenters);
+	uspex_gui.calc.MolCenters=NULL;
+}
 if(uspex_gui.auto_C_lat){
 	if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
 	uspex_gui.calc.Latticevalues=NULL;
@@ -2996,7 +3072,7 @@ if(uspex_gui.auto_C_lat){
 	USPEX_REG_VAL(minSlice,"%lf");
 	USPEX_REG_VAL(maxSlice,"%lf");
 	USPEX_REG_VAL(numberparents,"%i");
-	/*_nmolecules is special TODO*/
+	//_nmolecules is already sync
 	USPEX_REG_VAL(BoltzTraP_T_max,"%lf");
 	USPEX_REG_VAL(BoltzTraP_T_delta,"%lf");
 	USPEX_REG_VAL(BoltzTraP_T_efcut,"%lf");
@@ -3438,15 +3514,10 @@ GUI_TOOLTIP(button,"AUTO_ION: use automatic values for ion constraints.");
 /* line 16 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.MolCenters,"Mol:",0,1,16,17);/*multiline*/
 GUI_TOOLTIP(uspex_gui.MolCenters,"MolCenters: Ch. 4.5 DEFAULT: none\nTriangular matrix of the minimum allowed\ndistances between molecules centers.");
-	GUI_TEXT_TABLE(table,uspex_gui._centers,uspex_gui._tmp_centers,"CENTER:",1,3,16,17);
+	GUI_TEXT_TABLE(table,uspex_gui._centers," ","CENTER:",1,3,16,17);
 GUI_TOOLTIP(uspex_gui._centers,"centers: minimum allowed distance from the current molecule center to others.");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_centers,3,4,16,17);
+	GUI_APPLY_BUTTON_TABLE(table,uspex_gui._centers_button,apply_centers,3,4,16,17);
 /* line 17 */
-	/*col 1: empty*/
-	GUI_COMBOBOX_TABLE(table,uspex_gui._molModels,"Model:",1,3,17,18);/*NEW*/
-	GUI_COMBOBOX_ADD(uspex_gui._molModels,"UNDER CONSTRUCTION");
-GUI_TOOLTIP(uspex_gui._centers,"Associate each molecule with a GDIS model.");
-	/*col 4: empty*/
 /* --- end page */
 
 /*---------------------*/
@@ -3651,7 +3722,7 @@ GUI_TOOLTIP(button,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an 
 /* line 8 */
 	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,8,9);
 GUI_TOOLTIP(uspex_gui.job_path,"Select USPEX calculation folder.\nThis folder is where run_uspex will be launched\nand result will be read by GDIS.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_job_path,1,2,8,9);
+	GUI_OPEN_BUTTON_TABLE(table,button,uspex_path_dialog,1,2,8,9);
 	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,8,9);
 GUI_TOOLTIP(uspex_gui.remoteFolder,"remoteFolder: Ch. 4.8 DEFAULT: none\nExecution folder on the distant computer.");
 	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,8,9);
@@ -3913,33 +3984,41 @@ GUI_TOOLTIP(uspex_gui.img_model,"Select the original Images model.");
 /* --- Molecules */
 	GUI_LABEL_TABLE(table,"Molecules",0,4,12,13);
 /* line 13 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_model,"MODEL:",0,2,13,14);
-	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_1 file");
-	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_x folder");
-	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"UNDER CONSTRUCTION");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_model,"MODEL:",0,1,13,14);
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"Already provided");
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_ folder");
+	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From GDIS models");
 GUI_TOOLTIP(uspex_gui.mol_model,"Select the model(s) for molecular calculation.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.mol_model_button,load_mod_model_file,2,3,13,14);
-	GUI_ENTRY_TABLE(table,uspex_gui.num_mol,uspex_gui.calc._nmolecules,"%i","N_Mol:",3,4,13,14);
-GUI_TOOLTIP(uspex_gui.num_mol,"number of molecules in the system.");
+	GUI_SPIN_TABLE(table,uspex_gui.num_mol,uspex_gui._tmp_num_mol,spin_update_num_mol,"N_MOLS",1,2,13,14);
+GUI_TOOLTIP(uspex_gui.num_mol,"Select the number of molecules.");
+	/*col 3: empty*/
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.mol_model_button,load_mol_model_folder,3,4,13,14);
+/* line 14 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_gdis,"GDIS_MOL:",0,1,14,15);
+GUI_TOOLTIP(uspex_gui.mol_gdis,"Select the molecule from GDIS model.");
+	GUI_SPIN_TABLE(table,uspex_gui.curr_mol,uspex_gui._tmp_curr_mol,spin_update_curr_mol,"MOL_#",1,2,14,15);
+	GUI_SPIN_RANGE(uspex_gui.curr_mol,1.,(gdouble)uspex_gui.calc._nmolecules);
+GUI_TOOLTIP(uspex_gui.curr_mol,"Current molecule number.");
+	GUI_CHECK_TABLE(table,uspex_gui.mol_gulp,uspex_gui.mol_as_gulp,NULL,"GULP_FORM",2,3,14,15);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.optFreezing,"Use GULP chemical labels and charge Zmatrix form.");
+	GUI_APPLY_BUTTON_TABLE(table,uspex_gui.mol_apply_button,apply_gdis_mol,3,4,14,15);	
 /* --- Surfaces */
-	GUI_LABEL_TABLE(table,"Surfaces",0,4,14,15);
-/* line 15 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",0,2,15,16);
+	GUI_LABEL_TABLE(table,"Surfaces",0,4,15,16);
+/* line 16 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",0,2,16,17);
 	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"From VASP5 POSCAR file");
 	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"UNDER CONSTRUCTION");
 GUI_TOOLTIP(uspex_gui.substrate_model,"Select the model to use as a substrate\nie. without buffer, surface, and vacuum region.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,2,3,15,16);
-GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",3,4,15,16);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,2,3,16,17);
+GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",3,4,16,17);
 GUI_TOOLTIP(uspex_gui.thicknessS,"thicknessS: Ch. 5.3 DEFAULT: 2.0\nThickness (Ang.) of the surface region.");
-/* line 16 */
-	GUI_TEXT_TABLE(table,uspex_gui.StoichiometryStart,uspex_gui._tmp_StoichiometryStart,"Stoichio:",0,2,16,17);
+/* line 17 */
+	GUI_TEXT_TABLE(table,uspex_gui.StoichiometryStart,uspex_gui._tmp_StoichiometryStart,"Stoichio:",0,2,17,18);
 GUI_TOOLTIP(uspex_gui.StoichiometryStart,"StoichiometryStart: Ch. 5.3 DEFAULT: ?\nDefine the initial stoichiometry of the bulk.");
-	GUI_ENTRY_TABLE(table,uspex_gui.reconstruct,uspex_gui.calc.reconstruct,"%i","N_Surf:",2,3,16,17);
+	GUI_ENTRY_TABLE(table,uspex_gui.reconstruct,uspex_gui.calc.reconstruct,"%i","N_Surf:",2,3,17,18);
 GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.3 DEFAULT: 1\nNumber of replication of the surface cell.");
-	GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,16,17);
+	GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,17,18);
 GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
-/* line 17: empty*/
-	GUI_LABEL_TABLE(table," ",0,4,17,18);
 /* --- end page */
 
 /* initialize everything */
@@ -3997,8 +4076,10 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui.img_model,0,uspex_img_model_selected);
 	update_vcnebType();
 	GUI_COMBOBOX_SETUP(uspex_gui.mol_model,0,uspex_mol_model_selected);
-	GUI_COMBOBOX_SETUP(uspex_gui.substrate_model,0,uspex_substrate_model_selected);
+	init_uspex_gdis_mol();
+	GUI_COMBOBOX_SETUP(uspex_gui.mol_gdis,0,uspex_gdis_mol_selected);
 
+	GUI_COMBOBOX_SETUP(uspex_gui.substrate_model,0,uspex_substrate_model_selected);
 /* --- Outside of notebook */
 	GUI_FRAME_WINDOW(uspex_gui.window,frame);
 	GUI_VBOX_FRAME(frame,vbox);
