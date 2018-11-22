@@ -30,6 +30,8 @@
 		49714D5D05E3ADF9002CED9C /* libXt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 498A8491059B206A005B1183 /* libXt.dylib */; };
 		4979FCDC1AA0910400898946 /* water.qein in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4979FCDB1AA090F400898946 /* water.qein */; };
 		4979FCDF1AA4905C00898946 /* octane.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4979FCDE1AA4904900898946 /* octane.got */; };
+		4982FFDE21A6EF3A00F8AF86 /* gui_uspex.c in Sources */ = {isa = PBXBuildFile; fileRef = 4982FFDC21A6EF3900F8AF86 /* gui_uspex.c */; };
+		4982FFDF21A6EF3A00F8AF86 /* gui_uspex.h in Headers */ = {isa = PBXBuildFile; fileRef = 4982FFDD21A6EF3A00F8AF86 /* gui_uspex.h */; };
 		49884E6E1A07BC6600B54AD9 /* analysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E261A07BC6600B54AD9 /* analysis.h */; };
 		49884E6F1A07BC6600B54AD9 /* colourlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E271A07BC6600B54AD9 /* colourlib.h */; };
 		49884E701A07BC6600B54AD9 /* command.h in Headers */ = {isa = PBXBuildFile; fileRef = 49884E281A07BC6600B54AD9 /* command.h */; };
@@ -288,6 +290,8 @@
 		4979FCDD1AA4904900898946 /* octane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octane.gin; sourceTree = "<group>"; };
 		4979FCDE1AA4904900898946 /* octane.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = octane.got; sourceTree = "<group>"; };
 		4979FCE01AA4B76000898946 /* vdw1.qein */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = vdw1.qein; path = ../src/vdw1.qein; sourceTree = "<group>"; };
+		4982FFDC21A6EF3900F8AF86 /* gui_uspex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gui_uspex.c; sourceTree = "<group>"; };
+		4982FFDD21A6EF3A00F8AF86 /* gui_uspex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_uspex.h; sourceTree = "<group>"; };
 		49884E261A07BC6600B54AD9 /* analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = analysis.h; sourceTree = "<group>"; };
 		49884E271A07BC6600B54AD9 /* colourlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = colourlib.h; sourceTree = "<group>"; };
 		49884E281A07BC6600B54AD9 /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = command.h; sourceTree = "<group>"; };
@@ -768,6 +772,7 @@
 				49884F041A07BC9B00B54AD9 /* gui_symmetry.c */,
 				49884F051A07BC9B00B54AD9 /* gui_task.c */,
 				49884F061A07BC9B00B54AD9 /* gui_tree.c */,
+				4982FFDC21A6EF3900F8AF86 /* gui_uspex.c */,
 				49178CB6208D916600CF0B32 /* gui_vasp.c */,
 				49884F071A07BC9B00B54AD9 /* gui_zmatrix.c */,
 				49884F081A07BC9B00B54AD9 /* hirshfeld.c */,
@@ -1053,6 +1058,7 @@
 				49884E3C1A07BC6600B54AD9 /* gui_image.h */,
 				49884E3D1A07BC6600B54AD9 /* gui_shorts.h */,
 				49884E3E1A07BC6600B54AD9 /* gui_siesta.h */,
+				4982FFDD21A6EF3A00F8AF86 /* gui_uspex.h */,
 				49178CB9208D91C900CF0B32 /* gui_vasp.h */,
 				49884E3F1A07BC6600B54AD9 /* gulp_keyword.h */,
 				49884E401A07BC6600B54AD9 /* hirshfeld_data.h */,
@@ -1161,6 +1167,7 @@
 				49884E851A07BC6600B54AD9 /* gui_shorts.h in Headers */,
 				49884E8D1A07BC6600B54AD9 /* keywords.h in Headers */,
 				49884E931A07BC6600B54AD9 /* mdi.h in Headers */,
+				4982FFDF21A6EF3A00F8AF86 /* gui_uspex.h in Headers */,
 				49884E6F1A07BC6600B54AD9 /* colourlib.h in Headers */,
 				49884EA61A07BC6600B54AD9 /* sginfo.h in Headers */,
 				49884E961A07BC6600B54AD9 /* mesch.h in Headers */,
@@ -1297,6 +1304,7 @@
 				49884F751A07BC9B00B54AD9 /* gui_render.c in Sources */,
 				49884F5E1A07BC9B00B54AD9 /* gl_stereo.c in Sources */,
 				49884F301A07BC9B00B54AD9 /* command.c in Sources */,
+				4982FFDE21A6EF3A00F8AF86 /* gui_uspex.c in Sources */,
 				49178CC1208D92D700CF0B32 /* plots.c in Sources */,
 				49884F321A07BC9B00B54AD9 /* contents.c in Sources */,
 				49884F8A1A07BC9B00B54AD9 /* mesch.c in Sources */,
