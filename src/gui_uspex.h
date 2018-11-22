@@ -306,6 +306,8 @@ struct uspex_calc_gui{
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;
 	gboolean have_result;
+	gboolean have_v1010;
+	gboolean have_octave;
 	gint index;
 /*buttons*/
 	GUI_OBJ *button_save;

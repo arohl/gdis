@@ -287,6 +287,10 @@ void gui_uspex_init(struct model_pak *model){
 	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);/*<- needed?*/
 	uspex_gui._potentials=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._potentials[idx]=NULL;
+	/**/
+	uspex_gui.have_v1010=TRUE;
+	uspex_gui.have_octave=TRUE;
+	if(sysenv.uspex_path!=NULL) uspex_gui.calc.job_uspex_exe=g_strdup(sysenv.uspex_path);
 	/*set everything for an update*/
 	uspex_gui.is_dirty=TRUE;
 }
@@ -361,13 +365,13 @@ void load_parameters_dialog(void){
 /****************************/
 /* load the uspex executable */
 /****************************/
-void load_uspex_exe_dialog(void){
+void load_uspex_exe(void){
 	GUI_OBJ *file_chooser;
 	gint have_answer;
 	gchar *filename;
 	gchar *text;
 	/**/
-	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select USPEX Executable","uspex","uspex_exec");
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select USPEX Executable","*","uspex_exec");
 	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
 	if(have_answer){
 		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
@@ -2070,6 +2074,8 @@ void spin_update_num_opt_steps(void){
 	gdouble *tmp_d1;
 	gboolean *tmp_b;
 	gchar   **tmp_c;
+	gchar **tmp_inp;
+	gchar **tmp_opt;
 	gint i=(gint)uspex_gui._tmp_num_opt_steps;
 	gint idx;
 	/**/
@@ -2078,6 +2084,8 @@ void spin_update_num_opt_steps(void){
 	tmp_d1=g_malloc(i*sizeof(gdouble));
 	tmp_b=g_malloc(i*sizeof(gboolean));
 	tmp_c=g_malloc(i*sizeof(gchar *));
+	tmp_inp=g_malloc(i*sizeof(gchar *));
+	tmp_opt=g_malloc(i*sizeof(gchar *));
 	if(i>uspex_gui.calc._num_opt_steps){
 		/*increase*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
@@ -2091,6 +2099,19 @@ void spin_update_num_opt_steps(void){
 				uspex_gui._tmp_commandExecutable[idx]=NULL;
 			}else
 				tmp_c[idx]=NULL;
+			if(uspex_gui._tmp_ai_input[idx]!=NULL){
+				tmp_inp[idx]=g_strdup(uspex_gui._tmp_ai_input[idx]);
+				g_free(uspex_gui._tmp_ai_input[idx]);
+				uspex_gui._tmp_ai_input[idx]=NULL;
+			}else
+				tmp_inp[idx]=NULL;
+			if(uspex_gui._tmp_ai_opt[idx]!=NULL){
+				tmp_opt[idx]=g_strdup(uspex_gui._tmp_ai_opt[idx]);
+				g_free(uspex_gui._tmp_ai_opt[idx]);
+				uspex_gui._tmp_ai_opt[idx]=NULL;
+			}else
+				tmp_opt[idx]=NULL;
+
 		}
 		/*last step*/
 		tmp_i[i-1]=1;
@@ -2098,6 +2119,8 @@ void spin_update_num_opt_steps(void){
 		tmp_d0[i-1]=0.2-(gdouble)(i-1)*(0.2-0.08)/(uspex_gui.calc._num_opt_steps);
 		tmp_d1[i-1]=10.;
 		tmp_c[i-1]=NULL;/*find a better default?*/
+		tmp_inp[i-1]=g_strdup("N/A");
+		tmp_opt[i-1]=g_strdup("N/A");
 	}else{
 		/*decrease*/
 		for(idx=0;idx<i;idx++){
@@ -2111,6 +2134,18 @@ void spin_update_num_opt_steps(void){
 				uspex_gui._tmp_commandExecutable[idx]=NULL;
 			}else
 				tmp_c[idx]=NULL;
+			if(uspex_gui._tmp_ai_input[idx]!=NULL){
+				tmp_inp[idx]=g_strdup(uspex_gui._tmp_ai_input[idx]);
+				g_free(uspex_gui._tmp_ai_input[idx]);
+				uspex_gui._tmp_ai_input[idx]=NULL;
+			}else
+				tmp_inp[idx]=NULL;
+			if(uspex_gui._tmp_ai_opt[idx]!=NULL){
+				tmp_opt[idx]=g_strdup(uspex_gui._tmp_ai_opt[idx]);
+				g_free(uspex_gui._tmp_ai_opt[idx]);
+				uspex_gui._tmp_ai_opt[idx]=NULL;
+			}else
+				tmp_opt[idx]=NULL;
 		}
 	}
 	g_free(uspex_gui.calc.abinitioCode);uspex_gui.calc.abinitioCode=tmp_i;
@@ -3655,13 +3690,13 @@ if(uspex_gui.auto_C_lat){
 	USPEX_REG_TEXT(trajectoryFile);
 	USPEX_REG_TEXT(MDrestartFile);
 	USPEX_REG_TEXT(job_path);
+	USPEX_REG_TEXT(job_uspex_exe);
 }
 /***************************/
 /* save current parameters */
 /***************************/
 gint save_uspex_calc(){
 #define DEBUG_USPEX_SAVE 0
-//	FILE *save_fp;
 	gchar *filename;
 	/*1-synchronize*/
 	uspex_gui_sync();
@@ -3669,7 +3704,7 @@ gint save_uspex_calc(){
 	//SAVE calculation parameters to INPUT.txt
 	filename=g_strdup_printf("%s/INPUT.txt",uspex_gui.calc.job_path);
 	if(dump_uspex_parameters(filename,&(uspex_gui.calc))<0){
-		fprintf(stderr,"#ERR: can't open file INPUT.txt for WRITE!\n");
+		fprintf(stderr,"#ERR: while saving INPUT.txt!\n");
 		return -1;
 	}
 	g_free(filename);
@@ -3700,7 +3735,13 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec){
 	fprintf(stderr,"USPEX calculation can't be done in this environment.\n");return;
 #else 
 	/*direct launch*/
-	cmd = g_strdup_printf("%s > uspex.log",(*uspex_exec).job_uspex_exe);
+if(uspex_gui.have_v1010){
+	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s > uspex.log",(*uspex_exec).job_uspex_exe);
+	else cmd = g_strdup_printf("%s -m > uspex.log",(*uspex_exec).job_uspex_exe);
+}else{
+	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s -9 > uspex.log",(*uspex_exec).job_uspex_exe);
+	else cmd = g_strdup_printf("%s -m9 > uspex.log",(*uspex_exec).job_uspex_exe);
+}
 #endif
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*uspex_exec).job_path);
@@ -3714,40 +3755,10 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec){
 /* cleanup task: load result */
 /*****************************/
 void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
-	/*USPEX process has exit, try to load the result*/
-	struct model_pak *result_model;
-	gchar *filename;
-	int index;
-	FILE *vf;
+	/*USPEX process has exit, DO NOT try to load the result -- yet*/
 	/*sync_ wait for result?*/
 	while(!(*uspex_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
-	/*init a model*/
-	result_model=model_new();
-	model_init(result_model);
-	/*put result into it*/
-	/*1- find the last result folder*/
-	index=1;
-	filename=g_strdup_printf("%s/results1/OUTPUT.txt",(*uspex_exec).job_path);
-	vf=fopen(filename,"r");
-	while(vf!=NULL){
-		g_free(filename);
-		fclose(vf);
-		index++;
-		filename=g_strdup_printf("%s/results%i/OUTPUT.txt",(*uspex_exec).job_path,index);
-		vf=fopen(filename,"r");
-	}
-	index--;
-	g_free(filename);
-	/*this is the last openable folder/OUTPUT.txt*/
-	filename=g_strdup_printf("%s/results%i/OUTPUT.txt",(*uspex_exec).job_path,index);
-	(*uspex_exec).index=index;
-	/*TODO: detect if a calculation have failed*/
-	file_load(filename,result_model);/*TODO: load result without annoying tree_select_active*/
-	model_prep(result_model);
-	tree_model_add(result_model);
-	tree_model_refresh(result_model);
-	canvas_shuffle();
-	redraw_canvas(ALL);/*ALL: necessary?*/
+	/*TODO: connect an empty model that will be updated with uspex results AS THEY ARRIVE TODO*/
 /*just wipe the structure*/
 	sysenv.uspex_calc_list=g_slist_remove(sysenv.uspex_calc_list,uspex_exec);/*does not free, does it?*/
 	g_free(uspex_exec);
@@ -3793,10 +3804,8 @@ void gui_uspex_dialog(void){
 	gpointer dialog;
 	GUI_OBJ *frame, *vbox, *hbox, *table;
 	GUI_OBJ *notebook, *page, *button, *label;
-//	GUI_OBJ *separator;
 	/* special */
 	struct model_pak *data;
-//	struct core_pak *core;
 	gint idx;
 	gchar *tmp;
 /* checks */
@@ -4250,36 +4259,43 @@ GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.\nFor pair- a
 /* --- USPEX launch */
 	GUI_LABEL_TABLE(table,"USPEX launch",0,4,6,7);
 /* line 7 */
-	/*col 1: empty*/
-	GUI_ENTRY_TABLE(table,uspex_gui.numProcessors,uspex_gui.calc.numProcessors,"%i","CPU:",0,1,7,8);
-GUI_TOOLTIP(uspex_gui.numProcessors,"numProcessors: Ch. ? DEFAULT: 1\nNumber of processors used in a step (undocumented).");
-	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",1,2,7,8);
-GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
+	GUI_TEXT_TABLE(table,uspex_gui.job_uspex_exe,uspex_gui.calc.job_uspex_exe,"USPEX:",0,1,7,8);
+GUI_TOOLTIP(uspex_gui.job_uspex_exe,"The USPEX script executable.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_uspex_exe,1,2,7,8);
 	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,7,8);
 GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.\n>2 - specific supercomputer.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
 GUI_TOOLTIP(button,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
 /* line 8 */
-	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,8,9);
+	GUI_CHECK_TABLE(table,button,uspex_gui.have_v1010,NULL,"Ver 10.1",0,1,8,9);/*not calling anything*/
+GUI_TOOLTIP(button,"Use USPEX v. 10.1 instead of 9.4.4.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numProcessors,uspex_gui.calc.numProcessors,"%i","CPU:",1,2,8,9);
+GUI_TOOLTIP(uspex_gui.numProcessors,"numProcessors: Ch. ? DEFAULT: 1\nNumber of processors used in a step (undocumented).");
+	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",2,3,8,9);
+GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.have_octave,NULL,"OCTAVE",3,4,8,9);/*not calling anything*/
+GUI_TOOLTIP(button,"Use octave instead of matlab.");
+/* line 9 */
+	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,9,10);
 GUI_TOOLTIP(uspex_gui.job_path,"Select USPEX calculation folder.\nThis folder is where run_uspex will be launched\nand result will be read by GDIS.");
-	GUI_OPEN_BUTTON_TABLE(table,button,uspex_path_dialog,1,2,8,9);
-	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,8,9);
+	GUI_OPEN_BUTTON_TABLE(table,button,uspex_path_dialog,1,2,9,10);
+	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,9,10);
 GUI_TOOLTIP(uspex_gui.remoteFolder,"remoteFolder: Ch. 4.8 DEFAULT: none\nWhen using remote submission, this hold the\nexecution folder on the distant computer.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,8,9);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,9,10);
 	/*TODO: disable remote when whichCluster<2*/
 /* --- Restart */
-	GUI_LABEL_TABLE(table,"Restart",0,4,9,10);	
-/* line 10 */
-	GUI_CHECK_TABLE(table,uspex_gui.pickUpYN,uspex_gui.calc.pickUpYN,NULL,"RESTART",0,1,10,11);/*not calling anything*/
+	GUI_LABEL_TABLE(table,"Restart",0,4,10,11);
+/* line 11 */
+	GUI_CHECK_TABLE(table,uspex_gui.pickUpYN,uspex_gui.calc.pickUpYN,NULL,"RESTART",0,1,11,12);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui.pickUpYN,"pickUpYN: deprecated DEFAULT: 0\nSet to restart a calculation, deprecated on version <= 10.");
-	GUI_ENTRY_TABLE(table,uspex_gui.pickUpGen,uspex_gui.calc.pickUpGen,"%i","GEN:",1,2,10,11);
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpGen,uspex_gui.calc.pickUpGen,"%i","GEN:",1,2,11,12);
 GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the generation at which USPEX should restart.\nA new calculation is started for 0 (default).");
-	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,10,11);
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,11,12);
 GUI_TOOLTIP(uspex_gui.pickUpFolder,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
-	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,10,11);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,11,12);/*not calling anything*/
 GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, 0PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
 /* reserved for future use */
-	for(idx=11;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
+	for(idx=12;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
 /* --- end page */
 
 /*--------------------*/
