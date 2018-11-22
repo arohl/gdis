@@ -66,7 +66,7 @@ NODATA, DATA, BIOSYM, CIF, FDF, GULP, MONTY, MARVIN, MORPH,
 META_DATA, XML, XTL, XYZ, MOL2,
 AUTO, CSSR, GAMOUT, PDB, GEOMVIEW_OFF, PROJECT, DOCKING,
 MDI, CREATOR, MVNOUT, GULPOUT, GULP_TRJ, SIESTA_OUT, VASP, CVASP,
-USPEX, REPLACE_ATOMS, DYNAMICS, ZMATRIX,
+USPEX, CUSPEX, REPLACE_ATOMS, DYNAMICS, ZMATRIX,
 OPENGL, OPENGL_OPTIONS, GAMESS, GAMESS_OUT, DIFFAX, DIFFAX_INP, DMOL_INPUT,
 ABINIT, ABINIT_OUT, NWCHEM, NWCHEM_OUT, CASTEP, CASTEP_OUT, GAUSS, GAUSS_OUT,
 QE, QE_OUT,
@@ -149,6 +149,7 @@ void gui_defect_dialog(void);
 void gui_setup_dialog(void);
 void gui_siesta_dialog(void);
 void gui_vasp_dialog(void);
+void gui_uspex_dialog(void);
 
 void gui_surface_widget(GtkWidget *);
 void gui_surface_setup(GtkWidget *);

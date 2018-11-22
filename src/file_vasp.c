@@ -1816,7 +1816,7 @@ core_delete_all(model);
 	name=g_strdup_printf("%c",'\0');
         do{
 		ptr=ptr2;
-		ix=g_ascii_strtod(ptr,&ptr2);
+		ix=(gint)g_ascii_strtod(ptr,&ptr2);
 		if(ptr2==ptr) break;
 		while(*ptr3==' ') ptr3++;
 		sym[0]=*ptr3;
@@ -1835,7 +1835,10 @@ core_delete_all(model);
 		name=g_strdup(spec);
                 model->num_atoms+=ix;
         }while(1);
+	g_free(spec);/*FIX _VALGRIND_BUG_*/
+	g_free(label);/*FIX _VALGRIND_BUG_*/
 property_add_ranked(7, "Formula", name, model);
+	g_free(name);/*FIX _VALGRIND_BUG_*/
 	g_free(line);
 	/*Always true in VASP*/
         model->fractional=TRUE;

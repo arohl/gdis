@@ -129,8 +129,7 @@ if (data->graph_active)
   struct graph_pak *graph=(struct graph_pak *)data->graph_active;
   if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
   if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
-  if((graph->type==GRAPH_USPEX)||(graph->type==GRAPH_USPEX_BEST)) graph_uspex_select(x,y,data);
-  if(graph->type==GRAPH_USPEX_2D) graph_uspex_2d_select(x,y,data);
+  if((graph->type==GRAPH_IY_TYPE)||(GRAPH_XY_TYPE)||(GRAPH_IX_TYPE)||(GRAPH_XX_TYPE)) dat_graph_select(x,y,data);
   return(FALSE);
   }
 
@@ -1376,6 +1375,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Computation/Monty...",            NULL, monty_dialog, 0, NULL },
   { "/Tools/Computation/SIESTA...",           NULL, gui_siesta_dialog, 0, NULL },
   { "/Tools/Computation/VASP...",             NULL, gui_vasp_dialog, 0, NULL },
+  { "/Tools/Computation/USPEX...",            NULL, gui_uspex_dialog, 0, NULL },
 
   { "/Tools/Analysis",                        NULL, NULL, 0, "<Branch>" },
   { "/Tools/Analysis/Dynamics...",            NULL, gui_analysis_dialog, 0, NULL },

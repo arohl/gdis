@@ -174,7 +174,7 @@ void graph_set_xticks(gint label, gint ticks, gpointer ptr_graph)
 struct graph_pak *graph = ptr_graph;
 
 g_assert(graph != NULL);
-g_assert(ticks > 1);/* FIXME: ticks shouldn't matter if label=FALSE */
+if(label) g_assert(ticks > 1);
 
 graph->xlabel = label;
 graph->xticks = ticks;
@@ -188,7 +188,7 @@ void graph_set_yticks(gint label, gint ticks, gpointer ptr_graph)
 struct graph_pak *graph = ptr_graph;
 
 g_assert(graph != NULL);
-g_assert(ticks > 1);/* FIXME: ticks shouldn't matter if label=FALSE */
+if(label) g_assert(ticks > 1);
 
 graph->ylabel = label;
 graph->yticks = ticks;
@@ -205,7 +205,9 @@ g_assert(graph != NULL);
 
 graph->wavelength = wavelength;
 }
-
+/********************************/
+/* regular selection of 1D data */
+/********************************/
 void graph_set_select(gdouble x, gchar *label, gpointer data)
 {
 gdouble n;
@@ -232,7 +234,6 @@ else
 printf("select -> %d : [0, %d]\n", graph->select, graph->size);
 */
 }
-
 /*****************************/
 /* add dependent data set(s) */
 /*****************************/
@@ -260,7 +261,6 @@ graph_init_y(x, graph);
 
 graph->set_list = g_slist_append(graph->set_list, ptr);
 }
-
 /*********************************/
 /* add borned (x,y) data (ovhpa) */
 /*********************************/
@@ -271,8 +271,6 @@ struct graph_pak *graph = data;
 
 g_assert(graph != NULL);
 
-/* try to prevent the user supplying different sized data */
-/* TODO - sample in some fashion if different? */
 if(type==GRAPH_BANDOS){
 	/*the first *two* sets of a GRAPH_BANDOS are _not_ the same size*/
 	/*also it doesn't make much sense to allow anything on that one.*/
@@ -292,13 +290,8 @@ else
   graph->size = size;
 }
 
-if((type==GRAPH_USPEX)||(type==GRAPH_USPEX_BEST)){
-ptr = g_malloc(1+((gint)x[0])*sizeof(gdouble));
-memcpy(ptr,x,(1+(gint)x[0])*sizeof(gdouble));
-}else{
 ptr = g_malloc(size*sizeof(gdouble));
 memcpy(ptr, x, size*sizeof(gdouble));
-}
 
 graph->xmin = x_min;
 graph->xmax = x_max;
@@ -308,6 +301,96 @@ graph->ymax = y_max;
 graph->type=type;
 
 graph->set_list = g_slist_append(graph->set_list, ptr);
+}
+/*************************/
+/* NEW - dat_graph: set x*/
+/*************************/
+void dat_graph_set_x(g_data_x dx,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+int i;
+g_data_x *px;
+
+g_assert(graph != NULL);
+
+/*duplicate and register*/
+px=g_malloc(sizeof(g_data_x));
+g_assert(px != NULL);
+px->x_size = dx.x_size;
+px->x = g_malloc(dx.x_size*sizeof(gdouble));
+//memcpy(px->x,dx.x,dx.x_size*sizeof(gdouble));
+for(i=0;i<dx.x_size;i++) px->x[i]=dx.x[i];
+
+graph->size=0;/*graph size hold the number of y arrays!*/
+graph->set_list = g_slist_append(graph->set_list, px);
+}
+/**************************/
+/* NEW - dat_graph: add y */
+/**************************/
+void dat_graph_add_y(g_data_y dy,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+g_data_y *py;
+
+g_assert(graph != NULL);
+
+if(dy.y_size==0) {
+	/*empty size data set are OK*/
+	py=g_malloc(sizeof(g_data_y));
+	py->y_size=0;
+	py->y=NULL;
+	py->idx=NULL;
+	py->type=GRAPH_REGULAR;
+	py->symbol=NULL;
+	py->line=GRAPH_LINE_NONE;
+	py->color=0;
+	graph->size++;/*graph size hold the number of y arrays!*/
+	graph->set_list = g_slist_append(graph->set_list, py);
+	return;
+}
+/*duplicate and register*/
+py=g_malloc(sizeof(g_data_y));
+g_assert(py != NULL);
+py->y_size=dy.y_size;
+py->y=g_malloc(dy.y_size*sizeof(gdouble));
+memcpy(py->y,dy.y,dy.y_size*sizeof(gdouble));
+if(dy.idx==NULL) py->idx=NULL;
+else{
+	py->idx=g_malloc(dy.y_size*sizeof(gint32));
+	memcpy(py->idx,dy.idx,dy.y_size*sizeof(gint32));
+}
+if(dy.symbol==NULL) py->symbol=NULL;
+else{
+	py->symbol=g_malloc(dy.y_size*sizeof(graph_symbol));
+	memcpy(py->symbol,dy.symbol,dy.y_size*sizeof(graph_symbol));
+}
+py->line=dy.line;
+py->color=dy.color;
+py->type=dy.type;
+
+graph->size++;/*graph size hold the number of y arrays!*/
+graph->set_list = g_slist_append(graph->set_list, py);
+}
+/*******************************/
+/* NEW - dat_graph: set limits */
+/*******************************/
+void dat_graph_set_limits(gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+
+g_assert(graph != NULL);
+
+graph->xmin = x_min;
+graph->xmax = x_max;
+graph->ymin = y_min;
+graph->ymax = y_max;
+}
+/*******************************/
+/* NEW - set global graph type */
+/*******************************/
+void dat_graph_set_type(graph_type type,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+
+g_assert(graph != NULL);
+
+graph->type=type;
 }
 /*********************************************/
 /* select a value in a GRAPH_FREQUENCY graph */
@@ -346,30 +429,29 @@ for (list=graph->set_list ; list ; list=g_slist_next(list))
         }
   }
 }
-/***************************************/
-/* Select a value in GRAPH_USPEX graph */
-/***************************************/
-void graph_uspex_select(gint x, gint y, struct model_pak *model){
-/*when selected, print value and open the corresponding structure file*/
+/***********************************/
+/* NEW - dat_graph: select a value */
+/***********************************/
+void dat_graph_select(gint x, gint y, struct model_pak *model){
         struct graph_pak *graph;
         struct canvas_pak *canvas;
-        gint struct_sel;
-        gdouble ox,dx;
-	gdouble oy,dy,yf;
-	gint yy;
+        gdouble ox,dx, xf;
+        gdouble oy,dy, yf;
+        gint xx,yy;
         int i,j;
-        gdouble *ptr;
         GSList *list;
-/*just a try*/
-	FILE *vf;
-	gint n_struct;
-        /*get the selected structure*/
+        FILE *vf;
+	gint x_index;
+	gint y_index;
+        g_data_x *p_x;
+	g_data_y *p_y;
+
 g_assert(model!=NULL);
-        graph=(struct graph_pak *)model->graph_active;
+	graph=(struct graph_pak *)model->graph_active;
 g_assert(graph!=NULL);
-        canvas = g_slist_nth_data(sysenv.canvas_list, 0);
+	canvas = g_slist_nth_data(sysenv.canvas_list, 0);
 g_assert(canvas!=NULL);
-/*calculate real data*/
+/*calculate x data*/
 	ox=canvas->x + 4*gl_fontsize;
 	if (graph->ylabel) ox+=4*gl_fontsize;
 	oy=canvas->y + canvas->height - 2*gl_fontsize;
@@ -377,158 +459,99 @@ g_assert(canvas!=NULL);
 	dy=(canvas->height-8.0*gl_fontsize);
 	dx=(canvas->width-2.0*ox);
 
-	struct_sel=(gint)(0.25+((x-ox)/dx)*(graph->size));/*generation*/
-	struct_sel--;
-
-/*check if the data point exists*/
-if((struct_sel<0)||(struct_sel>graph->size-1)) return;/*not in there*/
-
-/*USPEX_BEST: simple search*/
-if(graph->type==GRAPH_USPEX_BEST){
-list=graph->set_list;/*there should be only one list*/
-ptr = (gdouble *) list->data;
-i = struct_sel + 1;
-yf = ptr[i];
-yf -= graph->ymin;
-yf /= (graph->ymax - graph->ymin);
-yf *= dy;
-yy = (gint) yf;
-yy *= -1;
-yy += oy;
-if((y>yy-3)&&(y<yy+3)){
-	uspex_calc_struct *uspex_calc=model->uspex;
-	/*we have a hit*/
-	graph->select=struct_sel;
-	graph->select_2=ptr[i];
-	g_free(graph->select_label);
-	graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
-	vf=fopen(model->filename, "r");
-	if(!vf) return;
-	model->cur_frame=(*uspex_calc).best_ind[struct_sel+1];/*this is the structure number*/
-	read_raw_frame(vf,model->cur_frame,model);
-	fclose(vf);
-	tree_model_refresh(model);
-	model_prep(model);
-	return;/*no need to continue for all data!*/
-}
-}else{
-/*USPEX: more complex search*/
-j=0;n_struct=0;
-for (list=graph->set_list ; list ; list=g_slist_next(list))
-  {
-	if(j>struct_sel) return;
-	if(j<struct_sel) {
-		ptr = (gdouble *) list->data;
-		n_struct+=(gint)ptr[0];
-		j++;
-		continue;
-	}else{
-		/*we are on the good set*/
-		ptr = (gdouble *) list->data;
-		for(i=1;i<=(gint)ptr[0];i++){
-			yf = ptr[i];
-			yf -= graph->ymin;
-			yf /= (graph->ymax - graph->ymin);
-			yf *= dy;
-			yy = (gint) yf;
-			yy *= -1;
-			yy += oy;
-			if((y>yy-3)&&(y<yy+3)){
-				uspex_calc_struct *uspex_calc=model->uspex;
-				/*we have a hit*/
-				graph->select=struct_sel;
-				graph->select_2=ptr[i];
-				g_free(graph->select_label);
-				graph->select_label=g_strdup_printf("[%i,%f]",struct_sel+1,ptr[i]);
-				vf=fopen(model->filename, "r");
-				if(!vf) return;
-				if((*uspex_calc).method==US_CM_META) n_struct++;
-				model->cur_frame=n_struct+i-1;
-				read_raw_frame(vf,n_struct+i-1,model);
-				fclose(vf);
-				tree_model_refresh(model);
-				model_prep(model);
-				return;/*no need to continue for all data!*/
-			}
+	list=graph->set_list;
+	p_x = (g_data_x *) list->data;
+	/*get the corresponding x index*/
+	x_index=-1;
+	for(i=0;i<p_x->x_size;i++){
+		xf = p_x->x[i];
+		xf -= graph->xmin;
+		xf /= (graph->xmax - graph->xmin);
+		xx = ox + xf*dx;
+		if((x>xx-3)&&(x<xx+3)) {
+			/*got it*/
+			x_index=i;
+			break;
 		}
-		j++;
 	}
-  }
-}
-}
-/******************************************/
-/* Select a value in GRAPH_USPEX_2D graph */
-/******************************************/
-void graph_uspex_2d_select(gint x, gint y, struct model_pak *model){
-/*when selected, print value and open the corresponding structure file*/
-        struct graph_pak *graph;
-        struct canvas_pak *canvas;
-        gdouble ox,dx, xf;
-        gdouble oy,dy, yf;
-        gint xx,yy;
-        int i;
-	gdouble *xval;
-        gdouble *yval;
-	gdouble *tag;
-        GSList *list;
-        FILE *vf;
-        /*get the selected structure*/
-g_assert(model!=NULL);
-        graph=(struct graph_pak *)model->graph_active;
-g_assert(graph!=NULL);
-        canvas = g_slist_nth_data(sysenv.canvas_list, 0);
-g_assert(canvas!=NULL);
-/*calculate real data*/
-        ox=canvas->x + 4*gl_fontsize;
-        if (graph->ylabel) ox+=4*gl_fontsize;
-        oy=canvas->y + canvas->height - 2*gl_fontsize;
-        if (graph->xlabel) oy-=2*gl_fontsize;
-        dy=(canvas->height-8.0*gl_fontsize);
-        dx=(canvas->width-2.0*ox);
-
-/*first set is tags*/
-list=graph->set_list;
-tag = (gdouble *) list->data;
-list=g_slist_next(list);
-/*second set is x*/
-xval = (gdouble *) list->data;
-list=g_slist_next(list);
-
-for ( ; list ; list=g_slist_next(list)){
-  i=0;
-  yval = (gdouble *) list->data;
-  while(i<graph->size){
-        xf = xval[i];
-	xf -= graph->xmin;
-	xf /= (graph->xmax - graph->xmin);
-	xx = ox + xf*dx;
-	if((x>xx-3)&&(x<xx+3)){/*x is good*/
-		yf = yval[i];
+	if(x_index<0) return;
+	/*scan for the proper y value*/
+	j=0;y_index=-1;
+  if((graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XY_TYPE)){
+	for ( ; list ; list=g_slist_next(list)){
+		p_y = (g_data_y *) list->data;
+		yf = p_y->y[x_index];/*only need to look here*/
 		yf -= graph->ymin;
 		yf /= (graph->ymax - graph->ymin);
 		yf *= dy;
 		yy = (gint) yf;
 		yy *= -1;
 		yy += oy;
-		if((y>yy-3)&&(y<yy+3)){/*y also good*/
-			graph->select=i;
-			graph->select_2=yval[i];
-			g_free(graph->select_label);
-			graph->select_label=g_strdup_printf("[%f,%f]",xval[i],yval[i]);
-			vf=fopen(model->filename, "r");
-			if(!vf) return;
-			model->cur_frame=tag[i];
-			read_raw_frame(vf,tag[i],model);
-			fclose(vf);
-			tree_model_refresh(model);
-			model_prep(model);
-			return;/*no need to continue for all data!*/
+		if((y>yy-3)&&(y<yy+3)){
+			/*got it no y_index here!*/
+			graph->select=x_index;
+			graph->select_2=p_y->y[x_index];
+			if(graph->select_label) g_free(graph->select_label);
+			if(graph->type==GRAPH_IY_TYPE) graph->select_label=g_strdup_printf("[%i,%f]",(gint)p_x->x[x_index],p_y->y[x_index]);
+			else graph->select_label=g_strdup_printf("[%G,%G]",p_x->x[x_index],p_y->y[x_index]);
+			if(p_y->idx!=NULL) {
+				if(p_y->idx[x_index]<0) {
+					update_frame_uspex(p_y->idx[x_index]-1,model);
+					return;/*unavailable*/
+				}
+				/*load structure*/
+				vf=fopen(model->filename, "r");
+				if(!vf) return;
+				model->cur_frame=p_y->idx[x_index]-1;
+				read_raw_frame(vf,p_y->idx[x_index]-1,model);
+				fclose(vf);
+				tree_model_refresh(model);
+				model_prep(model);
+			}
+			break;
+		}
+		j++;
+	}
+	if(y_index<0) return;
+  }else if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_XX_TYPE)){
+	/*in this case, we know the data is on the x_index set*/
+	list=g_slist_nth(graph->set_list,x_index+1);
+	if(!list) return;/*missing data?*/
+	p_y = (g_data_y *) list->data;
+	for(j=0;j<p_y->y_size;j++){
+		yf = p_y->y[j];
+		yf -= graph->ymin;
+		yf /= (graph->ymax - graph->ymin);
+		yf *= dy;
+		yy = (gint) yf;
+		yy *= -1;
+		yy += oy;
+		if((y>yy-3)&&(y<yy+3)){
+			/*got it*/
+			y_index=j;
+			graph->select=x_index;
+			graph->select_2=p_y->y[y_index];
+			if(graph->select_label) g_free(graph->select_label);
+			if(graph->type==GRAPH_IX_TYPE) graph->select_label=g_strdup_printf("[%i,%f]",(gint)p_x->x[x_index],p_y->y[y_index]);
+			else graph->select_label=g_strdup_printf("[%G,%G]",p_x->x[x_index],p_y->y[y_index]);
+			if(p_y->idx!=NULL) {
+				if(p_y->idx[y_index]<0) {
+					update_frame_uspex(p_y->idx[y_index],model);
+					return;/*unavailable*/
+				}
+				/*load structure*/
+				vf=fopen(model->filename, "r");
+				if(!vf) return;
+				model->cur_frame=p_y->idx[y_index];
+				read_raw_frame(vf,p_y->idx[y_index],model);
+				fclose(vf);
+				tree_model_refresh(model);
+				model_prep(model);
+			}
+			break;
 		}
 	}
-	i++;
-  }
-
-}
+  }else return;/*unknown graph type*/
 }
 /************************************/
 /* graph data extraction primitives */
@@ -578,8 +601,14 @@ gint size;
 gint shift;
 gint nkpoints;
 gdouble sz;
-gdouble *xval;
-gdouble xmin,xmax;
+gdouble *xval=NULL;
+gdouble xmin=0.;
+gdouble xmax=0.;
+/*NEW - dat_graph*/
+g_data_x *gx=NULL;
+g_data_y *gy=NULL;
+graph_type type=graph->type;
+graph_line line=GRAPH_LINE_NONE;
 /* compute origin */
 ox = canvas->x + 4*gl_fontsize;
 if (graph->ylabel) ox += 4*gl_fontsize;
@@ -592,7 +621,7 @@ dx = (canvas->width-2.0*ox);
 glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
 glLineWidth(2.0);
 /* x labels */
-if((graph->type==GRAPH_DOS)&&(graph->xticks>2)){
+if((type==GRAPH_DOS)&&(graph->xticks>2)){
 	/* we WANT 0 to be a tick, if nticks>2 */
         sz=(graph->xmax-graph->xmin)/(graph->xticks);/*size of a tick*/
         shift=(gint)(graph->xmin/sz);
@@ -629,14 +658,14 @@ if((graph->type==GRAPH_DOS)&&(graph->xticks>2)){
   for (i=0 ; i<graph->xticks ; i++){
   /* get real index */
   xf = (gdouble) i / (gdouble) (graph->xticks-1);
-  if(graph->type==GRAPH_BANDOS){
+  if(type==GRAPH_BANDOS){
     x = ox + xf*dx*0.3;
   }else{
     x = ox + xf*dx;
   }
   if (graph->xlabel){
 	/*only calculate real value when needed*/
-	if(graph->type!=GRAPH_BANDOS){
+	if(type!=GRAPH_BANDOS){
 	    xf *= (graph->xmax-graph->xmin);
 	    xf += graph->xmin;
 	}
@@ -654,7 +683,7 @@ if((graph->type==GRAPH_DOS)&&(graph->xticks>2)){
   }
 }
 /* another x axis */
-if(graph->type==GRAPH_BANDOS){
+if(type==GRAPH_BANDOS){
   /*second x axis*/
   oldx = ox+dx*0.4;
   for (i=0 ; i<graph->xticks ; i++){
@@ -677,7 +706,7 @@ if(graph->type==GRAPH_BANDOS){
   }
 }
 /* y labels */
-if(((graph->type==GRAPH_BANDOS)||(graph->type==GRAPH_BAND))&&(graph->yticks>2)){
+if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
   /* we WANT 0 to be a tick, if nticks>2 */
   sz=(graph->ymax-graph->ymin)/(graph->yticks);/*size of a tick*/
   shift=(gint)(graph->ymin/sz);
@@ -741,7 +770,7 @@ if(((graph->type==GRAPH_BANDOS)||(graph->type==GRAPH_BAND))&&(graph->yticks>2)){
   }
 }
 /* another y axis */
-if(graph->type==GRAPH_BANDOS){
+if(type==GRAPH_BANDOS){
   x=ox+0.4*dx;
   y=oy-dy;
   oldy=oy;
@@ -801,7 +830,7 @@ flag = FALSE;
 sx = sy = 0;
 list=graph->set_list;
 size=graph->size;
-if(graph->type==GRAPH_BANDOS){
+if(type==GRAPH_BANDOS){
 /*first set is the DOS, to put on [0,0.3] of x, rotated by 90 degrees*/
 	ptr = (gdouble *) list->data;
 	glBegin(GL_LINE_STRIP);
@@ -833,47 +862,65 @@ if(graph->type==GRAPH_BANDOS){
 	size=nkpoints;
 	list=g_slist_next(list);
 }
-if(graph->type==GRAPH_BAND){
+if(type==GRAPH_BAND){
 /*the first set of GRAPH_BAND data contain X values*/
 /*we do not read the full header (yet)*/
 	ptr = (gdouble *) list->data;
 	xval=&(ptr[4]);
 	list=g_slist_next(list);
 }
-if(graph->type==GRAPH_USPEX_2D){
-/*first set is the tags, ignore*/
-list=g_slist_next(list);
-/*second set is x*/
-	ptr = (gdouble *) list->data;
-	xval=&(ptr[0]);
+if((type==GRAPH_IY_TYPE)
+    ||(type==GRAPH_XY_TYPE)
+    ||(type==GRAPH_IX_TYPE)
+    ||(type==GRAPH_XX_TYPE)){
+/*we have dedicated x,y*/
+	gx=(g_data_x *)list->data;
+	xval=&(gx->x[0]);
 	list=g_slist_next(list);
 }
 j=0;
 for ( ; list ; list=g_slist_next(list))
   {
-  ptr = (gdouble *) list->data;
+	/*FIXME here with ALL graph*/
+  if((type==GRAPH_IY_TYPE)
+      ||(type==GRAPH_XY_TYPE)
+      ||(type==GRAPH_IX_TYPE)
+      ||(type==GRAPH_XX_TYPE)){
+	gy=(g_data_y *)list->data;
+	ptr=&(gy->y[0]);
+	size=gy->y_size;
+	line=gy->line;
+	if((ptr==NULL)||(size==0)){
+		/*empty data set is OK*/
+		j++;
+		continue;
+	}
+	if(gy->type!=GRAPH_REGULAR) type=gy->type;
+  } else {
+	ptr = (gdouble *) list->data;
+  }
   oldx=-1;
   oldy=-1;
   i=0;
-  if(graph->type==GRAPH_USPEX) size=(gint)ptr[0];
   while(i<size)
     {
 /*get real values*/
-switch (graph->type){
-	case GRAPH_USPEX_BEST:
-	xf = (gdouble) (i);
-	yf = ptr[i+1];
+switch (type){
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	xf = xval[i];
+	yf = ptr[i];
 	break;
-	case GRAPH_USPEX:
-	xf = (gdouble) (j);
-	yf = ptr[i+1];
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
+	xf = xval[j];
+	yf = ptr[i];
 	break;
 	case GRAPH_FREQUENCY:
 	case GRAPH_DOS:
 	xf = ptr[i];
 	yf = ptr[i+1];
 	break;
-	case GRAPH_USPEX_2D:
 	case GRAPH_BANDOS:
 	case GRAPH_BAND:
 	xf = xval[i];
@@ -888,13 +935,14 @@ switch (graph->type){
 /*new: skip drawing for points outside of graph extrema (also interrupt line when line drawing)*/
 if((xf<graph->xmin)||(xf>graph->xmax)||(yf<graph->ymin)||(yf>graph->ymax)) {
 	/*update index*/
-	switch(graph->type){
+	switch(type){
 	  case GRAPH_FREQUENCY:
 	  case GRAPH_DOS:
 		i++;/* ie twice ++ */
-	  case GRAPH_USPEX_2D:
-	  case GRAPH_USPEX_BEST:
-	  case GRAPH_USPEX:
+	  case GRAPH_IY_TYPE:
+	  case GRAPH_XY_TYPE:
+	  case GRAPH_IX_TYPE:
+	  case GRAPH_XX_TYPE:
 	  case GRAPH_BAND:
 	  case GRAPH_BANDOS:
 	  case GRAPH_REGULAR:
@@ -905,7 +953,7 @@ if((xf<graph->xmin)||(xf>graph->xmax)||(yf<graph->ymin)||(yf>graph->ymax)) {
 	continue;
 }
 /*calculate screen values*/
-switch (graph->type){
+switch (type){
 	case GRAPH_FREQUENCY:
 	/*we can draw impulse directly*/
 	glBegin(GL_LINE_STRIP);
@@ -954,27 +1002,11 @@ switch (graph->type){
 	y *= -1;
 	y += oy;
 	break;
-	case GRAPH_USPEX_BEST:
-	case GRAPH_USPEX:
-	xf += 1.;
-	xf /= (gdouble) (graph->size);/*NOT size*/
-	x = ox + xf*dx;
-	yf -= graph->ymin;
-	yf /= (graph->ymax - graph->ymin);
-	yf *= dy;
-	y = (gint) yf;
-	y *= -1;
-	y += oy;
-	/*draw a rectangle*/
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(x-2, y-2, canvas);
-	gl_vertex_window(x+2, y-2, canvas);
-	gl_vertex_window(x+2, y+2, canvas);
-	gl_vertex_window(x-2, y+2, canvas);
-	gl_vertex_window(x-2, y-2, canvas);
-	glEnd();
-	break;
-	case GRAPH_USPEX_2D:
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
+//	xf += 1.;
 	xf -= graph->xmin;
 	xf /= (graph->xmax - graph->xmin);
 	x = ox + xf*dx;
@@ -984,7 +1016,59 @@ switch (graph->type){
 	y = (gint) yf;
 	y *= -1;
 	y += oy;
-	/*draw a rectangle*/
+if(gy->symbol){
+	switch(gy->symbol[i]){
+	case GRAPH_SYMB_SQUARE:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x-2, y-2, canvas);
+		gl_vertex_window(x+2, y-2, canvas);
+		gl_vertex_window(x+2, y+2, canvas);
+		gl_vertex_window(x-2, y+2, canvas);
+		gl_vertex_window(x-2, y-2, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_CROSS:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x-2, y-2, canvas);
+		gl_vertex_window(x+2, y+2, canvas);
+		glEnd();
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x+2, y-2, canvas);
+		gl_vertex_window(x-2, y+2, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_TRI_DN:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x, y+3, canvas);
+		gl_vertex_window(x-3, y-3, canvas);
+		gl_vertex_window(x+3, y-3, canvas);
+		gl_vertex_window(x, y+3, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_TRI_UP:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x, y-3, canvas);
+		gl_vertex_window(x-3, y+3, canvas);
+		gl_vertex_window(x+3, y+3, canvas);
+		gl_vertex_window(x, y-3, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_DIAM:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x, y+5, canvas);
+		gl_vertex_window(x-5, y, canvas);
+		gl_vertex_window(x, y-5, canvas);
+		gl_vertex_window(x+5, y, canvas);
+		gl_vertex_window(x, y+5, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_NONE:
+	default:
+		/*no symbol*/
+	break;
+	}
+}else{
+	/*draw a default rectangle*/
 	glBegin(GL_LINE_STRIP);
 	gl_vertex_window(x-2, y-2, canvas);
 	gl_vertex_window(x+2, y-2, canvas);
@@ -992,6 +1076,7 @@ switch (graph->type){
 	gl_vertex_window(x-2, y+2, canvas);
 	gl_vertex_window(x-2, y-2, canvas);
 	glEnd();
+}
 	if((i == graph->select)&&(ptr[i] == graph->select_2)){
 		sx=x;
 		sy=y-1;
@@ -1017,18 +1102,48 @@ switch (graph->type){
 }
 if(oldx!=-1){
 	/*plot LINE data*/
-  switch(graph->type){
-	case GRAPH_USPEX:
-	case GRAPH_USPEX_2D:
+  switch(type){
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	/* NEW: use line*/
+		switch(line){
+		case GRAPH_LINE_THICK:
+			glLineWidth(2.0);
+		case GRAPH_LINE_SINGLE:
+			glBegin(GL_LINE_STRIP);
+			gl_vertex_window(oldx, oldy-1, canvas);
+			gl_vertex_window(x, y-1, canvas);
+			glEnd();
+			glLineWidth(1.0);
+		break;
+		case GRAPH_LINE_DASH:
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1,0xCCCC);
+			glBegin(GL_LINE_STRIP);
+			gl_vertex_window(oldx, oldy-1, canvas);
+			gl_vertex_window(x, y-1, canvas);
+			glEnd();
+			glDisable(GL_LINE_STIPPLE);
+		case GRAPH_LINE_DOT:
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1,0xAAAA);
+			glBegin(GL_LINE_STRIP);
+			gl_vertex_window(oldx, oldy-1, canvas);
+			gl_vertex_window(x, y-1, canvas);
+			glEnd();
+			glDisable(GL_LINE_STIPPLE);
+		break;
+		case GRAPH_LINE_NONE:
+		default:
+			break;
+		}
+	break;
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
+		/*not ready yet*/
 	break;
 	case GRAPH_FREQUENCY:
 		/*we should never reach here*/
-	break;
-	case GRAPH_USPEX_BEST:
-	glBegin(GL_LINE_STRIP);
-	gl_vertex_window(oldx,oldy-1,canvas);
-	gl_vertex_window(x,y-1,canvas);
-	glEnd();
 	break;
 	case GRAPH_DOS:
 	case GRAPH_BAND:
@@ -1045,13 +1160,14 @@ if(oldx!=-1){
 	oldx=x;
 	oldy=y;
 /*update index*/
-	switch(graph->type){
+	switch(type){
 	case GRAPH_FREQUENCY:
 	case GRAPH_DOS:
 		i++;/* ie twice ++ */
-	case GRAPH_USPEX:
-	case GRAPH_USPEX_BEST:
-	case GRAPH_USPEX_2D:
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
 	case GRAPH_BAND:
 	case GRAPH_BANDOS:
 	case GRAPH_REGULAR:
@@ -1062,7 +1178,7 @@ if(oldx!=-1){
     j++;
   }
 /*outside of loop*/
-switch (graph->type){
+switch (type){
 	/*plot add-axis*/
 	case GRAPH_DOS:
 	/* need 0 y axis at Fermi level */
@@ -1115,71 +1231,88 @@ switch (graph->type){
 	  gl_vertex_window(x, y-1, canvas);
 	  glEnd();
 	break;
-	case GRAPH_USPEX_BEST:
-	case GRAPH_USPEX_2D:/*TODO: add a 0.5 composition axis?*/
-	case GRAPH_USPEX:
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
 	case GRAPH_FREQUENCY:
 	case GRAPH_REGULAR:
 	default:
 	break;
 }
-
-/* draw peak selector */
-/*regular, frequency*/
-  if (flag) {
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(1, 0x0303);
-    glColor3f(0.9, 0.7, 0.4);
-    glLineWidth(2.0);
-    glBegin(GL_LINES);
-    gl_vertex_window(sx, sy-10, canvas);
-    gl_vertex_window(sx, 3*gl_fontsize, canvas);
-    glEnd();
-
-    if (graph->select_label)
-      {
-      gint xoff;
-
-      xoff = (gint) strlen(graph->select_label);
-      xoff *= gl_fontsize;
-      xoff /= 4;
-      gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
-      }
-    glDisable(GL_LINE_STIPPLE);
-  }
-/* uspex, uspex_best */
-  if(((graph->type==GRAPH_USPEX)||(graph->type==GRAPH_USPEX_BEST))&&(graph->select_label!=NULL)){
-        xf = (gdouble) (graph->select+1) / (gdouble) (graph->size);
-        sx = ox + xf*dx;
-        yf = graph->select_2;
-        yf -= graph->ymin;
-        yf /= (graph->ymax - graph->ymin);
-        yf *= dy;
-        sy = (gint) yf;
-        sy *= -1;
-        sy += oy;
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x0303);
-        glColor3f(0.9, 0.7, 0.4);
-        glLineWidth(2.0);
-        /*horizontal*/
-        glBegin(GL_LINES);
-        gl_vertex_window(ox, sy, canvas);
-        gl_vertex_window(sx, sy, canvas);
-        glEnd();
-        /*vertical*/
-        glBegin(GL_LINES);
-        gl_vertex_window(sx, sy, canvas);
-        gl_vertex_window(sx, -1*(gint)(dy)+oy, canvas);
-        glEnd();
-        /*label*/
-        gint xoff;
-        xoff = (gint) strlen(graph->select_label);
-        xoff *= gl_fontsize;
-        xoff /= 4;
-        gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
-        glDisable(GL_LINE_STIPPLE);
-  }
+/* NEW - selector*/
+	if((flag)||(graph->select_label!=NULL)){
+		gint xoff;
+		list=graph->set_list;
+		glEnable(GL_LINE_STIPPLE);
+		glLineStipple(1, 0x0303);
+		glColor3f(0.9, 0.7, 0.4);
+		glLineWidth(2.0);
+		/*depend on graph->type ; TODO: manage changing types*/
+		switch(graph->type){
+		case GRAPH_IX_TYPE:
+		case GRAPH_XX_TYPE:
+			gx=(g_data_x *)list->data;
+			xf=gx->x[graph->select];
+			yf=graph->select_2;
+			xf -= graph->xmin;
+			xf /= (graph->xmax - graph->xmin);
+			sx = ox + xf*dx;
+			yf -= graph->ymin;
+			yf /= (graph->ymax - graph->ymin);
+			yf *= dy;
+			sy = (gint) yf;
+			sy *= -1;
+			sy += oy;
+		/*horizontal*/
+			glBegin(GL_LINES);
+			gl_vertex_window(ox, sy, canvas);
+			gl_vertex_window(sx, sy, canvas);
+			glEnd();
+		/*vertical*/
+			glBegin(GL_LINES);
+			gl_vertex_window(sx, sy, canvas);
+			gl_vertex_window(sx, -1*(gint)(dy)+oy, canvas);
+			glEnd();
+		break;
+		case GRAPH_IY_TYPE:
+		case GRAPH_XY_TYPE:
+			gx=(g_data_x *)list->data;
+			xf=gx->x[graph->select];
+			yf=graph->select_2;
+			xf -= graph->xmin;
+			xf /= (graph->xmax - graph->xmin);
+			sx = ox + xf*dx;
+			yf -= graph->ymin;
+			yf /= (graph->ymax - graph->ymin);
+			yf *= dy;
+			sy = (gint) yf;
+			sy *= -1;
+			sy += oy;
+		/*horizontal*/
+			glBegin(GL_LINES);
+			gl_vertex_window(ox, sy, canvas);
+			gl_vertex_window(sx, sy, canvas);
+			glEnd();
+		/*vertical*/
+			glBegin(GL_LINES);
+			gl_vertex_window(sx, sy, canvas);
+			gl_vertex_window(sx, -1*(gint)(dy)+oy, canvas);
+			glEnd();
+		break;
+		default:
+			glBegin(GL_LINES);
+			gl_vertex_window(sx, sy-10, canvas);
+			gl_vertex_window(sx, 3*gl_fontsize, canvas);
+			glEnd();
+		}
+	/*label is always same (I think)*/
+	xoff = (gint) strlen(graph->select_label);
+	xoff *= gl_fontsize;
+	xoff /= 4;
+	gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
+	glDisable(GL_LINE_STIPPLE);
+	}
 }
 
 /****************/
@@ -1193,9 +1326,10 @@ void graph_draw_1d(struct canvas_pak *canvas, struct graph_pak *graph)
 	case GRAPH_BAND:
 	case GRAPH_DOS:
 	case GRAPH_BANDOS:
-	case GRAPH_USPEX:
-	case GRAPH_USPEX_BEST:
-	case GRAPH_USPEX_2D:
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
 		graph_draw_new(canvas,graph);
 		break;
 	default:
@@ -1278,7 +1412,8 @@ void graph_read(gchar *filename)
 {
 gint i, j, n, num_tokens;
 gchar *fullpath, *line, **buff;
-gdouble xstart, xstop, x[GRAPH_SIZE_MAX], *y;
+gdouble xstart=0.;
+gdouble xstop, x[GRAPH_SIZE_MAX], *y;
 GArray *garray;
 gpointer graph;
 struct model_pak *model;
