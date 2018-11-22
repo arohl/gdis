@@ -23,127 +23,13 @@ The GNU GPL can also be found at http://www.gnu.org
 /* simple VASP calcul interface */
 /* DEFINES: sync vasp_gui and vasp_gui.calc */
 #define VASP_REG_VAL(value,format) do{\
-        tamp=g_strdup_printf("%s",gtk_entry_get_text(GTK_ENTRY(vasp_gui.value)));\
-        sscanf(tamp,format,&(vasp_gui.calc.value));\
-        g_free(tamp);\
+	GUI_REG_VAL(vasp_gui.value,vasp_gui.calc.value,format);\
 }while(0)
 #define VASP_REG_TEXT(value) do{\
-if(gtk_entry_get_text_length(GTK_ENTRY(vasp_gui.value))>0){\
-        if(vasp_gui.calc.value!=NULL) g_free(vasp_gui.calc.value);\
-        vasp_gui.calc.value=g_strdup_printf("%s",gtk_entry_get_text(GTK_ENTRY(vasp_gui.value)));\
-}else{\
-        if(vasp_gui.calc.value!=NULL) g_free(vasp_gui.calc.value);\
-        vasp_gui.calc.value=NULL;\
-}\
+	if(vasp_gui.calc.value!=NULL) g_free(vasp_gui.calc.value);\
+	if(GUI_ENTRY_LENGHT(vasp_gui.value)>0) GUI_ENTRY_GET_TEXT(vasp_gui.value,vasp_gui.calc.value);\
+	else vasp_gui.calc.value=NULL;\
 }while(0)
-/* DEFINES: interface */
-#define _SPACE 0
-#define VASP_NEW_LINE() do{\
-        hbox = gtk_hbox_new(FALSE, 0);\
-        gtk_container_set_border_width(GTK_CONTAINER(hbox), _SPACE);\
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);\
-}while(0)
-#define VASP_NEW_LABEL(text) do{\
-        label = gtk_label_new(text);\
-        gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);\
-}while(0)
-#define VASP_TEXT_ENTRY(name,value,wilde) do{\
-        name=gtk_entry_new();\
-        if(value!=NULL) gtk_entry_set_text(GTK_ENTRY(name),g_strdup_printf("%s",value));\
-        gtk_box_pack_start(GTK_BOX(hbox), name, wilde, wilde, 0);\
-}while(0)
-#define VASP_ENTRY(name,value,format,size) do{\
-        name=gtk_entry_new();\
-        gtk_entry_set_text(GTK_ENTRY(name),g_strdup_printf(format,value));\
-        gtk_entry_set_width_chars (GTK_ENTRY(name),size);\
-        gtk_box_pack_start(GTK_BOX(hbox), name, FALSE, FALSE, 0);\
-}while(0)
-#define VASP_NEW_SEPARATOR() do{\
-        separator=gtk_hseparator_new();\
-        gtk_box_pack_start(GTK_BOX(hbox), separator, TRUE, FALSE, 0);\
-}while(0)
-#define VASP_REG_COMBO(name,default_text,function) do{\
-        name = gtk_combo_new();\
-        gtk_entry_set_editable(GTK_ENTRY(GTK_COMBO(name)->entry), FALSE);\
-        gtk_combo_set_popdown_strings(GTK_COMBO(name), list);\
-        g_list_free(list);\
-        gtk_box_pack_start(GTK_BOX(hbox), name, FALSE, FALSE, 0);\
-        gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(name)->entry),default_text);\
-        g_signal_connect(GTK_OBJECT(GTK_COMBO(name)->entry), "changed",GTK_SIGNAL_FUNC(function),data);\
-}while(0)
-/* DEFINES: table interface */
-#define VASP_TEXT_TABLE(name,value,caption,l,r,t,b) do{\
-        hbox = gtk_hbox_new(FALSE, 0);\
-        VASP_NEW_LABEL(caption);\
-	VASP_TEXT_ENTRY(name,value,TRUE);\
-        gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_ENTRY_TABLE(name,value,format,caption,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	VASP_NEW_LABEL(caption);\
-	VASP_NEW_SEPARATOR();\
-	VASP_ENTRY(name,value,format,8);\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_CHECK_TABLE(name,value,function,caption,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	name = gui_direct_check(caption,&(value),function,NULL,hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_COMBO_TABLE(name,default_text,function,caption,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	VASP_NEW_LABEL(caption);\
-	VASP_NEW_SEPARATOR();\
-	VASP_REG_COMBO(name,default_text,function);\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_SEPARATOR_TABLE(l,r,t,b) do{\
-        separator=gtk_hseparator_new();\
-	gtk_table_attach_defaults(GTK_TABLE(table),separator,l,r,t,b);\
-}while(0)
-#define VASP_COMBOBOX_TABLE(name,caption,l,r,t,b) do{\
-        hbox = gtk_hbox_new(FALSE, 0);\
-        label = gtk_label_new(caption);\
-        gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);\
-        name=gtk_combo_box_text_new_with_entry();\
-        gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(name))),FALSE);\
-        gtk_box_pack_start(GTK_BOX(hbox),name,TRUE,TRUE,0);\
-        gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_COMBOBOX_ADD(combobox,text) do{\
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combobox),text);\
-}while(0)
-#define VASP_COMBOBOX_SETUP(combobox,default_value,function) do{\
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combobox),default_value);\
-	g_signal_connect(GTK_COMBO_BOX_TEXT(combobox),"changed",GTK_SIGNAL_FUNC(function),data);\
-}while(0)
-/*default spin is always [1,100]*/
-#define VASP_SPIN_TABLE(name,value,function,caption,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	name = gui_direct_spin(caption,&(value),1.0,100.0,1.0,function,NULL,hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_BUTTON_TABLE(name,type,function,l,r,t,b) do{\
-        name=gtk_button_new_from_stock(type);\
-	gtk_table_attach_defaults(GTK_TABLE(table),name,l,r,t,b);\
-        g_signal_connect(GTK_OBJECT(name),"clicked",GTK_SIGNAL_FUNC(function),NULL);\
-}while(0)
-#define VASP_2BUTTONS_TABLE(name_1,name_2,function_1,function_2,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	name_1 = gui_stock_button(GTK_STOCK_APPLY,function_1,NULL,hbox);\
-	name_2 = gui_stock_button(GTK_STOCK_DELETE,function_2,NULL,hbox);\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-/*left aligned labels*/
-#define VASP_LABEL_TABLE(caption,l,r,t,b) do{\
-	hbox = gtk_hbox_new(FALSE, 0);\
-	label = gtk_label_new(caption);\
-	gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);\
-	VASP_NEW_SEPARATOR();\
-	gtk_table_attach_defaults(GTK_TABLE(table),hbox,l,r,t,b);\
-}while(0)
-#define VASP_TOOLTIP(widget,text) gtk_widget_set_tooltip_text(widget,text)
-
 /*page numbers*/
 #define VASP_PAGE_SIMPLIFIED 0
 #define VASP_PAGE_CONVERGENCE 1
@@ -153,207 +39,206 @@ if(gtk_entry_get_text_length(GTK_ENTRY(vasp_gui.value))>0){\
 #define VASP_PAGE_KPOINTS 5
 #define VASP_PAGE_POTCAR 6
 #define VASP_PAGE_EXEC 7
-
 /* gui structure */
 struct vasp_calc_gui{
 	/*just a recall*/
-	GtkWidget *window;
+	GUI_OBJ *window;
 	vasp_calc_struct calc;
 	/*actual GUI*/
 /*simple interface*/
-	GtkWidget *simple_calcul;
-	GtkWidget *simple_system;
+	GUI_OBJ *simple_calcul;
+	GUI_OBJ *simple_system;
 	gboolean simple_rgeom;
-	GtkWidget *simple_dim;
+	GUI_OBJ *simple_dim;
 	gdouble dimension;
-	GtkWidget *simple_kgrid;
-	GtkWidget *simple_poscar;
-	GtkWidget *simple_species;
-	GtkWidget *simple_potcar;
-	GtkWidget *simple_potcar_button;
-	GtkWidget *simple_np;
-	GtkWidget *simple_ncore;
-	GtkWidget *simple_kpar;
-	GtkWidget *simple_apply;
-	GtkWidget *simple_message;
-	GtkTextBuffer *simple_message_buff;
+	GUI_OBJ *simple_kgrid;
+	GUI_OBJ *simple_poscar;
+	GUI_OBJ *simple_species;
+	GUI_OBJ *simple_potcar;
+	GUI_OBJ *simple_potcar_button;
+	GUI_OBJ *simple_np;
+	GUI_OBJ *simple_ncore;
+	GUI_OBJ *simple_kpar;
+	GUI_OBJ *simple_apply;
+	GUI_OBJ *simple_message;
+	GUI_TEXTVIEW_BUFFER *simple_message_buff;
 /*full interface*/
 	gint cur_page;
-	GtkWidget *name;
-	GtkWidget *file_entry;
-	GtkWidget *prec;
-	GtkWidget *encut;
-	GtkWidget *enaug;
-	GtkWidget *ediff;
-	GtkWidget *algo;
-	GtkWidget *ialgo;
-	GtkWidget *nsim;
-	GtkWidget *vtime;
-	GtkWidget *nbands;
-	GtkWidget *nelect;
-	GtkWidget *iwavpr;
-	GtkWidget *ismear;
-	GtkWidget *ismear_3;/*intentional duplicate*/
-	GtkWidget *sigma;
-	GtkWidget *fermwe;
-	GtkWidget *fermdo;
-	GtkWidget *kgamma;
-	GtkWidget *kgamma_3;/*intentional duplicates*/
-	GtkWidget *kspacing;
-	GtkWidget *kspacing_3;/*intentional duplicates*/
-	GtkWidget *lreal;
-	GtkWidget *ropt;
-	GtkWidget *lmaxmix;
-	GtkWidget *lmaxpaw;
-	GtkWidget *istart;
-	GtkWidget *icharg;
-	GtkWidget *nupdown;
-	GtkWidget *magmom;
-	GtkWidget *lmaxtau;
-	GtkWidget *lnoncoll;
-	GtkWidget *saxis;
-	GtkWidget *gga;
-	GtkWidget *lsorbit;
-	GtkWidget *metagga;
-	GtkWidget *cmbj;
-	GtkWidget *cmbja;
-	GtkWidget *cmbjb;
-	GtkWidget *ldau;
-	GtkWidget *ldau_print;
-	GtkWidget *ldaul;
-	GtkWidget *ldauu;
-	GtkWidget *ldauj;
+	GUI_OBJ *name;
+	GUI_OBJ *file_entry;
+	GUI_OBJ *prec;
+	GUI_OBJ *encut;
+	GUI_OBJ *enaug;
+	GUI_OBJ *ediff;
+	GUI_OBJ *algo;
+	GUI_OBJ *ialgo;
+	GUI_OBJ *nsim;
+	GUI_OBJ *vtime;
+	GUI_OBJ *nbands;
+	GUI_OBJ *nelect;
+	GUI_OBJ *iwavpr;
+	GUI_OBJ *ismear;
+	GUI_OBJ *ismear_3;/*intentional duplicate*/
+	GUI_OBJ *sigma;
+	GUI_OBJ *fermwe;
+	GUI_OBJ *fermdo;
+	GUI_OBJ *kgamma;
+	GUI_OBJ *kgamma_3;/*intentional duplicates*/
+	GUI_OBJ *kspacing;
+	GUI_OBJ *kspacing_3;/*intentional duplicates*/
+	GUI_OBJ *lreal;
+	GUI_OBJ *ropt;
+	GUI_OBJ *lmaxmix;
+	GUI_OBJ *lmaxpaw;
+	GUI_OBJ *istart;
+	GUI_OBJ *icharg;
+	GUI_OBJ *nupdown;
+	GUI_OBJ *magmom;
+	GUI_OBJ *lmaxtau;
+	GUI_OBJ *lnoncoll;
+	GUI_OBJ *saxis;
+	GUI_OBJ *gga;
+	GUI_OBJ *lsorbit;
+	GUI_OBJ *metagga;
+	GUI_OBJ *cmbj;
+	GUI_OBJ *cmbja;
+	GUI_OBJ *cmbjb;
+	GUI_OBJ *ldau;
+	GUI_OBJ *ldau_print;
+	GUI_OBJ *ldaul;
+	GUI_OBJ *ldauu;
+	GUI_OBJ *ldauj;
 /*mixer*/
-	GtkWidget *nelm;
-	GtkWidget *nelmdl;
-	GtkWidget *nelmin;
-	GtkWidget *mixer;
-	GtkWidget *amix;
-	GtkWidget *bmix;
-	GtkWidget *amin;
-	GtkWidget *amix_mag;
-	GtkWidget *bmix_mag;
-	GtkWidget *maxmix;
-	GtkWidget *wc;
-	GtkWidget *inimix;
-	GtkWidget *mixpre;
+	GUI_OBJ *nelm;
+	GUI_OBJ *nelmdl;
+	GUI_OBJ *nelmin;
+	GUI_OBJ *mixer;
+	GUI_OBJ *amix;
+	GUI_OBJ *bmix;
+	GUI_OBJ *amin;
+	GUI_OBJ *amix_mag;
+	GUI_OBJ *bmix_mag;
+	GUI_OBJ *maxmix;
+	GUI_OBJ *wc;
+	GUI_OBJ *inimix;
+	GUI_OBJ *mixpre;
 /* dipol */
-	GtkWidget *idipol;
-	GtkWidget *ldipol;
-	GtkWidget *lmono;
-	GtkWidget *dipol;
-	GtkWidget *epsilon;
-	GtkWidget *efield;
+	GUI_OBJ *idipol;
+	GUI_OBJ *ldipol;
+	GUI_OBJ *lmono;
+	GUI_OBJ *dipol;
+	GUI_OBJ *epsilon;
+	GUI_OBJ *efield;
 /* dos */
-	GtkWidget *lorbit;
-	GtkWidget *have_paw;
-	GtkWidget *nedos;
-	GtkWidget *emin;
-	GtkWidget *emax;
-	GtkWidget *efermi;
-	GtkWidget *rwigs;
+	GUI_OBJ *lorbit;
+	GUI_OBJ *have_paw;
+	GUI_OBJ *nedos;
+	GUI_OBJ *emin;
+	GUI_OBJ *emax;
+	GUI_OBJ *efermi;
+	GUI_OBJ *rwigs;
 /* linear response */
-	GtkWidget *loptics;
-	GtkWidget *lepsilon;
-	GtkWidget *lrpa;
-	GtkWidget *lnabla;
-	GtkWidget *lcalceps;
-	GtkWidget *cshift;
+	GUI_OBJ *loptics;
+	GUI_OBJ *lepsilon;
+	GUI_OBJ *lrpa;
+	GUI_OBJ *lnabla;
+	GUI_OBJ *lcalceps;
+	GUI_OBJ *cshift;
 /* grid */
-	GtkWidget *ngx;
-	GtkWidget *ngy;
-	GtkWidget *ngz;
-	GtkWidget *ngxf;
-	GtkWidget *ngyf;
-	GtkWidget *ngzf;
+	GUI_OBJ *ngx;
+	GUI_OBJ *ngy;
+	GUI_OBJ *ngz;
+	GUI_OBJ *ngxf;
+	GUI_OBJ *ngyf;
+	GUI_OBJ *ngzf;
 /*ionic*/
-	GtkWidget *nsw;
-	GtkWidget *ibrion;
-	GtkWidget *isif;
-	GtkWidget *relax_ions;
-	GtkWidget *relax_shape;
-	GtkWidget *relax_volume;
-	GtkWidget *ediffg;
-	GtkWidget *pstress;
-	GtkWidget *nfree;
-	GtkWidget *potim;
+	GUI_OBJ *nsw;
+	GUI_OBJ *ibrion;
+	GUI_OBJ *isif;
+	GUI_OBJ *relax_ions;
+	GUI_OBJ *relax_shape;
+	GUI_OBJ *relax_volume;
+	GUI_OBJ *ediffg;
+	GUI_OBJ *pstress;
+	GUI_OBJ *nfree;
+	GUI_OBJ *potim;
 /*md*/
-	GtkWidget *tebeg;
-	GtkWidget *teend;
-	GtkWidget *smass;
-	GtkWidget *nblock;
-	GtkWidget *kblock;
-	GtkWidget *npaco;
-	GtkWidget *apaco;
+	GUI_OBJ *tebeg;
+	GUI_OBJ *teend;
+	GUI_OBJ *smass;
+	GUI_OBJ *nblock;
+	GUI_OBJ *kblock;
+	GUI_OBJ *npaco;
+	GUI_OBJ *apaco;
 /*symmetry*/
-	GtkWidget *isym;
-	GtkWidget *sym_prec;
+	GUI_OBJ *isym;
+	GUI_OBJ *sym_prec;
 /* POSCAR */
-	GtkWidget *poscar_free;
-	GtkWidget *poscar_direct;
-	GtkWidget *poscar_a0;
-	GtkWidget *poscar_ux;
-        GtkWidget *poscar_uy;
-        GtkWidget *poscar_uz;
-        GtkWidget *poscar_vx;
-        GtkWidget *poscar_vy;
-        GtkWidget *poscar_vz;
-        GtkWidget *poscar_wx;
-        GtkWidget *poscar_wy;
-        GtkWidget *poscar_wz;
-	GtkWidget *poscar_atoms;
-	GtkWidget *poscar_index;
-	GtkWidget *poscar_symbol;
-	GtkWidget *poscar_x;
-	GtkWidget *poscar_y;
-	GtkWidget *poscar_z;
-	GtkWidget *poscar_tx;
-	GtkWidget *poscar_ty;
-	GtkWidget *poscar_tz;
+	GUI_OBJ *poscar_free;
+	GUI_OBJ *poscar_direct;
+	GUI_OBJ *poscar_a0;
+	GUI_OBJ *poscar_ux;
+        GUI_OBJ *poscar_uy;
+        GUI_OBJ *poscar_uz;
+        GUI_OBJ *poscar_vx;
+        GUI_OBJ *poscar_vy;
+        GUI_OBJ *poscar_vz;
+        GUI_OBJ *poscar_wx;
+        GUI_OBJ *poscar_wy;
+        GUI_OBJ *poscar_wz;
+	GUI_OBJ *poscar_atoms;
+	GUI_OBJ *poscar_index;
+	GUI_OBJ *poscar_symbol;
+	GUI_OBJ *poscar_x;
+	GUI_OBJ *poscar_y;
+	GUI_OBJ *poscar_z;
+	GUI_OBJ *poscar_tx;
+	GUI_OBJ *poscar_ty;
+	GUI_OBJ *poscar_tz;
 /* KPOINTS */
-	GtkWidget *kpoints_nkpts;
-	GtkWidget *kpoints_mode;
-	GtkWidget *kpoints_cart;
-	GtkWidget *kpoints_kx;
-        GtkWidget *kpoints_ky;
-        GtkWidget *kpoints_kz;
-	GtkWidget *kpoints_sx;
-	GtkWidget *kpoints_sy;
-	GtkWidget *kpoints_sz;
-	GtkWidget *kpoints_coord;
-	GtkWidget *have_tetra;
-	GtkWidget *kpoints_kpts;
-	GtkWidget *kpoints_i;
-	GtkWidget *kpoints_x;
-	GtkWidget *kpoints_y;
-	GtkWidget *kpoints_z;
-	GtkWidget *kpoints_w;
-	GtkWidget *kpoints_tetra;
-	GtkWidget *tetra;
-	GtkWidget *tetra_total;
-	GtkWidget *tetra_volume;
-	GtkWidget *tetra_i;
-	GtkWidget *tetra_w;
-	GtkWidget *tetra_a;
-	GtkWidget *tetra_b;
-	GtkWidget *tetra_c;
-	GtkWidget *tetra_d;
+	GUI_OBJ *kpoints_nkpts;
+	GUI_OBJ *kpoints_mode;
+	GUI_OBJ *kpoints_cart;
+	GUI_OBJ *kpoints_kx;
+        GUI_OBJ *kpoints_ky;
+        GUI_OBJ *kpoints_kz;
+	GUI_OBJ *kpoints_sx;
+	GUI_OBJ *kpoints_sy;
+	GUI_OBJ *kpoints_sz;
+	GUI_OBJ *kpoints_coord;
+	GUI_OBJ *have_tetra;
+	GUI_OBJ *kpoints_kpts;
+	GUI_OBJ *kpoints_i;
+	GUI_OBJ *kpoints_x;
+	GUI_OBJ *kpoints_y;
+	GUI_OBJ *kpoints_z;
+	GUI_OBJ *kpoints_w;
+	GUI_OBJ *kpoints_tetra;
+	GUI_OBJ *tetra;
+	GUI_OBJ *tetra_total;
+	GUI_OBJ *tetra_volume;
+	GUI_OBJ *tetra_i;
+	GUI_OBJ *tetra_w;
+	GUI_OBJ *tetra_a;
+	GUI_OBJ *tetra_b;
+	GUI_OBJ *tetra_c;
+	GUI_OBJ *tetra_d;
 /* POTCAR */
-	GtkWidget *poscar_species;
-	GtkWidget *species_flavor;
-	GtkWidget *species_button;
+	GUI_OBJ *poscar_species;
+	GUI_OBJ *species_flavor;
+	GUI_OBJ *species_button;
 	gboolean have_potcar_folder;
-	GtkWidget *potcar_select_file;
-	GtkWidget *potcar_file;
-	GtkWidget *potcar_file_button;
-	GtkWidget *potcar_select_folder;
-	GtkWidget *potcar_folder;
-	GtkWidget *potcar_folder_button;
-	GtkWidget *potcar_species;
-	GtkWidget *potcar_species_flavor;
+	GUI_OBJ *potcar_select_file;
+	GUI_OBJ *potcar_file;
+	GUI_OBJ *potcar_file_button;
+	GUI_OBJ *potcar_select_folder;
+	GUI_OBJ *potcar_folder;
+	GUI_OBJ *potcar_folder_button;
+	GUI_OBJ *potcar_species;
+	GUI_OBJ *potcar_species_flavor;
 /* PERF */
-	GtkWidget *ncore;
-	GtkWidget *kpar;
+	GUI_OBJ *ncore;
+	GUI_OBJ *kpar;
 /*switches*/
 	gboolean have_xml;
 	gboolean poscar_dirty;
@@ -362,13 +247,13 @@ struct vasp_calc_gui{
 	gboolean rvolume;
 	gboolean have_result;
 /* CALCUL */
-	GtkWidget *job_vasp_exe;/*will be taken directly from gdis in the future*/
-	GtkWidget *job_mpirun;
-	GtkWidget *job_path;
-	GtkWidget *job_nproc;
+	GUI_OBJ *job_vasp_exe;/*will be taken directly from gdis in the future*/
+	GUI_OBJ *job_mpirun;
+	GUI_OBJ *job_path;
+	GUI_OBJ *job_nproc;
 /*buttons*/
-	GtkWidget *button_save;
-	GtkWidget *button_exec;
+	GUI_OBJ *button_save;
+	GUI_OBJ *button_exec;
 };
 
 /*methods of interest*/

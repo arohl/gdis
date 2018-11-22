@@ -1326,7 +1326,8 @@ g_assert(data != NULL);
 
 /* turn lighting off for wire frame drawing - looks esp ugly */
 /* when hidden (stippled) lines and normal lines are overlayed */
-if (0.5*sysenv.render.wire_surface)
+//if (0.5*sysenv.render.wire_surface)
+if (((gint)0.5*sysenv.render.wire_surface)!=0)
   glDisable(GL_LIGHTING);
 
 glLineWidth(sysenv.render.frame_thickness);

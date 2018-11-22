@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
-#define MAX_VALUE_SIZE 64 /*_BUG_OVHPA_1*/
+#define MAX_VALUE_SIZE 128 /*_BUG_OVHPA_1*/
 
 /**********************************/
 /* global unified rendering setup */
@@ -153,6 +153,9 @@ gchar *gamess_path;
 gchar *vasp_exe;
 gchar *vasp_path;
 
+gchar *uspex_exe;
+gchar *uspex_path;
+
 gchar *mpirun_exe;
 gchar *mpirun_path;
 
@@ -278,6 +281,7 @@ GThreadPool *thread_pool;
 
 /* temporary vasp calculation tasks. Will remove when remote job execution is ready --OVHPA*/
 GSList *vasp_calc_list;
+GSList *uspex_calc_list;
 
 /* CURRENT - task successor (remote job execution) */
 GSList *host_list;
@@ -1393,6 +1397,7 @@ void delay(gint);
 
 gint read_elem_data(FILE *, gint);
 gint write_elem_data(FILE *);
+GSList *find_unique(gint mode, struct model_pak *model);
 
 void cmd_init(gint, gchar **);
 
