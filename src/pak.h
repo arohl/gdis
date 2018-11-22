@@ -1182,6 +1182,7 @@ gdouble area;
 gdouble volume;
 /* translation matrix/vectors & its inverse */
 gdouble latmat[9];
+gdouble cell_strains[6];
 gdouble ilatmat[9];
 /* reciprocal lattice vectors */
 gdouble rlatmat[9];
