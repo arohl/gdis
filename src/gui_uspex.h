@@ -155,10 +155,10 @@ struct uspex_calc_gui{
 	GUI_OBJ *KresolStart;
 	GUI_OBJ *vacuumSize;
 	gboolean auto_step;
-	gchar *_tmp_ai_input;
+	gchar **_tmp_ai_input;
 	GUI_OBJ *ai_input;
 	GUI_OBJ *ai_input_button;
-	gchar *_tmp_ai_opt;
+	gchar **_tmp_ai_opt;
 	GUI_OBJ *ai_opt;
 	GUI_OBJ *ai_opt_button;
 	GUI_OBJ *ai_generate;
@@ -170,7 +170,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *ai_pot_button;
 	GUI_OBJ *numProcessors;
 	GUI_OBJ *numParallelCalcs;
-	gchar *_tmp_commandExecutable;
+	gchar **_tmp_commandExecutable;
 	GUI_OBJ *commandExecutable;
 	GUI_OBJ *whichCluster;
 	GUI_OBJ *remoteFolder;
@@ -226,6 +226,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *TE_goal;
 	gchar *_tmp_cmd_BoltzTraP;/*optional, and unused (for now)*/
 	GUI_OBJ *cmd_BoltzTraP;/*optional, and unused (for now)*/
+	GUI_OBJ *cmd_BoltzTraP_button;
 /*5.3 Surfaces*/
 	GUI_OBJ *thicknessS;
 	GUI_OBJ *thicknessB;

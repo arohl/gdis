@@ -63,6 +63,7 @@ struct uspex_calc_gui uspex_gui;
 void gui_uspex_init(struct model_pak *model){
 	gint idx;
 	gchar *line;
+	gchar *ptr;
 	uspex_gui.cur_page=USPEX_PAGE_SYSTEM;
 	/*prepare local values*/
 	uspex_gui._tmp_atom_typ=0;uspex_gui._tmp_atom_num=0;uspex_gui._tmp_atom_val=0;
@@ -255,14 +256,37 @@ void gui_uspex_init(struct model_pak *model){
 		uspex_gui.calc.vacuumSize=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc.vacuumSize[idx]=10.;
 	}
-	if(uspex_gui.calc.commandExecutable!=NULL) uspex_gui._tmp_commandExecutable=g_strdup(&uspex_gui.calc.commandExecutable[0]);
+	uspex_gui._tmp_commandExecutable=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_commandExecutable[idx]=NULL;
+	if(uspex_gui.calc.commandExecutable!=NULL) {
+		/*cut*/
+		idx=0;/*for safety*/
+		line=&(uspex_gui.calc.commandExecutable[0]);
+		ptr=line;
+		while(*line!='\0'){
+			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
+			if(*ptr=='\0') {
+				/*last one*/
+				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
+				line=ptr;
+				break;
+			}else{
+				*ptr='\0';/*cut here*/
+				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
+				line=ptr+1;
+				*ptr='\n';/*restore*/
+			}
+		}
+	}
+	uspex_gui._tmp_ai_input=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_ai_input[idx]=NULL;/*no default*/
+	uspex_gui._tmp_ai_opt=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_ai_opt[idx]=NULL;/*no default*/
 	uspex_gui.auto_step=TRUE;/*auto step is ON by default*/
 	uspex_gui._tmp_ai_spe=NULL;
-/**/
-	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);
+	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);/*<- needed?*/
 	uspex_gui._potentials=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._potentials[idx]=NULL;
-
 	/*set everything for an update*/
 	uspex_gui.is_dirty=TRUE;
 }
@@ -460,6 +484,7 @@ void update_specific(void){
 	GUI_LOCK(uspex_gui.TE_threshold);
 	GUI_LOCK(uspex_gui.TE_goal);
 	GUI_LOCK(uspex_gui.cmd_BoltzTraP);
+	GUI_LOCK(uspex_gui.cmd_BoltzTraP_button);
 /*SURFACES*/
 	GUI_LOCK(uspex_gui.thicknessS);
 	GUI_LOCK(uspex_gui.thicknessB);
@@ -606,6 +631,7 @@ if(uspex_gui.have_ZT){
 		GUI_UNLOCK(uspex_gui.TE_threshold);
 		GUI_UNLOCK(uspex_gui.TE_goal);
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP);
+		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP_button);
 }
 /*SURFACES*/
 if(uspex_gui.calc._calctype_dim==2){
@@ -697,6 +723,7 @@ if(uspex_gui.have_ZT){
 		GUI_UNLOCK(uspex_gui.TE_threshold);
 		GUI_UNLOCK(uspex_gui.TE_goal);
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP);
+		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP_button);
 }
 /*SURFACES*/
 if(uspex_gui.calc._calctype_dim==2){
@@ -803,7 +830,6 @@ if(uspex_gui.calc._calctype_var){
 /* refresh the GUI with value from uspex_gui.calc */
 /**************************************************/
 void uspex_gui_refresh(){
-//	gchar *text;
 	/*refresh the whole GUI based on uspex_gui.calc information*/
 }
 /*******************************/
@@ -1983,6 +2009,58 @@ void SG_toggle(void){
 		GUI_LOCK(uspex_gui.SymTolerance);
 	}
 }
+/*****************************************************************/
+/* convert from _tmp_commandExecutable to calc.commandExecutable */
+/*****************************************************************/
+void register_commandExecutable(void){
+	gchar *text;
+	gint idx;
+	gint jdx;
+	gboolean repopulate=FALSE;
+	/*1- wipe calc.commandExecutable*/
+	if(uspex_gui.calc.commandExecutable!=NULL) g_free(uspex_gui.calc.commandExecutable);
+	uspex_gui.calc.commandExecutable=NULL;
+	/*2- register mandatory element*/
+	if(uspex_gui._tmp_commandExecutable[0]==NULL) return;/*nothing to update at all*/
+	uspex_gui.calc.commandExecutable=g_strdup(uspex_gui._tmp_commandExecutable[0]);
+	for(idx=1;idx<uspex_gui.calc._num_opt_steps;idx++){
+		if(uspex_gui._tmp_commandExecutable[idx]==NULL) continue;/*skip it*/
+		text=g_strdup_printf("%s\n%s",uspex_gui.calc.commandExecutable,uspex_gui._tmp_commandExecutable[idx]);
+		g_free(uspex_gui.calc.commandExecutable);
+		uspex_gui.calc.commandExecutable=text;
+		if(!uspex_gui.calc._isCmdList) repopulate=TRUE;
+		uspex_gui.calc._isCmdList=TRUE;
+	}
+	if(repopulate){
+		/*set each step explicitely*/
+		//1bis- re-wipe
+		g_free(uspex_gui.calc.commandExecutable);
+		uspex_gui.calc.commandExecutable=NULL;
+		uspex_gui.calc.commandExecutable=g_strdup(uspex_gui._tmp_commandExecutable[0]);
+		for(idx=1;idx<uspex_gui.calc._num_opt_steps;idx++){
+			if(uspex_gui._tmp_commandExecutable[idx]==NULL){
+				/*not acceptable, have to be set*/
+				if(uspex_gui.calc.abinitioCode[idx]==uspex_gui.calc.abinitioCode[idx-1]){
+					/*same as previous one*/
+					uspex_gui._tmp_commandExecutable[idx]=g_strdup(uspex_gui._tmp_commandExecutable[idx-1]);
+				}else{
+					/*find a similar one*/
+					for(jdx=1;jdx<uspex_gui.calc._num_opt_steps;jdx++){
+						if(jdx==idx) continue;
+						if(uspex_gui.calc.abinitioCode[idx]==uspex_gui.calc.abinitioCode[jdx]){
+							uspex_gui._tmp_commandExecutable[idx]=g_strdup(uspex_gui._tmp_commandExecutable[jdx]);
+						}
+					}
+					/*if all fail*/
+					if(uspex_gui._tmp_commandExecutable[idx]==NULL) uspex_gui._tmp_commandExecutable[idx]=g_strdup("N/A");
+				}
+			}
+			text=g_strdup_printf("%s\n%s",uspex_gui.calc.commandExecutable,uspex_gui._tmp_commandExecutable[idx]);
+			g_free(uspex_gui.calc.commandExecutable);
+			uspex_gui.calc.commandExecutable=text;
+		}
+	}
+}
 /*************************************************/
 /* change the total number of optimisation steps */
 /*************************************************/
@@ -1991,6 +2069,7 @@ void spin_update_num_opt_steps(void){
 	gdouble *tmp_d0;
 	gdouble *tmp_d1;
 	gboolean *tmp_b;
+	gchar   **tmp_c;
 	gint i=(gint)uspex_gui._tmp_num_opt_steps;
 	gint idx;
 	/**/
@@ -1998,6 +2077,7 @@ void spin_update_num_opt_steps(void){
 	tmp_d0=g_malloc(i*sizeof(gdouble));
 	tmp_d1=g_malloc(i*sizeof(gdouble));
 	tmp_b=g_malloc(i*sizeof(gboolean));
+	tmp_c=g_malloc(i*sizeof(gchar *));
 	if(i>uspex_gui.calc._num_opt_steps){
 		/*increase*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
@@ -2005,12 +2085,19 @@ void spin_update_num_opt_steps(void){
 			tmp_b[idx]=uspex_gui.calc._isfixed[idx];
 			tmp_d0[idx]=uspex_gui.calc.KresolStart[idx];
 			tmp_d1[idx]=uspex_gui.calc.vacuumSize[idx];
+			if(uspex_gui._tmp_commandExecutable[idx]!=NULL){
+				tmp_c[idx]=g_strdup(uspex_gui._tmp_commandExecutable[idx]);
+				g_free(uspex_gui._tmp_commandExecutable[idx]);
+				uspex_gui._tmp_commandExecutable[idx]=NULL;
+			}else
+				tmp_c[idx]=NULL;
 		}
 		/*last step*/
 		tmp_i[i-1]=1;
 		tmp_b[i-1]=FALSE;
 		tmp_d0[i-1]=0.2-(gdouble)(i-1)*(0.2-0.08)/(uspex_gui.calc._num_opt_steps);
 		tmp_d1[i-1]=10.;
+		tmp_c[i-1]=NULL;/*find a better default?*/
 	}else{
 		/*decrease*/
 		for(idx=0;idx<i;idx++){
@@ -2018,27 +2105,36 @@ void spin_update_num_opt_steps(void){
 			tmp_b[idx]=uspex_gui.calc._isfixed[idx];
 			tmp_d0[idx]=uspex_gui.calc.KresolStart[idx];
 			tmp_d1[idx]=uspex_gui.calc.vacuumSize[idx];
+			if(uspex_gui._tmp_commandExecutable[idx]!=NULL){
+				tmp_c[idx]=g_strdup(uspex_gui._tmp_commandExecutable[idx]);
+				g_free(uspex_gui._tmp_commandExecutable[idx]);
+				uspex_gui._tmp_commandExecutable[idx]=NULL;
+			}else
+				tmp_c[idx]=NULL;
 		}
 	}
 	g_free(uspex_gui.calc.abinitioCode);uspex_gui.calc.abinitioCode=tmp_i;
 	g_free(uspex_gui.calc._isfixed);uspex_gui.calc._isfixed=tmp_b;
 	g_free(uspex_gui.calc.KresolStart);uspex_gui.calc.KresolStart=tmp_d0;
 	g_free(uspex_gui.calc.vacuumSize);uspex_gui.calc.vacuumSize=tmp_d1;
+	g_free(uspex_gui._tmp_commandExecutable);uspex_gui._tmp_commandExecutable=tmp_c;
 	/*update _num_opt_steps*/
 	uspex_gui.calc._num_opt_steps=i;
+	register_commandExecutable();
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
-	if(uspex_gui._tmp_curr_step>i) uspex_gui._tmp_curr_step=i;
+	if(uspex_gui._tmp_curr_step>i) uspex_gui._tmp_curr_step=(gdouble)i;
+	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
 }
 /***************************/
 /* change the current step */
 /***************************/
 void spin_update_curr_step(void){
 	gint i=(gint)uspex_gui._tmp_curr_step;
-	gint index;
 	gchar *text;
-	gchar *ptr;
 	/*update step information*/
 	uspex_gui._tmp_isfixed=uspex_gui.calc._isfixed[i-1];
+	if(uspex_gui._tmp_isfixed) GUI_TOGGLE_ON(uspex_gui._isfixed);
+	else GUI_TOGGLE_OFF(uspex_gui._isfixed);
 	GUI_COMBOBOX_SET(uspex_gui.abinitioCode,uspex_gui.calc.abinitioCode[i-1]);
 	text=g_strdup_printf("%.4lf",uspex_gui.calc.KresolStart[i-1]);
 	GUI_ENTRY_TEXT(uspex_gui.KresolStart,text);
@@ -2046,26 +2142,29 @@ void spin_update_curr_step(void){
 	text=g_strdup_printf("%.4lf",uspex_gui.calc.vacuumSize[i-1]);
 	GUI_ENTRY_TEXT(uspex_gui.vacuumSize,text);
 	g_free(text);
-	/**/
-	if(uspex_gui.calc._isCmdList){
-		/*we have 1 cmd per step*/
-		text=g_strdup(uspex_gui.calc.commandExecutable);
-		index=1;
-		while((index<i)&&(*text!='\0')){
-			if(*text=='\n') index++;
-			text++;
-		}
-		if(*text=='\0') {
-			text=g_strdup("N/A");
-			GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
-			g_free(text);
-		}else {
-			ptr=text+1;
-			while((*ptr!='\0')&&(*ptr!='\n')) ptr++;
-			*ptr='\0';/*correct the termination*/
-			GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
-		}
+	/*commandExecutable*/
+	if(!uspex_gui.calc._isCmdList){
+		/*only first command matter*/
+		if(uspex_gui._tmp_commandExecutable[0]==NULL) text=g_strdup("N/A");
+		else text=g_strdup(uspex_gui._tmp_commandExecutable[0]);
+	}else{
+		/*display ith command*/
+		if(uspex_gui._tmp_commandExecutable[i-1]==NULL) text=g_strdup("N/A");
+		else text=g_strdup(uspex_gui._tmp_commandExecutable[i-1]);
 	}
+	GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
+	g_free(text);
+	/*uspex_gui._tmp_ai_input*/
+	if(uspex_gui._tmp_ai_input[i-1]==NULL) text=g_strdup("N/A");
+	else text=g_strdup(uspex_gui._tmp_ai_input[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.ai_input,text);
+	g_free(text);
+	/*uspex_gui._tmp_ai_opt*/
+	if(uspex_gui._tmp_ai_opt[i-1]==NULL) text=g_strdup("N/A");
+	else text=g_strdup(uspex_gui._tmp_ai_opt[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.ai_opt,text);
+	g_free(text);
+
 }
 /********************/
 /* toggle auto_step */
@@ -2093,26 +2192,101 @@ void toggle_auto_step(void){
 /* select AI code for this step */
 /********************************/
 void uspex_ai_selected(GUI_OBJ *w){
-	/*TODO: trigger VASP-only + BoltzTraP + ...*/
-
+	gint idx;
+	gint step=(gint)uspex_gui._tmp_curr_step;
+	GUI_COMBOBOX_GET(w,uspex_gui.calc.abinitioCode[step-1]);
+	/*propose some defaults command is missing*/
+	if((uspex_gui._tmp_commandExecutable[step-1]==NULL)&&(uspex_gui.calc._isCmdList)){
+		/*we don't have commandExecutable*/
+		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
+			if(idx==(step-1)) continue;
+			if(uspex_gui.calc.abinitioCode[idx]==uspex_gui.calc.abinitioCode[step-1])
+				uspex_gui._tmp_commandExecutable[step-1]=g_strdup(uspex_gui._tmp_commandExecutable[idx]);
+		}
+		/*if all fail*/
+		if(uspex_gui._tmp_commandExecutable[step-1]==NULL) uspex_gui._tmp_commandExecutable[step-1]=g_strdup("N/A");
+	}
+	uspex_gui.have_ZT=FALSE;
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.have_ZT|=(uspex_gui.calc.abinitioCode[idx]==14);
+	/*TODO: find the many things restricted to VASP in USPEX*/
 }
 /****************************/
 /* load input for this step */
 /****************************/
 void load_ai_input_dialog(void){
-
+        GUI_OBJ *file_chooser;
+        gint have_answer;
+        gchar *filename;
+        gchar *text;
+	gint step=(gint)uspex_gui._tmp_curr_step;
+        /**/
+        GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select Specific INPUT_X file","*","INPUT_X");
+        GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+        if(have_answer){
+                /*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+                if(filename) {
+                        text=g_strdup_printf("%s",filename);
+                        GUI_ENTRY_TEXT(uspex_gui.ai_input,text);
+			if(uspex_gui._tmp_ai_input[step-1]!=NULL) g_free(uspex_gui._tmp_ai_input[step-1]);
+			uspex_gui._tmp_ai_input[step-1]=NULL;
+			uspex_gui._tmp_ai_input[step-1]=g_strdup(text);
+                        g_free (filename);
+			g_free(text);
+                }
+        }
+        GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*********************************************/
 /* load option file (optional) for this step */
 /*********************************************/
 void load_ai_opt_dialog(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	gint step=(gint)uspex_gui._tmp_curr_step;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select Specific OPTION_X file","*","OPTION_X");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.ai_opt,text);
+			if(uspex_gui._tmp_ai_opt[step-1]!=NULL) g_free(uspex_gui._tmp_ai_opt[step-1]);
+			uspex_gui._tmp_ai_opt[step-1]=NULL;
+			uspex_gui._tmp_ai_opt[step-1]=g_strdup(text);
+			g_free (filename);
+			g_free(text);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*****************************************************/
 /* define an ab initio code executable for this step */
 /*****************************************************/
-void load_abinito_exe_dialog(void){
-
+void load_abinitio_exe_dialog(void){
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	gint step=(gint)uspex_gui._tmp_curr_step;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select ab initio command","*","CommandExecutable");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.commandExecutable,text);
+			if(uspex_gui._tmp_commandExecutable[step-1]!=NULL) g_free(uspex_gui._tmp_commandExecutable[step-1]);
+			uspex_gui._tmp_commandExecutable[step-1]=NULL;
+			uspex_gui._tmp_commandExecutable[step-1]=g_strdup(text);
+			g_free (filename);
+			g_free(text);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /**********************************************/
 /* generate input/optional file for this step */
@@ -2125,97 +2299,13 @@ void generate_step(void){
 /**************************/
 void apply_step(void){
 	gint i=(gint)uspex_gui._tmp_curr_step;
-	gint index;
-	gchar *text;
-	gchar *ptr;
-	gchar *ptr2;
 	/*REG step values*/
 	uspex_gui.calc._isfixed[i-1]=uspex_gui._tmp_isfixed;
 	GUI_COMBOBOX_GET(uspex_gui.abinitioCode,uspex_gui.calc.abinitioCode[i-1]);
 	GUI_REG_VAL(uspex_gui.KresolStart,uspex_gui.calc.KresolStart[i-1],"%lf");
 	GUI_REG_VAL(uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[i-1],"%lf");
-	/*REG command*/
-	if(uspex_gui.calc._isCmdList){
-		/*we have 1 cmd per step*/
-		ptr=uspex_gui.calc.commandExecutable;
-		index=1;
-		while((index<i)&&(*ptr!='\0')){
-			ptr++;
-			if(*ptr=='\n') index++;
-		}
-		if(*ptr=='\0'){/*is not an error*/
-			*ptr='\n';/*change to EOL*/
-			/*just paste the command at the end of the array*/
-			GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
-			text=g_strdup_printf("%s%s",uspex_gui.calc.commandExecutable,ptr);
-			g_free(ptr);
-			g_free(uspex_gui.calc.commandExecutable);
-			uspex_gui.calc.commandExecutable=text;
-		}else{
-			/*we need to replace that part of uspex_gui.calc.commandExecutable*/
-			ptr2=ptr+1;
-			while((*ptr2!='\n')&&(*ptr2!='\0')) ptr2++;
-			*ptr='\0';/*ie cut here*/
-			GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
-			if(*ptr2=='\0') text=g_strdup_printf("%s\n%s",uspex_gui.calc.commandExecutable,ptr);
-			else{
-				ptr2++;/*from here*/
-				if(i==1) text=g_strdup_printf("%s\n%s",ptr,ptr2);
-				else text=g_strdup_printf("%s\n%s\n%s",uspex_gui.calc.commandExecutable,ptr,ptr2);
-			}
-			g_free(ptr);
-			g_free(uspex_gui.calc.commandExecutable);
-			uspex_gui.calc.commandExecutable=text;
-		}
-	}else{
-		/*we have 1 command at all!*/
-		GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
-		ptr2=uspex_gui.calc.commandExecutable;
-if(ptr2==NULL) {
-		/*just copy the command*/
-		uspex_gui.calc.commandExecutable=g_strdup(ptr);
-}else{
-		while((*ptr!='\0')&&(*ptr2!='\0')&&((*ptr)==(*ptr2))) {
-			ptr++;
-			ptr2++;
-		}
-		if ((*ptr)!=(*ptr2)){
-			/*we have a new command*/
-			if(i==1){
-				/*new first command, easy*/
-				GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr);
-				for(index=1;index<uspex_gui.calc._num_opt_steps;index++){
-					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
-					g_free(ptr);
-					ptr=text;
-				}
-				g_free(uspex_gui.calc.commandExecutable);
-				uspex_gui.calc.commandExecutable=ptr;
-			}else{
-				ptr=g_strdup(uspex_gui.calc.commandExecutable);
-				for(index=1;index<(i-1);index++){/*REPEAT before step*/
-					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
-					g_free(ptr);
-					ptr=text;
-				}/*COPY*/
-				GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,ptr2);
-				text=g_strdup_printf("%s\n%s",ptr,ptr2);
-				g_free(ptr);
-				ptr=text;
-				for(index=i;index<uspex_gui.calc._num_opt_steps;index++){/*REPEAT after step*/
-					text=g_strdup_printf("%s\n%s",ptr,uspex_gui.calc.commandExecutable);
-					g_free(ptr);
-					ptr=text;
-				}
-				g_free(uspex_gui.calc.commandExecutable);
-				uspex_gui.calc.commandExecutable=ptr;
-			}
-			uspex_gui.calc._isCmdList=TRUE;/*change to reflect new orientation*/
-		}
-		/*all*/
-}
-	}/*false alarm*/
-
+	GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[i-1]);
+	register_commandExecutable();/*REG command*/
 }
 /***************************************************************/
 /* populate the species array for (pseudo-)potential definition */
@@ -2275,8 +2365,12 @@ void load_ai_pot_dialog(){
         gchar *text;
 	gchar *type;
 	gchar *filter;
+	gint index;
+	gint i=(gint)uspex_gui._tmp_curr_step;
         /**/
-	switch (uspex_gui.calc.abinitioCode[0]){
+	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
+	if(index<0) index=0;
+	switch (uspex_gui.calc.abinitioCode[i-1]){
 	case 2:/*SIESTA*/
 		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.psf",uspex_gui._tmp_ai_spe);
 		else type=g_strdup("X.psf");
@@ -2340,8 +2434,6 @@ void load_ai_pot_dialog(){
 	if(have_answer){
 		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
 		if(filename) {
-			gint index;
-			GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
 			text=g_strdup_printf("%s",filename);
 			GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
 			if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
@@ -2443,43 +2535,164 @@ void uspex_TE_goal_selected(GUI_OBJ *w){
 /* load the BoltzTraP script/command */
 /*************************************/
 void load_cmd_BoltzTraP(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select BoltzTrap command","*","BoltzTraP");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.cmd_BoltzTraP,text);
+			if(uspex_gui._tmp_cmd_BoltzTraP!=NULL) g_free(uspex_gui._tmp_cmd_BoltzTraP);
+			uspex_gui._tmp_cmd_BoltzTraP=NULL;
+			uspex_gui._tmp_cmd_BoltzTraP=g_strdup(text);
+			g_free (filename);
+			g_free(text);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*******************************/
 /* load orderParameter command */
 /*******************************/
 void load_cmd_OP(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select OrderParameter command","*","script");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.cmdOrderParameter,text);
+			g_free(text);
+			USPEX_REG_TEXT(cmdOrderParameter);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /************************************/
 /* load enthalpyTemperature command */
 /************************************/
 void load_cmd_ET(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select EnthalpyTemperature command","*","script");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.cmdEnthalpyTemperature,text);
+			g_free(text);
+			USPEX_REG_TEXT(cmdEnthalpyTemperature);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /***************************/
 /*load orderParameter file */
 /***************************/
 void load_OP_file(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select OP file","*.dat","data file");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.orderParameterFile,text);
+			g_free(text);
+			USPEX_REG_TEXT(orderParameterFile);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /********************************/
 /*load enthalpyTemperature file */
 /********************************/
 void load_ET_file(){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select ET file","*.dat","data file");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.enthalpyTemperatureFile,text);
+			g_free(text);
+			USPEX_REG_TEXT(enthalpyTemperatureFile);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /************************/
 /* load trajectory file */
 /************************/
 void load_traj_file(){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select MD trajectory file","*","traj file");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.trajectoryFile,text);
+			g_free(text);
+			USPEX_REG_TEXT(trajectoryFile);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /************************/
 /* load MD restart file */
 /************************/
 void load_MDrestart_file(){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select MD restart file","*","restart file");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_ENTRY_TEXT(uspex_gui.MDrestartFile,text);
+			g_free(text);
+			USPEX_REG_TEXT(MDrestartFile);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /********************/
 /* select FullRelax */
@@ -2500,11 +2713,53 @@ void uspex_relax_selected(GUI_OBJ *w){
 		uspex_gui.calc.FullRelax=2;
 	}
 }
+/********************************************/
+/* init metadynamics model from GDIS models */
+/********************************************/
+void init_metadynamics_models(){
+	gint index;
+	gchar *text;
+	GSList *list;
+	struct model_pak *data;
+	/*WIPE MODEL*/
+	GUI_COMBOBOX_WIPE(uspex_gui.meta_model);
+	GUI_COMBOBOX_ADD(uspex_gui.meta_model,"From VASP5 POSCAR file");
+	index=1;
+	for(list=sysenv.mal;list;list=g_slist_next(list)){
+		data = list->data;
+		/*to be registered a model must have at least 1 atom*/
+		if(g_slist_length(data->cores)>0) {
+			text=g_strdup_printf("%i: %s",index,data->basename);
+			GUI_COMBOBOX_ADD(uspex_gui.meta_model,text);
+			g_free(text);
+		}
+		index++;
+	}
+	GUI_COMBOBOX_SET(uspex_gui.meta_model,0);
+}
 /****************************************/
 /* load metadynamics starting structure */
 /****************************************/
 void load_meta_start_file(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select META starting point","POSCAR*","POSCAR_1");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+	/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_COMBOBOX_ADD_TEXT(uspex_gui.meta_model,0,text);
+			GUI_COMBOBOX_DEL(uspex_gui.meta_model,1);
+			GUI_COMBOBOX_SET(uspex_gui.meta_model,0);
+			g_free(text);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*****************************/
 /* select metadynamics model */
@@ -2513,13 +2768,11 @@ void uspex_meta_model_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
-	case 1:
-		GUI_LOCK(uspex_gui.meta_model_button);
-		break;
 	case 0:
-		/* fall through */
-	default:
 		GUI_UNLOCK(uspex_gui.meta_model_button);
+		break;
+	default:
+		GUI_LOCK(uspex_gui.meta_model_button);
 	}
 }
 /*********************/
@@ -2668,6 +2921,30 @@ void uspex_FormatType_selected(GUI_OBJ *w){
 		uspex_gui.calc.FormatType=2;
 	}
 }
+/*************************************/
+/* initialize image models from GDIS */
+/*************************************/
+void init_img_gdis_model(void){
+	gint index;
+	gchar *text;
+	GSList *list;
+	struct model_pak *data;
+	/*WIPE MODEL*/
+	GUI_COMBOBOX_WIPE(uspex_gui.img_model);
+	GUI_COMBOBOX_ADD(uspex_gui.img_model,"From VASP5 POSCAR file");
+	index=1;
+	for(list=sysenv.mal;list;list=g_slist_next(list)){
+		data = list->data;
+		/*to be registered, a model must 3D periodic... I think*/
+		if(data->periodic==3){
+			text=g_strdup_printf("%i: %s",index,data->basename);
+			GUI_COMBOBOX_ADD(uspex_gui.img_model,text);
+			g_free(text);
+		}
+		index++;
+	}
+	GUI_COMBOBOX_SET(uspex_gui.img_model,0);
+}
 /*****************************/
 /* select VCNEB Images model */
 /*****************************/
@@ -2675,20 +2952,36 @@ void uspex_img_model_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
-	case 1:
-		GUI_LOCK(uspex_gui.img_model_button);
-		break;
 	case 0:
-		/* fall through */
-	default:
 		GUI_UNLOCK(uspex_gui.img_model_button);
+		break;
+	default:
+		GUI_LOCK(uspex_gui.img_model_button);
 	}
 }
 /*************************/
 /* load VCNEB Image file */
 /*************************/
 void load_img_model_file(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select VCNEB image model","*","VASP5 format");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_COMBOBOX_ADD_TEXT(uspex_gui.img_model,0,text);
+			GUI_COMBOBOX_DEL(uspex_gui.img_model,1);
+			GUI_COMBOBOX_SET(uspex_gui.img_model,0);
+			g_free(text);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
 /*****************************************/
 /* initialize molecular models from GDIS */
@@ -2812,7 +3105,7 @@ void spin_update_num_mol(void){
 /* Select a GDIS model */
 /***********************/
 void uspex_gdis_mol_selected(GUI_OBJ *w){
-
+	/*nothing here for now*/
 }
 /***************************/
 /* update current molecule */
@@ -2836,6 +3129,30 @@ void apply_gdis_mol(void){
 	uspex_gui._tmp_mols_gdis[i]=index;
 	uspex_gui._tmp_mols_gulp[i]=uspex_gui.mol_as_gulp;
 }
+/*****************************************/
+/* init substrate model from GDIS models */
+/*****************************************/
+void init_substrate_models(){
+	gint index;
+	gchar *text;
+	GSList *list;
+	struct model_pak *data;
+	/*WIPE MODEL*/
+	GUI_COMBOBOX_WIPE(uspex_gui.substrate_model);
+	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"From VASP5 POSCAR file");
+	index=1;
+	for(list=sysenv.mal;list;list=g_slist_next(list)){
+		data = list->data;
+		/*to be registered, a model must be 3D periodic*/
+		if(data->periodic==3){
+			text=g_strdup_printf("%i: %s",index,data->basename);
+			GUI_COMBOBOX_ADD(uspex_gui.substrate_model,text);
+			g_free(text);
+		}
+		index++;
+	}
+	GUI_COMBOBOX_SET(uspex_gui.substrate_model,0);
+}
 /**********************************/
 /* select surface substrate model */
 /**********************************/
@@ -2843,22 +3160,37 @@ void uspex_substrate_model_selected(GUI_OBJ *w){
 	gint index;
 	GUI_COMBOBOX_GET(w,index);
 	switch (index){
-	case 1:
-		GUI_LOCK(uspex_gui.substrate_model_button);
-		break;
 	case 0:
-		/* fall through */
-	default:
 		GUI_UNLOCK(uspex_gui.substrate_model_button);
+		break;
+	default:
+		GUI_LOCK(uspex_gui.substrate_model_button);
 	}
 }
 /********************************/
 /* load surface substrate model */
 /********************************/
 void load_substrate_model_file(void){
-
+	GUI_OBJ *file_chooser;
+	gint have_answer;
+	gchar *filename;
+	gchar *text;
+	/**/
+	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select Substrate structure","POSCAR_SUBSTRATE","VASP5 format");
+	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+	if(have_answer){
+		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+		if(filename) {
+			text=g_strdup_printf("%s",filename);
+			GUI_COMBOBOX_ADD_TEXT(uspex_gui.substrate_model,0,text);
+			GUI_COMBOBOX_DEL(uspex_gui.substrate_model,1);
+			GUI_COMBOBOX_SET(uspex_gui.substrate_model,0);
+			g_free(text);
+			g_free (filename);
+		}
+	}
+	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
-
 /************************/
 /* Switch notebook page */
 /************************/
@@ -3132,7 +3464,7 @@ if(uspex_gui.auto_C_lat){
 	//_isfixed is already sync
 	USPEX_REG_VAL(numProcessors,"%i");
 	USPEX_REG_VAL(numParallelCalcs,"%i");
-	//commandExecutable is already sync
+	register_commandExecutable();
 	USPEX_REG_VAL(whichCluster,"%i");
 	USPEX_REG_TEXT(remoteFolder);
 	//PhaseDiagram is already sync
@@ -3895,16 +4227,16 @@ GUI_TOOLTIP(uspex_gui.KresolStart,"KresolStart: Ch. 4.8 DEFAULT: 0.2-0.08\nRecip
 	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[0],"%.4f","vacuum:",3,4,2,3);
 GUI_TOOLTIP(uspex_gui.vacuumSize,"vacuumSize: Ch. 4.8 DEFAULT: 10.0\nVacuum size (Ang.) between neighbor atoms from adjacent unit cells.\nFor cluster, 2D-crystal, and surfaces only.");
 /* line 3 */
-	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input,"INP:",0,1,3,4);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input[0],"INP:",0,1,3,4);
 GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile name as to end with *_N where N is the step number.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_input_button,load_ai_input_dialog,1,2,3,4);
-	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt,"OPT:",2,3,3,4);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt[0],"OPT:",2,3,3,4);
 GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_opt_button,load_ai_opt_dialog,3,4,3,4);
 /* line 4 */
-	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable,"EXE:",0,1,4,5);
+	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[0],"EXE:",0,1,4,5);
 GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_abinito_exe_dialog,1,2,4,5);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_abinitio_exe_dialog,1,2,4,5);
 	GUI_BUTTON_TABLE(table,uspex_gui.ai_generate,"Generate",generate_step,2,3,4,5);
 GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nUnavailable (for now) m(_ _)m");
 	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,4,5);
@@ -4032,7 +4364,7 @@ GUI_TOOLTIP(uspex_gui.BoltzTraP_T_efcut,"BoltzTraP_T_efcut: Ch. 5.2 DEFAULT: 0.1
 /* line 9 */
 	GUI_TEXT_TABLE(table,uspex_gui.cmd_BoltzTraP,uspex_gui._tmp_cmd_BoltzTraP,"cmd:",0,1,9,10);
 GUI_TOOLTIP(uspex_gui.cmd_BoltzTraP,"BoltzTraP software command/script (optional).");
-GUI_OPEN_BUTTON_TABLE(table,button,load_cmd_BoltzTraP,1,2,9,10);
+GUI_OPEN_BUTTON_TABLE(table,uspex_gui.cmd_BoltzTraP_button,load_cmd_BoltzTraP,1,2,9,10);
 	GUI_ENTRY_TABLE(table,uspex_gui.TE_T_interest,uspex_gui.calc.TE_T_interest,"%.4f","T_target:",2,3,9,10);
 GUI_TOOLTIP(uspex_gui.TE_T_interest,"TE_T_interest: Ch. 5.2 DEFAULT: 300.0Y\nTarget temperature to optimize thermoelectric efficiency.");
 	GUI_ENTRY_TABLE(table,uspex_gui.TE_threshold,uspex_gui.calc.TE_threshold,"%.4f","Threshold:",3,4,9,10);
@@ -4219,8 +4551,6 @@ GUI_TOOLTIP(uspex_gui.PrintStep,"PrintStep: Ch. 6.1 DEFAULT: 1\nSave restart fil
 	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"3 - XYZ format with lattice.");
 GUI_TOOLTIP(uspex_gui.FormatType,"FormatType: Ch. 6.1 DEFAULT: 2\nFormat of structures in PATH output directory.");
 	GUI_COMBOBOX_TABLE(table,uspex_gui.img_model,"Model:",1,3,11,12);
-	GUI_COMBOBOX_ADD(uspex_gui.img_model,"From Images file");
-	GUI_COMBOBOX_ADD(uspex_gui.img_model,"UNDER CONSTRUCTION");
 GUI_TOOLTIP(uspex_gui.img_model,"Select the original Images model.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.img_model_button,load_img_model_file,3,4,11,12);
 /* --- Molecules */
@@ -4248,8 +4578,6 @@ GUI_TOOLTIP(uspex_gui.optFreezing,"Use GULP chemical labels and charge Zmatrix f
 	GUI_LABEL_TABLE(table,"Surfaces",0,4,15,16);
 /* line 16 */
 	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",0,2,16,17);
-	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"From VASP5 POSCAR file");
-	GUI_COMBOBOX_ADD(uspex_gui.substrate_model,"UNDER CONSTRUCTION");
 GUI_TOOLTIP(uspex_gui.substrate_model,"Select the model to use as a substrate\nie. without buffer, surface, and vacuum region.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,2,3,16,17);
 GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",3,4,16,17);
@@ -4317,6 +4645,7 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui.TE_goal,0,uspex_TE_goal_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.FullRelax,2,uspex_relax_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.meta_model,0,uspex_meta_model_selected);
+	init_metadynamics_models();
 	GUI_COMBOBOX_SETUP(uspex_gui._vcnebtype_method,0,uspex_vcneb_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optReadImages,2,uspex_ReadImg_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.optimizerType,0,uspex_optimizerType_selected);
@@ -4325,12 +4654,13 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui.FormatType,0,uspex_FormatType_selected);
 	uspex_CIDI_selected(uspex_gui.optMethodCIDI);
 	GUI_COMBOBOX_SETUP(uspex_gui.img_model,0,uspex_img_model_selected);
+	init_img_gdis_model();
 	update_vcnebType();
 	GUI_COMBOBOX_SETUP(uspex_gui.mol_model,0,uspex_mol_model_selected);
 	init_uspex_gdis_mol();
 	GUI_COMBOBOX_SETUP(uspex_gui.mol_gdis,0,uspex_gdis_mol_selected);
-
 	GUI_COMBOBOX_SETUP(uspex_gui.substrate_model,0,uspex_substrate_model_selected);
+	init_substrate_models();
 /* --- Outside of notebook */
 	GUI_FRAME_WINDOW(uspex_gui.window,frame);
 	GUI_VBOX_FRAME(frame,vbox);
