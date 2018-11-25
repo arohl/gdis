@@ -79,6 +79,37 @@ matrix_camera_transform(m, model);
 }
 
 /*******************************/
+/* multiply two (2x2) matrices */
+/*******************************/
+void mat2mat(gdouble *mat1, gdouble *mat2)
+/* mat2 -> mat1*mat2 */
+{
+  gint i;
+  gdouble tmp[4], *res, *ptr1, *ptr2;
+  
+  /* init */
+  matrix_transpose_22(mat2);
+
+  res = tmp;
+  ptr1 = mat1;
+  
+  /* mult - loop over rows of mat 1*/
+  for (i=2 ; i-- ; )
+  {
+    ptr2 = mat2;
+    
+    *res = *(ptr1++) * (*(ptr2++));
+    *(res++) += *(ptr1--) * (*(ptr2++));
+    
+    *res = *(ptr1++) * (*(ptr2++));
+    *(res++) += *(ptr1++) * (*ptr2);
+  }
+  
+  /* copy result to mat2 */
+  memcpy(mat2,tmp,4*sizeof(gdouble));
+}
+
+/*******************************/
 /* multiply two (3x3) matrices */
 /*******************************/
 void matmat(gdouble *mat1, gdouble *mat2)
@@ -311,6 +342,19 @@ ptr++;
 *ptr++ = tmp[7]; 
 *ptr++ = tmp[2]; 
 *ptr   = tmp[5]; 
+}
+
+/*****************/
+/* transpose 2x2 */
+/*****************/
+void matrix_transpose_22(gdouble *mat)
+{
+  gdouble tmp[4], *ptr=mat;
+  
+  memcpy(tmp, mat, 4*sizeof(gdouble));
+  ptr++;
+  *ptr++ = tmp[2];
+  *ptr++ = tmp[1];
 }
 
 void make_cofmat(gdouble *cof, gdouble *mat)

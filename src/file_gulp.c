@@ -1267,6 +1267,7 @@ gint type, gen_flag, temp_code, noflags, growth, translate, noautobond;
 gchar *tmp, *line, **buff;
 gdouble switch_value;
 gdouble x[3], vec1[3], vec2[3], vec3[3];
+gdouble strainmat[9], svec[4];
 gpointer scan;
 GSList *item, *clist, *slist;
 GString *key_buff, *elem_buff, *ex_buff, *ff_buff, *species_buff, *kpoints_buff;
@@ -2006,6 +2007,70 @@ printf("code: %d, context: %d\n", code, context);
             scan_put_line(scan);
           break;
 
+        case CELL_STRAIN:
+          if (model->periodic == 3 && num_tokens == 7)
+            {
+            model->cell_strains[0] = str_to_float(*(buff+1));
+            model->cell_strains[1] = str_to_float(*(buff+2));
+            model->cell_strains[2] = str_to_float(*(buff+3));
+            model->cell_strains[3] = str_to_float(*(buff+4));
+            model->cell_strains[4] = str_to_float(*(buff+5));
+            model->cell_strains[5] = str_to_float(*(buff+6));
+              
+            strainmat[0] = model->cell_strains[0] + 1.0;
+            strainmat[4] = model->cell_strains[1] + 1.0;
+            strainmat[8] = model->cell_strains[2] + 1.0;
+            strainmat[1] = strainmat[3] = model->cell_strains[5]*0.5;
+            strainmat[2] = strainmat[6] = model->cell_strains[4]*0.5;
+            strainmat[5] = strainmat[7] = model->cell_strains[3]*0.5;
+#if DEBUG_READ_GULP
+P3MAT("lattice matrix: ", model->latmat);
+P3MAT("strain matrix: ", strainmat);
+#endif
+            matmat(strainmat, model->latmat);
+#if DEBUG_READ_GULP
+P3MAT("new lattice matrix: ", model->latmat);
+#endif
+            }
+          else if (model->periodic == 2 && num_tokens == 4)
+            {
+            model->cell_strains[0] = str_to_float(*(buff+1));
+            model->cell_strains[1] = str_to_float(*(buff+2));
+            model->cell_strains[2] = str_to_float(*(buff+3));
+              
+            strainmat[0] = model->cell_strains[0] + 1.0;
+            strainmat[3] = model->cell_strains[1] + 1.0;
+            strainmat[1] = strainmat[2] = model->cell_strains[2]*0.5;
+/* GDIS stores the latmat as a 3x3 matrix; pullout 2 x 2 do matrix ops and put back */
+            svec[0] = model->latmat[0];
+            svec[1] = model->latmat[1];
+            svec[2] = model->latmat[3];
+            svec[3] = model->latmat[4];
+#if DEBUG_READ_GULP
+P2MAT("lattice matrix: ", svec);
+P2MAT("strain matrix: ", strainmat);
+#endif
+            mat2mat(strainmat, svec);
+#if DEBUG_READ_GULP
+P2MAT("new lattice matrix: ", svec);
+#endif
+            model->latmat[0] = svec[0];
+            model->latmat[1] = svec[1];
+            model->latmat[3] = svec[2];
+            model->latmat[4] = svec[3];
+            }
+          else if (model->periodic == 1 && num_tokens == 2)
+            {
+            model->cell_strains[0] = str_to_float(*(buff+1));
+              
+            strainmat[0] = model->cell_strains[0] + 1.0;
+            model->latmat[0] *= strainmat[0];
+            }
+          else
+            {
+            gui_text_show(WARNING, "Invalid use of cstrain. Ignoring...\n");
+            }
+          break;
 /* NB: errors -> break (not return) so we cope with empty regions */
         case PFRAC:
         case SFRAC:

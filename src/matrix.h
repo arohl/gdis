@@ -6,6 +6,8 @@ enum {IDENTITY, INVERSION, PLANE, PAXIS, IAXIS, REFLECTION, ALIGNMENT, LATMAT};
 #define ARR2ADD(vec, a) {*vec += *a ; *(vec+1) += *(a+1);}
 #define VEC2ADD(vec, a, b) {*vec += a ; *(vec+1) += b;}
 #define VEC2SET(vec, a, b) {*vec = a ; *(vec+1) = b;}
+#define P2MAT(s,m) {printf("%s\n|%lf, %lf|\n|%lf, %lf|\n",s,*m,*(m+1),*(m+2),*(m+3));}
+
 
 /* dim 3 */
 #define VEC3MUL(vec,m) {*vec *= m ; *(vec+1) *= m ; *(vec+2) *= m;}
@@ -40,9 +42,11 @@ enum {IDENTITY, INVERSION, PLANE, PAXIS, IAXIS, REFLECTION, ALIGNMENT, LATMAT};
 void vecmat(gdouble *, gdouble *);
 void vectmat(gdouble *, gdouble *);
 void vec4mat(gdouble *, gdouble *);
+void mat2mat(gdouble *, gdouble *);
 void matmat(gdouble *, gdouble *);
 void mat4mat(gdouble *, gdouble *);
 gint matrix_invert(gdouble *);
+void matrix_transpose_22(gdouble *);
 void matrix_transpose(gdouble *);
 void matrix_transpose_44(gdouble *);
 

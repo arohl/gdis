@@ -64,6 +64,7 @@ struct keyword_pak gulp_option[] =
 {"svec", SURFACE_VECTORS},
 {"vect", LATTICE_VECTORS},
 {"cell", CELL},
+{"cstrain", CELL_STRAIN},
 {"pfrac", PFRAC},
 {"sfrac", SFRAC},
 {"frac", FRAC},
