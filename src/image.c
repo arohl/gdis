@@ -57,8 +57,8 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* NEW: include a button to create a new model */
 #include "plus.xpm"
- 
-
+/* NEW: include a control for plots -- OVHPA*/
+#include "plots.xpm"
 
 extern struct sysenv_pak sysenv;
 
@@ -241,6 +241,10 @@ for (i=0 ; i<IMAGE_LAST ; i++)
     case IMAGE_PALETTE:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) palette_xpm);
       name = "image_palette";
+      break;
+    case IMAGE_PLOTS:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) plots_xpm);
+      name = "image_plots";
       break;
     case IMAGE_PLUS:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) plus_xpm);

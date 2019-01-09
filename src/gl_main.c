@@ -35,7 +35,6 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <GL/glu.h>
 #endif
 
-
 #include "gdis.h"
 #include "coords.h"
 #include "edit.h"
@@ -572,7 +571,67 @@ glRasterPos3f(w[0], w[1], w[2]);
 glListBase(font_offset);
 glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
 }
-
+/**********************************/
+/* pango print:  new routine as a */
+/* replacement for gl_print_world */
+/* 2D print.             --OVHPA  */
+/**********************************/
+#define __COLOR_F_2_I(f) floor(f >= 1.0 ? 65535 : f * 65536.0)
+void pango_print(const gchar *str, gint x, gint y, struct canvas_pak *canvas, guint font_size, gint rotate){
+/*GDK*/
+GdkScreen *screen;
+GdkDrawable *drawable;
+GdkGC *gc;
+GdkColor color;
+/*PANGO*/
+PangoRenderer *pr;
+PangoContext *pc;
+PangoLayout *pl;
+PangoMatrix pm=PANGO_MATRIX_INIT;
+PangoFontDescription *pfd;
+/*INIT*/
+drawable=(sysenv.glarea)->window;
+screen=gdk_drawable_get_screen(drawable);
+pr=gdk_pango_renderer_get_default(screen);
+gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(pr),drawable);
+gc=gdk_gc_new(drawable);
+gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(pr),gc);
+pango_matrix_translate(&pm,x,y);
+pc=gtk_widget_create_pango_context(sysenv.glarea);
+pl=pango_layout_new(pc);
+pango_layout_set_markup(pl,str,strlen(str));
+pango_layout_set_single_paragraph_mode(pl,TRUE);
+pango_layout_set_width(pl,-1);
+pfd = pango_font_description_from_string(sysenv.gl_fontname);
+pango_font_description_set_absolute_size(pfd, font_size * PANGO_SCALE);
+pango_layout_set_font_description(pl,pfd);
+/*MATRIX*/
+pango_matrix_rotate(&pm,rotate);
+pango_context_set_matrix(pc,&pm);
+pango_layout_context_changed(pl);
+/*RENDER*/
+/*
+color.red=__COLOR_F_2_I(sysenv.render.label_colour[0]);
+color.green=__COLOR_F_2_I(sysenv.render.label_colour[1]);
+color.blue=__COLOR_F_2_I(sysenv.render.label_colour[2]);
+color.red=__COLOR_F_2_I(sysenv.render.title_colour[0]);
+color.green=__COLOR_F_2_I(sysenv.render.title_colour[1]);
+color.blue=__COLOR_F_2_I(sysenv.render.title_colour[2]);
+*/
+color.red=__COLOR_F_2_I(sysenv.render.fg_colour[0]);
+color.green=__COLOR_F_2_I(sysenv.render.fg_colour[1]);
+color.blue=__COLOR_F_2_I(sysenv.render.fg_colour[2]);
+gdk_pango_renderer_set_override_color(GDK_PANGO_RENDERER(pr),PANGO_RENDER_PART_FOREGROUND,&color);
+pango_renderer_draw_layout(pr,pl,0,0);
+//////gdk_draw_layout_with_colors (drawable,gc,x,y,pl,&color,NULL);/*this one needs explicit x,y*/
+/*CLEANUP*/
+gdk_pango_renderer_set_drawable(GDK_PANGO_RENDERER(pr),NULL);
+gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(pr),NULL);
+g_object_unref(pl);
+g_object_unref(pc);
+g_object_unref(gc);
+sysenv.pango_is_dirty=TRUE;
+}
 /*****************************/
 /* print at a world position */
 /*****************************/
@@ -2900,6 +2959,8 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
       if (canvas_timing_adjust(model))
         {
         gdk_gl_drawable_swap_buffers(gldrawable);
+	gdk_gl_drawable_wait_gl(gldrawable);
+	gdk_gl_drawable_wait_gdk(gldrawable);
         gdk_gl_drawable_gl_end(gldrawable);
         return(FALSE);
         }
@@ -2922,6 +2983,10 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
   }
 
 gdk_gl_drawable_swap_buffers(gldrawable);
+/* We NEED to wait for gl first, then for gdk
+ * for a proper display              -- OVHPA*/
+gdk_gl_drawable_wait_gl(gldrawable);
+gdk_gl_drawable_wait_gdk(gldrawable);
 gdk_gl_drawable_gl_end(gldrawable);
 
 return(TRUE);

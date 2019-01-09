@@ -3012,6 +3012,13 @@ fprintf(stdout,"-SENT\n");
 	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph_best);
 	g_free(gx.x);
+	dat_graph_set_title("<big>Best structures per generation</big>",_UO.graph_best);
+	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
+		dat_graph_set_sub_title("<small>(From <b>BESTIndividuals_relaxed</b> file)</small>",_UO.graph_best);
+	else
+		dat_graph_set_sub_title("<small>(From <b>BESTIndividuals</b> file)</small>",_UO.graph_best);
+	dat_graph_set_x_title("Generation number (iteration)",_UO.graph_best);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
 	/*END - NEW*/
 	gen=0;
 	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) { 

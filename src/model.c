@@ -118,6 +118,7 @@ data->transform_list = NULL;
 data->waypoint_list = NULL;
 data->frame_data_list = NULL;
 data->graph_active = NULL;
+data->graph_ui_active = NULL;
 data->picture_active = NULL;
 data->project = NULL;
 data->zone_array = NULL;

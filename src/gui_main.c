@@ -1994,6 +1994,18 @@ gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         GTK_SIGNAL_FUNC(gtk_mode_switch),
                         GINT_TO_POINTER(FREE));
 
+/* plot control button */
+pixbuf = image_table_lookup("image_plots");
+gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"plots controls",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_graph_controls),
+			NULL);
+
+
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */
 hpaned = gtk_hpaned_new();

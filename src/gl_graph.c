@@ -124,6 +124,11 @@ graph->select = -1;
 graph->select_label = NULL;
 graph->set_list = NULL;
 graph->type=GRAPH_REGULAR;
+/*NEW: graph_controls*/
+graph->title=NULL;
+graph->sub_title=NULL;
+graph->x_title=NULL;
+graph->y_title=NULL;
 
 /* append to preserve intuitive graph order on the model tree */
 model->graph_list = g_slist_append(model->graph_list, graph);
@@ -302,6 +307,42 @@ graph->type=type;
 
 graph->set_list = g_slist_append(graph->set_list, ptr);
 }
+/******************************/
+/* NEW - dat_graph: set title */
+/******************************/
+void dat_graph_set_title(const gchar *title,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+g_assert(graph != NULL);
+/*duplicate string*/
+graph->title=g_strdup(title);
+}
+/**********************************/
+/* NEW - dat_graph: set sub-title */
+/**********************************/
+void dat_graph_set_sub_title(const gchar *title,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+g_assert(graph != NULL);
+/*duplicate string*/
+graph->sub_title=g_strdup(title);
+}
+/********************************/
+/* NEW - dat_graph: set x_title */
+/********************************/
+void dat_graph_set_x_title(const gchar *x_title,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+g_assert(graph != NULL);
+/*duplicate string*/
+graph->x_title=g_strdup(x_title);
+}
+/********************************/
+/* NEW - dat_graph: set y_title */
+/********************************/
+void dat_graph_set_y_title(const gchar *y_title,gpointer pgraph){
+struct graph_pak *graph = pgraph;
+g_assert(graph != NULL);
+/*duplicate string*/
+graph->y_title=g_strdup(y_title);
+}
 /*************************/
 /* NEW - dat_graph: set x*/
 /*************************/
@@ -341,7 +382,7 @@ if(dy.y_size==0) {
 	py->type=GRAPH_REGULAR;
 	py->symbol=NULL;
 	py->line=GRAPH_LINE_NONE;
-	py->color=0;
+	py->color=GRAPH_COLOR_DEFAULT;
 	graph->size++;/*graph size hold the number of y arrays!*/
 	graph->set_list = g_slist_append(graph->set_list, py);
 	return;
@@ -453,11 +494,14 @@ g_assert(graph!=NULL);
 g_assert(canvas!=NULL);
 /*calculate x data*/
 	ox=canvas->x + 4*gl_fontsize;
-	if (graph->ylabel) ox+=4*gl_fontsize;
+	if (graph->ylabel) ox+=2*gl_fontsize;
 	oy=canvas->y + canvas->height - 2*gl_fontsize;
 	if (graph->xlabel) oy-=2*gl_fontsize;
 	dy=(canvas->height-8.0*gl_fontsize);
 	dx=(canvas->width-2.0*ox);
+
+if (graph->title) dy = (canvas->height-10.0*gl_fontsize);
+if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 
 	list=graph->set_list;
 	p_x = (g_data_x *) list->data;
@@ -611,12 +655,22 @@ graph_type type=graph->type;
 graph_line line=GRAPH_LINE_NONE;
 /* compute origin */
 ox = canvas->x + 4*gl_fontsize;
-if (graph->ylabel) ox += 4*gl_fontsize;
+if (graph->ylabel) ox += 2*gl_fontsize;
 oy = canvas->y + canvas->height - 2*gl_fontsize;
 if (graph->xlabel) oy -= 2*gl_fontsize;
 /* increments for screen drawing */
 dy = (canvas->height-8.0*gl_fontsize);
 dx = (canvas->width-2.0*ox);
+if (graph->title) {
+//  oy += 2*gl_fontsize;
+  dy = (canvas->height-10.0*gl_fontsize);
+}
+if (graph->x_title) {
+/*we have a x_title we need to offset y*/
+  oy = canvas->y + canvas->height - 5*gl_fontsize;
+}
+
+
 /* axes label colour */
 glColor3f(sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2]);
 glLineWidth(2.0);
@@ -669,8 +723,13 @@ if((type==GRAPH_DOS)&&(graph->xticks>2)){
 	    xf *= (graph->xmax-graph->xmin);
 	    xf += graph->xmin;
 	}
-    text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
+if((type==GRAPH_IY_TYPE)||(type==GRAPH_IX_TYPE)) {
+  text = g_strdup_printf("%i",(gint)xf);
+  pango_print(text, x, oy+gl_fontsize, canvas, gl_fontsize-2,0);
+} else {
+  text = g_strdup_printf("%.2f", xf);
+  pango_print(text, x-2*gl_fontsize, oy+gl_fontsize, canvas, gl_fontsize-2,0);
+}
     g_free(text);
   }
   /* axis segment + tick */
@@ -679,6 +738,13 @@ if((type==GRAPH_DOS)&&(graph->xticks>2)){
   gl_vertex_window(x, oy, canvas);
   gl_vertex_window(x, oy+5, canvas);
   glEnd();
+  if((type==GRAPH_IY_TYPE)||(type==GRAPH_XY_TYPE)||(type==GRAPH_IX_TYPE)||(type==GRAPH_XX_TYPE)){
+	  glBegin(GL_LINE_STRIP);
+	  gl_vertex_window(oldx,oy-dy-1,canvas);
+	  gl_vertex_window(x,oy-dy-1,canvas);
+	  gl_vertex_window(x,oy-dy-5,canvas);
+	  glEnd();
+  }
   oldx = x;
   }
 }
@@ -724,7 +790,7 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
 		text = g_strdup_printf("%.2e", yf);
 	else
 		text = g_strdup_printf("%7.2f", yf);
-	gl_print_window(text, 0, y-1, canvas);
+	gl_print_window(text,0,y-1, canvas);
 	g_free(text);
     }
     /* axis segment + tick */
@@ -757,7 +823,8 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
 		text = g_strdup_printf("%.2e", yf);
 	else
 		text = g_strdup_printf("%7.2f", yf);
-	gl_print_window(text, 0, y-1, canvas);
+//	gl_print_window(text, 2*gl_fontsize, y-1, canvas);
+	pango_print(text, 2*gl_fontsize, y-1, canvas,gl_fontsize-2,0);
 	g_free(text);
     }
     /* axis segment + tick */
@@ -766,6 +833,13 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
     gl_vertex_window(ox, y-1, canvas);
     gl_vertex_window(ox-5, y-1, canvas);
     glEnd();
+    if((type==GRAPH_IY_TYPE)||(type==GRAPH_XY_TYPE)||(type==GRAPH_IX_TYPE)||(type==GRAPH_XX_TYPE)){
+	    glBegin(GL_LINE_STRIP);
+		gl_vertex_window(ox+dx,oldy,canvas);
+		gl_vertex_window(ox+dx,y-1,canvas);
+		gl_vertex_window(ox+dx+4,y-1,canvas);
+		glEnd();
+    }
     oldy = y;
   }
 }
@@ -896,6 +970,43 @@ for ( ; list ; list=g_slist_next(list))
 		continue;
 	}
 	if(gy->type!=GRAPH_REGULAR) type=gy->type;
+	switch(gy->color){
+		case GRAPH_COLOR_WHITE:/*1.0,  1.0,    1.0*/
+			glColor3f(1.0,1.0,1.0);break;
+		case GRAPH_COLOR_BLUE:/*0.0,  0.0,    1.0*/
+			glColor3f(0.0,0.0,1.0);break;
+		case GRAPH_COLOR_GREEN:/*0.0,  0.5,    0.0*/
+			glColor3f(0.0,0.5,0.0);break;
+		case GRAPH_COLOR_RED:/*1.0,  0.0,    0.0*/
+			glColor3f(1.0,0.0,0.0);break;
+		case GRAPH_COLOR_YELLOW:/*1.0,  1.0,    0.0*/
+			glColor3f(1.0,1.0,0.0);break;
+		case GRAPH_COLOR_GRAY:/*0.5,  0.5,    0.5*/
+			glColor3f(0.5,0.5,0.5);break;
+		case GRAPH_COLOR_NAVY:/*0.0,  0.0,    0.5*/
+			glColor3f(0.0,0.0,0.5);break;
+		case GRAPH_COLOR_LIME:/*0.0,  1.0,    0.0*/
+			glColor3f(0.0,1.0,0.0);break;
+		case GRAPH_COLOR_TEAL:/*0.0,  0.5,    0.5*/
+			glColor3f(0.0,0.5,0.5);break;
+		case GRAPH_COLOR_AQUA:/*0.0,  1.0,    1.0*/
+			glColor3f(0.0,1.0,1.0);break;
+		case GRAPH_COLOR_MAROON:/*0.5,  0.0,    0.0*/
+			glColor3f(0.5,0.0,0.0);break;
+		case GRAPH_COLOR_PURPLE:/*0.5,  0.0,    0.5*/
+			glColor3f(0.5,0.0,0.5);break;
+		case GRAPH_COLOR_OLIVE:/*0.5,  0.5,    0.0*/
+			glColor3f(0.5,0.5,0.0);break;
+		case GRAPH_COLOR_SILVER:/*0.75, 0.75,   0.75*/
+			glColor3f(0.75,0.75,0.75);break;
+		case GRAPH_COLOR_FUSHIA:/*1.0,  0.0,    1.0*/
+			glColor3f(1.0,0.0,1.0);break;
+		case GRAPH_COLOR_BLACK:/*0.0,0.0,0.0*/
+			glColor3f(0.,0.,0.);
+		case GRAPH_COLOR_DEFAULT:/*whatever title color*/
+		default:
+			glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
+	}
   } else {
 	ptr = (gdouble *) list->data;
   }
@@ -1310,9 +1421,23 @@ switch (type){
 	xoff = (gint) strlen(graph->select_label);
 	xoff *= gl_fontsize;
 	xoff /= 4;
-	gl_print_window(graph->select_label, sx-xoff, 2*gl_fontsize, canvas);
+	pango_print(graph->select_label, sx-xoff, 0, canvas,gl_fontsize-2,0);
 	glDisable(GL_LINE_STIPPLE);
 	}
+/* NEW: set titles */
+if(graph->title){
+  pango_print(graph->title,ox+2,oy-(gint)dy-4*gl_fontsize,canvas,gl_fontsize,0);
+}
+if(graph->sub_title){
+  pango_print(graph->sub_title,ox+0.5*dx+2, oy-dy-2*gl_fontsize, canvas,gl_fontsize,0);
+}
+if(graph->x_title){
+  pango_print(graph->x_title,ox+0.33*dx+2,oy+2*gl_fontsize,canvas,gl_fontsize,0);
+}
+if(graph->y_title){
+  pango_print(graph->y_title,0,oy-0.33*dy,canvas,gl_fontsize,90);
+}
+/*axis?*/
 }
 
 /****************/
@@ -1478,4 +1603,3 @@ graph_add_data(n, y, xstart, xstop, graph);
 g_array_free(garray, TRUE);
 g_free(y);
 }
-

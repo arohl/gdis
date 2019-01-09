@@ -1141,6 +1141,7 @@ GSList *frame_data_list;
 GSList *waypoint_list;
 GSList *undo_list;
 gpointer graph_active;
+gpointer graph_ui_active;
 gpointer picture_active;
 gpointer project;
 gpointer zone_array;
@@ -1186,7 +1187,6 @@ gdouble area;
 gdouble volume;
 /* translation matrix/vectors & its inverse */
 gdouble latmat[9];
-gdouble cell_strains[6];
 gdouble ilatmat[9];
 /* reciprocal lattice vectors */
 gdouble rlatmat[9];

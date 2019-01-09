@@ -27,7 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 }while(0)
 #define VASP_REG_TEXT(value) do{\
 	if(vasp_gui.calc.value!=NULL) g_free(vasp_gui.calc.value);\
-	if(GUI_ENTRY_LENGHT(vasp_gui.value)>0) GUI_ENTRY_GET_TEXT(vasp_gui.value,vasp_gui.calc.value);\
+	if(GUI_ENTRY_LENGTH(vasp_gui.value)>0) GUI_ENTRY_GET_TEXT(vasp_gui.value,vasp_gui.calc.value);\
 	else vasp_gui.calc.value=NULL;\
 }while(0)
 /*page numbers*/
