@@ -174,6 +174,8 @@ gdouble graph_wavelength(gpointer);
 /* dat_graph interface */
 void dat_graph_set_title(const gchar *title,gpointer pgraph);
 void dat_graph_set_sub_title(const gchar *title,gpointer pgraph);
+void dat_graph_set_x_title(const gchar *x_title,gpointer pgraph);
+void dat_graph_set_y_title(const gchar *y_title,gpointer pgraph);
 void dat_graph_set_x(g_data_x dx,gpointer pgraph);
 void dat_graph_add_y(g_data_y dy,gpointer pgraph);
 void dat_graph_set_limits(gdouble x_min,gdouble x_max,gdouble y_min,gdouble y_max,gpointer pgraph);

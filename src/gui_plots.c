@@ -886,6 +886,11 @@ void sync_graph_controls(struct graph_pak *graph){
 			list=graph->set_list;/*this is g_data_x*/
 			list=g_slist_next(list);/*this is g_data_y*/
 			p_y = (g_data_y *) list->data;
+			if(p_y->y_size==0){
+				/*this is normal for non META/MINHOP*/
+				list=g_slist_next(list);
+				p_y = (g_data_y *) list->data;
+			}
 			GUI_UNLOCK(GRAPH_UI.type);
 			switch(p_y->type){
 				case GRAPH_IY_TYPE:
@@ -1178,14 +1183,31 @@ void toggle_auto_y(){
 				list=g_slist_next(list);/*this is g_data_y*/
 				if(!list) return;/*no Y data?*/
 				p_y = (g_data_y *) list->data;
-				graph->ymin=p_y->y[0];
-				graph->ymax=p_y->y[0];
+				if(p_y->y_size==0) {
+					/*this is normal for non META/MINHOP*/
+					list=g_slist_next(list);
+					p_y = (g_data_y *) list->data;
+				}
+				if(p_y->y[0]==-999.9){
+					graph->ymin=p_y->y[1];
+					graph->ymax=p_y->y[1];
+				}else{
+					graph->ymin=p_y->y[0];
+					graph->ymax=p_y->y[0];
+				}
 				/*go through all y sets*/
 				for(;list;list=g_slist_next(list)){
 					p_y = (g_data_y *) list->data;
-					for(idx=0;idx<p_y->y_size;idx++){
-						if(p_y->y[idx]<graph->ymin) graph->ymin=p_y->y[idx];
-						if(p_y->y[idx]>graph->ymax) graph->ymax=p_y->y[idx];
+					if(p_y->y[0]==-999.9){
+						for(idx=1;idx<p_y->y_size;idx++){
+							if(p_y->y[idx]<graph->ymin) graph->ymin=p_y->y[idx];
+							if(p_y->y[idx]>graph->ymax) graph->ymax=p_y->y[idx];
+						}
+					}else{
+						for(idx=0;idx<p_y->y_size;idx++){
+							if(p_y->y[idx]<graph->ymin) graph->ymin=p_y->y[idx];
+							if(p_y->y[idx]>graph->ymax) graph->ymax=p_y->y[idx];
+						}
 					}
 				}
 				/*add 5%*/
@@ -1461,19 +1483,18 @@ void graph_control_apply_dim(void){
 	if(graph->sub_title!=NULL) g_free(graph->sub_title);
 	if(GUI_ENTRY_LENGTH(GRAPH_UI.sub_title)>0) GUI_ENTRY_GET_TEXT(GRAPH_UI.sub_title,graph->sub_title);
 	else graph->sub_title=NULL;
-
-
-
-
-
-
+	if(graph->x_title!=NULL) g_free(graph->x_title);
+	if(GUI_ENTRY_LENGTH(GRAPH_UI.x_title)>0) GUI_ENTRY_GET_TEXT(GRAPH_UI.x_title,graph->x_title);
+	else graph->x_title=NULL;
+	if(graph->y_title!=NULL) g_free(graph->y_title);
+	if(GUI_ENTRY_LENGTH(GRAPH_UI.y_title)>0) GUI_ENTRY_GET_TEXT(GRAPH_UI.y_title,graph->y_title);
+	else graph->y_title=NULL;
 	GUI_REG_VAL(GRAPH_UI.xmin,graph->xmin,"%lf");
 	GUI_REG_VAL(GRAPH_UI.xmax,graph->xmax,"%lf");
 	GUI_REG_VAL(GRAPH_UI.ymin,graph->ymin,"%lf");
 	GUI_REG_VAL(GRAPH_UI.ymax,graph->ymax,"%lf");
 	graph->xticks=(gint)GRAPH_UI.xticks;
 	graph->yticks=(gint)GRAPH_UI.yticks;
-
 /*Apply Set, only if have_changed==FALSE*/
 if(have_changed==FALSE){
 	if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XX_TYPE)||(graph->type==GRAPH_XY_TYPE)){

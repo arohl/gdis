@@ -630,7 +630,6 @@ gdk_pango_renderer_set_gc(GDK_PANGO_RENDERER(pr),NULL);
 g_object_unref(pl);
 g_object_unref(pc);
 g_object_unref(gc);
-sysenv.pango_is_dirty=TRUE;
 }
 /*****************************/
 /* print at a world position */

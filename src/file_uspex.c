@@ -2910,12 +2910,19 @@ fprintf(stdout,"\n");
 	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph);
 	g_free(gx.x);
+	dat_graph_set_title("<big>All structures per generation</big>",_UO.graph);
+	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
+		dat_graph_set_sub_title("<small>(From <b>Individuals_relaxed</b> file)</small>",_UO.graph);
+	else
+		dat_graph_set_sub_title("<small>(From <b>Individuals</b> file)</small>",_UO.graph);
+	dat_graph_set_x_title("Generation number (iteration)",_UO.graph);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph);
 	/*END - NEW*/
 	gen=0;
 	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) {
 		/*create a fake 0 generation*/
 		/*NEW - y dat*/
-		gy.y_size=1;
+		gy.y_size=0;
 		gy.y=g_malloc(1*sizeof(gdouble));
 		gy.y[0]=max_E*2.;/*outside of graph*/
 		gy.idx=g_malloc(1*sizeof(gint32));
@@ -3174,9 +3181,18 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 #endif
 		line=g_strdup_printf("COMP_%s",elements[_UC.atomType[species_index]].symbol);
 		_UO.graph_comp[species_index]=graph_new(line, model);
+		g_free(line);
 		dat_graph_set_x(gx,_UO.graph_comp[species_index]);
 		dat_graph_set_limits(0.,1.,min_E,max_E,_UO.graph_comp[species_index]);
 		dat_graph_set_type(GRAPH_XX_TYPE,_UO.graph_comp[species_index]);
+		line=g_strdup_printf("<big>Structure energy vs. %s composition</big>",elements[_UC.atomType[species_index]].symbol);
+		dat_graph_set_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		line=g_strdup_printf("%s atomic composition (n<sub>%s</sub>/n<sub>total</sub>)",
+			elements[_UC.atomType[species_index]].symbol,elements[_UC.atomType[species_index]].symbol);
+		dat_graph_set_x_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		dat_graph_set_y_title("Structure energy (eV)",_UO.graph_comp[species_index]);
 		/*dynamically create y*/
 		for(jdx=0;jdx<n_compo;jdx++){
 			num=0;gy.y=NULL;gy.idx=NULL;
@@ -3451,6 +3467,10 @@ else{
 	dat_graph_set_x(gx,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IY_TYPE,_UO.graph_best);
 	g_free(gx.x);
+	dat_graph_set_title("<big>Structure energy vs. Image number</big>",_UO.graph_best);
+	dat_graph_set_sub_title("<small>(From <b>Energy</b> file)</small>",_UO.graph_best);
+	dat_graph_set_x_title("Image number (iteration)",_UO.graph_best);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
 	/*Y -> image data*/
 	gy.y_size=_UO.num_gen;
 	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
@@ -3460,6 +3480,7 @@ else{
 	gy.y[1] /= (gdouble)natoms;
 	_UO.min_E=gy.y[1];
 	_UO.max_E=gy.y[1];
+	gy.y[0]=-999.9;
 	/*create a fake image_0*/
 	_UO.ind[0].gen=0;
 	_UO.ind[0].have_data=FALSE;

@@ -518,7 +518,12 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 			break;
 		}
 	}
-	if(x_index<0) return;
+	if(x_index<0) {
+		/*not found*/
+		if(graph->select_label!=NULL) g_free(graph->select_label);
+		graph->select_label=NULL;
+		return;
+	}
 	/*scan for the proper y value*/
 	j=0;y_index=-1;
   if((graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XY_TYPE)){
@@ -532,7 +537,8 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 		yy *= -1;
 		yy += oy;
 		if((y>yy-3)&&(y<yy+3)){
-			/*got it no y_index here!*/
+			/*got it*/
+			y_index=1;
 			graph->select=x_index;
 			graph->select_2=p_y->y[x_index];
 			if(graph->select_label) g_free(graph->select_label);
@@ -556,7 +562,12 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 		}
 		j++;
 	}
-	if(y_index<0) return;
+	if(y_index<0) {
+		/*not found*/
+		if(graph->select_label!=NULL) g_free(graph->select_label);
+		graph->select_label=NULL;
+		return;
+	}
   }else if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_XX_TYPE)){
 	/*in this case, we know the data is on the x_index set*/
 	list=g_slist_nth(graph->set_list,x_index+1);
@@ -595,7 +606,18 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 			break;
 		}
 	}
-  }else return;/*unknown graph type*/
+	if(y_index<0) {
+		/*not found*/
+		if(graph->select_label!=NULL) g_free(graph->select_label);
+		graph->select_label=NULL;
+		return;
+	}
+  }else {
+	/*unknown graph type*/
+	if(graph->select_label!=NULL) g_free(graph->select_label);
+	graph->select_label=NULL;
+	return;
+  }
 }
 /************************************/
 /* graph data extraction primitives */
@@ -1346,12 +1368,15 @@ switch (type){
 	case GRAPH_XY_TYPE:
 	case GRAPH_IX_TYPE:
 	case GRAPH_XX_TYPE:
+		flag=(graph->select_label!=NULL);
+		break;
 	case GRAPH_FREQUENCY:
 	case GRAPH_REGULAR:
 	default:
 	break;
 }
 /* NEW - selector*/
+	
 	if((flag)||(graph->select_label!=NULL)){
 		gint xoff;
 		list=graph->set_list;
