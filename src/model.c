@@ -234,6 +234,7 @@ data->region[REGION2A] = FALSE;
 data->region[REGION1B] = FALSE;
 data->region[REGION2B] = FALSE;
 /* morphology */
+data->morph_label = FALSE;/*FIX valgrind complaint --OVHPA*/
 data->morph_type = DHKL;
 data->num_vertices = 0;
 data->num_planes = 0;

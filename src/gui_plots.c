@@ -840,6 +840,13 @@ if((plot->task)!=NULL) {
 /**********************/
 /* setup the controls */
 /**********************/
+void init_graph_ui(struct graph_pak *graph){
+GRAPH_UI.auto_x=TRUE;
+GRAPH_UI.auto_y=TRUE;
+GRAPH_UI.xticks=(gdouble)graph->xticks;
+GRAPH_UI.yticks=(gdouble)graph->yticks;
+GRAPH_UI.set_number=1.;
+}
 void sync_graph_controls(struct graph_pak *graph){
 	gchar *text;
 	GSList *list;
@@ -868,14 +875,9 @@ void sync_graph_controls(struct graph_pak *graph){
 	text=g_strdup_printf("%G",graph->ymax);
 	GUI_ENTRY_TEXT(GRAPH_UI.ymax,text);g_free(text);
 	/*ticks & auto*/
-	GRAPH_UI.auto_x=TRUE;
-	GRAPH_UI.auto_y=TRUE;
-	GRAPH_UI.xticks=(gdouble)graph->xticks;
 	GUI_SPIN_SET(GRAPH_UI.xtics,GRAPH_UI.xticks);
-	GRAPH_UI.yticks=(gdouble)graph->yticks;
 	GUI_SPIN_SET(GRAPH_UI.ytics,GRAPH_UI.yticks);
 	/*sets, which depends on graph->type*/
-	GRAPH_UI.set_number=1.;
 	switch(graph->type){
 		case GRAPH_IX_TYPE:
 		case GRAPH_IY_TYPE:
@@ -958,6 +960,7 @@ void sync_graph_controls(struct graph_pak *graph){
 					GUI_COMBOBOX_SET(GRAPH_UI.color,16);
 			}
 			/*TODO: act on selection?*/
+			GUI_UNLOCK(GRAPH_UI.symbol);
 			switch(p_y->symbol[0]){
 				case GRAPH_SYMB_CROSS:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,1);break;
@@ -973,6 +976,7 @@ void sync_graph_controls(struct graph_pak *graph){
 				default:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
+			if(p_y->mixed_symbol) GUI_LOCK(GRAPH_UI.symbol);
 			break;
 		case GRAPH_FREQUENCY:
 		case GRAPH_BAND:
@@ -1188,7 +1192,7 @@ void toggle_auto_y(){
 					list=g_slist_next(list);
 					p_y = (g_data_y *) list->data;
 				}
-				if(p_y->y[0]==-999.9){
+				if(isnan(p_y->y[0])){
 					graph->ymin=p_y->y[1];
 					graph->ymax=p_y->y[1];
 				}else{
@@ -1198,7 +1202,7 @@ void toggle_auto_y(){
 				/*go through all y sets*/
 				for(;list;list=g_slist_next(list)){
 					p_y = (g_data_y *) list->data;
-					if(p_y->y[0]==-999.9){
+					if(isnan(p_y->y[0])){
 						for(idx=1;idx<p_y->y_size;idx++){
 							if(p_y->y[idx]<graph->ymin) graph->ymin=p_y->y[idx];
 							if(p_y->y[idx]>graph->ymax) graph->ymax=p_y->y[idx];
@@ -1412,6 +1416,7 @@ void spin_update_set(void){
 			/*TODO: act on selection?*/
 			if(p_y->symbol!=NULL) symb=p_y->symbol[0];
 			else symb=GRAPH_SYMB_NONE;/*actually a set can be empty AND not the last one*/
+			GUI_UNLOCK(GRAPH_UI.symbol);
 			switch(symb){
 				case GRAPH_SYMB_CROSS:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,1);break;
@@ -1427,6 +1432,7 @@ void spin_update_set(void){
 				default:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
+			if(p_y->mixed_symbol) GUI_LOCK(GRAPH_UI.symbol);
 			break;
                 case GRAPH_FREQUENCY:
                 case GRAPH_BAND:
@@ -1563,7 +1569,7 @@ if(have_changed==FALSE){
 			default:
 				p_y->color=GRAPH_COLOR_DEFAULT;
 		}
-		if(p_y->symbol!=NULL){
+		if((p_y->symbol!=NULL)&&(!p_y->mixed_symbol)){
 			gint i;
 			GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
 			switch(idx){
@@ -1605,16 +1611,16 @@ void graph_control_reset_dim(void){
 /*************************/
 /* plot controls cleanup */
 /*************************/
-void graph_controls_cleanup(struct model_pak *model){
-	g_assert(model != NULL);
+void graph_controls_cleanup(){
+	if(graph_ui!=NULL)
+		if(graph_ui->ref_model!=NULL)
+			graph_ui->ref_model->graph_ui_active=NULL;
 	if(graph_ui!=NULL) g_free(graph_ui);
 	graph_ui=NULL;
-	model->graph_ui_active=NULL;
 }
 void quit_graph_control_gui(GUI_OBJ *w, gpointer data){
-        struct model_pak *model=data;
-        graph_controls_cleanup(data);
-        dialog_destroy(w,model);
+        graph_controls_cleanup();
+	dialog_destroy(NULL, data);
 }
 /**********************/
 /* graph controls gui */
@@ -1639,10 +1645,12 @@ void gui_graph_controls(void){
 	g_assert(graph_ui!=NULL);
 	data->graph_ui_active=(gpointer)graph_ui;
 	graph_ui->graph_active=(gpointer)graph;
+	graph_ui->ref_model=data;
 	title = g_strdup("GRAPH CONTROLS");
 	dialog = dialog_request(PLOTS, title, NULL, graph_controls_cleanup, data);
 	g_free(title);
 	window = dialog_window(dialog);
+	init_graph_ui(graph);
 #define GRAPH_UI (*graph_ui)
 	/*frame*/
 	GUI_FRAME_WINDOW(window,frame);
@@ -1735,7 +1743,6 @@ GUI_TOOLTIP(GRAPH_UI.line,"Default line type for the graph.");
 GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph.");
 /* initialize everything */
 	sync_graph_controls(graph);
-//	GUI_COMBOBOX_SETUP(xxxxx,0,xxxxx_function);
 	toggle_auto_x();
 	toggle_auto_y();
 	GUI_LOCK(GRAPH_UI.type);

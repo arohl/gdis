@@ -381,6 +381,7 @@ if(dy.y_size==0) {
 	py->idx=NULL;
 	py->type=GRAPH_REGULAR;
 	py->symbol=NULL;
+	py->mixed_symbol=FALSE;
 	py->line=GRAPH_LINE_NONE;
 	py->color=GRAPH_COLOR_DEFAULT;
 	graph->size++;/*graph size hold the number of y arrays!*/
@@ -403,6 +404,7 @@ else{
 	py->symbol=g_malloc(dy.y_size*sizeof(graph_symbol));
 	memcpy(py->symbol,dy.symbol,dy.y_size*sizeof(graph_symbol));
 }
+py->mixed_symbol=dy.mixed_symbol;
 py->line=dy.line;
 py->color=dy.color;
 py->type=dy.type;
@@ -991,7 +993,7 @@ for ( ; list ; list=g_slist_next(list))
 		j++;
 		continue;
 	}
-	if(gy->type!=GRAPH_REGULAR) type=gy->type;
+	if(gy->type!=GRAPH_REGULAR) type=gy->type;/*update type within type?*/
 	switch(gy->color){
 		case GRAPH_COLOR_WHITE:/*1.0,  1.0,    1.0*/
 			glColor3f(1.0,1.0,1.0);break;
@@ -1037,6 +1039,12 @@ for ( ; list ; list=g_slist_next(list))
   i=0;
   while(i<size)
     {
+/*exclude non-value*/
+if(isnan(ptr[i])) {
+	i++;
+	oldx=-1;
+	continue;
+}
 /*get real values*/
 switch (type){
 	case GRAPH_IY_TYPE:

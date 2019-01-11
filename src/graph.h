@@ -81,6 +81,7 @@ typedef struct {
 	gint32 *idx;            /*index up to 2,147,483,647 (<0 = missing structure)*/
 	graph_type type;	/* NEW - type can change for each set! */
 	graph_symbol *symbol;	/*symbol for each data*/
+	gboolean mixed_symbol;
 	graph_line line;	/*one line type per set*/
 	graph_color color;	/*TODO graph set color*/
 } g_data_y;
@@ -88,6 +89,7 @@ typedef struct {
 /* UI definition for graph_controls */
 /************************************/
 struct graph_ui{
+	struct model_pak *ref_model;
 	gpointer graph_active;
 	GUI_OBJ *title;
 	GUI_OBJ *sub_title;
