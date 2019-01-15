@@ -57,8 +57,10 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* NEW: include a button to create a new model */
 #include "plus.xpm"
-/* NEW: include a control for plots -- OVHPA*/
+/* NEW: include a control for plots and eps/png export tool -- OVHPA*/
 #include "plots.xpm"
+#include "to_eps.xpm"
+#include "to_png.xpm"
 
 extern struct sysenv_pak sysenv;
 
@@ -245,6 +247,15 @@ for (i=0 ; i<IMAGE_LAST ; i++)
     case IMAGE_PLOTS:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) plots_xpm);
       name = "image_plots";
+      break;
+    case IMAGE_TO_EPS:
+if(sysenv.have_eps){
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) to_eps_xpm);
+}else{
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) to_png_xpm);
+}
+
+      name = "image_to_eps";
       break;
     case IMAGE_PLUS:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) plus_xpm);

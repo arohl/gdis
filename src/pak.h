@@ -167,6 +167,7 @@ gint file_type;
 gint babel_type;
 gint write_gdisrc;
 int fortran_buffer;
+gboolean have_eps;/*for snapshot --OVHPA*/
 
 /* centralized info on all supported file types */
 GSList *file_list;
@@ -232,6 +233,7 @@ gint canvas_cols;
 GSList *canvas_list;
 GdkVisual *visual;
 GdkColormap *colourmap;
+GtkWidget* main_window;/* add main_window --OVHPA*/
 GtkWidget *display_box;
 GtkWidget *glarea;
 GtkWidget *surfaces;
@@ -1057,6 +1059,8 @@ gint redraw_count;       /* current number of redraws */
 gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
+gboolean snapshot_eps;  /* save an eps image to file eps_file */
+gchar *eps_file;         /* the said eps_file           --OVHPA*/
 gint fractional;
 guint periodic;
 guint num_frames;

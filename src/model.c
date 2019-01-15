@@ -96,6 +96,8 @@ data->redraw_cumulative = 0;
 data->redraw_time = 0;
 data->colour_scheme = ELEM;
 data->rmax = RMAX_FUDGE;
+data->snapshot_eps=FALSE;
+data->eps_file=NULL;
 
 /* linked list init */
 data->cbu = TRUE;

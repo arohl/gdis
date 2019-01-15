@@ -2879,6 +2879,30 @@ glDeleteLists(font_offset, 128);
 font_offset = -1;
 }
 
+/************************************************************/
+/* perform a snapshot of sysenv.glarea onto eps_file --OVHPA*/
+/************************************************************/
+void do_eps_snapshot(struct model_pak *model,gint w,gint h){
+GdkDrawable *drawable;
+GdkPixbuf *pixbuf;
+GError *error=NULL;
+/**/
+if(model==NULL) return;
+if(model->eps_file==NULL) return;
+
+/*INIT*/
+drawable=(sysenv.glarea)->window;
+pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB,TRUE,8,w,h);
+pixbuf=gdk_pixbuf_get_from_drawable (pixbuf,drawable,NULL,0,0,0,0,w,h);
+if(sysenv.have_eps){
+	gdk_pixbuf_save (pixbuf,model->eps_file,"eps",&error,NULL);/*probably not available*/
+}else{
+	gdk_pixbuf_save (pixbuf,model->eps_file,"png",&error,NULL);/*png is always possible*/
+}
+g_object_unref (pixbuf);
+model->snapshot_eps=FALSE;
+}
+
 /**************************/
 /* handle redraw requests */ 
 /**************************/
@@ -2891,6 +2915,8 @@ GdkGLContext *glcontext;
 GdkGLDrawable *gldrawable;
 struct model_pak *model;
 struct canvas_pak *canvas;
+gboolean do_snap=FALSE;
+struct canvas_pak *snap_canvas;
 
 /* divert to stereo update? */
 if (sysenv.stereo)
@@ -2955,6 +2981,11 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
 
       model->redraw = FALSE;
 
+      if(model->snapshot_eps) {
+		snap_canvas=canvas;
+		do_snap=TRUE;
+      }
+
       if (canvas_timing_adjust(model))
         {
         gdk_gl_drawable_swap_buffers(gldrawable);
@@ -2963,6 +2994,7 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
         gdk_gl_drawable_gl_end(gldrawable);
         return(FALSE);
         }
+//      if(model->snapshot_eps) do_eps_snapshot(model,canvas->width,canvas->height);
       }
     }
 
@@ -2987,6 +3019,8 @@ gdk_gl_drawable_swap_buffers(gldrawable);
 gdk_gl_drawable_wait_gl(gldrawable);
 gdk_gl_drawable_wait_gdk(gldrawable);
 gdk_gl_drawable_gl_end(gldrawable);
+
+if(do_snap) do_eps_snapshot(snap_canvas->model,snap_canvas->width,snap_canvas->height);/*snapshot here*/
 
 return(TRUE);
 }

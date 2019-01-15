@@ -440,7 +440,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_OPEN_DIALOG_RUN(open_dialog,have_answer,filename) do{\
 	if(gtk_dialog_run(GTK_DIALOG(open_dialog)) == GTK_RESPONSE_ACCEPT) {\
 		have_answer=TRUE;\
-		filename=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));\
+		filename=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (open_dialog));\
 	}else{\
 		have_answer=FALSE;\
 		filename=NULL;\

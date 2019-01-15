@@ -692,6 +692,18 @@ sysenv.manual = NULL;
 sysenv.image_table = NULL;
 sysenv.surfaces = NULL;
 
+/* check eps format */
+sysenv.have_eps=FALSE;
+GSList *formats = gdk_pixbuf_get_formats ();
+GSList *format=formats;
+for(;format;format=g_slist_next(format)){
+	GdkPixbufFormat *this_format=format->data;
+	if (strcmp("eps", gdk_pixbuf_format_get_name(this_format)) == 0){
+		if(gdk_pixbuf_format_is_writable(this_format)) sysenv.have_eps=TRUE;
+	}
+}
+g_slist_free(formats);
+
 /* module */
 file_init();
 #ifdef WITH_GUI
