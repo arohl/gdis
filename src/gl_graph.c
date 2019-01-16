@@ -1180,18 +1180,18 @@ if(gy->symbol){
 	break;
 	case GRAPH_SYMB_TRI_DN:
 		glBegin(GL_LINE_STRIP);
-		gl_vertex_window(x, y+3, canvas);
-		gl_vertex_window(x-3, y-3, canvas);
-		gl_vertex_window(x+3, y-3, canvas);
-		gl_vertex_window(x, y+3, canvas);
-		glEnd();
-	break;
-	case GRAPH_SYMB_TRI_UP:
-		glBegin(GL_LINE_STRIP);
 		gl_vertex_window(x, y-3, canvas);
 		gl_vertex_window(x-3, y+3, canvas);
 		gl_vertex_window(x+3, y+3, canvas);
 		gl_vertex_window(x, y-3, canvas);
+		glEnd();
+	break;
+	case GRAPH_SYMB_TRI_UP:
+		glBegin(GL_LINE_STRIP);
+		gl_vertex_window(x, y+3, canvas);
+		gl_vertex_window(x-3, y-3, canvas);
+		gl_vertex_window(x+3, y-3, canvas);
+		gl_vertex_window(x, y+3, canvas);
 		glEnd();
 	break;
 	case GRAPH_SYMB_DIAM:
