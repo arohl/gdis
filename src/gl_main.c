@@ -34,6 +34,10 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <GL/gl.h>
 #include <GL/glu.h>
 #endif
+#ifdef CAIRO_HAS_PS_SURFACE
+#include <cairo-ps.h>
+#endif
+
 
 #include "gdis.h"
 #include "coords.h"
@@ -2885,20 +2889,42 @@ font_offset = -1;
 void do_eps_snapshot(struct model_pak *model,gint w,gint h){
 GdkDrawable *drawable;
 GdkPixbuf *pixbuf;
+#ifdef CAIRO_HAS_PS_SURFACE
+gchar *text;
+cairo_t *cr;
+cairo_surface_t *eps_surface;
+#else
 GError *error=NULL;
+#endif //CAIRO_HAS_PS_SURFACE
 /**/
 if(model==NULL) return;
 if(model->eps_file==NULL) return;
-
-/*INIT*/
+/*init pixbuf*/
 drawable=(sysenv.glarea)->window;
 pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB,TRUE,8,w,h);
 pixbuf=gdk_pixbuf_get_from_drawable (pixbuf,drawable,NULL,0,0,0,0,w,h);
+#ifdef CAIRO_HAS_PS_SURFACE
+eps_surface=cairo_ps_surface_create(model->eps_file,w,h);/*FIXME: w and h are in points*/
+cairo_ps_surface_set_eps (eps_surface,TRUE);
+/*comments*/
+text=g_strdup_printf("%%%%Title: %s",model->basename);
+cairo_ps_surface_dsc_comment (eps_surface,text);g_free(text);
+text=g_strdup_printf("%%%%Software: GDIS %4.2f.%d (C) %d",VERSION,PATCH,YEAR);
+cairo_ps_surface_dsc_comment (eps_surface,text);g_free(text);
+/*end comments*/
+cr = cairo_create (eps_surface);
+gdk_cairo_set_source_pixbuf(cr,pixbuf,0,0);
+cairo_paint (cr);
+cairo_surface_flush (eps_surface);/*useful?*/
+cairo_surface_destroy (eps_surface);
+cairo_destroy (cr);
+#else
 if(sysenv.have_eps){
 	gdk_pixbuf_save (pixbuf,model->eps_file,"eps",&error,NULL);/*probably not available*/
 }else{
 	gdk_pixbuf_save (pixbuf,model->eps_file,"png",&error,NULL);/*png is always possible*/
 }
+#endif //CAIRO_HAS_PS_SURFACE
 g_object_unref (pixbuf);
 model->snapshot_eps=FALSE;
 }
@@ -2983,7 +3009,7 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
 
       if(model->snapshot_eps) {
 		snap_canvas=canvas;
-		do_snap=TRUE;
+		do_snap=TRUE;/*<- do actual snapshot AFTER drawing*/
       }
 
       if (canvas_timing_adjust(model))
@@ -2994,7 +3020,6 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
         gdk_gl_drawable_gl_end(gldrawable);
         return(FALSE);
         }
-//      if(model->snapshot_eps) do_eps_snapshot(model,canvas->width,canvas->height);
       }
     }
 

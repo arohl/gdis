@@ -692,7 +692,11 @@ sysenv.manual = NULL;
 sysenv.image_table = NULL;
 sysenv.surfaces = NULL;
 
-/* check eps format */
+/* check for eps format support by pixbuf */
+#ifdef CAIRO_HAS_PS_SURFACE
+sysenv.have_eps=TRUE;
+#else
+/* check for eps format support by pixbuf <- very unlikely: remove?*/
 sysenv.have_eps=FALSE;
 GSList *formats = gdk_pixbuf_get_formats ();
 GSList *format=formats;
@@ -703,6 +707,7 @@ for(;format;format=g_slist_next(format)){
 	}
 }
 g_slist_free(formats);
+#endif
 
 /* module */
 file_init();
