@@ -1611,6 +1611,48 @@ if (active_data)
   }
 }
 
+/***************************************/
+/* quick - export view into eps --OVHPA*/
+/***************************************/
+void gui_eps_export(void){
+struct model_pak *model;
+GtkWidget *file_chooser;
+GtkFileFilter *filter;
+
+/**/
+model = sysenv.active_model;
+if (!model) return;
+filter=gtk_file_filter_new();
+if(sysenv.have_eps){
+	gtk_file_filter_add_pattern(filter,"*.eps");
+	gtk_file_filter_set_name (filter,"eps image file");
+	file_chooser = gtk_file_chooser_dialog_new("snapshot to eps",
+		GTK_WINDOW(sysenv.main_window),
+		GTK_FILE_CHOOSER_ACTION_SAVE,GTK_STOCK_CANCEL,
+		GTK_RESPONSE_CANCEL,GTK_STOCK_SAVE,GTK_RESPONSE_ACCEPT,
+		NULL);
+}else{
+	gtk_file_filter_add_pattern(filter,"*.png");
+	gtk_file_filter_set_name (filter,"png image file");
+	file_chooser = gtk_file_chooser_dialog_new("snapshot to png",
+		GTK_WINDOW(sysenv.main_window),
+		GTK_FILE_CHOOSER_ACTION_SAVE,GTK_STOCK_CANCEL,
+		GTK_RESPONSE_CANCEL,GTK_STOCK_SAVE,GTK_RESPONSE_ACCEPT,
+		NULL);
+}
+gtk_file_chooser_add_filter (GTK_FILE_CHOOSER(file_chooser),filter);
+if(gtk_dialog_run(GTK_DIALOG(file_chooser)) == GTK_RESPONSE_ACCEPT) {
+	if(model->eps_file!=NULL) g_free(model->eps_file);
+	model->eps_file=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
+	model->snapshot_eps=TRUE;
+	model->redraw = TRUE;
+}else{
+	model->snapshot_eps=FALSE;/*useless*/
+}
+gtk_widget_destroy (GTK_WIDGET(file_chooser));
+redraw_canvas(ALL);
+}
+
 /****************************************/
 /* active pulldown change event handler */
 /****************************************/
@@ -1741,6 +1783,7 @@ image_table_init();
 
 /* main window */
 window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+sysenv.main_window = window;/*FIXME: move to sysenv. --OVHPA*/
 gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
 gtk_window_set_title(GTK_WINDOW(window),"GTK Display Interface for Structures");
 gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
@@ -1993,6 +2036,39 @@ gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         gdis_wid,
                         GTK_SIGNAL_FUNC(gtk_mode_switch),
                         GINT_TO_POINTER(FREE));
+
+/* plot control button */
+pixbuf = image_table_lookup("image_plots");
+gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"plots controls",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_graph_controls),
+			NULL);
+/* eps/png export tool */
+if(sysenv.have_eps){
+	pixbuf = image_table_lookup("image_to_eps");
+	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"export to eps",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_eps_export),
+			NULL);
+}else{
+	pixbuf = image_table_lookup("image_to_eps");
+	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"export to png",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_eps_export),
+			NULL);
+}
 
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */

@@ -96,6 +96,8 @@ data->redraw_cumulative = 0;
 data->redraw_time = 0;
 data->colour_scheme = ELEM;
 data->rmax = RMAX_FUDGE;
+data->snapshot_eps=FALSE;
+data->eps_file=NULL;
 
 /* linked list init */
 data->cbu = TRUE;
@@ -118,6 +120,7 @@ data->transform_list = NULL;
 data->waypoint_list = NULL;
 data->frame_data_list = NULL;
 data->graph_active = NULL;
+data->graph_ui_active = NULL;
 data->picture_active = NULL;
 data->project = NULL;
 data->zone_array = NULL;
@@ -233,6 +236,7 @@ data->region[REGION2A] = FALSE;
 data->region[REGION1B] = FALSE;
 data->region[REGION2B] = FALSE;
 /* morphology */
+data->morph_label = FALSE;/*FIX valgrind complaint --OVHPA*/
 data->morph_type = DHKL;
 data->num_vertices = 0;
 data->num_planes = 0;

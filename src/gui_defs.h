@@ -397,7 +397,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	text=g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));\
 }while(0)
 /*get the lenght of text in entry (entry)*/
-#define GUI_ENTRY_LENGHT(entry) (gtk_entry_get_text_length(GTK_ENTRY(entry)))
+#define GUI_ENTRY_LENGTH(entry) (gtk_entry_get_text_length(GTK_ENTRY(entry)))
 /*set sensitivity of a widget*/
 #define GUI_LOCK(widget) gtk_widget_set_sensitive(widget,FALSE)
 #define GUI_UNLOCK(widget) gtk_widget_set_sensitive(widget,TRUE)
@@ -440,7 +440,7 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 #define GUI_OPEN_DIALOG_RUN(open_dialog,have_answer,filename) do{\
 	if(gtk_dialog_run(GTK_DIALOG(open_dialog)) == GTK_RESPONSE_ACCEPT) {\
 		have_answer=TRUE;\
-		filename=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));\
+		filename=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (open_dialog));\
 	}else{\
 		have_answer=FALSE;\
 		filename=NULL;\

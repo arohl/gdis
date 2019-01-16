@@ -88,6 +88,7 @@ void draw_vector(gdouble *, gdouble *, gdouble);
 void draw_arc(gdouble *, gdouble *, gdouble *);
 
 void gl_print_window(gchar *, gint, gint, struct canvas_pak *);
+void pango_print(const gchar *str, gint x, gint y, struct canvas_pak *canvas, guint font_size, gint rotate);
 void gl_print_world(gchar *, gdouble, gdouble, gdouble);
 
 void gl_font_free(void);

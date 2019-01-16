@@ -27,7 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 }while(0)
 #define USPEX_REG_TEXT(value) do{\
 	if(uspex_gui.calc.value!=NULL) g_free(uspex_gui.calc.value);\
-	if(GUI_ENTRY_LENGHT(uspex_gui.value)>0) GUI_ENTRY_GET_TEXT(uspex_gui.value,uspex_gui.calc.value);\
+	if(GUI_ENTRY_LENGTH(uspex_gui.value)>0) GUI_ENTRY_GET_TEXT(uspex_gui.value,uspex_gui.calc.value);\
 	else uspex_gui.calc.value=NULL;\
 }while(0)
 /*page numbers*/

@@ -2910,19 +2910,28 @@ fprintf(stdout,"\n");
 	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph);
 	g_free(gx.x);
+	dat_graph_set_title("<big>All structures per generation</big>",_UO.graph);
+	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
+		dat_graph_set_sub_title("<small>(From <b>Individuals_relaxed</b> file)</small>",_UO.graph);
+	else
+		dat_graph_set_sub_title("<small>(From <b>Individuals</b> file)</small>",_UO.graph);
+	dat_graph_set_x_title("Generation number (iteration)",_UO.graph);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph);
 	/*END - NEW*/
 	gen=0;
 	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) {
 		/*create a fake 0 generation*/
 		/*NEW - y dat*/
-		gy.y_size=1;
+		gy.y_size=0;
 		gy.y=g_malloc(1*sizeof(gdouble));
-		gy.y[0]=max_E*2.;/*outside of graph*/
+		gy.y[0]=NAN;/*not a value*/
 		gy.idx=g_malloc(1*sizeof(gint32));
 		gy.idx[0]=0;/*ie. no data*/
 		gy.symbol=g_malloc(1*sizeof(graph_symbol));
 		gy.symbol[0]=GRAPH_SYMB_CROSS;
+		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
+		gy.color=GRAPH_COLOR_DEFAULT;
 		dat_graph_add_y(gy,_UO.graph);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -2934,19 +2943,12 @@ fprintf(stdout,"\n");
 	idx=0;
 	while(gen<=_UO.num_gen){
 		/*prepare one generation*/
-		num=0;
+		num=0;gy.mixed_symbol=FALSE;
 		for(jdx=idx;jdx<_UO.num_struct;jdx++){
 			if((_UO.ind[jdx].gen==gen)&&(_UO.ind[jdx].have_data)) num++;
 		}
 		/*NEW - y dat*/
 		gy.y_size=num;
-/*
-		if(num==0){
-			dat_graph_add_y(gy,_UO.graph);
-			gen++;
-			continue;
-		}
-*/
 		gy.y=g_malloc(num*sizeof(gdouble));
 		gy.idx=g_malloc(num*sizeof(gint32));
 		gy.symbol=g_malloc(num*sizeof(graph_symbol));
@@ -2965,6 +2967,7 @@ fprintf(stdout,"#DBG graph_all: GEN=%i num=%i ",gen,num);
 				} else {
 					gy.idx[ix]=-1*jdx;
 					gy.symbol[ix]=GRAPH_SYMB_CROSS;
+					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 				}
 #if DEBUG_USPEX_READ
 fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i ",jdx,ix,gy.y[ix],ix,gy.symbol[ix]);
@@ -2979,6 +2982,7 @@ fprintf(stdout,"-SENT\n");
 /* NEW - y dat*/
 		gy.type=GRAPH_IX_TYPE;
 		gy.line=GRAPH_LINE_NONE;
+		gy.color=GRAPH_COLOR_DEFAULT;
 		dat_graph_add_y(gy,_UO.graph);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3012,19 +3016,28 @@ fprintf(stdout,"-SENT\n");
 	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph_best);
 	g_free(gx.x);
+	dat_graph_set_title("<big>Best structures per generation</big>",_UO.graph_best);
+	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
+		dat_graph_set_sub_title("<small>(From <b>BESTIndividuals_relaxed</b> file)</small>",_UO.graph_best);
+	else
+		dat_graph_set_sub_title("<small>(From <b>BESTIndividuals</b> file)</small>",_UO.graph_best);
+	dat_graph_set_x_title("Generation number (iteration)",_UO.graph_best);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
 	/*END - NEW*/
 	gen=0;
 	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) { 
 		/*create a fake 0 generation*/
 		/*NEW - y dat*/
-		gy.y_size=1;
+		gy.y_size=0;
 		gy.y=g_malloc(1*sizeof(gdouble));
-		gy.y[0]=max_E*2.;/*outside of graph*/
+		gy.y[0]=NAN;/*not a value*/
 		gy.idx=g_malloc(1*sizeof(gint32));
 		gy.idx[0]=-1;/*ie. no data*/
 		gy.symbol=g_malloc(1*sizeof(graph_symbol));
 		gy.symbol[0]=GRAPH_SYMB_CROSS;
+		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
+		gy.color=GRAPH_COLOR_DEFAULT;
 		dat_graph_add_y(gy,_UO.graph_best);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3034,19 +3047,12 @@ fprintf(stdout,"-SENT\n");
 	}
 	idx=0;
 	while(gen<=_UO.num_gen){
-		num=0;
+		num=0;gy.mixed_symbol=FALSE;
 		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen) num++;
 		}
 		/*NEW - y dat*/
 		gy.y_size=num;
-/*
-		if(num==0){
-			dat_graph_add_y(gy,_UO.graph);
-			gen++;
-			continue;
-		}
-*/
 		gy.y=g_malloc(num*sizeof(gdouble));
 		gy.type=GRAPH_IX_TYPE;
 		gy.idx=g_malloc(num*sizeof(gint32));
@@ -3066,6 +3072,7 @@ fprintf(stdout,"#DBG graph_best: num=%i ",num);
 				}else{
 					gy.idx[ix]=-1*_UO.best_ind[jdx+1];
 					gy.symbol[ix]=GRAPH_SYMB_CROSS;
+					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 				}
 #if DEBUG_USPEX_READ
 fprintf(stdout,"e[%i]=%lf ",ix,gy.y[ix]);
@@ -3077,6 +3084,7 @@ fprintf(stdout,"e[%i]=%lf ",ix,gy.y[ix]);
 fprintf(stdout,"-SENT\n");
 #endif
 		/* NEW - y dat*/
+		gy.color=GRAPH_COLOR_DEFAULT;
 		dat_graph_add_y(gy,_UO.graph_best);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3093,10 +3101,11 @@ fprintf(stdout,"-SENT\n");
 	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
 	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
+	gy.color=GRAPH_COLOR_DEFAULT;
 	gen=0;
 	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) {
 		/*fake first point*/
-		gy.y[0]=max_E;/*outside of graph*/
+		gy.y[0]=NAN;/*not a value*/
 		gy.symbol[0]=GRAPH_SYMB_NONE;
 		gen=1;
 	}
@@ -3167,9 +3176,18 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 #endif
 		line=g_strdup_printf("COMP_%s",elements[_UC.atomType[species_index]].symbol);
 		_UO.graph_comp[species_index]=graph_new(line, model);
+		g_free(line);
 		dat_graph_set_x(gx,_UO.graph_comp[species_index]);
 		dat_graph_set_limits(0.,1.,min_E,max_E,_UO.graph_comp[species_index]);
 		dat_graph_set_type(GRAPH_XX_TYPE,_UO.graph_comp[species_index]);
+		line=g_strdup_printf("<big>Structure energy vs. %s composition</big>",elements[_UC.atomType[species_index]].symbol);
+		dat_graph_set_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		line=g_strdup_printf("%s atomic composition (n<sub>%s</sub>/n<sub>total</sub>)",
+			elements[_UC.atomType[species_index]].symbol,elements[_UC.atomType[species_index]].symbol);
+		dat_graph_set_x_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		dat_graph_set_y_title("Structure energy (eV)",_UO.graph_comp[species_index]);
 		/*dynamically create y*/
 		for(jdx=0;jdx<n_compo;jdx++){
 			num=0;gy.y=NULL;gy.idx=NULL;
@@ -3202,6 +3220,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 				}else{
 					c_idx[num-1]=-1*idx;
 					c_sym[num-1]=GRAPH_SYMB_CROSS;
+					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 				}
 				gy.y=c;
 				gy.idx=c_idx;
@@ -3209,6 +3228,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 				gy.type=GRAPH_XX_TYPE;
 			}
 			gy.y_size=num;
+			gy.color=GRAPH_COLOR_DEFAULT;
 			dat_graph_add_y(gy,_UO.graph_comp[species_index]);
 			if(num>0){
 				g_free(gy.y);
@@ -3224,8 +3244,10 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 	gy.y=g_malloc(n_compo*sizeof(gdouble));
 	gy.idx=g_malloc(n_compo*sizeof(gint32));
 	gy.symbol=g_malloc(n_compo*sizeof(graph_symbol));
+	gy.mixed_symbol=TRUE;/*symbol for convex hull only appear on stable species*/
         gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
         gy.line=GRAPH_LINE_DASH;
+	gy.color=GRAPH_COLOR_DEFAULT;
 	/*1- look for the minimum of minimum*/
 	min=0;
 	for(idx=0;idx<n_compo;idx++)
@@ -3444,6 +3466,10 @@ else{
 	dat_graph_set_x(gx,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IY_TYPE,_UO.graph_best);
 	g_free(gx.x);
+	dat_graph_set_title("<big>Structure energy vs. Image number</big>",_UO.graph_best);
+	dat_graph_set_sub_title("<small>(From <b>Energy</b> file)</small>",_UO.graph_best);
+	dat_graph_set_x_title("Image number (iteration)",_UO.graph_best);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
 	/*Y -> image data*/
 	gy.y_size=_UO.num_gen;
 	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
@@ -3453,6 +3479,7 @@ else{
 	gy.y[1] /= (gdouble)natoms;
 	_UO.min_E=gy.y[1];
 	_UO.max_E=gy.y[1];
+	gy.y[0]=NAN;/*not a value*/
 	/*create a fake image_0*/
 	_UO.ind[0].gen=0;
 	_UO.ind[0].have_data=FALSE;
@@ -3484,6 +3511,7 @@ fprintf(stdout,"#DBG: VCNEB Image %i: natoms=%i energy=%lf e=%lf\n",_UO.ind[idx]
 	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
 	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
 	gy.line=GRAPH_LINE_DASH;
+	gy.color=GRAPH_COLOR_DEFAULT;
 	dat_graph_add_y(gy,_UO.graph_best);
 	g_free(gy.y);
 	g_free(gy.idx);
