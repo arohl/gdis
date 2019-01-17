@@ -887,6 +887,7 @@ void sync_graph_controls(struct graph_pak *graph){
 			GUI_SPIN_RANGE(GRAPH_UI.set,1.,(gdouble)graph->size);
 			list=graph->set_list;/*this is g_data_x*/
 			list=g_slist_next(list);/*this is g_data_y*/
+			if(!list) return;/*no y data? FIX: 660ce6*/
 			p_y = (g_data_y *) list->data;
 			if(p_y->y_size==0){
 				/*this is normal for non META/MINHOP*/
@@ -1177,7 +1178,7 @@ void toggle_auto_y(){
 					return;
 				}
 			}
-		}
+		} else return;/*FIX: d1a785 d508be*/
 		switch(graph->type){
 			case GRAPH_IY_TYPE:
 			case GRAPH_XY_TYPE:
