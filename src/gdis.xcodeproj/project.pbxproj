@@ -211,15 +211,12 @@
 		498E433421F0542D0067C1E2 /* plots.h in Headers */ = {isa = PBXBuildFile; fileRef = 498E432D21F0542C0067C1E2 /* plots.h */; };
 		498E433521F0542D0067C1E2 /* gui_defs.h in Headers */ = {isa = PBXBuildFile; fileRef = 498E433021F0542D0067C1E2 /* gui_defs.h */; };
 		4993D3DC2044155D0025E74F /* file_vasp.c in Sources */ = {isa = PBXBuildFile; fileRef = 4993D3DB2044155C0025E74F /* file_vasp.c */; };
-		49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF31A9B853100205B78 /* example12.gin */; };
-		49B57D201A9B861500205B78 /* example12.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49B57CF41A9B853100205B78 /* example12.got */; };
 		49CAB03421F06C1F0067EBC3 /* libgtkglext-x11-1.0.0.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49CAB03321F06C1E0067EBC3 /* libgtkglext-x11-1.0.0.0.0.dylib */; };
 		49CAB03621F06C9E0067EBC3 /* libgdkglext-x11-1.0.0.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49CAB03521F06C9E0067EBC3 /* libgdkglext-x11-1.0.0.0.0.dylib */; };
 		49CAB03821F06D150067EBC3 /* libgdk_pixbuf-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49CAB03721F06D150067EBC3 /* libgdk_pixbuf-2.0.0.dylib */; };
 		49CAB03A21F07BB20067EBC3 /* libgtk-x11-2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49CAB03921F07BB20067EBC3 /* libgtk-x11-2.0.0.dylib */; };
 		49CAB03C21F07C310067EBC3 /* libpango-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 49CAB03B21F07C310067EBC3 /* libpango-1.0.0.dylib */; };
 		49D234281A84D31600319538 /* file_mol2.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D234271A84D31600319538 /* file_mol2.c */; };
-		49D696DC1A9C2F3300239D39 /* test_surf.got in CopyFiles */ = {isa = PBXBuildFile; fileRef = 49D696DB1A9C2F1C00239D39 /* test_surf.got */; };
 		49D7BF6821A38C7400B5881C /* file_uspex.c in Sources */ = {isa = PBXBuildFile; fileRef = 49D7BF6621A38C7400B5881C /* file_uspex.c */; };
 		49D7BF6921A38C7400B5881C /* file_uspex.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D7BF6721A38C7400B5881C /* file_uspex.h */; };
 /* End PBXBuildFile section */
@@ -249,9 +246,6 @@
 				495093BC1A9F19CF001C74C4 /* gdis.elements in CopyFiles */,
 				495093BD1A9F19CF001C74C4 /* gdis.library in CopyFiles */,
 				495093BE1A9F19CF001C74C4 /* water.qeout in CopyFiles */,
-				49D696DC1A9C2F3300239D39 /* test_surf.got in CopyFiles */,
-				49B57D1F1A9B861500205B78 /* example12.gin in CopyFiles */,
-				49B57D201A9B861500205B78 /* example12.got in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -566,8 +560,6 @@
 		49B57CF01A9B853100205B78 /* dummy.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dummy.gin; sourceTree = "<group>"; };
 		49B57CF11A9B853100205B78 /* dummy.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dummy.got; sourceTree = "<group>"; };
 		49B57CF21A9B853100205B78 /* ethane.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ethane.gin; sourceTree = "<group>"; };
-		49B57CF31A9B853100205B78 /* example12.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.gin; sourceTree = "<group>"; };
-		49B57CF41A9B853100205B78 /* example12.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = example12.got; sourceTree = "<group>"; };
 		49B57CF51A9B853100205B78 /* full.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = full.car; sourceTree = "<group>"; };
 		49B57CF61A9B853100205B78 /* gibb.car */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb.car; sourceTree = "<group>"; };
 		49B57CF71A9B853100205B78 /* gibb.gin */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gibb.gin; sourceTree = "<group>"; };
@@ -616,7 +608,6 @@
 		49CAB03921F07BB20067EBC3 /* libgtk-x11-2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libgtk-x11-2.0.0.dylib"; path = "../../../../../../opt/local/lib/libgtk-x11-2.0.0.dylib"; sourceTree = "<group>"; };
 		49CAB03B21F07C310067EBC3 /* libpango-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libpango-1.0.0.dylib"; path = "../../../../../../opt/local/lib/libpango-1.0.0.dylib"; sourceTree = "<group>"; };
 		49D234271A84D31600319538 /* file_mol2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_mol2.c; sourceTree = "<group>"; };
-		49D696DB1A9C2F1C00239D39 /* test_surf.got */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = test_surf.got; sourceTree = "<group>"; };
 		49D7BF6621A38C7400B5881C /* file_uspex.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = file_uspex.c; sourceTree = "<group>"; };
 		49D7BF6721A38C7400B5881C /* file_uspex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = file_uspex.h; sourceTree = "<group>"; };
 		8DD76FB20486AB0100D96B5E /* gdis */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gdis; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -891,7 +882,6 @@
 				4979FCDD1AA4904900898946 /* octane.gin */,
 				4979FCDE1AA4904900898946 /* octane.got */,
 				4979FCDB1AA090F400898946 /* water.qein */,
-				49D696DB1A9C2F1C00239D39 /* test_surf.got */,
 				495093BA1A9F19AB001C74C4 /* water.qeout */,
 				49B57CC11A9B853100205B78 /* 1_C2H4_HOOH_Tifer.arc */,
 				49B57CC21A9B853100205B78 /* 1FUF.gin */,
@@ -943,8 +933,6 @@
 				49B57CF01A9B853100205B78 /* dummy.gin */,
 				49B57CF11A9B853100205B78 /* dummy.got */,
 				49B57CF21A9B853100205B78 /* ethane.gin */,
-				49B57CF31A9B853100205B78 /* example12.gin */,
-				49B57CF41A9B853100205B78 /* example12.got */,
 				49B57CF51A9B853100205B78 /* full.car */,
 				49B57CF61A9B853100205B78 /* gibb.car */,
 				49B57CF71A9B853100205B78 /* gibb.gin */,
