@@ -91,7 +91,7 @@ int vasp_xml_read_kpoints(FILE *vf,struct model_pak *model){
 	gdouble xi,yi,zi;
 	gdouble dist=0.;
 	long int vfpos=ftell(vf);/*flag begining of kpoints*/
-	line = file_read_line(vf);
+	/*FIX: d4a984*/
 /*unfortunately, there is no NKPTS entry in vasprun.xml!*/
 	if(fetch_in_file(vf,"kpointlist")==0) {
 		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -1501,7 +1501,7 @@ int vasp_xml_read_bands(FILE *vf,struct model_pak *model){
         /*allocation TODO: g_malloc_try?*/
         model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	ik=0;ib=0;
-	idx=0;
+	/*FIX: a85092*/
 	line = file_read_line(vf);
 	while(line){
 		if(ib>(model->nbands-1)) {
@@ -1536,7 +1536,7 @@ fprintf(stdout,"#DBG: spin=  up kpt=%i band=%i eval=%lf\n",ik,ib,model->band_up[
         if(model->band_down != NULL) g_free(model->band_down);
         model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
         ik=0;ib=0;
-        idx=0;
+        /*FIX: 88b202*/
         line = file_read_line(vf);
         while(line){
                 if(ib>(model->nbands-1)) {
@@ -1807,7 +1807,7 @@ gint vasp_load_poscar5(FILE *vf,struct model_pak *model){
 	label=g_strdup(line);/*atomic symbols*/
 	g_free(line);
 	line = file_read_line(vf);/*number of each species*/
-	idx=0;ptr2=&(line[0]);ptr3=label;
+	ptr2=&(line[0]);ptr3=label;/*FIX: 7faa32*/
 	sym[2]='\0';/*always*/
 	model->num_atoms=0;
 /*FIX _BUG_ core list grow!*/
