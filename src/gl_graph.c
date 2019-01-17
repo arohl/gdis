@@ -871,7 +871,7 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
 if(type==GRAPH_BANDOS){
   x=ox+0.4*dx;
   y=oy-dy;
-  oldy=oy;
+  /*FIX: 186c9c*/
   /* second axis y ticks - NO labels */
   /* we WANT 0 to be a tick, if nticks>2 */
   if(graph->yticks>2){
@@ -1594,7 +1594,7 @@ garray = g_array_new(FALSE, FALSE, sizeof(gdouble));
 fullpath = g_build_filename(sysenv.cwd, filename, NULL);
 fp = fopen(fullpath, "rt");
 line = file_read_line(fp);
-n=0;
+n=0;x[0]=0.;/*FIX 09bf1e*/
 while (line)
   {
   buff = tokenize(line, &num_tokens);
