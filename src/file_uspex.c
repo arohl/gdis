@@ -2438,7 +2438,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gint num;
 	gint *atom_n;
 	gint max_num_p;
-	gint max_num_i;
+	gint max_num_i=0;/*FIX: e729cc*/
 	gint n_data;
 	/*graph*/
 	gint gen;
@@ -2710,7 +2710,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	_UO.num_struct+=1;/*so that idx structure <-> idx ind*/
 	fclose(vf);
 /* +++ alloc/prepare the Ind array!*/
-	_UO.ind=g_malloc(_UO.num_struct*sizeof(uspex_individual));
+	_UO.ind=g_malloc0(_UO.num_struct*sizeof(uspex_individual));/*FIX dac0b1*/
 	for(idx=0;idx<_UO.num_struct;idx++) {
 		_UO.ind[idx].have_data=FALSE;
 		_UO.ind[idx].struct_number=-1;
@@ -2876,7 +2876,7 @@ fprintf(stdout,"#DBG: N_BEST=%i ",_UO.num_best);
 #endif
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	/*prepare (NEW) best_ind array*/
-	_UO.best_ind=g_malloc((2*_UO.num_best)*sizeof(gint));
+	_UO.best_ind=g_malloc0((2*_UO.num_best)*sizeof(gint));/*FIX: 883705*/
 	line = file_read_line(vf);
 	idx=0;
 	while(line){
