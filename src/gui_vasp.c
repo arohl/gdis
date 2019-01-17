@@ -2495,13 +2495,15 @@ void vasp_poscar_sync(){
 		tamp=text;
 	}
 	vasp_gui.calc.species_numbers=g_strdup(tamp);
-	g_free(tamp);
+	g_free(tamp);g_free(ztmp);/*FIX: b05ebe*/
 	/*wipe the combobox*/
 	GUI_COMBOBOX_WIPE(vasp_gui.poscar_atoms);
 	/*copy the ordered list in combobox*/
-	idx=0;spec=0;
-	text=list->data;
-	sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
+	idx=0;/*FIX: b28170*/
+	if(list!=NULL) {/*FIX: e6ffa7*/
+		text=list->data;
+		sscanf(text,"%*[^!]! atom: %*i (%[^)])",&(vasp_gui.calc.poscar_symbol[0]));
+	}
 	for (lp=list ; lp ; lp=g_slist_next(lp)){
 		text=lp->data;
 		tamp=g_strdup(text);/*to get some space*/
