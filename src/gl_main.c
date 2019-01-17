@@ -171,7 +171,7 @@ return(0);
 void gl_init_projection(struct canvas_pak *canvas, struct model_pak *model)
 {
 gdouble r, a;
-gdouble pix2ang;
+//gdouble pix2ang;/*FIX: 533acf*/
 gdouble x[3], o[3], v[3];
 struct camera_pak *camera;
 
@@ -199,8 +199,8 @@ g_assert(model->camera != NULL);
 r = 1.0 + model->rmax;
 
 /* yet another magic number (0.427) - works reasonably well */
-pix2ang = sysenv.size;
-pix2ang *= 0.427 / model->rmax;
+//pix2ang = sysenv.size;/*FIX: 533acf*/
+//pix2ang *= 0.427 / model->rmax;/*FIX: 533acf*/
 sysenv.rsize = r;
 
 /* viewing */
@@ -1603,7 +1603,7 @@ GSList *ilist;
 struct image_pak *image;
 
 /* image iteration (don't do original) */
-ilist = model->images;
+//ilist = model->images;/*FIX: b38968*/
 for (ilist=model->images ; ilist ; ilist=g_slist_next(ilist))
   {
 /* image translation */
@@ -2309,7 +2309,7 @@ size = 0.0;
 VEC3SET(mp, 0.0, 0.0, 0.0);
 VEC3SET(mn, 0.0, 0.0, 0.0);
 
-p1 = g_slist_nth_data(spatial->list, 0);
+//p1 = g_slist_nth_data(spatial->list, 0);/*FIX: 7d9c35*/
 
 /* CURRENT */
 /*
