@@ -331,7 +331,7 @@ ns = -mdi_data.comp_req[0];
 #endif
 for (i=0 ; i<mdi_data.num_comp ; i++)
   {
-  data = model_ptr(i, RECALL);
+//data = model_ptr(i, RECALL);/*FIX 1bb46b*/
   mdi_data.comp_done[i]=0;
   }
 
@@ -420,7 +420,7 @@ site = g_malloc(max_sites*sizeof(struct box_pak));
 r2_min = (gint *) g_malloc(pow(mdi_data.box_dim,3)*sizeof(gint));
 
 /* max out the number of candidate sites */
-cand = g_malloc(pow(mdi_data.box_dim,3) *sizeof(struct cand_pak));
+cand = g_malloc0(pow(mdi_data.box_dim,3) *sizeof(struct cand_pak));/*FIX 178d27*/
 
 /* NB: initially every point in box should be 0 => solvent */
 #if DEBUG
@@ -448,6 +448,9 @@ for (ri=0 ; ri<req_tot ; ri++)
   if (ci == g_slist_length(sysenv.mal))
     {
     printf("fill() error: mismatch in component requirements!\n");
+    g_free(site);/*FIX f75d7c*/
+    g_free(r2_min);/*FIX 43cc34*/
+    g_free(cand);/*FIX b87255*/
     return(2);
     }
   mdi_data.comp_done[ci]++;
@@ -468,6 +471,9 @@ for(i=0 ; i<mdi_data.box_dim ; i++)
 if (s == max_sites)
   {
   printf("Error: site indexing beyond boundary!\n");
+  g_free(site);/*FROM f75d7c*/
+  g_free(r2_min);/*FROM 43cc34*/
+  g_free(cand);/*FROM b87255*/
   return(2);
   }
 /* PBC */
