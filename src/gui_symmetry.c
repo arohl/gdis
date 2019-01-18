@@ -722,6 +722,7 @@ if( s2 >= s0 && s2 >= s1 ) d = d2 ;
 if(d == NULL)
   {
   fprintf(stderr, "ERROR: init_ultimate_plane(): %g, %g and %g have no ordering!\n", s0, s1, s2);
+  g_free(plane);/*FIX c50f9f*/
   return NULL;
   }
 
@@ -1557,7 +1558,7 @@ for (i=MaxAxisOrder ; i>=2 ; i--)
                                                     ImproperAxesCounts[i],i);
   }
 
-p=0;
+//p=0;/*FIX 02eea3*/
 switch (PlanesCount) 
   {
   case 0:

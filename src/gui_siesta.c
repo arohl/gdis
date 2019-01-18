@@ -671,7 +671,7 @@ model->siesta.eigen_values = mesch_vec_new(3*num_atoms);
 mesch_sev_compute(bigmat, model->siesta.eigen_xyz_atom_mat, model->siesta.eigen_values);
 
 // stupid sort routine -> this is going to need a rewrite - its a bubble sort - O(n^2).
-model->siesta.sorted_eig_values = g_malloc(sizeof(int[mesch_dim_get(model->siesta.eigen_values)]));
+model->siesta.sorted_eig_values = g_malloc0(sizeof(int[mesch_dim_get(model->siesta.eigen_values)]));/*FIX cef27e 6cc85f 1d07ca*/
 
 for (i=0; i<mesch_dim_get(model->siesta.eigen_values); i++)
   {
