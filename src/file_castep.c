@@ -231,7 +231,9 @@ while (TRUE)
       }
     }
 
-
+/*FIX a13a7b eb969b 3b0c4f is ugly:
+ * before: the correspondance between cq[shift_counter] and *cq[i] can only be assumed.
+ * Now cq[i] is only defined for (i<shift_counter). --OVHPA*/
 gdouble* shifts[2000];
 int shift_counter=0;
 gdouble* aniso[2000];
@@ -308,7 +310,7 @@ int skip=0;
       }
     buff = tokenize(line, &num_tokens);
     int i=0;
-    while ((num_tokens == 9) || (num_tokens == 7))
+    while (((num_tokens == 9) || (num_tokens == 7))&&(i<shift_counter)) /*FIX a13a7b eb969b 3b0c4f*/
     {
 /*	if (i<=shift_counter)*/
 	*shifts[i]=str_to_float(*(buff+3));
@@ -340,7 +342,7 @@ int skip=0;
       }
     buff = tokenize(line, &num_tokens);
     int i=0;
-    while (num_tokens == 6)
+    while ((num_tokens == 6)&&(i<shift_counter)) /*FIX a13a7b eb969b 3b0c4f*/
     {
 	*cq[i]=str_to_float(*(buff+3));
 	*efgasym[i]=str_to_float(*(buff+4));
@@ -626,9 +628,9 @@ if(band_structure) {/*try to read band structure information, if any.*/
 	while(!fgetline(fp, line)) if (g_strrstr(line, "K-point") != NULL) break;
 	if(feof(fp)) goto castep_done;
 	model->kpts_d=g_malloc((model->nkpoints)*sizeof(gdouble));
-	x=g_malloc((model->nkpoints)*sizeof(gdouble));
-	y=g_malloc((model->nkpoints)*sizeof(gdouble));
-	z=g_malloc((model->nkpoints)*sizeof(gdouble));
+	x=g_malloc0((model->nkpoints)*sizeof(gdouble));/*FIX 273e0d*/
+	y=g_malloc0((model->nkpoints)*sizeof(gdouble));/*FIX 273e0d*/
+	z=g_malloc0((model->nkpoints)*sizeof(gdouble));/*FIX 273e0d*/
 	model->band_up=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	if(model->spin_polarized) model->band_down=g_malloc((model->nkpoints*model->nbands)*sizeof(gdouble));
 	evmin=0.;evmax=0.;

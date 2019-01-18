@@ -109,7 +109,7 @@ gint write_bgf(gchar *filename, struct model_pak *data)
       for (bond_iter = core->bonds; bond_iter; bond_iter = bond_iter->next)
       {
         bond = bond_iter->data;
-        bond_order = 1;
+//      bond_order = 1;/*FIX be22c4*/
         bond_order = (bond->type == BOND_DOUBLE) ? 2 : ( (bond->type == BOND_TRIPLE) ? 3 : 1);
         fprintf(fp, "%6i", bond_order);
       }
