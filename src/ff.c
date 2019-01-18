@@ -330,7 +330,7 @@ return(ff);
 /* return true if complete? */
 gint ff_data_add(gpointer forcefield, gchar *text)
 {
-gint n=0, len, num_tokens;
+gint n=0, /*len,*/ num_tokens;/*FIX 8372c5*/
 gchar **buff;
 gdouble x;
 struct forcefield_pak *ff = forcefield;
@@ -350,9 +350,9 @@ while (n<num_tokens && ff->atoms_current < ff->atoms_expected)
     {
     g_assert(ff->atoms_current < FF_MAX_ATOMS);
 
-    len = strlen(*(buff+n));
-    if (len > FF_MAX_SYMBOL-1)
-      len = FF_MAX_SYMBOL-1;
+//  len = strlen(*(buff+n));/*FIX 8372c5*/
+//  if (len > FF_MAX_SYMBOL-1)
+//    len = FF_MAX_SYMBOL-1;
 
     g_snprintf(ff->atom[ff->atoms_current++], FF_MAX_SYMBOL, "%s", *(buff+n));
     }
