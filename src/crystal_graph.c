@@ -253,6 +253,7 @@ gint calculate_crystal_graph(struct model_pak * model)
   }
   /* new iterate the results from the tree */
   g_tree_foreach(tree, print_node, NULL);
+  g_free(single_energies);/*FIX 8643ed*/
   g_tree_destroy(tree);
   return(0);
 }
