@@ -981,7 +981,9 @@ if (!num_cuts)
   z1 = g_malloc(sizeof(gdouble));
   *z1 = 0.0;
   zlist = g_slist_prepend(zlist, z1);
-  num_cuts = 1;
+#if DEBUG_CALC_SHIFTS
+  num_cuts = 1;/*FIX b1b848*/
+#endif
   }
 
 #if DEBUG_CALC_SHIFTS
@@ -995,9 +997,9 @@ printf("\n");
 #endif
 
 zlist = trim_zlist(zlist);
-num_cuts = g_slist_length(zlist);
-
 #if DEBUG_CALC_SHIFTS
+num_cuts = g_slist_length(zlist);/*FIX 95d70c*/
+
 printf("Found %d unique shifts.\n", num_cuts);
 for (list=zlist ; list ; list=g_slist_next(list))
   {
@@ -1382,7 +1384,7 @@ sbe /= (gdouble) model->num_atoms;
 /* converge region size */
 n=flag=0;
 old_energy = 0.0;
-de = 99999999.9;
+//de = 99999999.9;/*FIX e176b9*/
 status = 0;
 for (;;)
   {
