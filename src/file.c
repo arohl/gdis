@@ -827,7 +827,7 @@ if (!name)
   return(NULL);
 
 /* search for '.' character in reverse order */
-i = n = strlen(name);
+/*i =*/ n = strlen(name);/*FIX 4ff5be*/
 /* minimum size, avoids troublesome cases (eg "..") */
 if (n > 2)
   {

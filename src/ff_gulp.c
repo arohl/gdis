@@ -359,7 +359,7 @@ for (i=0 ; i<m ; i++)
     output = g_slist_prepend(output, ff);
     }
   }
-
+g_free(la);/*FIX 6adf29*/
 return(output);
 }
 
@@ -400,7 +400,7 @@ for (j=0 ; j<m ; j++)
       }
     }
   }
-
+g_free(la);/*FIX aa68db*/
 return(output);
 }
 

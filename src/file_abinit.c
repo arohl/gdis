@@ -270,7 +270,7 @@ while (!fgetline(fp, line))
       }
     if (g_ascii_strncasecmp("     znucl", line, 10) == 0)
       {
-      types = g_malloc(ntype * sizeof(gint));
+      types = g_malloc0(ntype * sizeof(gint));/*FIX: 3aa3e8*/
       i = 0;
       tot_tokens = 0;
       buff = tokenize(line, &num_tokens);
@@ -294,12 +294,14 @@ while (!fgetline(fp, line))
       if (clist == NULL)
         {
         gui_text_show(ERROR, "no atoms found\n");
+	g_free(types);/*FIX: 960910*/
         return(2);
         }
       for (i=0; i<natom; i++)
         {
         core = clist->data;
-        core_init(elements[types[core->atom_code]].symbol, core, model);
+        if(ntype > 0) core_init(elements[types[core->atom_code]].symbol, core, model);/*FIX 3aa3e8*/
+	else  core_init(elements[0].symbol, core, model);/*if ntype==0 assuming symbol is "X" --OVHPA*/
         clist = g_slist_next(clist);
         }
       }
