@@ -941,7 +941,7 @@ if (!scan)
   return;
 
 /* header */
-buff = scan_get_tokens(scan, &num_tokens);
+buff = scan_get_tokens(scan, &num_tokens);if(buff==NULL) return;/*FIX 3b7f02*/
 #ifdef UNUSED_BUT_SET
 if (num_tokens == 1)
   expect = str_to_float(*buff);

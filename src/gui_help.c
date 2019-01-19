@@ -214,7 +214,7 @@ n = strlen(source);
 start = 0;
 #endif
 i = 0;
-stop = -1;
+//stop = -1;/*FIX 53421d*/
 while (i<n)
   {
 /* search for special tags */
