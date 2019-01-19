@@ -140,7 +140,7 @@ for (;;)
     if (folder)
       {
       entry = library_entry_add(folder, *(buff+1), offset);
-      g_free(folder);
+      g_free(folder);folder=NULL;/*FIX 3fe0a9*/
       }
     else
       entry = library_entry_add("default", *(buff+1), offset);

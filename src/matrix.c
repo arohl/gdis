@@ -277,10 +277,8 @@ gdouble *mptr=mat, *vptr=vec;
 /* init */
 #ifdef UNUSED_BUT_SET
 x = *vptr++;
-#else
-y = *vptr++;
 #endif
-y = *vptr++;
+y = *(vptr+2);/*FIX 06ce68*/
 z = *vptr--;
 
 /* mult */
@@ -426,12 +424,13 @@ return(0);
 gdouble magnitude(gdouble *vec, gint dim)
 {
 gint i;
-gdouble sum=0.0;
+gdouble sum=0.;
 
 for (i=0 ; i<dim ; i++)
   sum += (*(vec+i)) * (*(vec+i));
 
-return(sqrt(sum));
+if(sum<=0.) sum=0.;/*valgrind _BUG_ FIX*/
+return sqrt(sum);
 }
 
 /********************************/
@@ -443,11 +442,12 @@ gint i;
 gdouble len, *ptr=vec;
 
 len = magnitude(vec, dim);
-if (len < FRACTION_TOLERANCE)
+if (len < FRACTION_TOLERANCE) /*valgring _BUG_*/
   return(1);
 
 for (i=0 ; i<dim ; i++)
   *ptr++ /= len;
+
 
 return(0);
 }

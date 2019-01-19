@@ -339,6 +339,7 @@ while (!scan_complete(scan))
             ib = nearest_int(1.0/cell[1]);
 /* allocation */
             size = a*b;
+	    if(surface!=NULL) g_free(surface);/*FIX a02228*/
             surface = g_malloc(size*sizeof(gdouble));
             for (i=size ; i-- ; )
               surface[i] = 0.0;
@@ -372,7 +373,7 @@ g_assert_not_reached();
     }
   else
     {
-    set=0;
+    //set=0;/*FIX 11b326*/
     break;
     }
 

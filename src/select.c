@@ -1128,7 +1128,7 @@ else
   dest_link = create_link(chain);
   dest_link->type = type;
 /* input chain */
-  list = chain;
+//list = chain;/*FIX 2553f8*/
 /* store the completed chain as a link */
   cnode->link_list = g_list_append(cnode->link_list, dest_link);
   }
