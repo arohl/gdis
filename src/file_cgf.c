@@ -185,18 +185,20 @@ gchar **tokenize_bondline(FILE *fp, gint *num_tokens)
 /****************/
 gint write_cgf(gchar *filename, struct model_pak *data)
 {
-  GSList *core_iter, *bond_iter;//,
+  GSList *core_iter;/*FIX 7d2047*/
   GSList *primary_cores = NULL;
   FILE *fp;
-  gint nr_primary_cores = 0, max_bonds = 0, bond_counter = 0;
+  gint nr_primary_cores = 0, max_bonds = 0;/*FIX 7d2047*/
 #ifdef UNUSED_BUT_SET
+  GSList *bond_iter;/*FIX 7d2047*/
+  gint bond_counter = 0;
+  struct bond_pak *bond;
   gint offset_counter = 0;
 #endif
    
   gint *nr_bonds = g_new(gint, g_slist_length(data->cores));
   
   struct core_pak *core;
-  struct bond_pak *bond;
   
   /* checks and open file */
   g_return_val_if_fail(data != NULL, 1);
@@ -230,19 +232,21 @@ gint write_cgf(gchar *filename, struct model_pak *data)
     }
   }
   
+#ifdef UNUSED_BUT_SET
   gdouble * bond_strengths = g_new0(gdouble, total_bonds);
   gint * bond_to_values =  g_new0(gint, total_bonds);
   gint * bond_offsets = g_new0(gint, total_bonds * 3);
+#endif /*FIX 7d2047*/
   
   fprintf(fp, "Nr of centres of mass: %i\n", nr_primary_cores);
   fprintf(fp, "Maximum connectivity: %i\n", max_bonds);
   fprintf(fp, "These are fractional coordinates\n");
   fprintf(fp, "--------------------------------------------\n");
 
-  bond_counter = 0;
 #ifdef UNUSED_BUT_SET
+  bond_counter = 0;/*FIX 7d2047*/
   offset_counter = 0;
-#endif
+
   
   for (core_iter = data->cores; core_iter; core_iter = core_iter->next)
   {
@@ -257,12 +261,14 @@ gint write_cgf(gchar *filename, struct model_pak *data)
 //  gint i = 0;
 //  for (; i < total_bonds; ++i)
 //    g_message("%3.5f", bond_strengths[i]);
-  
+#endif /*FIX 7d2047*/  
   g_free(nr_bonds);
+#ifdef UNUSED_BUT_SET
   g_free(bond_strengths);
   g_free(bond_to_values);
   g_free(bond_offsets);
-  
+#endif /*FIX 7d2047*/
+
   fclose(fp);
   return(0);
 }
@@ -364,7 +370,7 @@ gint read_cgf(gchar *filename, struct model_pak *data)
   g_message("%d lines of bond information", nr_bond_lines);
 #endif
   
-  bondto = g_new(gint, nr_bond_lines * num_gu * 5);
+  bondto = g_new0(gint, nr_bond_lines * num_gu * 5);/*FIX e10cdb*/
   bond_offsets = g_new(gdouble, nr_bond_lines * num_gu * 15);
   //gdouble *bond_strengths;
   //bond_strengths = g_new(gdouble, nr_bond_lines * num_gu * 5);

@@ -93,7 +93,7 @@ gchar **strip_empty_strings(gchar **str_array)
 {
 gchar **new_str_array = NULL;
 gint i=0, j=0;
-
+if(str_array==NULL) return NULL;/*FIX 7c1ccb <- extra precaution*/
 while (str_array[i] != NULL)
   {
   if (strlen(str_array[i]) != 0)
@@ -105,7 +105,7 @@ while (str_array[i] != NULL)
   else
     g_free(str_array[i]);
   i++;
-  }
+  } if((j==0)||(i==0)) return NULL;/*FIX 7c1ccb (see also above)*/
   new_str_array[j] = NULL;
   g_free(str_array);
   return(new_str_array);

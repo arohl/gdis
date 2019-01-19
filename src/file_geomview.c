@@ -50,7 +50,7 @@ extern struct elem_pak elements[];
 gint read_off(gchar *filename, struct model_pak *model)
 {
 gint a, b, c, i, n, v, num_tokens, remaining, v_limit;
-gint colour_flag, normal_flag, texture_flag;
+gint colour_flag, normal_flag/*, texture_flag*/;/*FIX 1c7612*/
 gchar **buff, *text;
 gdouble norm[3];
 gpointer scan;
@@ -66,7 +66,7 @@ if (!scan)
   return(2);
 
 /* setup flags */
-colour_flag = normal_flag = texture_flag = FALSE;
+colour_flag = normal_flag = /*texture_flag =*/ FALSE;/*FIX 1c7612*/
 
 /* parse header */
 buff = scan_get_tokens(scan, &num_tokens);
@@ -90,10 +90,11 @@ if (num_tokens)
       case 'N':
         normal_flag = TRUE;
         break;
-
+#ifdef UNUSED_BUT_SET /*FIX 1c7612*/
       case 'T':
         texture_flag = TRUE;
         break;
+#endif
       }
     }
   }
@@ -160,7 +161,7 @@ while (!scan_complete(scan))
         }
 
       }
-    remaining -= 3;
+//  remaining -= 3;/*FIX 5bd91a*/
 /* alpha */
 /*
     if (remaining)
