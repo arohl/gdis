@@ -85,10 +85,11 @@ while (!scan_complete(scan))
         }
 
 /* parse spacegroup */
-      line = scan_get_line(scan);
-      line = scan_get_line(scan);
-      model->sginfo.spacename = g_strstrip(g_strdup(line));
-      model->sginfo.spacenum = -1;
+      if(scan_get_line(scan)){ /*FIX de93af*/
+	line = scan_get_line(scan);
+	model->sginfo.spacename = g_strstrip(g_strdup(line));
+	model->sginfo.spacenum = -1;
+      }
 
 /* parse a structure */
       skip = 0;
