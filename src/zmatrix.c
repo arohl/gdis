@@ -880,7 +880,7 @@ GSList *zmat_connect_sort(GSList *molecule)
 {
 GSList *list, *path, *sorted;
 struct core_pak *core, *next;
-
+if(molecule==NULL) return NULL;/*FIX e1bf91*/
 /* flag all atoms as unpruned */
 for (list=molecule ; list ; list=g_slist_next(list))
   {

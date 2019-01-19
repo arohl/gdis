@@ -146,7 +146,7 @@ gint c, i, j, h, k, l, flag;
 gint GCD(gint, gint);
 gint vector_compare(vector *, vector *);
 gdouble depth, depth_min;
-gdouble gcd, cd, x;
+gdouble /*gcd,*/ cd, x;/*FIX db67a8*/
 gdouble tmat[9], norm[3], va[3];
 gdouble wlat[9];
 gdouble sign, vec[3], vec2[3], dn[3];
