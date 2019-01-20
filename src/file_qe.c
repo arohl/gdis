@@ -315,7 +315,7 @@ while (TRUE)
     {
     while (!fgetline(fp, line))
       {
-      species = g_malloc(sizeof(struct qe_species_pak));
+      //species = g_malloc(sizeof(struct qe_species_pak));/*FIX 735085*/
       buff = tokenize((gchar *)(line), &num_tokens);
       if (num_tokens == 0)
         {

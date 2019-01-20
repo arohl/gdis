@@ -649,7 +649,7 @@ orig = data;
 #endif
 while(data)
   {
-#if DEBUG_UPDATE_COORDS
+#if DEBUG_UPDATE_COORDS && DOES_NOT_EXIST
 P3MAT("instantaneous rot matrix", rot);
 P3MAT("cummulative rot matrix", data->rotmat);
 P3MAT("           irot matrix", data->irotmat);

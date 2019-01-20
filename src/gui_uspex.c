@@ -193,7 +193,7 @@ void gui_uspex_init(struct model_pak *model){
 			uspex_gui.calc.howManySwaps*=0.5;
 		}else{
 			/*we need to count over only possible swaps*/
-			gint i,j;
+			gint i,j;gdouble tmp_d=0.;/*FIX: b865cc*/
 			gint n_swaps;
 			gint *specificSwaps;
 			gchar *ptr,*ptr2;
@@ -203,29 +203,36 @@ void gui_uspex_init(struct model_pak *model){
 			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
 			ptr2=ptr;
 			do{
-				j=g_ascii_strtod(ptr,&ptr2);
+				tmp_d+=g_ascii_strtod(ptr,&ptr2);/*FIX: b865cc*/
 				if(ptr2==ptr) break;
 				n_swaps++;
 				ptr=ptr2;
 			}while(1);
-			/*2-populate specificSwaps*/
-			specificSwaps = g_malloc(n_swaps*sizeof(gint));
-			ptr=uspex_gui.calc.specificSwaps;i=0;
-			while(*ptr==' ') ptr++;/*skip initial space (if any)*/
-			ptr2=ptr;
-			do{
-				j=g_ascii_strtod(ptr,&ptr2);
-				if(ptr2==ptr) break;
-				/*reg j*/
-				specificSwaps[i] = j;
-				ptr=ptr2;
-				i++;
-			}while(1);
-			for(i=0;i<n_swaps-1;i++)
-				for(j=i+1;j<n_swaps;j++)
-					uspex_gui.calc.howManySwaps+=MIN(uspex_gui.calc.numSpecies[i],uspex_gui.calc.numSpecies[j]);
-			uspex_gui.calc.howManySwaps*=0.5;
-			g_free(specificSwaps);
+			tmp_d-=(gint)tmp_d;
+			if((tmp_d>0.)||(n_swaps==0)) {
+				/*erroneous data, give up specificSwaps information*/
+				g_free(uspex_gui.calc.specificSwaps);
+				uspex_gui.calc.specificSwaps=NULL;
+			}else{
+				/*2-populate specificSwaps*/
+				specificSwaps = g_malloc(n_swaps*sizeof(gint));
+				ptr=uspex_gui.calc.specificSwaps;
+				while(*ptr==' ') ptr++;/*skip initial space (if any)*/
+				ptr2=ptr;i=0;/*FIX: 736236*/
+				do{
+					tmp_d=g_ascii_strtod(ptr,&ptr2);
+					if(ptr2==ptr) break;
+					/*reg tmp_d*/
+					specificSwaps[i] = (gint)tmp_d;
+					ptr=ptr2;
+					i++;
+				}while(1);
+				for(i=0;i<n_swaps-1;i++)
+					for(j=i+1;j<n_swaps;j++)
+						uspex_gui.calc.howManySwaps+=MIN(uspex_gui.calc.numSpecies[i],uspex_gui.calc.numSpecies[j]);
+				uspex_gui.calc.howManySwaps*=0.5;
+				g_free(specificSwaps);
+			}
 		}
 	}
 	if(uspex_gui.calc.IonDistances==NULL){
@@ -268,7 +275,7 @@ void gui_uspex_init(struct model_pak *model){
 			if(*ptr=='\0') {
 				/*last one*/
 				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
-				line=ptr;
+				/*FIX: f50eec*/
 				break;
 			}else{
 				*ptr='\0';/*cut here*/
@@ -1377,7 +1384,7 @@ void apply_atom(){
 				if(uspex_gui.calc.numSpecies!=NULL) g_free(uspex_gui.calc.numSpecies);
 				uspex_gui.calc.numSpecies=numSpecies;
 				update_numSpecies();
-			}
+			} else g_free(numSpecies);/*FIX: 0259a1*/
 			/*select last*/
 			GUI_COMBOBOX_SET(uspex_gui.atomType,uspex_gui.calc._nspecies);
 		}
@@ -1472,7 +1479,7 @@ void remove_atom(){
 		if(uspex_gui.calc.numSpecies!=NULL) g_free(uspex_gui.calc.numSpecies);
 		uspex_gui.calc.numSpecies=numSpecies;
 		update_numSpecies();
-	}
+	} else g_free(numSpecies);/*FIX: 628b78*/
 	/*select previous*/
 	if(index-1<0) index=1;
 	GUI_COMBOBOX_SET(uspex_gui.atomType,index-1);
@@ -1830,8 +1837,8 @@ void apply_latticevalue(void){
 		}
 		/*wipe and replace*/
 		uspex_gui.calc._nlattice_vals=nvals;
-		if(uspex_gui.calc.Latticevalues!=NULL) uspex_gui.calc.Latticevalues=g_malloc(nvals*sizeof(gdouble));
-		for(index=0;index<nvals;index++) uspex_gui.calc.Latticevalues[index]=0.;
+		if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);/*FIX: 23188d*/
+		uspex_gui.calc.Latticevalues=g_malloc0(nvals*sizeof(gdouble));
 		ptr=uspex_gui._tmp_latticevalue;
 		nvals=0;
 		while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
@@ -1909,7 +1916,7 @@ void uspex_latticeformat_selected(GUI_OBJ *w){
 					uspex_gui.calc._nlattice_vals=2;
 				}
 				if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
-uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+uspex_gui.calc.Latticevalues=g_malloc0((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));/*FIX: 400a23*/
 				for(idx=0;idx<uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals;idx++)
 					uspex_gui.calc.Latticevalues[idx]=0.;
 			}
@@ -1936,7 +1943,7 @@ uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.c
 				uspex_gui.calc._nlattice_line=1;
 				uspex_gui.calc._nlattice_vals=6;
 				if(uspex_gui.calc.Latticevalues!=NULL) g_free(uspex_gui.calc.Latticevalues);
-uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+uspex_gui.calc.Latticevalues=g_malloc0((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));/*FIX: 018107*/
 				for(idx=0;idx<uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals;idx++)
 					uspex_gui.calc.Latticevalues[idx]=0.;
 			}
@@ -2097,21 +2104,17 @@ void spin_update_num_opt_steps(void){
 				tmp_c[idx]=g_strdup(uspex_gui._tmp_commandExecutable[idx]);
 				g_free(uspex_gui._tmp_commandExecutable[idx]);
 				uspex_gui._tmp_commandExecutable[idx]=NULL;
-			}else
-				tmp_c[idx]=NULL;
+			}else tmp_c[idx]=NULL;
 			if(uspex_gui._tmp_ai_input[idx]!=NULL){
 				tmp_inp[idx]=g_strdup(uspex_gui._tmp_ai_input[idx]);
 				g_free(uspex_gui._tmp_ai_input[idx]);
 				uspex_gui._tmp_ai_input[idx]=NULL;
-			}else
-				tmp_inp[idx]=NULL;
+			}else tmp_inp[idx]=NULL;
 			if(uspex_gui._tmp_ai_opt[idx]!=NULL){
 				tmp_opt[idx]=g_strdup(uspex_gui._tmp_ai_opt[idx]);
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
-			}else
-				tmp_opt[idx]=NULL;
-
+			}else tmp_opt[idx]=NULL;
 		}
 		/*last step*/
 		tmp_i[i-1]=1;
@@ -2132,20 +2135,17 @@ void spin_update_num_opt_steps(void){
 				tmp_c[idx]=g_strdup(uspex_gui._tmp_commandExecutable[idx]);
 				g_free(uspex_gui._tmp_commandExecutable[idx]);
 				uspex_gui._tmp_commandExecutable[idx]=NULL;
-			}else
-				tmp_c[idx]=NULL;
+			}else tmp_c[idx]=NULL;
 			if(uspex_gui._tmp_ai_input[idx]!=NULL){
 				tmp_inp[idx]=g_strdup(uspex_gui._tmp_ai_input[idx]);
 				g_free(uspex_gui._tmp_ai_input[idx]);
 				uspex_gui._tmp_ai_input[idx]=NULL;
-			}else
-				tmp_inp[idx]=NULL;
+			}else tmp_inp[idx]=NULL;
 			if(uspex_gui._tmp_ai_opt[idx]!=NULL){
 				tmp_opt[idx]=g_strdup(uspex_gui._tmp_ai_opt[idx]);
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
-			}else
-				tmp_opt[idx]=NULL;
+			}else tmp_opt[idx]=NULL;
 		}
 	}
 	g_free(uspex_gui.calc.abinitioCode);uspex_gui.calc.abinitioCode=tmp_i;
@@ -2153,6 +2153,8 @@ void spin_update_num_opt_steps(void){
 	g_free(uspex_gui.calc.KresolStart);uspex_gui.calc.KresolStart=tmp_d0;
 	g_free(uspex_gui.calc.vacuumSize);uspex_gui.calc.vacuumSize=tmp_d1;
 	g_free(uspex_gui._tmp_commandExecutable);uspex_gui._tmp_commandExecutable=tmp_c;
+	g_free(uspex_gui._tmp_ai_input);uspex_gui._tmp_ai_input=tmp_inp;/*FIX d09393*/
+	g_free(uspex_gui._tmp_ai_opt);uspex_gui._tmp_ai_opt=tmp_opt;/*FIX 4f5cad*/
 	/*update _num_opt_steps*/
 	uspex_gui.calc._num_opt_steps=i;
 	register_commandExecutable();
@@ -3399,7 +3401,7 @@ if(!uspex_gui.auto_bonds){
 		/*there is something to update*/
 		if(uspex_gui.calc.goodBonds!=NULL) g_free(uspex_gui.calc.goodBonds);
 		uspex_gui.calc.goodBonds=g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
-		ptr=text;jdx=0;
+		jdx=0;/*FIX: 5c0648*/
 		while((jdx<uspex_gui.calc._nspecies)&&(g_ascii_strcasecmp(text,"ADD GOODBOND") != 0)){
 			ptr=text;
 			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
@@ -3472,7 +3474,7 @@ if(uspex_gui.auto_C_lat){
 	if(*ptr!='\0'){
 		/*count number of splits*/
 		while(*ptr!='\0'){
-			idx=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+			if(g_ascii_strtoull(ptr,&ptr2,10)==G_MAXUINT64) break;/*FIX: 38832a*/
 			if(ptr2==ptr) break;/*not a valid integer*/
 			uspex_gui.calc._nsplits++;
 			ptr=ptr2+1;
@@ -3585,7 +3587,7 @@ if(uspex_gui.auto_C_lat){
 	if(*ptr!='\0'){
 		/*count number of specificTrans*/
 		while(*ptr!='\0'){
-			idx=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+			if(g_ascii_strtoull(ptr,&ptr2,10)==G_MAXUINT64) break;/*FIX: 73cf4c*/
 			if(ptr2==ptr) break;/*not a valid integer*/
 			uspex_gui.calc._nspetrans++;
 			ptr=ptr2+1;
@@ -3637,7 +3639,7 @@ if(uspex_gui.auto_C_lat){
 	if(*ptr!='\0'){
 		/*count number of pickupImages*/
 		while(*ptr!='\0'){
-			idx=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+			if(g_ascii_strtoull(ptr,&ptr2,10)==G_MAXUINT64) break;/*FIX: 61c045*/
 			if(ptr2==ptr) break;/*not a valid integer*/
 			uspex_gui.calc._npickimg++;
 			ptr=ptr2+1;

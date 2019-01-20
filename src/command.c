@@ -124,8 +124,11 @@ do
           if (inp_pak->read_file)
             {
             model = model_new();
-
+#ifdef DEBUG_COMMAND_MAIN_LOOP /*FROM: 668594 e7a986*/
             status = inp_pak->read_file(inp, model);
+#else
+	    inp_pak->read_file(inp, model);
+#endif
 
             structures = g_slist_find(sysenv.mal, model);
 
@@ -144,7 +147,7 @@ printf("Items loaded = %d [status = %d]\n", g_slist_length(structures), status);
                 tmp = g_strdup_printf("%s_%d.%s", base, n, ext);
                 out = g_build_filename(sysenv.cwd, tmp, NULL);
 
-                status = out_pak->write_file(out, model);
+                /*status =*/ out_pak->write_file(out, model);/*FIX: 668594*/
 
 #if DEBUG_COMMAND_MAIN_LOOP
 printf("a [%s] -> [%s]\n", inp, out);
@@ -162,7 +165,7 @@ printf("a [%s] -> [%s]\n", inp, out);
               out = g_build_filename(sysenv.cwd, tmp, NULL);
               g_free(tmp);
 
-              status = out_pak->write_file(out, model);
+              /*status =*/ out_pak->write_file(out, model);/*FIX: e7a986*/
 
 #if DEBUG_COMMAND_MAIN_LOOP
 printf("b [%s] -> [%s]\n", inp, out);

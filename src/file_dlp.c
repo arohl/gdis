@@ -63,10 +63,10 @@ if (!scan)
   return(3);
 
 /* title line */
-line = scan_get_line(scan);
+if(scan_get_line(scan)==NULL) return(3);/*FIX 0c304f*/
 
 /* config stuff */
-line = scan_get_line(scan);
+if(scan_get_line(scan)==NULL) return(3);/*FIX 881ce0*/
 
 /* cell vectors */
 model->construct_pbc = TRUE;
@@ -123,7 +123,7 @@ while (!scan_complete(scan))
   g_strfreev(buff);
 
 /* TODO - acceleration??? */
-  line = scan_get_line(scan);
+  if(scan_get_line(scan)==NULL) break;/*FIX 7ef959*/
 
 /* finished reading atom data */
   if (core)

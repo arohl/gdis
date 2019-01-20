@@ -92,8 +92,9 @@ while (list)
 #if DEBUG_RELATION
 printf(" : relation (%p)", relation);
 #endif
-    g_free(relation);
+//    g_free(relation);/*FIX 5c2f9f*/
     gui_relation_list = g_slist_remove(gui_relation_list, relation);
+    g_free(relation);/*FIX 5c2f9f*/
     }
   }
 #if DEBUG_RELATION

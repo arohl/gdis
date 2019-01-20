@@ -56,7 +56,8 @@ gdouble p2a;
 /***************************/
 void povray_hdr(FILE *fp, struct model_pak *data)
 {
-gdouble xvec, yvec, amb, pos[3], colour[3];
+gdouble xvec, yvec, amb, colour[3];
+gdouble pos[3]={0.,0.,0.};/*FIX bfca4a*/
 gdouble x[3], o[3], v[3], e[3];
 GSList *list;
 struct light_pak *light;

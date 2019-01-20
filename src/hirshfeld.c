@@ -163,7 +163,7 @@ return(NULL);
 GSList *hfs_calc_env(GSList *select, struct model_pak *model)
 {
 gboolean flag, primary;
-gint i, imax[3];
+gint i, imax[3]={0,0,0};/*FIX 71bf17 e79abc 1f7792*/
 gdouble r2, dx[3];
 GSList *ilist, *list, *list2, *nlist;
 struct image_pak *image;

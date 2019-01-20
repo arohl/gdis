@@ -364,7 +364,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 			line = g_strdup_printf("ERROR: Can't read USPEX output: no usable atomType information!\n");
 	                gui_text_show(ERROR, line);
 	                g_free(line);
-			fclose(vf);
+			fclose(vf);g_free(uspex_calc);/*FIX: 858528*/
 			return(NULL);
 		}else{
 			/*this should *not* be the way to obtain _nspecies, atomType is mandatory!*/
@@ -375,7 +375,7 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 		line = g_strdup_printf("ERROR: Can't read USPEX output: no usable abinitioCode information!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
-		fclose(vf);
+		fclose(vf);g_free(uspex_calc);/*FROM: 858528*/
 		return(NULL);
 	}
 	rewind(vf);
@@ -2212,7 +2212,7 @@ if(_UC.calculationMethod==US_CM_TPS){/*because some values don't have default*/
 	if(_UC.MDrestartFile!=NULL) __OUT_STRING(MDrestartFile);
 }
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-else vfpos=ftell(vf);/* flag */
+/*FIX: 62e1bd*/
 	line=g_strdup_printf("*       END OF FILE       *");
 	__TITLE(line);
 	g_free(line);
@@ -2438,7 +2438,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gint num;
 	gint *atom_n;
 	gint max_num_p;
-	gint max_num_i;
+	gint max_num_i=0;/*FIX: e729cc*/
 	gint n_data;
 	/*graph*/
 	gint gen;
@@ -2507,7 +2507,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 				line = g_strdup_printf("WARNING: wrong USPEX Version tag!\n");
 				gui_text_show(WARNING, line);
 			}else{
-				min=0;med=0;max=0;
+				min=0;med=0;/*FIX: 2c2c73*/
 				ptr2=NULL;
 				max=g_ascii_strtoull(ptr,&ptr2,10);
 				ptr=NULL;
@@ -2529,7 +2529,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 			if(!g_ascii_isdigit(*ptr)){/*malformed Version tag*/
 				/*but we IGNORE it since it can be a valid tag which is not a Version*/
 			}else{
-				min=0;med=0;max=0;
+				min=0;med=0;/*FIX: b7efd4*/
 				ptr2=NULL;
 				max=g_ascii_strtoull(ptr,&ptr2,10);
 				ptr=NULL;
@@ -2631,7 +2631,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	model->basename=g_strdup_printf("uspex");
 	model->num_frames=0;
 /* +++ register frames, calculate max_struct (according to gatherPOSCARS - it can change)*/
-	num=0;max_num_p=0;
+	max_num_p=0;/*FIX: f70d36*/
 	vfpos=ftell(vf);/* flag */
 /* +++ frame_0 exists (but is not part of gathered_POSCARS) in case of META calculation*/
 	/*for now, just duplicate the first one (until we find out if this information is available somewhere in results)*/
@@ -2658,7 +2658,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		jdx++;
 	}
 	/*all done*/
-	num=0;
+	/*FIX: bbc31e*/
 	rewind(vf);
 	line = file_read_line(vf);
 	while(!feof(vf)){
@@ -2689,14 +2689,14 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		goto uspex_fail;
 	}
 	g_free(aux_file);
-	num=0;max_num_i=0;
+	/*FIX: c70a9c*/
 	line = file_read_line(vf);
 	while(!feof(vf)){
 		ptr=&(line[0]);
 		__SKIP_BLANK(ptr);
-		num=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+		max_num_i=(gint)g_ascii_strtoull(ptr,&(ptr2),10);/*FIX: 8b8a7f*/
 		if(ptr2!=NULL) {
-			num=0;
+			/*FIX e26c23*/
 			ptr=ptr2+1;
 			__SKIP_BLANK(ptr);
 			num=(gint)g_ascii_strtoull(ptr,NULL,10);
@@ -2710,7 +2710,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	_UO.num_struct+=1;/*so that idx structure <-> idx ind*/
 	fclose(vf);
 /* +++ alloc/prepare the Ind array!*/
-	_UO.ind=g_malloc(_UO.num_struct*sizeof(uspex_individual));
+	_UO.ind=g_malloc0(_UO.num_struct*sizeof(uspex_individual));/*FIX dac0b1*/
 	for(idx=0;idx<_UO.num_struct;idx++) {
 		_UO.ind[idx].have_data=FALSE;
 		_UO.ind[idx].struct_number=-1;
@@ -2876,7 +2876,7 @@ fprintf(stdout,"#DBG: N_BEST=%i ",_UO.num_best);
 #endif
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	/*prepare (NEW) best_ind array*/
-	_UO.best_ind=g_malloc((2*_UO.num_best)*sizeof(gint));
+	_UO.best_ind=g_malloc0((2*_UO.num_best)*sizeof(gint));/*FIX: 883705*/
 	line = file_read_line(vf);
 	idx=0;
 	while(line){
@@ -2932,6 +2932,7 @@ fprintf(stdout,"\n");
 		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
 		gy.color=GRAPH_COLOR_DEFAULT;
+		gy.line=GRAPH_LINE_NONE;/*FIX: 11a1ed*/
 		dat_graph_add_y(gy,_UO.graph);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3038,6 +3039,7 @@ fprintf(stdout,"-SENT\n");
 		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
 		gy.color=GRAPH_COLOR_DEFAULT;
+		gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 		dat_graph_add_y(gy,_UO.graph_best);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3085,6 +3087,7 @@ fprintf(stdout,"-SENT\n");
 #endif
 		/* NEW - y dat*/
 		gy.color=GRAPH_COLOR_DEFAULT;
+		gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 		dat_graph_add_y(gy,_UO.graph_best);
 		g_free(gy.y);
 		g_free(gy.idx);
@@ -3158,7 +3161,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			while((jdx<n_compo)&&(compo>gx.x[jdx])) jdx++;
 			if((compo-gx.x[jdx])==0.) continue;/*we already have that one*/
 			c=g_malloc((n_compo+1)*sizeof(gdouble));
-			jdx=0;
+			/*FIX 7a93da*/
 			for(jdx=0;(compo>gx.x[jdx])&&(jdx<n_compo);jdx++) c[jdx]=gx.x[jdx];
 			c[jdx]=compo;
 			for( ;jdx<n_compo;jdx++) c[jdx+1]=gx.x[jdx];
@@ -3229,6 +3232,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			}
 			gy.y_size=num;
 			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 			dat_graph_add_y(gy,_UO.graph_comp[species_index]);
 			if(num>0){
 				g_free(gy.y);

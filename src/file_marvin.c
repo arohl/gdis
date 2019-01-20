@@ -61,7 +61,7 @@ gui_text_show(STANDARD, "Saving file in MARVIN restart format!\n");
 
 /* save via the number of molecules in the */
 /* model - since this allows mol numbering */
-mol=0;
+//mol=0;/*FIX 4e0f99*/
 
 /* four region types printing */
 for (region=REGION1A ; region<REGION2B ; region++)
@@ -136,7 +136,7 @@ gint read_mvnout(gchar *filename, struct model_pak *model)
 {
 gboolean overwrite=FALSE;
 gint i, j, region, offset, num_tokens;
-gint count[REGION2B];
+gint count[REGION2B+1];/*FIX e254e8*/
 gchar *line, **buff, *text;
 gdouble veca[2], vecb[2];
 gdouble version;
@@ -160,7 +160,7 @@ strcpy(model->filename, filename);
 g_free(model->basename);
 model->basename = parse_strip(filename);
 
-for (i=REGION2B ; i-- ; )
+for (i=REGION2B+1 ; i-- ; )/*FIX e254e8*/
   count[i] = 0;
 
 /* NB: disallow image creation in this direction */
@@ -271,10 +271,10 @@ printf("Marvin version %lf, offset = %d\n", version, offset);
       region = REGION2B;
 
 /* check if it's coordinate data (don't want gradients) */
-    line = scan_get_line(scan);
-
-    g_strfreev(buff);
-    buff = scan_get_tokens(scan, &num_tokens);
+    if(scan_get_line(scan)!=NULL){/*FIX f14fda*/
+	g_strfreev(buff);
+	buff = scan_get_tokens(scan, &num_tokens);
+    } else num_tokens=0;
 
     if (num_tokens > 3)
     if (g_ascii_strncasecmp(*(buff+3),"coordinates",11) == 0)
@@ -298,8 +298,7 @@ printf("Reading region: %d\n", region);
 #endif
 
 /* skip to data */
-      line = scan_get_line(scan);
-      line = scan_get_line(scan);
+      if(scan_get_line(scan)!=NULL) line = scan_get_line(scan);/*FIX ea7b0c*/
 
       while (!scan_complete(scan))
         {

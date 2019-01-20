@@ -325,9 +325,10 @@ fprintf(stdout,"#DBG: LINE: %lf %lf %lf %s %s %s %f\n",x,y,z,c_type,c_ptype,c_sy
 			core->atom_type=g_malloc(9*sizeof(gchar));/*same here for atom_type*/
 			data->cores = g_slist_append(data->cores, core);
 		}
-	}
+	
 /* set the proper label */
-	sprintf(core->atom_label,"%s",c_symb);
+	sprintf(core->atom_label,"%s",c_symb);/*FIX 7637ff*/
+
 /* set values */
 	core->x[0] = x;core->x[1] = y;core->x[2] = z;core->charge = charge;
 if(data->periodic) {
@@ -342,6 +343,7 @@ if(data->periodic) {
 }
 	sprintf(core->atom_type,"%s",c_ptype);
 	core->region = region;core->lookup_charge = FALSE;
+	}/*FIX 7637ff (ugly one: in case core_flag==FALSE core=NULL and all core->xxx FAIL)*/	
   }else{
 /* overwrite existing shell (if any) */
 	if (slist){

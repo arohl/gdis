@@ -1285,7 +1285,7 @@ if (!scan)
 model->id = -1;
 keywords_found = keywords_expected = 0;
 /* deprec - use gulp_pak structure/gulp_init() instead */
-code = context = run = method = optimiser = optimiser2 = switch_type = switch_value = -1;
+/*code = */context = run = method = optimiser = optimiser2 = switch_type = switch_value = -1;/*FIX 289935*/
 qeq = free = zsisa = compare = nosym = phonon = eigen = unit = fix = FALSE;
 
 /* NEW*/
@@ -2854,7 +2854,7 @@ g_free(text);
 gint read_gulp_output(gchar *filename, struct model_pak *data)
 {
 gint i, j, m, n, flag, region, primitive=FALSE, shift=0 /*, comp=0,*/;
-gint status, count=0, dflag=0, fflag=0, pflag=0, read_pass=0, num_tokens;
+gint /*status,*/ count=0, dflag=0, fflag=0, pflag=0, read_pass=0, num_tokens;/*FIX 68c4ec e1cc11*/
 gint num_structures = 0;
 gchar line[LINELEN], **buff, *text, coord;
 gdouble *value;
@@ -2900,7 +2900,7 @@ if (!data->grafted)
   model_list = g_slist_append(model_list, data);
 
 /* look for interesting output */
-flag=status=0;
+flag=0;//status=0;/*FIX 68c4ec e1cc11*/
 while(!fgetline(fp,line))
   {
   buff = tokenize(line, &num_tokens);
@@ -2910,7 +2910,7 @@ while(!fgetline(fp,line))
     {
     data->error_file_read = g_string_append(data->error_file_read, line);
     g_strfreev(buff);
-    status = 2;
+//  status = 2;/*FIX e1cc11*/
     break;
     }
   if (g_ascii_strncasecmp("  **** Unit cell is not charge neutral",line,38) == 0)
@@ -2919,7 +2919,7 @@ while(!fgetline(fp,line))
     if (!fgetline(fp,line))
       data->error_file_read = g_string_append(data->error_file_read, line);
     g_strfreev(buff);
-    status = 2;
+//  status = 2;/*FIX 68c4ec*/
     break;
     }
 /*
@@ -3269,7 +3269,7 @@ printf("2 prim\n");
 /* NEW - store IR intensities */
       if (g_ascii_strncasecmp(" IR Intensity", line, 13) == 0)
         {
-        i = 2;
+//      i = 2;/*FIX 2b7a7b*/
         for (i=2 ; i<n ; i++)
           ir_list = g_slist_prepend(ir_list, g_strdup(*(buff+i)));
         }
@@ -3277,7 +3277,7 @@ printf("2 prim\n");
 /* NEW - store Raman intensities */
       if (g_ascii_strncasecmp(" Raman", line, 6) == 0)
         {
-        i = 2;
+//      i = 2;/*FIX b35039*/
         for (i=2 ; i<n ; i++)
           raman_list = g_slist_prepend(raman_list, g_strdup(*(buff+i)));
         }
@@ -3779,7 +3779,10 @@ if (g_ascii_strncasecmp("  Final cell parameters and derivatives", line, 39) == 
     for (i=0 ; i<5 ; i++)
       fgetline(fp,line);
 /* loop until we run out of atomic data lines */
-    i=j=n=0;
+ #if DEBUG_READ_GULP_OUTPUT
+    i=j=0;/*FIX 352de5*/
+#endif
+    n=0;
     flag=0;
 /* don't read any more than num_atoms -> memory allocation problems! */
     while(!fgetline(fp,line) && !flag)

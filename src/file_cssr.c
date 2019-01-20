@@ -140,7 +140,7 @@ gint read_cssr(gchar *filename, struct model_pak *data)
 {
 gint n=0, num_tokens, sgopt;
 gchar **buff, line[LINELEN];
-gchar *spacename;
+gchar *spacename, *tmp;/*FIX restrict-qualified parameter violation*/
 struct core_pak *core;
 FILE *fp;
 
@@ -230,7 +230,9 @@ if (!fp)
           sgopt = data->sginfo.cellchoice % 3;
           if(!sgopt)
              sgopt = 3;
-          sprintf(data->sginfo.spacename, "%s%d", data->sginfo.spacename, sgopt);
+	  tmp=g_strdup(data->sginfo.spacename);/*FIX restrict-qualified parameter violation*/
+          sprintf(data->sginfo.spacename, "%s%d", tmp, sgopt);
+	  g_free(tmp);
         }
       /* Match cssr options to sginfo name for two special cases */
       else if( data->sginfo.spacenum == 9 || data->sginfo.spacenum == 15)
@@ -250,7 +252,9 @@ if (!fp)
           sgopt = data->sginfo.cellchoice % 3;
           if(!sgopt)
              sgopt = 3;
-          sprintf(data->sginfo.spacename, "%s%d", data->sginfo.spacename, sgopt);
+	  tmp=g_strdup(data->sginfo.spacename);/*FIX restrict-qualified parameter violation*/
+          sprintf(data->sginfo.spacename, "%s%d", tmp, sgopt);
+	  g_free(tmp);
        }
       /* Adjust options to match name for SGs 50, 59, 68 */
       else if( data->sginfo.spacenum == 50 || data->sginfo.spacenum == 59 ||
@@ -269,8 +273,11 @@ if (!fp)
       /* Groups with possible alternative origins */
       else if( data->sginfo.spacenum == 70 ||
               (data->sginfo.spacenum > 84 && data->sginfo.spacenum < 143) ||
-               data->sginfo.spacenum > 201)
-         sprintf(data->sginfo.spacename, "%s:%d", data->sginfo.spacename, data->sginfo.cellchoice);
+               data->sginfo.spacenum > 201){
+	 tmp=g_strdup(data->sginfo.spacename);/*FIX restrict-qualified parameter violation*/
+         sprintf(data->sginfo.spacename, "%s:%d", tmp, data->sginfo.cellchoice);
+	 g_free(tmp);
+      }
     }
 
 #if DEBUG_READ_CSSR

@@ -2402,7 +2402,7 @@ switch (type)
       {
       get_elem_data(n, &edata, model);
 /* make sure we alow enough space for the string and the \0 */
-      n = (LABEL_SIZE-1 > strlen(text)) ? strlen(text) : LABEL_SIZE-1;
+//    n = (LABEL_SIZE-1 > strlen(text)) ? strlen(text) : LABEL_SIZE-1;/*FIX e1c506*/
       for (list=model->selection ; list ; list=g_slist_next(list))
         {
         core = list->data;

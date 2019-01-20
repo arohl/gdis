@@ -158,7 +158,7 @@ rmax = model->rmax;
 if (model->transform_list)
   {
 /* NEW - process transformation list as an animation */
-  status = read_transform(n, model);
+  /*status =*/ read_transform(n, model);/*FIX 8f7718*/
   }
 else
   {

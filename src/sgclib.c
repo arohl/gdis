@@ -2150,7 +2150,7 @@ static int BuildHSym(T_SgInfo *SgInfo)
       for (i = 0; i < 3; i++)
         Transl[i] = iModPositive(GRT[iG].Transl[i] + TrV[i], STBF);
 
-      Screw = 0;
+//    Screw = 0;/*FIX 38f5f9*/
 
       for (ip = 0; ip < 3; ip++)
         if (rmxi->EigenVector[ip] != 0) break;

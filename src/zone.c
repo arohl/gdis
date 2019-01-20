@@ -179,7 +179,7 @@ for (i=0 ; i<3 ; i++)
 printf("Allocating %dx%dx%d = %d zones...\n", div[0], div[1], div[2], num_zones);
 #endif
 
-za->zone = g_malloc(num_zones * sizeof(struct zone_pak *));
+za->zone = g_malloc0(num_zones * sizeof(struct zone_pak *));/*FIX 916071*/
 
 #if DEBUG_ZONE_MAKE
 printf("Initializing zone array: %p, size : %d\n", za, num_zones);
@@ -245,7 +245,7 @@ for (list=model->shels ; list ; list=g_slist_next(list))
 
 /* add to the list */
   zone = za->zone[zi];
-  zone->shells = g_slist_prepend(zone->shells, shel);
+  if(zone!=NULL) zone->shells = g_slist_prepend(zone->shells, shel);
 
 /* DEBUG - use region colouring to show zones */
 /*
@@ -429,7 +429,7 @@ for (i=za->periodic ; i<3 ; i++)
   }
 
 /* eliminate (redundant) periodic parts that exceed width */
-for (i=0 ; i<za->periodic ; i++)
+for (i=0 ; (i<za->periodic)&&(i<3) ; i++)/*FIX d8a008*/
   {
   if ((stop[i] - start[i]) > za->div[i]-1)
     {

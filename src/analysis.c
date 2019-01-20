@@ -769,8 +769,10 @@ if (!analysis->position)
   {
 /* time slice - if load_analysis() needed assume it consumes half ie 50.0 */
   slice = 50.0;
-  if (analysis_load(analysis, model, task))
+  if (analysis_load(analysis, model, task)){
+    g_free(vacf);/*FIX ca7224*/
     return;
+    }
   }
 else
   slice = 100.0;

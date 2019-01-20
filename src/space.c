@@ -518,8 +518,8 @@ else
   {
 #if DEBUG_GEN_POS
 printf("Skipping symmetry matrix generation.\n");
+  m = data->sginfo.order;/*FIX 54e255*/
 #endif
-  m = data->sginfo.order;
   }
 
 #if DEBUG_GEN_POS

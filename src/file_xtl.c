@@ -216,7 +216,7 @@ gint read_xtl(gchar *filename, struct model_pak *data)
 gint i, offset, num_tokens, num_columns, n=0;
 guint shift;
 gchar **buff;
-gchar *symbol;
+gchar *symbol, *tmp;/*FIX restrict-qualified parameter violation*/
 struct core_pak *core;
 FILE *fp;
 gint column[9];
@@ -283,7 +283,9 @@ for (;;)
         if(g_ascii_strncasecmp("origin_", *(buff+i+1), 7) == 0)
           {
           data->sginfo.cellchoice = (gint) str_to_float(*(buff+i+1)+7);
-          sprintf(data->sginfo.spacename, "%s:%d", data->sginfo.spacename, data->sginfo.cellchoice);
+	  tmp=g_strdup(data->sginfo.spacename);/*FIX restrict-qualified parameter violation*/
+          sprintf(data->sginfo.spacename, "%s:%d", tmp, data->sginfo.cellchoice);
+	  g_free(tmp);
           }
 
         if(g_ascii_strcasecmp("hexagonal", *(buff+i+1)) == 0)

@@ -310,19 +310,19 @@ void monty_input_box(GtkWidget *box, struct model_pak *data)
     into the table 
    */
   hbox = gtk_hbox_new(FALSE, 0);
-  wdgt = gui_text_entry("Input CGF Filename", &data->monty.input_cgf, TRUE, FALSE, hbox);
+  gui_text_entry("Input CGF Filename", &data->monty.input_cgf, TRUE, FALSE, hbox);/*FIX f556b0*/
   gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0,1,0,1);
   
   hbox = gtk_hbox_new(FALSE, 0);
-  wdgt = gui_text_entry("Input Surface Filename", &data->monty.input_surface, TRUE, FALSE, hbox);  
+  gui_text_entry("Input Surface Filename", &data->monty.input_surface, TRUE, FALSE, hbox);/*FIX 0be582*/
   gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0,1,1,2);
   
   hbox = gtk_hbox_new(FALSE, 0);
-  wdgt = gui_stock_button(GTK_STOCK_OPEN, select_cgf_file_dialog, NULL, hbox);
+  gui_stock_button(GTK_STOCK_OPEN, select_cgf_file_dialog, NULL, hbox);/*FIX 84d13d*/
   gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1,2,0,1);
   
   hbox = gtk_hbox_new(FALSE, 0);
-  wdgt = gui_stock_button(GTK_STOCK_OPEN, select_surface_file_dialog, NULL, hbox);
+  gui_stock_button(GTK_STOCK_OPEN, select_surface_file_dialog, NULL, hbox);/*FIX 304a57*/
   gtk_table_attach_defaults(GTK_TABLE(table), hbox, 1,2,1,2);
   
   h_sep = GTK_WIDGET(g_object_new(GTK_TYPE_HSEPARATOR, NULL));
@@ -365,7 +365,7 @@ void monty_input_box(GtkWidget *box, struct model_pak *data)
   if(find_in_string("kcal/mol",data->monty.energy_unit) != NULL)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wdgt), TRUE);
   
-  wdgt = gui_text_entry("Solvation energy", &data->monty.esolv, TRUE, FALSE, vbox);  
+  gui_text_entry("Solvation energy", &data->monty.esolv, TRUE, FALSE, vbox);/*FIX 303d31*/
   
   h_sep = GTK_WIDGET(g_object_new(GTK_TYPE_HSEPARATOR, NULL));
   gtk_widget_set_size_request(h_sep, -1, size);
@@ -376,7 +376,7 @@ void monty_input_box(GtkWidget *box, struct model_pak *data)
 
   
   gui_direct_check("Run 3D nucleation", &data->monty.run_nucleation, NULL, NULL, hbox);
-  wdgt = gui_direct_spin("Initial nucleus size", &data->monty.nucleus_size, 1.0, DBL_MAX, 1.0, NULL, NULL, hbox);
+  gui_direct_spin("Initial nucleus size", &data->monty.nucleus_size, 1.0, DBL_MAX, 1.0, NULL, NULL, hbox);/*FIX 126681*/
   //  gui_direct_check("Run diffusion controlled simulation", &data->monty.run_diffusion, NULL, NULL, vbox);
 
   

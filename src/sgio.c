@@ -918,13 +918,13 @@ static int LookupRotMx(T_HallGenerator *HG)
 
   if (HG->Rotation == 1)
   {
-    refaxis = 'o';
+//  refaxis = 'o';/*FIX ba38f0*/
     dircode = '.';
     nNextBasis = 0;
   }
   else if (dircode == '*')
   {
-    if (refaxis == 0) refaxis = 'o';
+//  if (refaxis == 0) refaxis = 'o';/*FIX 85c4f9*/
     nNextBasis = 0;
   }
   else

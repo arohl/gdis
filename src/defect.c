@@ -365,7 +365,7 @@ else
 #define DEBUG_DEFECT_NEW 1
 void defect_new(struct defect_pak *defect, struct model_pak *source)
 {
-gint height, gcd, mult1, mult2;
+gint i,height, gcd, mult1, mult2;
 gdouble r, len;
 gdouble o[2], v[3], b[3], m[9], s[36];
 gdouble w[3], x[3], x1[3], x2[3], x3[3];
@@ -377,7 +377,7 @@ struct shel_pak *shell;
 
 g_assert(defect != NULL);
 g_assert(source != NULL);
-
+for(i=0;i<36;i++) s[i]=0.;/*FIX 7b4fca*/
 /* check for 2-fold axes */
 defect_check_symmetry(source);
 

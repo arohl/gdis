@@ -670,6 +670,7 @@ if (host_connect(host))
 else
   {
   printf("host_connect(): failed!\n");
+  host_free(host);/*FIX 669738*/
   return;
   }
 

@@ -101,7 +101,7 @@ printf("(%d %d %d) ", plane->index[0], plane->index[1], plane->index[2]);
 /*
 printf("(%d %d %d) ", plane->index[0], plane->index[1], plane->index[2]);
 */
-    refplane->multiplicity++;
+    if(refplane!=NULL) refplane->multiplicity++;/*FIX f93659*/
     }
   }
 
@@ -419,6 +419,7 @@ fp = fopen(gtk_entry_get_text(GTK_ENTRY(diff_filename)), "at");
 if (!fp)
   {
   gui_text_show(ERROR, "Failed to open file for raw spectrum data.\n");
+  g_free(spectrum);/*FIX 20cedb*/
   return;
   }
 for (i=0 ; i<n ; i++)

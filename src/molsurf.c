@@ -1282,7 +1282,7 @@ GSList *pointsList, *hsEnvList, *selection, *selectionList;
 struct smv_pak *p;
 gdouble dist, tmp, tmpVec[3], currentEnvCore[3], minProp, maxProp, propRange, thisProp;
 gfloat hue, red, green, blue;
-int firstPoint, firstCore, atomIsInMolecule;
+gboolean firstPoint, firstCore, atomIsInMolecule;/*gboolean seems more appropriate --OVHPA*/
 struct core_pak *hsEnvCore, *selectionCore;
 gchar *text;
 time_t jobStartTime;
@@ -1352,7 +1352,7 @@ maxProp = -G_MAXDOUBLE;
     
     /* For now, just set the colour here */
     propRange = maxProp - minProp;
-    firstPoint = TRUE;
+//  firstPoint = TRUE;/*FIX f5966d*/
     for (pointsList=points ; pointsList ; pointsList=g_slist_next(pointsList)){
         p = pointsList->data;
         if (!p->adj)
@@ -1824,8 +1824,8 @@ while (list)
   ARR3SUB(x, triangle->point[1]->rx);
   if (VEC3MAGSQ(x) < r2)
     {
-    p1 = triangle->point[0];
-    p2 = triangle->point[1];
+//  p1 = triangle->point[0];/*FIX 248a0c*/
+//  p2 = triangle->point[1];/*FIX 970c38*/
     count++;
     }
 
@@ -1833,8 +1833,8 @@ while (list)
   ARR3SUB(x, triangle->point[2]->rx);
   if (VEC3MAGSQ(x) < r2)
     {
-    p1 = triangle->point[0];
-    p2 = triangle->point[2];
+//  p1 = triangle->point[0];/*FIX b5dfc1*/
+//  p2 = triangle->point[2];/*FIX 1d756b*/
     count++;
     }
 
@@ -1842,8 +1842,8 @@ while (list)
   ARR3SUB(x, triangle->point[2]->rx);
   if (VEC3MAGSQ(x) < r2)
     {
-    p1 = triangle->point[1];
-    p2 = triangle->point[2];
+//  p1 = triangle->point[1];/*FIX 150bc6*/
+//  p2 = triangle->point[2];/*FIX 8ea08b*/
     count++;
     }
 
@@ -1851,7 +1851,7 @@ while (list)
     {
     case 1:
 /* delete triangle */
-/*
+/* removal caused 8ea08b 150bc6 1d756b b5dfc1 970c38 248a0c --OVHPA
 tlist = g_slist_remove(tlist, triangle);
 
       ARR3SET(x, p1->rx);
@@ -2020,9 +2020,14 @@ GSList *list;
 
 g_assert(g_slist_length(cube) == 8);
 
-i=0;
-for (list=cube ; list ; list=g_slist_next(list))
-  p[i++] = list->data;
+list=cube;/*FIX 6007bc d22de6 59b397*/
+for(i=0;i<8;i++){
+  p[i]=list->data;
+  list=g_slist_next(list);
+}
+//i=0;
+//for (list=cube ; list ; list=g_slist_next(list))
+//  p[i++] = list->data;
 
 cubeindex = 0;
 if (p[0]->value < isolevel)
@@ -2105,7 +2110,7 @@ Use defines in gdis.h instead */
 void ms_cube(gdouble value, gint method, gint colour, struct model_pak *model)
 {
 gchar *text;
-gint i, j, k, z, index, eval, grid[3];
+gint i, j, k, z, index, eval, grid[3]={0,0,0};/*FIX d4a843*/
 #ifdef UNUSED_BUT_SET
 gint jjmTmp;
 #endif
@@ -2406,7 +2411,7 @@ for (i=grid[0]-1 ; i-- ; )
       }
     }
   }
-
+g_free(p);/*FIX 3155f3*/
 
 #if DEBUG_MS_CUBE
 fprintf(stderr," [%.1fs]\n",(float)(time(NULL) - jobStartTime));

@@ -859,7 +859,7 @@ void atom_colour_scheme(gint type, struct core_pak *core, struct model_pak *mode
 {
 gdouble t;
 struct elem_pak elem;
-
+VEC3SET(elem.colour, 0., 0., 0.);/*FIX e0b1a0*/
 switch (type)
   {
   case ELEM:
@@ -909,8 +909,9 @@ switch (type)
 #define TMIN 0.0
 #define TRANGE 2000.0
 
-    get_elem_data(core->atom_code, &elem, model);
-    t = elem.weight * VEC3MAGSQ(core->v) * 10.0 / (3.0*AN*BC);
+    if(!get_elem_data(core->atom_code, &elem, model))/*FIX: 137a5a*/
+      t = elem.weight * VEC3MAGSQ(core->v) * 10.0 / (3.0*AN*BC);
+    else t=0.;/*FROM: 137a5a, assuming t=0.0 is a failed value --OVHPA*/
 
 /*
 printf("T = %f\n", t);

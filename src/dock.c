@@ -432,7 +432,7 @@ g_assert(shell2 != NULL);
 /* free docking core/shell lists */
 free_slist(core_list);
 free_slist(shell_list);
-
+g_free(dock);/*FIX f04cde*/
 g_string_free(name, TRUE);
 fclose(fp);
 /* run docking in background unless told to stop after setup */
@@ -575,7 +575,7 @@ frame = gtk_frame_new(NULL);
 gtk_box_pack_start(GTK_BOX(vbox_right), frame, FALSE, FALSE, 0);
 vbox = gtk_vbox_new(TRUE, 0);
 gtk_container_add(GTK_CONTAINER(frame), vbox);
-hbox = gtk_hbox_new(FALSE, PANEL_SPACING);
+/*hbox =*/ gtk_hbox_new(FALSE, PANEL_SPACING);/*FIX aef23d*/
 gui_direct_check("Create project files then stop", &dock_no_execute, NULL, NULL, vbox);
 
 /* CURRRENT - executing the project has not been implemented yet */

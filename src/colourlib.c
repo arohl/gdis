@@ -11,7 +11,7 @@
 void hsv2lrgb(float hue,float saturation,float value,unsigned long *color)
 {
 	unsigned long ired,igreen,iblue,ialpha;	
-	float red,green,blue;
+	float red=0.,green=0.,blue=0.;/*FIX f469a8*/
 
     ialpha = (ALPHA_MASK & *color); /*** Keep whatever value of alpha already exists ***/
     hsv2rgb(hue, saturation, value, &red, &green, &blue);
@@ -25,7 +25,7 @@ void hsv2lrgb(float hue,float saturation,float value,unsigned long *color)
 	
 		
 void hsv2rgb(float hue, float saturation, float value, float *red, float *green, float *blue)
-{
+{/*NOTE: hue value is restored when leaving hsv2rgb --OVHPA*/
     int i;
     float f, m, n, k;
 
@@ -36,9 +36,9 @@ void hsv2rgb(float hue, float saturation, float value, float *red, float *green,
     if ( saturation == 0.0 ) { 
         *red = *green = *blue = value;
     } else { 
-	if ( hue == 360.0 ) {
-            hue = 0.0;
-        } else {
+	if ( hue != 360.0 ) {/*FIX 21d1d4*/
+//          hue = 0.0;
+//        } else {
             hue /= 60.0;
             i = hue; /* truncate */
             f = hue - (float)i;
@@ -81,7 +81,7 @@ void hsv2rgb(float hue, float saturation, float value, float *red, float *green,
             }
         }
     }
-
+/*if hue==360, red, green, and blue contain uninitialized value (f469a8) --OVHPA*/
     *red = (*red > 1.0) ? 1.0 : (*red < 0.0) ? 0.0 : *red;
     *green = (*green > 1.0) ? 1.0 : (*green < 0.0) ? 0.0 : *green;
     *blue = (*blue > 1.0) ? 1.0 : (*blue < 0.0) ? 0.0 : *blue;
@@ -101,8 +101,8 @@ void rgb2hsv(float red, float green, float blue, float *hue, float *saturation, 
 
   float myMin,myMax, delta;
   
-  myMin = 1.0;
-  myMax = 0.0;
+//  myMin = 1.0;/*FIX eac986*/
+//  myMax = 0.0;/*FIX 2b516c*/
 	
   if (red   < 0.0) red   = 0.0;
   if (green < 0.0) green = 0.0;

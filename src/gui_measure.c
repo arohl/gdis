@@ -877,14 +877,14 @@ for (list=list2 ; list ; list=g_slist_next(list))
       }
     }
   }
-
+if (measure && model){/*FIX c315f7*/
 /* update */
 coords_compute(model);
 connect_refresh(model);
 
 measure_update_single(measure, model);
 measure_update_selected(measure, model);
-
+}/*FIX c315f7*/
 gui_refresh(GUI_CANVAS);
 }
 

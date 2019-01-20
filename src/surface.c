@@ -146,7 +146,7 @@ gint c, i, j, h, k, l, flag;
 gint GCD(gint, gint);
 gint vector_compare(vector *, vector *);
 gdouble depth, depth_min;
-gdouble gcd, cd, x;
+gdouble /*gcd,*/ cd, x;/*FIX db67a8*/
 gdouble tmat[9], norm[3], va[3];
 gdouble wlat[9];
 gdouble sign, vec[3], vec2[3], dn[3];
@@ -214,7 +214,7 @@ if (V_MAGSQ(a) > EPSILON)
 
 sv_list2 = NULL;
 list1 = sv_list1;
-for (i=0 ; i<g_slist_length(sv_list1)-1 ; i++)
+if(list1!=NULL) for (i=0 ; i<g_slist_length(sv_list1)-1 ; i++)/*FIX aa498a*/
   {
   v_a = (vector *) list1->data;
   list1 = list2 = g_slist_next(list1);
@@ -328,7 +328,7 @@ for (i = 0; i < 3; i++)
 /* depth = 1.0e10; */
 
 /* surface specification */
-gcd = GCD(GCD(h, k), GCD(k, l));
+//gcd = GCD(GCD(h, k), GCD(k, l));/*FIX db67a8, consequence of 315b8f*/
 VEC3SET(vec, h, k, l);
 vecmat(src->rlatmat, vec);
  
@@ -340,7 +340,7 @@ dest->surface.dspacing = 1.0/VEC3MAG(vec);
 
 /* actual cut depth */
 /* NB: done wrt the FULL depth (ie remove the gcd) */
-depth = gcd/VEC3MAG(vec);
+//depth = gcd/VEC3MAG(vec);/*FIX 315b8f*/
 
 /*
 dest->surface.depth = depth;
@@ -451,7 +451,9 @@ if (n == 100)
   h /= 99;
   k /= 99;
   l /= 99;
-  n = 2;
+#if DEBUG_CREATE_PLANE
+  n = 2;/*FIX 5d1a6c*/
+#endif
   }
 
 #if DEBUG_CREATE_PLANE
@@ -737,6 +739,8 @@ vector work_lat[3];          /* transformed lattice vectors */
 vector rec_work_lat[3];      /* reciprocal transformed lattice vectors */
 gdouble inv_denom;
 vector rec_s[2];             /* reciprocal of s[0] and s[1] */
+gdouble z1_max, z1_min, z2_max, z2_min;/*FIX 6e8ba1 afeba5 0ebc85*/
+gdouble tempfloat;/*FIX 72fcb7*/
 #endif
 vector s[3];                 /* space we are trying to fill */
 vector tempvec;
@@ -751,8 +755,6 @@ gint GCD(gint, gint);
 gint vector_compare(vector *, vector *);
 gdouble shift, depth, depth_1, depth_2, depth_min;
 gdouble gcd, cd, x;
-gdouble z1_max, z1_min, z2_max, z2_min;
-gdouble tempfloat;
 gdouble tmat[9], norm[3], va[3];
 gdouble wlat[9], temp[9], lpm[9];
 gdouble sign, vec[3], vec2[3], dn[3];
@@ -826,7 +828,7 @@ if (V_MAGSQ(a) > EPSILON)
 
 sv_list2 = NULL;
 list1 = sv_list1;
-for (i=0 ; i<g_slist_length(sv_list1)-1 ; i++)
+if(list1!=NULL) for (i=0 ; i<g_slist_length(sv_list1)-1 ; i++)/*FIX 9579bf*/
   {
   v_a = (vector *) list1->data;
   list1 = list2 = g_slist_next(list1);
@@ -987,8 +989,8 @@ V_Z(rec_s[0]) =  0.0;
 V_X(rec_s[1]) = -V_Y(s[0])*inv_denom;
 V_Y(rec_s[1]) =  V_X(s[0])*inv_denom;
 V_Z(rec_s[1]) =  0.0;
-#endif
 
+/*FIX 6e8ba1 afeba5 0ebc85 72fcb7*/
 z2_min = z1_min = 0.00;
 z2_max = V_Z(s[2]);
 z1_max = depth_1 * (z2_max < 0 ? -1.0: +1.0);
@@ -1005,7 +1007,7 @@ if (z1_max < z1_min)
   z1_max = z1_min;
   z1_min = tempfloat;
   }
-
+#endif
 /* display name */
 g_free(dest->basename);
 dest->basename = g_strdup_printf("%s_%-1d%-1d%-1d_%6.4f",
@@ -1665,7 +1667,7 @@ printf("Perturbing [%d %d %d] : %f : [%d][%d]\n",
 /* generate surface */
 model = make_surface(src, plane, shift);  
 coords_init(INIT_COORDS, model);
-
+g_free(shift);g_free(plane);/*FIX dc488c 73aec6*/
 /* sort molecule centroids */
 model->moles = g_slist_sort(model->moles, (gpointer) surf_molecules_zsort);
 
@@ -1677,7 +1679,7 @@ i = 0;
 mol1 = g_slist_nth_data(model->moles, i);
 n = g_slist_length(model->moles);
 
-mol2 = g_slist_nth_data(model->moles, n-1);
+//mol2 = g_slist_nth_data(model->moles, n-1);/*FIX e0edca*/
 
 /* nth bottommost */
 /*
@@ -1694,7 +1696,7 @@ for (list=mol1->cores ; list ; list=g_slist_next(list))
   region_move_atom(core, DOWN, model); 
   }
 
-mol2 = g_slist_nth_data(model->moles, n-1);
+//mol2 = g_slist_nth_data(model->moles, n-1);/*FIX 528dd2*/
 
 for (j=0 ; j<3 ; j++)
   {
