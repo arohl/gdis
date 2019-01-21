@@ -127,9 +127,22 @@ if (event->button != 1)
 if (data->graph_active)
   {/*FIXME: why only diffract?*/
   struct graph_pak *graph=(struct graph_pak *)data->graph_active;
-  if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
-  if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
-  if((graph->type==GRAPH_IY_TYPE)||(GRAPH_XY_TYPE)||(GRAPH_IX_TYPE)||(GRAPH_XX_TYPE)) dat_graph_select(x,y,data);
+  switch(graph->type){
+  case GRAPH_REGULAR:
+    diffract_select_peak(x, y, data);
+    break;
+  case GRAPH_FREQUENCY:
+    graph_frequency_select(x, y, data);
+    break;
+  case GRAPH_IY_TYPE:
+  case GRAPH_XY_TYPE:
+  case GRAPH_IX_TYPE:
+  case GRAPH_XX_TYPE:
+    dat_graph_select(x,y,data);
+    break;
+  default:
+    break;
+  }
   return(FALSE);
   }
 
@@ -2007,7 +2020,7 @@ pixbuf = image_table_lookup("image_canvas_create");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         NULL,
-                        "Increase number of canvasses",
+                        "increase canvases",
                         "Private",
                         gdis_wid,
                         GTK_SIGNAL_FUNC(canvas_create),
@@ -2018,7 +2031,7 @@ pixbuf = image_table_lookup("image_canvas_delete");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         NULL,
-                        "Decrease number of canvasses",
+                        "decrease canvases",
                         "Private",
                         gdis_wid,
                         GTK_SIGNAL_FUNC(canvas_delete),
@@ -2042,7 +2055,7 @@ pixbuf = image_table_lookup("image_plots");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"Plot controls",
+			"plots controls",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_graph_controls),
@@ -2053,7 +2066,7 @@ if(sysenv.have_eps){
 	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"Export to EPS",
+			"export to eps",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_eps_export),
@@ -2063,13 +2076,12 @@ if(sysenv.have_eps){
 	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"Export to PNG",
+			"export to png",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_eps_export),
 			NULL);
 }
-
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */
 hpaned = gtk_hpaned_new();

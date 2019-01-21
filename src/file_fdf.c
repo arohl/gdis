@@ -2680,7 +2680,7 @@ gint set_temperature_units(gchar * buff, enum siesta_temperature_measurement_typ
     return allok;
 }
 
-gint set_mass_units(gchar * buff, enum siesta_temperature_measurement_type * siesta_unit_type)
+gint set_mass_units(gchar * buff, enum siesta_mass_measurement_type * siesta_unit_type)
 {
     //KG_MASS, G_MASS, AMU_MASS
     //

@@ -24,6 +24,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "gdis.h"
 #include "coords.h"
@@ -193,7 +194,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
     get_elem_data(core->atom_code, &elem_data, data);
     symbol = g_strdup(elem_data.symbol);
-    charge = (gint)abs(elem_data.charge);
+    charge = (gint)fabs(elem_data.charge);
 
     fprintf(fp,"%4s %10.5f %10.5f %10.5f %7.4f  0.0000  1.0000   %-2s%d%c\n",
       core->atom_label, vec[0], vec[1], vec[2], atom_charge(core), symbol,
