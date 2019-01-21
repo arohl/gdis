@@ -3841,7 +3841,7 @@ if((vasp_gui.calc.poscar_free==VPF_FIXED)||(vasp_gui.calc.poscar_free==VPF_FREE)
 	}
 }
 /* (re)initialize */
-	toggle_poscar_sd(NULL,NULL);
+	toggle_poscar_sd();
 	vasp_poscar_free_selected(vasp_gui.poscar_free);
 /* --- end frame */
 

@@ -127,9 +127,22 @@ if (event->button != 1)
 if (data->graph_active)
   {/*FIXME: why only diffract?*/
   struct graph_pak *graph=(struct graph_pak *)data->graph_active;
-  if(graph->type==GRAPH_REGULAR) diffract_select_peak(x, y, data);
-  if(graph->type==GRAPH_FREQUENCY) graph_frequency_select(x, y, data);
-  if((graph->type==GRAPH_IY_TYPE)||(GRAPH_XY_TYPE)||(GRAPH_IX_TYPE)||(GRAPH_XX_TYPE)) dat_graph_select(x,y,data);
+  switch(graph->type){
+  case GRAPH_REGULAR:
+    diffract_select_peak(x, y, data);
+    break;
+  case GRAPH_FREQUENCY:
+    graph_frequency_select(x, y, data);
+    break;
+  case GRAPH_IY_TYPE:
+  case GRAPH_XY_TYPE:
+  case GRAPH_IX_TYPE:
+  case GRAPH_XX_TYPE:
+    dat_graph_select(x,y,data);
+    break;
+  default:
+    break;
+  }
   return(FALSE);
   }
 
@@ -2069,7 +2082,6 @@ if(sysenv.have_eps){
 			GTK_SIGNAL_FUNC(gui_eps_export),
 			NULL);
 }
-
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */
 hpaned = gtk_hpaned_new();
