@@ -120,6 +120,40 @@ gdouble ribbon_colour[3];
 gchar *morph_finish;
 };
 
+/********************/
+/* edit data --OVHPA*/
+/********************/
+struct edit_pak {
+gdouble tmat[9];
+gdouble tvec[3];
+gdouble edit_anim_n;
+gdouble edit_chirality[2];
+gdouble edit_length;
+gpointer edit_construct;
+gchar *edit_basis[2];
+#ifdef UNUSED_BUT_SET
+GtkWidget *elem_entry, *grid_dim, *grid_sep;
+#endif
+GtkWidget *axis_entry, *obj_entry, *periodicity_spin;
+GtkWidget *transmat[12];
+/* NEW */
+gdouble edit_spatial_colour[3];
+gdouble edit_label_colour[3];
+/*spatial*/
+GtkListStore *spatial_list;
+GtkWidget *spatial_tree;
+gpointer spatial_selected;
+/*diffract*/
+struct model_pak *diffract_model;
+GtkWidget *diffract_layer_total;
+GtkWidget *diffract_layer_order;
+/* globals for the atom properties dialog */
+GtkWidget *apd_label, *apd_type, *apd_charge, *apd_x, *apd_y, *apd_z;
+GtkWidget *apd_growth, *apd_region, *apd_translate;
+struct model_pak *apd_data;
+struct core_pak *apd_core;
+};
+
 /***********************/
 /* top level structure */
 /***********************/
@@ -202,6 +236,9 @@ gint apb_on;
 gint pib_on;
 gint lmb_on;
 gint mcb_on;
+
+/*NEW - edit pak is here*/
+struct edit_pak cedit;
 
 /* model related */
 gpointer active_model;
@@ -1059,7 +1096,7 @@ gint redraw_count;       /* current number of redraws */
 gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
-gboolean snapshot_eps;  /* save an eps image to file eps_file */
+gboolean snapshot_eps;   /* save an eps image to file eps_file */
 gchar *eps_file;         /* the said eps_file           --OVHPA*/
 gint fractional;
 guint periodic;

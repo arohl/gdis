@@ -423,6 +423,28 @@ sysenv.msb_on = TRUE;
 sysenv.apb_on = TRUE;
 sysenv.lmb_on = FALSE;
 sysenv.pib_on = FALSE;
+
+/*edit_dialog*/
+sysenv.cedit.edit_anim_n=0;
+sysenv.cedit.edit_chirality[0]=6.;
+sysenv.cedit.edit_chirality[1]=6.;
+sysenv.cedit.edit_length=1.44;
+sysenv.cedit.edit_basis[0]=NULL;
+sysenv.cedit.edit_basis[1]=NULL;
+sysenv.cedit.edit_spatial_colour[0]=1.0;
+sysenv.cedit.edit_spatial_colour[1]=0.0;
+sysenv.cedit.edit_spatial_colour[2]=0.0;
+sysenv.cedit.edit_label_colour[0]=1.0;
+sysenv.cedit.edit_label_colour[1]=1.0;
+sysenv.cedit.edit_label_colour[2]=1.0;
+sysenv.cedit.spatial_list=NULL;
+sysenv.cedit.spatial_tree=NULL;
+sysenv.cedit.spatial_selected=NULL;
+sysenv.cedit.diffract_model=NULL;
+/*edit_widget*/
+sysenv.cedit.apd_data=NULL;
+sysenv.cedit.apd_core=NULL;
+
 /* default to single model display */
 sysenv.mal = NULL;
 sysenv.displayed[0] = -1;
