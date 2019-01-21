@@ -2020,7 +2020,7 @@ pixbuf = image_table_lookup("image_canvas_create");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         NULL,
-                        "increase canvases",
+                        "Increase number of canvasses",
                         "Private",
                         gdis_wid,
                         GTK_SIGNAL_FUNC(canvas_create),
@@ -2031,7 +2031,7 @@ pixbuf = image_table_lookup("image_canvas_delete");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         NULL,
-                        "decrease canvases",
+                        "Decrease number of canvasses",
                         "Private",
                         gdis_wid,
                         GTK_SIGNAL_FUNC(canvas_delete),
@@ -2055,7 +2055,7 @@ pixbuf = image_table_lookup("image_plots");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"plots controls",
+			"Plot controls",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_graph_controls),
@@ -2066,7 +2066,7 @@ if(sysenv.have_eps){
 	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"export to eps",
+			"Export to EPS",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_eps_export),
@@ -2076,7 +2076,7 @@ if(sysenv.have_eps){
 	gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 	gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
 			NULL,
-			"export to png",
+			"Export to PNG",
 			"Private",
 			gdis_wid,
 			GTK_SIGNAL_FUNC(gui_eps_export),
