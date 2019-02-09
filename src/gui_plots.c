@@ -1193,7 +1193,20 @@ void toggle_auto_y(){
 					list=g_slist_next(list);
 					p_y = (g_data_y *) list->data;
 				}
+				if(p_y->y==NULL){
+					for(;((p_y->y==NULL)&&(list));list=g_slist_next(list)){
+						/*select the first non-null set*/
+						p_y = (g_data_y *) list->data;
+					}
+					if(list==NULL){
+						text = g_strdup_printf("ERROR: GRAPH does not contain data!\n");
+						gui_text_show(ERROR, text);
+						g_free(text);
+						return;
+					}
+				}
 				if(isnan(p_y->y[0])){
+					/*ASSUME: if y[0]==NAN -> y[1]!=NULL */
 					graph->ymin=p_y->y[1];
 					graph->ymax=p_y->y[1];
 				}else{
@@ -1203,6 +1216,8 @@ void toggle_auto_y(){
 				/*go through all y sets*/
 				for(;list;list=g_slist_next(list)){
 					p_y = (g_data_y *) list->data;
+					if(p_y->y_size==0) continue;/*empty set*/
+					if(p_y->y==NULL) continue;/*can happen on ill-defined set (size!=0 but y==NULL).*/
 					if(isnan(p_y->y[0])){
 						for(idx=1;idx<p_y->y_size;idx++){
 							if(p_y->y[idx]<graph->ymin) graph->ymin=p_y->y[idx];
