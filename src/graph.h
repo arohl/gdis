@@ -107,9 +107,16 @@ struct graph_ui{
 	gboolean auto_y;
 	GUI_OBJ *set;
 	gdouble set_number;/*GTK SPIN*/
-	GUI_OBJ *type;
 	GUI_OBJ *size;
+	GUI_OBJ *by_val;
+	gboolean by_value;
+	GUI_OBJ *num;
+	gdouble num_number;/*GTK SPIN*/
+	GUI_OBJ *type;
 	GUI_OBJ *symbol;
+	GUI_OBJ *idx;
+	GUI_OBJ *x_val;
+	GUI_OBJ *y_val;
 	GUI_OBJ *line;
 	GUI_OBJ *color;
 };

@@ -843,9 +843,11 @@ if((plot->task)!=NULL) {
 void init_graph_ui(struct graph_pak *graph){
 GRAPH_UI.auto_x=TRUE;
 GRAPH_UI.auto_y=TRUE;
+GRAPH_UI.by_value=FALSE;
 GRAPH_UI.xticks=(gdouble)graph->xticks;
 GRAPH_UI.yticks=(gdouble)graph->yticks;
 GRAPH_UI.set_number=1.;
+GRAPH_UI.num_number=1.;
 }
 void sync_graph_controls(struct graph_pak *graph){
 	gchar *text;
@@ -910,6 +912,11 @@ void sync_graph_controls(struct graph_pak *graph){
 			text=g_strdup_printf("%i",p_y->y_size);
 			GUI_ENTRY_TEXT(GRAPH_UI.size,text);g_free(text);
 			GUI_LOCK(GRAPH_UI.size);
+			if(p_y->y_size<1){
+				GUI_SPIN_RANGE(GRAPH_UI.set,1.,1.);
+			}else{
+				GUI_SPIN_RANGE(GRAPH_UI.set,1.,(gdouble)p_y->y_size);
+			}
 			switch(p_y->line){
 				case GRAPH_LINE_SINGLE:
 					GUI_COMBOBOX_SET(GRAPH_UI.line,1);break;
@@ -1304,6 +1311,124 @@ void toggle_auto_y(){
 	}
 }
 /*********************/
+/* update num_number */
+/*********************/
+void spin_update_num(void){
+	struct model_pak *data;
+	struct graph_pak *graph=(struct graph_pak *)GRAPH_UI.graph_active;
+	gchar *text;
+	GSList *list;
+	g_data_x *p_x;
+	g_data_y *p_y;
+	gdouble my_x=0.;
+	graph_symbol symb;
+	gint idx=(gint)GRAPH_UI.num_number;
+/* --- detect if graph_active has change and react accordingly*/
+	g_assert(graph != NULL);
+	data = sysenv.active_model;
+	if(data){
+		if(data->graph_active){
+			if(graph!=data->graph_active){
+				/*graph data changed*/
+				sync_graph_controls((struct graph_pak *)data->graph_active);
+				GRAPH_UI.graph_active=data->graph_active;
+				return;/*does not make sense to modify num number anymore*/
+			}
+		}/*else user has moved, but graph should still be valid*/
+	}/*no active model doesn't mean that graph data is invalid*/
+/* --- we have a graph_active */
+	if(GRAPH_UI.by_value==FALSE) return;/*no update needed*/
+	switch(graph->type){
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
+		list=graph->set_list;/*this is g_data_x*/
+		p_x = (g_data_x *) list->data;
+		if((p_x->x==NULL)||(p_x->x_size==0)) {
+			text = g_strdup_printf("ERROR: invalid GRAPH data x set!\n");
+			gui_text_show(ERROR, text);
+			g_free(text);
+			return;
+		}
+		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_XX_TYPE)){
+			my_x=p_x->x[idx-1];
+		}else{
+			idx=(gint)GRAPH_UI.num_number;
+			if((idx>(p_x->x_size+1))||(idx<1)){
+				text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
+				gui_text_show(ERROR, text);
+				g_free(text);
+				return;
+			}
+			my_x=p_x->x[idx-1];
+		}
+		idx=0;
+		while((list)&&(idx<(gint)GRAPH_UI.set_number)){
+			list=g_slist_next(list);
+			idx++;
+		}
+		if(!list){
+			/*should never happen*/
+			text = g_strdup_printf("ERROR: invalid GRAPH data seeked!\n");
+			gui_text_show(ERROR, text);
+			g_free(text);
+			return;
+		}
+		p_y = (g_data_y *) list->data;
+		if((p_y->y==NULL)||(p_y->y_size<2)){
+			/*should never happen*/
+			text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
+			gui_text_show(ERROR, text);
+			g_free(text);
+			return;
+		}
+		idx=(gint)GRAPH_UI.num_number;/*number is off by 1*/
+		/*only the symbol can be changed on each data*/
+		if(p_y->symbol!=NULL) symb=p_y->symbol[idx-1];
+		else symb=GRAPH_SYMB_NONE;
+		switch(symb){
+		case GRAPH_SYMB_CROSS:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,1);break;
+		case GRAPH_SYMB_SQUARE:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,2);break;
+		case GRAPH_SYMB_TRI_DN:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,3);break;
+		case GRAPH_SYMB_TRI_UP:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,4);break;
+		case GRAPH_SYMB_DIAM:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,5);break;
+		case GRAPH_SYMB_NONE:
+		default:
+			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
+		}
+		/*show idx structure (if any)*/
+		GUI_UNLOCK(GRAPH_UI.idx);
+		text=g_strdup_printf("%i",p_y->idx[idx-1]);
+		GUI_ENTRY_TEXT(GRAPH_UI.idx,text);g_free(text);
+		GUI_LOCK(GRAPH_UI.idx);
+		/* show x_val */
+		GUI_UNLOCK(GRAPH_UI.x_val);
+		text=g_strdup_printf("%G",my_x);
+		GUI_ENTRY_TEXT(GRAPH_UI.x_val,text);g_free(text);
+		GUI_LOCK(GRAPH_UI.x_val);
+		/* show y_val */
+		GUI_UNLOCK(GRAPH_UI.y_val);
+		text=g_strdup_printf("%G",p_y->y[idx-1]);
+		GUI_ENTRY_TEXT(GRAPH_UI.y_val,text);g_free(text);
+		GUI_LOCK(GRAPH_UI.y_val);
+		break;
+	case GRAPH_FREQUENCY:
+	case GRAPH_BAND:
+	case GRAPH_DOS:
+	case GRAPH_BANDOS:
+		break;
+	case GRAPH_REGULAR:
+	default:
+		break;
+	}
+}
+/*********************/
 /* update set number */
 /*********************/
 void spin_update_set(void){
@@ -1338,6 +1463,14 @@ void spin_update_set(void){
 			GRAPH_UI.set_number=1.;
 		}
 		GUI_SPIN_SET(GRAPH_UI.set,GRAPH_UI.set_number);
+		GUI_UNLOCK(GRAPH_UI.by_val);
+		GRAPH_UI.by_value=FALSE;
+		GUI_TOGGLE_OFF(GRAPH_UI.by_val);
+		GUI_LOCK(GRAPH_UI.by_val);
+		GUI_UNLOCK(GRAPH_UI.num);
+		GUI_SPIN_RANGE(GRAPH_UI.num,1.,1.);
+		GRAPH_UI.num_number=1.;
+		GUI_LOCK(GRAPH_UI.num);
 		return;
 	}
         switch(graph->type){
@@ -1373,11 +1506,29 @@ void spin_update_set(void){
 					GUI_COMBOBOX_SET(GRAPH_UI.type,1);
 			}
 			GUI_LOCK(GRAPH_UI.type);
-			/*the size of each set can also differ (especially for IX,XX types)*/
 			GUI_UNLOCK(GRAPH_UI.size);
 			text=g_strdup_printf("%i",p_y->y_size);
 			GUI_ENTRY_TEXT(GRAPH_UI.size,text);g_free(text);
 			GUI_LOCK(GRAPH_UI.size);
+			if(p_y->y_size>1){
+				/*allow point modification*/
+				GUI_UNLOCK(GRAPH_UI.by_val);
+				GUI_UNLOCK(GRAPH_UI.num);
+				GUI_SPIN_RANGE(GRAPH_UI.num,1.,(gdouble)p_y->y_size);
+				GRAPH_UI.num_number=1.;
+				if(GRAPH_UI.by_value) GUI_UNLOCK(GRAPH_UI.num);
+				else GUI_LOCK(GRAPH_UI.num);
+			}else{
+				/*disallow point modification*/
+				GUI_UNLOCK(GRAPH_UI.by_val);
+				GRAPH_UI.by_value=FALSE;
+				GUI_TOGGLE_OFF(GRAPH_UI.by_val);
+				GUI_LOCK(GRAPH_UI.by_val);
+				GUI_UNLOCK(GRAPH_UI.num);
+				GUI_SPIN_RANGE(GRAPH_UI.num,1.,1.);
+				GRAPH_UI.num_number=1.;
+				GUI_LOCK(GRAPH_UI.num);
+			}
 			/*other are different from one set to another*/
 			switch(p_y->line){
 				case GRAPH_LINE_SINGLE:
@@ -1448,7 +1599,11 @@ void spin_update_set(void){
 				default:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
-			if(p_y->mixed_symbol) GUI_LOCK(GRAPH_UI.symbol);
+			if((p_y->mixed_symbol)&&(!GRAPH_UI.by_value)) GUI_LOCK(GRAPH_UI.symbol);
+			if(GRAPH_UI.by_value){
+				/*try to refresh idx, x_val, y_val*/
+				spin_update_num();
+			}
 			break;
                 case GRAPH_FREQUENCY:
                 case GRAPH_BAND:
@@ -1464,6 +1619,11 @@ void spin_update_set(void){
 			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			GUI_COMBOBOX_SET(GRAPH_UI.line,0);
 			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
+			GRAPH_UI.by_value=FALSE;
+			GUI_LOCK(GRAPH_UI.by_val);
+			GUI_SPIN_RANGE(GRAPH_UI.num,1.,1.);
+			GRAPH_UI.num_number=1.;
+			GUI_LOCK(GRAPH_UI.num);
                         break;
                 case GRAPH_REGULAR:
                 default:
@@ -1479,6 +1639,32 @@ void spin_update_set(void){
 			break;
 	}
 
+}
+/*****************/
+/* toggle by_val */
+/*****************/
+void toggle_by_value(void){
+	if(GRAPH_UI.by_value){
+		GUI_UNLOCK(GRAPH_UI.num);
+		GUI_UNLOCK(GRAPH_UI.symbol);/*side-effect*/
+		GUI_LOCK(GRAPH_UI.line);
+		GUI_LOCK(GRAPH_UI.color);
+		spin_update_num();
+	}else{
+		GUI_LOCK(GRAPH_UI.num);
+		GUI_UNLOCK(GRAPH_UI.line);
+		GUI_UNLOCK(GRAPH_UI.color);
+		GUI_UNLOCK(GRAPH_UI.idx);
+		GUI_ENTRY_TEXT(GRAPH_UI.idx," ");
+		GUI_LOCK(GRAPH_UI.idx);
+		GUI_UNLOCK(GRAPH_UI.x_val);
+		GUI_ENTRY_TEXT(GRAPH_UI.x_val," ");
+		GUI_LOCK(GRAPH_UI.x_val);
+		GUI_UNLOCK(GRAPH_UI.y_val);
+		GUI_ENTRY_TEXT(GRAPH_UI.y_val," ");
+		GUI_LOCK(GRAPH_UI.y_val);
+		spin_update_set();
+	}
 }
 /**************************/
 /* apply graph dimensions */
@@ -1519,102 +1705,143 @@ void graph_control_apply_dim(void){
 	graph->yticks=(gint)GRAPH_UI.yticks;
 /*Apply Set, only if have_changed==FALSE*/
 if(have_changed==FALSE){
-	if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XX_TYPE)||(graph->type==GRAPH_XY_TYPE)){
-		/*get set number first*/
+	if(GRAPH_UI.by_value){
+		gint jdx=(gint)GRAPH_UI.num_number;/*number is off by 1*/
+		/*update only a y value*/
 		list=graph->set_list;/*this is g_data_x*/
+		/*get the set*/
 		idx=0;
 		while((list)&&(idx<(gint)GRAPH_UI.set_number)){
 			list=g_slist_next(list);
 			idx++;
 		}
-		if(!list){
-			/*BAD, data set are missing...*/
-			return;
-		}
+		if(!list) return;/*bad, silently return*/
 		p_y = (g_data_y *) list->data;
-		/*we can't change type or size*/
-		GUI_COMBOBOX_GET(GRAPH_UI.line,idx);
-		switch(idx){
-			case 1:
-				p_y->line=GRAPH_LINE_SINGLE;break;
-			case 2:
-				p_y->line=GRAPH_LINE_DASH;break;
-			case 3:
-				p_y->line=GRAPH_LINE_DOT;break;
-			case 4:
-				p_y->line=GRAPH_LINE_THICK;break;
-			case 0:
-			default:
-				p_y->line=GRAPH_LINE_NONE;
-		}
-		GUI_COMBOBOX_GET(GRAPH_UI.color,idx);
-		switch(idx){
-			case 0:
-				p_y->color=GRAPH_COLOR_BLACK;break;
-			case 1:
-				p_y->color=GRAPH_COLOR_WHITE;break;
-			case 2:
-				p_y->color=GRAPH_COLOR_BLUE;break;
-			case 3:
-				p_y->color=GRAPH_COLOR_GREEN;break;
-			case 4:
-				p_y->color=GRAPH_COLOR_RED;break;
-			case 5:
-				p_y->color=GRAPH_COLOR_YELLOW;break;
-			case 6:
-				p_y->color=GRAPH_COLOR_GRAY;break;
-			case 7:
-				p_y->color=GRAPH_COLOR_NAVY;break;
-			case 8:
-				p_y->color=GRAPH_COLOR_LIME;break;
-			case 9:
-				p_y->color=GRAPH_COLOR_TEAL;break;
-			case 10:
-				p_y->color=GRAPH_COLOR_AQUA;break;
-			case 11:
-				p_y->color=GRAPH_COLOR_MAROON;break;
-			case 12:
-				p_y->color=GRAPH_COLOR_PURPLE;break;
-			case 13:
-				p_y->color=GRAPH_COLOR_OLIVE;break;
-			case 14:
-				p_y->color=GRAPH_COLOR_SILVER;break;
-			case 15:
-				p_y->color=GRAPH_COLOR_FUSHIA;break;
-			case 16:
-			default:
-				p_y->color=GRAPH_COLOR_DEFAULT;
-		}
-		if((p_y->symbol!=NULL)&&(!p_y->mixed_symbol)){
-			gint i;
+		/*update symbol <- if possible*/
+		if(p_y->symbol!=NULL){
+			/*We don't need to care about mixed_symbol (I think)*/
+			/*TODO: if p_y->symbol==NULL why not create a new array?*/
 			GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
 			switch(idx){
-				case 1:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_CROSS;
-					break;
-				case 2:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_SQUARE;
-					break;
-				case 3:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_TRI_DN;
-					break;
-				case 4:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_TRI_UP;
-					break;
-				case 5:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_DIAM;
-					break;
-				case 0:
-				default:
-					for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_NONE;
+			case 1:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_CROSS;
+				break;
+			case 2:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_SQUARE;
+				break;
+			case 3:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_DN;
+				break;
+			case 4:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_UP;
+				break;
+			case 5:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_DIAM;
+				break;
+			case 0:
+			default:
+				p_y->symbol[jdx-1]=GRAPH_SYMB_NONE;
 			}
 		}
-
-
-		
+	}else{
+		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XX_TYPE)||(graph->type==GRAPH_XY_TYPE)){
+			/*get set number first*/
+			list=graph->set_list;/*this is g_data_x*/
+			idx=0;
+			while((list)&&(idx<(gint)GRAPH_UI.set_number)){
+				list=g_slist_next(list);
+				idx++;
+			}
+			if(!list){
+				/*BAD, data set are missing...*/
+				return;
+			}
+			p_y = (g_data_y *) list->data;
+			/*we can't change type or size*/
+			GUI_COMBOBOX_GET(GRAPH_UI.line,idx);
+			switch(idx){
+				case 1:
+					p_y->line=GRAPH_LINE_SINGLE;break;
+				case 2:
+					p_y->line=GRAPH_LINE_DASH;break;
+				case 3:
+					p_y->line=GRAPH_LINE_DOT;break;
+				case 4:
+					p_y->line=GRAPH_LINE_THICK;break;
+				case 0:
+				default:
+					p_y->line=GRAPH_LINE_NONE;
+			}
+			GUI_COMBOBOX_GET(GRAPH_UI.color,idx);
+			switch(idx){
+				case 0:
+					p_y->color=GRAPH_COLOR_BLACK;break;
+				case 1:
+					p_y->color=GRAPH_COLOR_WHITE;break;
+				case 2:
+					p_y->color=GRAPH_COLOR_BLUE;break;
+				case 3:
+					p_y->color=GRAPH_COLOR_GREEN;break;
+				case 4:
+					p_y->color=GRAPH_COLOR_RED;break;
+				case 5:
+					p_y->color=GRAPH_COLOR_YELLOW;break;
+				case 6:
+					p_y->color=GRAPH_COLOR_GRAY;break;
+				case 7:
+					p_y->color=GRAPH_COLOR_NAVY;break;
+				case 8:
+					p_y->color=GRAPH_COLOR_LIME;break;
+				case 9:
+					p_y->color=GRAPH_COLOR_TEAL;break;
+				case 10:
+					p_y->color=GRAPH_COLOR_AQUA;break;
+				case 11:
+					p_y->color=GRAPH_COLOR_MAROON;break;
+				case 12:
+					p_y->color=GRAPH_COLOR_PURPLE;break;
+				case 13:
+					p_y->color=GRAPH_COLOR_OLIVE;break;
+				case 14:
+					p_y->color=GRAPH_COLOR_SILVER;break;
+				case 15:
+					p_y->color=GRAPH_COLOR_FUSHIA;break;
+				case 16:
+				default:
+					p_y->color=GRAPH_COLOR_DEFAULT;
+			}
+			if((p_y->symbol!=NULL)&&(!p_y->mixed_symbol)){
+				gint i;
+				GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
+				switch(idx){
+					case 1:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_CROSS;
+						break;
+					case 2:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_SQUARE;
+						break;
+					case 3:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_TRI_DN;
+						break;
+					case 4:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_TRI_UP;
+						break;
+					case 5:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_DIAM;
+						break;
+					case 0:
+					default:
+						for(i=0;i<p_y->y_size;i++) p_y->symbol[i]=GRAPH_SYMB_NONE;
+				}
+			}
+	
+	
+			
+		}
 	}
 }
 /*no need to re-sync graph data*/
+/*TODO: only refresh in case of a change*/
 	tree_model_refresh(data);
 	redraw_canvas(ALL);
 }
@@ -1671,7 +1898,7 @@ void gui_graph_controls(void){
 	/*frame*/
 	GUI_FRAME_WINDOW(window,frame);
 	GUI_VBOX_FRAME(frame,vbox);
-	GUI_TABLE_NOTE(vbox,table,12,3);
+	GUI_TABLE_NOTE(vbox,table,15,3);
 /* --- Title & Axis */
 	GUI_LABEL_TABLE(table,"Title & Axis",0,3,0,1);
 	/* line 1 */
@@ -1703,10 +1930,10 @@ GUI_TOOLTIP(GRAPH_UI.ymax,"Maximum Y value of the graph.");
 	GUI_SPIN_TABLE(table,GRAPH_UI.ytics,GRAPH_UI.yticks,spin_update_ytics,"YTICS",2,3,7,8);
 GUI_TOOLTIP(GRAPH_UI.ytics,"Number of tics on Y axis.");
 	/* line 8 */
-	GUI_CHECK_TABLE(table,button,GRAPH_UI.auto_x,toggle_auto_x,"Auto_X",0,1,8,9);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,GRAPH_UI.auto_x,toggle_auto_x,"Auto_X",0,1,8,9);
 GUI_TOOLTIP(button,"Set X axis limits automatically.");
 GUI_TOGGLE_ON(button);
-	GUI_CHECK_TABLE(table,button,GRAPH_UI.auto_y,toggle_auto_y,"Auto_Y",1,2,8,9);/*not calling anything*/
+	GUI_CHECK_TABLE(table,button,GRAPH_UI.auto_y,toggle_auto_y,"Auto_Y",1,2,8,9);
 GUI_TOOLTIP(button,"Set Y axis limits automatically.");
 GUI_TOGGLE_ON(button);
 	GUI_2BUTTONS_TABLE(table,graph_control_apply_dim,graph_control_reset_dim,2,3,8,9);
@@ -1715,15 +1942,22 @@ GUI_TOGGLE_ON(button);
 	/* line 10 */
 	GUI_SPIN_TABLE(table,GRAPH_UI.set,GRAPH_UI.set_number,spin_update_set,"SET",0,1,10,11);
 GUI_TOOLTIP(GRAPH_UI.set,"Select the graph SET number.");
-	GUI_COMBOBOX_TABLE(table,GRAPH_UI.type,"TYPE:",1,2,10,11);
+	GUI_COMBOBOX_TABLE(table,GRAPH_UI.type,"TYPE:",1,3,10,11);
 	GUI_COMBOBOX_ADD(GRAPH_UI.type,"NORMAL");
 	GUI_COMBOBOX_ADD(GRAPH_UI.type,"X_LINE");
 	GUI_COMBOBOX_ADD(GRAPH_UI.type,"Y_LINE");
 GUI_TOOLTIP(GRAPH_UI.type,"Type of graph, depending on DATA:\nNORMAL -> only one y[i] set, {i} being x[i]=i;\nX_LINE -> One {Y} set correspond to all X_i values;\nY_LINE -> One {Y} set correspond to one X_i value.");
-	GUI_ENTRY_TABLE(table,GRAPH_UI.size,0,"%4i","SIZE:",2,3,10,11);
-GUI_TOOLTIP(GRAPH_UI.size,"Size of the current set.");
 	/* line 11 */
-	GUI_COMBOBOX_TABLE(table,GRAPH_UI.symbol,"SYMBOL:",0,1,11,12);
+	GUI_CHECK_TABLE(table,GRAPH_UI.by_val,GRAPH_UI.by_value,toggle_by_value,"BY VALUE",0,1,11,12);
+GUI_TOOLTIP(GRAPH_UI.set,"Change the graph setting by value.");
+	GUI_SPIN_TABLE(table,GRAPH_UI.num,GRAPH_UI.num_number,spin_update_num,"NUM",1,2,11,12);
+GUI_TOOLTIP(GRAPH_UI.num,"Select the graph point in SET.");
+	GUI_ENTRY_TABLE(table,GRAPH_UI.size,0,"%4i","SIZE:",2,3,11,12);
+GUI_TOOLTIP(GRAPH_UI.size,"Size of the current set.");
+	/* line 12 */
+	GUI_ENTRY_TABLE(table,GRAPH_UI.idx,0,"%4i","IDX:",0,1,12,13);
+GUI_TOOLTIP(GRAPH_UI.idx,"structure index (when relevant).");
+	GUI_COMBOBOX_TABLE(table,GRAPH_UI.symbol,"SYMBOL:",1,3,12,13);
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"NONE");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"CROSS");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"SQUARE");
@@ -1731,14 +1965,20 @@ GUI_TOOLTIP(GRAPH_UI.size,"Size of the current set.");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"TRIANGLE (DN)");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"DIAMOND");
 GUI_TOOLTIP(GRAPH_UI.symbol,"Default symbol for the graph.");
-	GUI_COMBOBOX_TABLE(table,GRAPH_UI.line,"LINE:",1,2,11,12);
+	/* line 13 */
+	GUI_ENTRY_TABLE(table,GRAPH_UI.x_val,0.,"%G","X_VAL:",0,1,13,14);
+GUI_TOOLTIP(GRAPH_UI.x_val,"X value (when relevant).");
+	GUI_COMBOBOX_TABLE(table,GRAPH_UI.line,"LINE:",1,3,13,14);
 	GUI_COMBOBOX_ADD(GRAPH_UI.line,"NONE");
 	GUI_COMBOBOX_ADD(GRAPH_UI.line,"SINGLE");
 	GUI_COMBOBOX_ADD(GRAPH_UI.line,"DASH");
 	GUI_COMBOBOX_ADD(GRAPH_UI.line,"DOT");
 	GUI_COMBOBOX_ADD(GRAPH_UI.line,"THICK");
 GUI_TOOLTIP(GRAPH_UI.line,"Default line type for the graph.");
-	GUI_COMBOBOX_TABLE(table,GRAPH_UI.color,"COLOR:",2,3,11,12);
+	/* line 14 */
+	GUI_ENTRY_TABLE(table,GRAPH_UI.y_val,0.,"%G","IDX:",0,1,14,15);
+GUI_TOOLTIP(GRAPH_UI.y_val,"Y value (when relevant).");
+	GUI_COMBOBOX_TABLE(table,GRAPH_UI.color,"COLOR:",1,3,14,15);
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"BLACK");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"WHITE");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"BLUE");
@@ -1761,8 +2001,13 @@ GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph.");
 	sync_graph_controls(graph);
 	toggle_auto_x();
 	toggle_auto_y();
+	toggle_by_value();
 	GUI_LOCK(GRAPH_UI.type);
 	GUI_LOCK(GRAPH_UI.size);
+	GUI_LOCK(GRAPH_UI.idx);
+	GUI_LOCK(GRAPH_UI.x_val);
+	GUI_LOCK(GRAPH_UI.y_val);
+	spin_update_set();
 /* --- Outside of page */
         GUI_FRAME_WINDOW(window,frame);
         GUI_VBOX_FRAME(frame,vbox);
