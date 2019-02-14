@@ -381,6 +381,7 @@ if(dy.y_size==0) {
 	py->idx=NULL;
 	py->type=GRAPH_REGULAR;
 	py->symbol=NULL;
+	py->sym_color=NULL;
 	py->mixed_symbol=FALSE;
 	py->line=GRAPH_LINE_NONE;
 	py->color=GRAPH_COLOR_DEFAULT;
@@ -403,6 +404,11 @@ if(dy.symbol==NULL) py->symbol=NULL;
 else{
 	py->symbol=g_malloc(dy.y_size*sizeof(graph_symbol));
 	memcpy(py->symbol,dy.symbol,dy.y_size*sizeof(graph_symbol));
+}
+if(dy.sym_color==NULL) py->sym_color=NULL;
+else{
+	py->sym_color=g_malloc(dy.y_size*sizeof(graph_color));
+	memcpy(py->sym_color,dy.sym_color,dy.y_size*sizeof(graph_color));
 }
 py->mixed_symbol=dy.mixed_symbol;
 py->line=dy.line;
@@ -993,6 +999,7 @@ for ( ; list ; list=g_slist_next(list))
 		continue;
 	}
 	if(gy->type!=GRAPH_REGULAR) type=gy->type;/*update type within type?*/
+if(gy->sym_color==NULL){/*no indivudual coloring -> same color for symbol and line*/
 	switch(gy->color){
 		case GRAPH_COLOR_WHITE:/*1.0,  1.0,    1.0*/
 			glColor3f(1.0,1.0,1.0);break;
@@ -1030,6 +1037,7 @@ for ( ; list ; list=g_slist_next(list))
 		default:
 			glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
 	}
+}/*NEW: sym_color*/
   } else {
 	ptr = (gdouble *) list->data;
   }
@@ -1092,7 +1100,47 @@ if((xf<graph->xmin)||(xf>graph->xmax)||(yf<graph->ymin)||(yf>graph->ymax)) {
 	oldx=-1;
 	continue;
 }
-/*calculate screen values*/
+/*NEW: change color based on sym_color*/
+if(gy->sym_color!=NULL){
+  switch(gy->sym_color[i]){
+	case GRAPH_COLOR_WHITE:/*1.0,  1.0,    1.0*/
+		glColor3f(1.0,1.0,1.0);break;
+	case GRAPH_COLOR_BLUE:/*0.0,  0.0,    1.0*/
+		glColor3f(0.0,0.0,1.0);break;
+	case GRAPH_COLOR_GREEN:/*0.0,  0.5,    0.0*/
+		glColor3f(0.0,0.5,0.0);break;
+	case GRAPH_COLOR_RED:/*1.0,  0.0,    0.0*/
+		glColor3f(1.0,0.0,0.0);break;
+	case GRAPH_COLOR_YELLOW:/*1.0,  1.0,    0.0*/
+		glColor3f(1.0,1.0,0.0);break;
+	case GRAPH_COLOR_GRAY:/*0.5,  0.5,    0.5*/
+		glColor3f(0.5,0.5,0.5);break;
+	case GRAPH_COLOR_NAVY:/*0.0,  0.0,    0.5*/
+		glColor3f(0.0,0.0,0.5);break;
+	case GRAPH_COLOR_LIME:/*0.0,  1.0,    0.0*/
+		glColor3f(0.0,1.0,0.0);break;
+	case GRAPH_COLOR_TEAL:/*0.0,  0.5,    0.5*/
+		glColor3f(0.0,0.5,0.5);break;
+	case GRAPH_COLOR_AQUA:/*0.0,  1.0,    1.0*/
+		glColor3f(0.0,1.0,1.0);break;
+	case GRAPH_COLOR_MAROON:/*0.5,  0.0,    0.0*/
+		glColor3f(0.5,0.0,0.0);break;
+	case GRAPH_COLOR_PURPLE:/*0.5,  0.0,    0.5*/
+		glColor3f(0.5,0.0,0.5);break;
+	case GRAPH_COLOR_OLIVE:/*0.5,  0.5,    0.0*/
+		glColor3f(0.5,0.5,0.0);break;
+	case GRAPH_COLOR_SILVER:/*0.75, 0.75,   0.75*/
+		glColor3f(0.75,0.75,0.75);break;
+	case GRAPH_COLOR_FUSHIA:/*1.0,  0.0,    1.0*/
+		glColor3f(1.0,0.0,1.0);break;
+	case GRAPH_COLOR_BLACK:/*0.0,0.0,0.0*/
+		glColor3f(0.,0.,0.);
+	case GRAPH_COLOR_DEFAULT:/*whatever title color*/
+	default:
+		glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
+  }
+}
+/*calculate screen values, draw points*/
 switch (type){
 	case GRAPH_FREQUENCY:
 	/*we can draw impulse directly*/
@@ -1146,7 +1194,6 @@ switch (type){
 	case GRAPH_XY_TYPE:
 	case GRAPH_IX_TYPE:
 	case GRAPH_XX_TYPE:
-//	xf += 1.;
 	xf -= graph->xmin;
 	xf /= (graph->xmax - graph->xmin);
 	x = ox + xf*dx;
@@ -1242,6 +1289,45 @@ if(gy->symbol){
 }
 if(oldx!=-1){
 	/*plot LINE data*/
+	/*set line color*/
+  switch(gy->color){
+	case GRAPH_COLOR_WHITE:/*1.0,  1.0,    1.0*/
+		glColor3f(1.0,1.0,1.0);break;
+	case GRAPH_COLOR_BLUE:/*0.0,  0.0,    1.0*/
+		glColor3f(0.0,0.0,1.0);break;
+	case GRAPH_COLOR_GREEN:/*0.0,  0.5,    0.0*/
+		glColor3f(0.0,0.5,0.0);break;
+	case GRAPH_COLOR_RED:/*1.0,  0.0,    0.0*/
+		glColor3f(1.0,0.0,0.0);break;
+	case GRAPH_COLOR_YELLOW:/*1.0,  1.0,    0.0*/
+		glColor3f(1.0,1.0,0.0);break;
+	case GRAPH_COLOR_GRAY:/*0.5,  0.5,    0.5*/
+		glColor3f(0.5,0.5,0.5);break;
+	case GRAPH_COLOR_NAVY:/*0.0,  0.0,    0.5*/
+		glColor3f(0.0,0.0,0.5);break;
+	case GRAPH_COLOR_LIME:/*0.0,  1.0,    0.0*/
+		glColor3f(0.0,1.0,0.0);break;
+	case GRAPH_COLOR_TEAL:/*0.0,  0.5,    0.5*/
+		glColor3f(0.0,0.5,0.5);break;
+	case GRAPH_COLOR_AQUA:/*0.0,  1.0,    1.0*/
+		glColor3f(0.0,1.0,1.0);break;
+	case GRAPH_COLOR_MAROON:/*0.5,  0.0,    0.0*/
+		glColor3f(0.5,0.0,0.0);break;
+	case GRAPH_COLOR_PURPLE:/*0.5,  0.0,    0.5*/
+		glColor3f(0.5,0.0,0.5);break;
+	case GRAPH_COLOR_OLIVE:/*0.5,  0.5,    0.0*/
+		glColor3f(0.5,0.5,0.0);break;
+	case GRAPH_COLOR_SILVER:/*0.75, 0.75,   0.75*/
+		glColor3f(0.75,0.75,0.75);break;
+	case GRAPH_COLOR_FUSHIA:/*1.0,  0.0,    1.0*/
+		glColor3f(1.0,0.0,1.0);break;
+	case GRAPH_COLOR_BLACK:/*0.0,0.0,0.0*/
+		glColor3f(0.,0.,0.);
+	case GRAPH_COLOR_DEFAULT:/*whatever title color*/
+	default:
+		glColor3f(sysenv.render.title_colour[0],sysenv.render.title_colour[1],sysenv.render.title_colour[2]);
+  }
+	/*draw the LINE*/
   switch(type){
 	case GRAPH_IY_TYPE:
 	case GRAPH_XY_TYPE:

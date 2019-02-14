@@ -1322,6 +1322,7 @@ void spin_update_num(void){
 	g_data_y *p_y;
 	gdouble my_x=0.;
 	graph_symbol symb;
+	graph_color color;
 	gint idx=(gint)GRAPH_UI.num_number;
 /* --- detect if graph_active has change and react accordingly*/
 	g_assert(graph != NULL);
@@ -1351,18 +1352,7 @@ void spin_update_num(void){
 			g_free(text);
 			return;
 		}
-		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_XX_TYPE)){
-			my_x=p_x->x[idx-1];
-		}else{
-			idx=(gint)GRAPH_UI.num_number;
-			if((idx>(p_x->x_size+1))||(idx<1)){
-				text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
-				gui_text_show(ERROR, text);
-				g_free(text);
-				return;
-			}
-			my_x=p_x->x[idx-1];
-		}
+		/*actually each set have a type now -> get p_y first*/
 		idx=0;
 		while((list)&&(idx<(gint)GRAPH_UI.set_number)){
 			list=g_slist_next(list);
@@ -1383,8 +1373,21 @@ void spin_update_num(void){
 			g_free(text);
 			return;
 		}
+		/*now look for my_x*/
+		if((p_y->type==GRAPH_IX_TYPE)||(p_y->type==GRAPH_XX_TYPE)){
+			idx=(gint)GRAPH_UI.set_number;
+		}else{
+			idx=(gint)GRAPH_UI.num_number;
+		}
+		if((idx>(p_x->x_size+1))||(idx<1)){
+			text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
+			gui_text_show(ERROR, text);
+			g_free(text);
+			return;
+		}
+		my_x=p_x->x[idx-1];/*true for all cases*/
 		idx=(gint)GRAPH_UI.num_number;/*number is off by 1*/
-		/*only the symbol can be changed on each data*/
+		/*only the symbol and symbol color can be changed on each data*/
 		if(p_y->symbol!=NULL) symb=p_y->symbol[idx-1];
 		else symb=GRAPH_SYMB_NONE;
 		switch(symb){
@@ -1401,6 +1404,49 @@ void spin_update_num(void){
 		case GRAPH_SYMB_NONE:
 		default:
 			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
+		}
+		/*set color*/
+		if(p_y->sym_color!=NULL){
+			color=p_y->sym_color[idx-1];
+		}else{
+			color=p_y->color;
+		}
+		switch(color){
+		case GRAPH_COLOR_BLACK:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,0);break;
+		case GRAPH_COLOR_WHITE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,1);break;
+		case GRAPH_COLOR_BLUE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,2);break;
+		case GRAPH_COLOR_GREEN:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,3);break;
+		case GRAPH_COLOR_RED:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,4);break;
+		case GRAPH_COLOR_YELLOW:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,5);break;
+		case GRAPH_COLOR_GRAY:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,6);break;
+		case GRAPH_COLOR_NAVY:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,7);break;
+		case GRAPH_COLOR_LIME:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,8);break;
+		case GRAPH_COLOR_TEAL:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,9);break;
+		case GRAPH_COLOR_AQUA:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,10);break;
+		case GRAPH_COLOR_MAROON:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,11);break;
+		case GRAPH_COLOR_PURPLE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,12);break;
+		case GRAPH_COLOR_OLIVE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,13);break;
+		case GRAPH_COLOR_SILVER:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,14);break;
+		case GRAPH_COLOR_FUSHIA:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,15);break;
+		case GRAPH_COLOR_DEFAULT:
+		default:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
 		}
 		/*show idx structure (if any)*/
 		GUI_UNLOCK(GRAPH_UI.idx);
@@ -1515,7 +1561,6 @@ void spin_update_set(void){
 				GUI_UNLOCK(GRAPH_UI.by_val);
 				GUI_UNLOCK(GRAPH_UI.num);
 				GUI_SPIN_RANGE(GRAPH_UI.num,1.,(gdouble)p_y->y_size);
-				GRAPH_UI.num_number=1.;
 				if(GRAPH_UI.by_value) GUI_UNLOCK(GRAPH_UI.num);
 				else GUI_LOCK(GRAPH_UI.num);
 			}else{
@@ -1600,10 +1645,6 @@ void spin_update_set(void){
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
 			if((p_y->mixed_symbol)&&(!GRAPH_UI.by_value)) GUI_LOCK(GRAPH_UI.symbol);
-			if(GRAPH_UI.by_value){
-				/*try to refresh idx, x_val, y_val*/
-				spin_update_num();
-			}
 			break;
                 case GRAPH_FREQUENCY:
                 case GRAPH_BAND:
@@ -1638,7 +1679,7 @@ void spin_update_set(void){
 			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
 			break;
 	}
-
+	spin_update_num();
 }
 /*****************/
 /* toggle by_val */
@@ -1647,8 +1688,8 @@ void toggle_by_value(void){
 	if(GRAPH_UI.by_value){
 		GUI_UNLOCK(GRAPH_UI.num);
 		GUI_UNLOCK(GRAPH_UI.symbol);/*side-effect*/
+		GUI_UNLOCK(GRAPH_UI.color);
 		GUI_LOCK(GRAPH_UI.line);
-		GUI_LOCK(GRAPH_UI.color);
 		spin_update_num();
 	}else{
 		GUI_LOCK(GRAPH_UI.num);
@@ -1718,30 +1759,74 @@ if(have_changed==FALSE){
 		if(!list) return;/*bad, silently return*/
 		p_y = (g_data_y *) list->data;
 		/*update symbol <- if possible*/
-		if(p_y->symbol!=NULL){
-			/*We don't need to care about mixed_symbol (I think)*/
-			/*TODO: if p_y->symbol==NULL why not create a new array?*/
-			GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
-			switch(idx){
-			case 1:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_CROSS;
-				break;
-			case 2:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_SQUARE;
-				break;
-			case 3:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_DN;
-				break;
-			case 4:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_UP;
-				break;
-			case 5:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_DIAM;
-				break;
-			case 0:
-			default:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_NONE;
-			}
+		if(p_y->symbol==NULL){/*create an array of symbol, set to NONE*/
+			p_y->symbol=g_malloc(p_y->y_size*sizeof(graph_symbol));
+			for(idx=0;idx<p_y->y_size;idx++) p_y->symbol[idx]=GRAPH_SYMB_NONE;
+		}
+		if(p_y->sym_color==NULL){/*create an array of sym_color, set to line color*/
+			p_y->sym_color=g_malloc(p_y->y_size*sizeof(graph_color));
+			for(idx=0;idx<p_y->y_size;idx++) p_y->sym_color[idx]=p_y->color;
+		}
+		/*We don't need to care about mixed_symbol (I think)*/
+		GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
+		switch(idx){
+		case 1: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_CROSS;
+			break;
+		case 2: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_SQUARE;
+			break;
+		case 3: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_DN;
+			break;
+		case 4: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_UP;
+			break;
+		case 5: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_DIAM;
+			break;
+		case 0:
+		default:
+			p_y->symbol[jdx-1]=GRAPH_SYMB_NONE;
+		}
+		/*reset symbol color*/
+		GUI_COMBOBOX_GET(GRAPH_UI.color,idx);
+		switch(idx){
+		case 0:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_BLACK;break;
+		case 1:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_WHITE;break;
+		case 2:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_BLUE;break;
+		case 3:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_GREEN;break;
+		case 4:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_RED;break;
+		case 5:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_YELLOW;break;
+		case 6:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_GRAY;break;
+		case 7:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_NAVY;break;
+		case 8:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_LIME;break;
+		case 9:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_TEAL;break;
+		case 10:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_AQUA;break;
+		case 11:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_MAROON;break;
+		case 12:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_PURPLE;break;
+		case 13:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_OLIVE;break;
+		case 14:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_SILVER;break;
+		case 15:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_FUSHIA;break;
+		case 16:
+		default:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_DEFAULT;
 		}
 	}else{
 		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XX_TYPE)||(graph->type==GRAPH_XY_TYPE)){
@@ -1964,7 +2049,7 @@ GUI_TOOLTIP(GRAPH_UI.idx,"structure index (when relevant).");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"TRIANGLE (UP)");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"TRIANGLE (DN)");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"DIAMOND");
-GUI_TOOLTIP(GRAPH_UI.symbol,"Default symbol for the graph.");
+GUI_TOOLTIP(GRAPH_UI.symbol,"Default symbol for the graph, or for each graph point.");
 	/* line 13 */
 	GUI_ENTRY_TABLE(table,GRAPH_UI.x_val,0.,"%G","X_VAL:",0,1,13,14);
 GUI_TOOLTIP(GRAPH_UI.x_val,"X value (when relevant).");
@@ -1996,7 +2081,7 @@ GUI_TOOLTIP(GRAPH_UI.y_val,"Y value (when relevant).");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"SILVER");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"FUSHIA");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"DEFAULT");
-GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph.");
+GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph, or for each symbol.");
 /* initialize everything */
 	sync_graph_controls(graph);
 	toggle_auto_x();
