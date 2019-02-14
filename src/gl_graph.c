@@ -714,7 +714,7 @@ if((type==GRAPH_DOS)&&(graph->xticks>2)){
           if (graph->xlabel){
             xf=(i+shift)*sz;/*label name*/
             text = g_strdup_printf("%.2f", xf);
-            gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
+	    pango_print(text, x-2*gl_fontsize, oy+gl_fontsize, canvas, gl_fontsize-2,0);
             g_free(text);
           }
         /* axis segment + tick */
@@ -783,7 +783,7 @@ if(type==GRAPH_BANDOS){
   if (graph->xlabel){
     /*only calculate real value when needed*/
     text = g_strdup_printf("%.2f", xf);
-    gl_print_window(text, x-2*gl_fontsize, oy+2*gl_fontsize, canvas);
+    pango_print(text, x-2*gl_fontsize, oy+gl_fontsize, canvas, gl_fontsize-2,0);
     g_free(text);
     }
   /* axis segment + tick */
@@ -814,7 +814,7 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
 		text = g_strdup_printf("%.2e", yf);
 	else
 		text = g_strdup_printf("%7.2f", yf);
-	gl_print_window(text,0,y-1, canvas);
+	pango_print(text, 2*gl_fontsize, y-1, canvas,gl_fontsize-2,0);
 	g_free(text);
     }
     /* axis segment + tick */
@@ -847,7 +847,6 @@ if(((type==GRAPH_BANDOS)||(type==GRAPH_BAND))&&(graph->yticks>2)){
 		text = g_strdup_printf("%.2e", yf);
 	else
 		text = g_strdup_printf("%7.2f", yf);
-//	gl_print_window(text, 2*gl_fontsize, y-1, canvas);
 	pango_print(text, 2*gl_fontsize, y-1, canvas,gl_fontsize-2,0);
 	g_free(text);
     }
