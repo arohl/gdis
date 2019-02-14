@@ -3193,7 +3193,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		dat_graph_set_y_title("Structure energy (eV)",_UO.graph_comp[species_index]);
 		/*dynamically create y*/
 		for(jdx=0;jdx<n_compo;jdx++){
-			num=0;gy.y=NULL;gy.idx=NULL;
+			num=0;gy.y=NULL;gy.idx=NULL;gy.mixed_symbol=FALSE;/*no cross symbol is the default*/
 			for(idx=0;idx<_UO.num_struct;idx++){
 				if(!_UO.ind[idx].have_data) continue;
 				c_sum=0;for(ix=0;ix<_UO.calc->_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
