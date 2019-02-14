@@ -1697,7 +1697,7 @@ static void PrintSeitzMx(const T_RTMx *SMx, FILE *fpout)
 void ListSgInfo(const T_SgInfo *SgInfo, int F_XYZ, int F_Verbose, FILE *fpout)
 {
   int           iList, i_si_v;
-  char          buf[8];
+  char          buf[16];
   const char    *xyz;
   const T_RTMx  *lsmx;
   T_RotMxInfo   *rmxi, RotMxInfo;
@@ -1767,7 +1767,7 @@ void ListSgInfo(const T_SgInfo *SgInfo, int F_XYZ, int F_Verbose, FILE *fpout)
 
       if (F_Verbose)
       {
-        sprintf(buf, "(%d)", iList + 1);
+        sprintf(buf, "(%i)", iList + 1);
         fprintf(fpout, "%-4s", buf);
 
         fprintf(fpout, "  %2d", rmxi->Order);
