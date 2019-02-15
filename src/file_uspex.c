@@ -2928,6 +2928,7 @@ fprintf(stdout,"\n");
 		gy.idx=g_malloc(1*sizeof(gint32));
 		gy.idx[0]=0;/*ie. no data*/
 		gy.symbol=g_malloc(1*sizeof(graph_symbol));
+		gy.sym_color=NULL;
 		gy.symbol[0]=GRAPH_SYMB_CROSS;
 		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
@@ -2953,6 +2954,7 @@ fprintf(stdout,"\n");
 		gy.y=g_malloc(num*sizeof(gdouble));
 		gy.idx=g_malloc(num*sizeof(gint32));
 		gy.symbol=g_malloc(num*sizeof(graph_symbol));
+		gy.sym_color=NULL;
 		/*END - NEW*/
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG graph_all: GEN=%i num=%i ",gen,num);
@@ -3035,6 +3037,7 @@ fprintf(stdout,"-SENT\n");
 		gy.idx=g_malloc(1*sizeof(gint32));
 		gy.idx[0]=-1;/*ie. no data*/
 		gy.symbol=g_malloc(1*sizeof(graph_symbol));
+		gy.sym_color=NULL;
 		gy.symbol[0]=GRAPH_SYMB_CROSS;
 		gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 		gy.type=GRAPH_IX_TYPE;
@@ -3059,6 +3062,7 @@ fprintf(stdout,"-SENT\n");
 		gy.type=GRAPH_IX_TYPE;
 		gy.idx=g_malloc(num*sizeof(gint32));
 		gy.symbol=g_malloc(num*sizeof(graph_symbol));
+		gy.sym_color=NULL;
 		/*END - NEW*/
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG graph_best: num=%i ",num);
@@ -3102,6 +3106,7 @@ fprintf(stdout,"-SENT\n");
 	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
 	gy.idx=NULL;
 	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.sym_color=NULL;
 	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
 	gy.color=GRAPH_COLOR_DEFAULT;
@@ -3248,6 +3253,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 	gy.y=g_malloc(n_compo*sizeof(gdouble));
 	gy.idx=g_malloc(n_compo*sizeof(gint32));
 	gy.symbol=g_malloc(n_compo*sizeof(graph_symbol));
+	gy.sym_color=NULL;
 	gy.mixed_symbol=TRUE;/*symbol for convex hull only appear on stable species*/
         gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
         gy.line=GRAPH_LINE_DASH;
@@ -3479,6 +3485,7 @@ else{
 	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
 	gy.idx=g_malloc(gy.y_size*sizeof(gint32));
 	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.sym_color=NULL;
 	sscanf(line," %*i %lf %*s",&(gy.y[1]));
 	gy.y[1] /= (gdouble)natoms;
 	_UO.min_E=gy.y[1];

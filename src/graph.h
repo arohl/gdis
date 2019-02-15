@@ -24,13 +24,10 @@ The GNU GPL can also be found at http://www.gnu.org
 
 typedef enum {
         GRAPH_REGULAR=0,	/*previous plain graph*/
-        GRAPH_FREQUENCY,	/*impulse graph for frequency*/
-        GRAPH_BAND,		/*kpoints/state energy graph */
-	GRAPH_DOS,		/*interleave e,dos plot*/
-        GRAPH_BANDOS,		/*dual BAND & DOS graph*/
 	/*  NEW - graph: generic data types*/
 	GRAPH_IY_TYPE,		/*nx integer {x} + ny sets of {nx real y for all x}*/
 	GRAPH_XY_TYPE,		/*nx real    {x} + ny sets of {nx real y for all x}*/
+	GRAPH_YX_TYPE,		/*interleave {y,x} set (for BANDOS)*/
 	GRAPH_IX_TYPE,		/*nx integer {x} + nx sets of {ny real y for one x}*/
 	GRAPH_XX_TYPE,		/*nx real    {x} + nx sets of {ny real y for one x}*/
 } graph_type;
@@ -135,6 +132,8 @@ struct graph_pak
 	gint xlabel;
 	gint ylabel;
 	graph_type type;	/*TODO eliminate this*/
+	gboolean require_xaxis;
+	gboolean require_yaxis;
 	/* graph layout */
 	gint xticks;
 	gint yticks;
@@ -182,6 +181,8 @@ gdouble graph_ymin(gpointer);
 gdouble graph_ymax(gpointer);
 gdouble graph_wavelength(gpointer);
 /* dat_graph interface */
+void dat_graph_toggle_xaxis(gpointer pgraph);
+void dat_graph_toggle_yaxis(gpointer pgraph);
 void dat_graph_set_title(const gchar *title,gpointer pgraph);
 void dat_graph_set_sub_title(const gchar *title,gpointer pgraph);
 void dat_graph_set_x_title(const gchar *x_title,gpointer pgraph);
