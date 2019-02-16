@@ -1372,6 +1372,70 @@ int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
 	return 0;
 }
 
+int vasp_xml_read_forces(FILE *vf, struct model_pak *model){
+	gchar *line;
+	gdouble force=0.;
+	gdouble f,fx,fy,fz;
+	long int vfpos=ftell(vf);
+	if(fetch_in_file(vf,"<varray name=\"forces\" >")==0){
+		/*finalpos exception*/
+		rewind(vf);
+		while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		if(fetch_in_file(vf,"<varray name=\"forces\" >")==0) return -1;/*still no forces?*/
+	}
+	/*we are on the force varray begining*/
+	line = file_read_line(vf);/*first line of forces*/
+	sscanf(line," <v> %lf %lf %lf </v>",&fx,&fy,&fz);
+	force=sqrt(fx*fx+fy*fy+fz*fz);
+	g_free(line);
+	line = file_read_line(vf);/*next line*/
+	while (find_in_string("/varray",line) == NULL){
+		sscanf(line," <v> %lf %lf %lf </v>",&fx,&fy,&fz);
+		f=sqrt(fx*fx+fy*fy+fz*fz);
+		if(f>force) force=f;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	g_free(line);
+	line=g_strdup_printf("%lf eV/Ang",force);
+	property_add_ranked(4, "Force", line, model);
+	g_free(line);
+	return 0;
+}
+
+int vasp_xml_read_stress(FILE *vf, struct model_pak *model){
+	gchar *line;
+	gdouble stress=0.;
+	gdouble sx,sy,sz;
+	long int vfpos=ftell(vf);
+	if(fetch_in_file(vf,"<varray name=\"stress\" >")==0){
+		/*finalpos exception*/
+		rewind(vf);
+		while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		if(fetch_in_file(vf,"<varray name=\"stress\" >")==0) return -1;/*still no stress?*/
+	}
+	/*we are on the stress varray begining*/
+	line = file_read_line(vf);/*first line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	line = file_read_line(vf);/*second line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	line = file_read_line(vf);/*third line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	stress/=3.;
+	line=g_strdup_printf("%lf kB",stress);
+	property_add_ranked(5, "Stress", line, model);
+	g_free(line);
+	return 0;
+}
+
 int vasp_xml_read_frequency(FILE *vf, struct model_pak *model){
 /*factor is actually:
  * factor = sqrt((1.60217733e-19/1e-20)/1.6605402e-27)/(2.*PI*2.99792458e+10)
@@ -1455,7 +1519,7 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	/* fill every atom position */
 	line = file_read_line(vf);
 	idx=0;core=g_slist_nth_data(model->cores,0);
-	while (line) {
+	while((core)&&(line)) {
 		if (find_in_string("/varray",line) != NULL) break;
 		sscanf(line," <v> %lf %lf %lf </v>",&core->x[0],&core->x[1],&core->x[2]);
 		idx++;
@@ -1469,6 +1533,8 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->num_atoms,idx);
 	/* look for energies */
 	vasp_xml_read_energy(vf,model);
+	vasp_xml_read_forces(vf,model);
+	vasp_xml_read_stress(vf,model);
 	return 0;
 }
 int vasp_xml_read_bands(FILE *vf,struct model_pak *model){
