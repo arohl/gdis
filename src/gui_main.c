@@ -55,6 +55,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zmatrix.h"
 #include "gui_image.h"
 #include "undo.h"
+#include "track.h"
 
 #include "logo_left.xpm"
 #include "logo_right.xpm"
@@ -1621,7 +1622,37 @@ if (active_data)
     active_data->refresh(NULL);
   }
 }
+/*********************************************/
+/* toggle tracking mode (if possible) --OVHPA*/
+/*********************************************/
+void gui_track_output(void){
+struct model_pak *model;
+gchar *ptr;
+/**/
+model = sysenv.active_model;
+if (!model) return;
+switch(model->id){
+case VASP:
+	if(model->track_me){
+		model->track_me=FALSE;
+		/*this is enough to have track_vasp return FALSE*/
+		track_vasp(model);/*be sure track_vasp is called before user changes model->track_me*/
+	}else{
+		model->track_me=TRUE;/*set TRUE first!*/
+		g_timeout_add_full(G_PRIORITY_DEFAULT,1000,track_vasp,model,track_vasp_cleanup);
+		if(model->track_me) {
+			ptr=g_strdup_printf("VASP TRACKING: START.\n");
+			gui_text_show(ITALIC,ptr);
+			g_free(ptr);
+		}
+		/*this timer is destroyed when track_vasp return FALSE at which point track_vasp_cleanup is called*/
+	}
+	break;
+default:
+	return;/*nothing to do*/
+}
 
+}
 /***************************************/
 /* quick - export view into eps --OVHPA*/
 /***************************************/
@@ -2080,6 +2111,16 @@ if(sysenv.have_eps){
 			GTK_SIGNAL_FUNC(gui_eps_export),
 			NULL);
 }
+/* tracking system */
+pixbuf = image_table_lookup("image_track");
+gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"Track output",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_track_output),
+			NULL);
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */
 hpaned = gtk_hpaned_new();

@@ -1,7 +1,7 @@
 /*
-Copyright (C) 2003 by Sean David Fleming
+Copyright (C) 2018 by Okadome Valencia
 
-sean@ivec.org
+hubert.valencia _at_ imass.nagoya-u.ac.jp
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,33 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 
-enum {
-IMAGE_ANIMATE,
-IMAGE_ARROW,
-IMAGE_AXES,
-IMAGE_CANVAS_SINGLE,
-IMAGE_CANVAS_CREATE,
-IMAGE_CANVAS_DELETE,
-IMAGE_CAMERA,
-IMAGE_COMPASS,
-IMAGE_CROSS,
-IMAGE_DIFFRACTION,
-IMAGE_DISK,
-IMAGE_ELEMENT,
-IMAGE_FOLDER,
-IMAGE_ISOSURFACE,
-IMAGE_MEASURE,
-IMAGE_PERIODIC,
-IMAGE_PALETTE,
-IMAGE_PLOTS,
-IMAGE_TO_EPS,
-IMAGE_PLUS,
-IMAGE_SURFACE,
-IMAGE_TOOLS,
-IMAGE_TRACK,
-IMAGE_LAST
-};
+/* simple header for tracking system functions */
 
-void image_table_init(void);
-gpointer image_table_lookup(const gchar *);
+/* VASP is the "model" prototype*/
+gboolean track_vasp(void *data);
+void track_vasp_cleanup(void *data);
 

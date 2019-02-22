@@ -1829,6 +1829,133 @@ gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 	if(vasp_xml_read_pos(vf,model)<0) return 3;
 	return 0;
 }
+/******************************/
+/* NEW: track running vasp xml*/
+/******************************/
+gboolean track_vasp(void *data){
+	fpos_t *vffpos=NULL;
+	FILE *vf;
+	GList *list;
+	gchar *line;
+	gchar *ptr;
+	gint add_frames;
+	struct model_pak *model=(struct model_pak *)data;
+	/*is being called every 1s; every "return FALSE" will stop the timer!*/
+	if(model==NULL) return FALSE;
+	if(model->track_me==FALSE) return FALSE;
+	if((model->frame_list==NULL)||(model->num_frames<=2)) {
+		/*there is no frame list 
+		 * BUT: it can mean that
+		 * we're waiting for the
+		 * first data to appear.*/
+		model_free(model);
+		model_init(model);
+		model->track_me=TRUE;/*because it got reset*/
+		if(read_xml_vasp(model->filename,model)==0){
+			if(model->num_frames>2){
+				tree_model_refresh(model);
+				redraw_canvas(ALL);
+			}
+		}
+		return TRUE;
+	}
+	if(model->basename==NULL) {/*should never happen*/
+		model->basename=g_strdup("unknown_VASP");
+	}
+	vf=fopen(model->filename, "r");
+	if(vf==NULL) return FALSE;/*output file can't be opened!*/
+	list=g_list_last(model->frame_list);
+	vffpos=(fpos_t *)list->data;
+	if(fsetpos(vf,vffpos)!=0){
+		/*unable to set position...
+		* -> there is a chance that vasprun.xml
+		* is being overwritten...
+		* TODO <- 1/ cleanup model
+		*      <- 2/ new model
+		*      <- 3/ read_xml_vasp
+		*      <- set tracking... */
+		fclose(vf);
+		return FALSE;/*for now, just give up*/
+	}
+	line = file_read_line(vf);
+	if(line==NULL) {
+		fclose(vf);
+		return FALSE;
+	}
+	if(find_in_string("finalpos",line)!=NULL) {
+		g_free(line);
+		fclose(vf);
+		return FALSE;/*TODO: catch that before*/
+	}
+	add_frames=0;
+	if(g_ascii_isalnum(model->basename[0])){
+		ptr=g_strdup_printf("%s%s","[/]",&(model->basename[0]));
+		g_free(model->basename);
+		model->basename=ptr;
+	}else{
+		if(model->basename[1]=='/') model->basename[1]='-';
+		else if(model->basename[1]=='-') model->basename[1]='\\';
+		else if(model->basename[1]=='\\') model->basename[1]='|';
+		else model->basename[1]='/';
+	}
+        while (line){
+		/*there can be more that ONE frame*/
+                if (find_in_string("/calculation",line) != NULL) {
+                        add_frame_offset(vf, model);
+                        add_frames++;
+                }
+                if (find_in_string("/modeling",line) != NULL) {
+			/*important: this means that the reading is over!*/
+			/*TODO: detect that before in the first read!*/
+			g_free(line);
+			fclose(vf);
+			return FALSE;
+		}
+                g_free(line);
+                line = file_read_line(vf);
+        }
+	if(add_frames==0) {
+		tree_model_refresh(model);
+		redraw_canvas(ALL);
+		fclose(vf);
+		return TRUE;/*we didn't get anything this time*/
+	}
+	model->num_frames+=add_frames;
+	if(model->num_frames>2) {
+		model->animation=TRUE;/*just in case it wasn't set*/
+		list=g_list_last(model->frame_list);
+		vffpos=(fpos_t *)list->data;
+		fsetpos(vf,vffpos);
+		model->cur_frame = model->num_frames-1;
+		read_frame(vf,model->cur_frame,model);
+	}
+	model->redraw = TRUE;
+	tree_model_refresh(model);
+	redraw_canvas(ALL);
+	/*if we didn't detect "/modeling" means this is not over*/
+	fclose(vf);
+	return TRUE;
+}
+void track_vasp_cleanup(void *data){
+	gchar *ptr;
+	struct model_pak *model=(struct model_pak *)data;
+	if(model==NULL) return;/*why should this happen?*/
+	if(model->basename==NULL) {/*should never happen*/
+		model->basename=g_strdup("unknown_VASP");
+	}
+	/*remove temporary stuff*/
+	if(!g_ascii_isalnum(model->basename[0])){
+		ptr=g_strdup_printf("%s",&(model->basename[3]));
+		g_free(model->basename);
+		model->basename=ptr;
+		tree_model_refresh(model);
+		redraw_canvas(ALL);
+	}
+	ptr=g_strdup_printf("VASP TRACKING: STOP.\n");gui_text_show(ITALIC,ptr);g_free(ptr);
+	model->track_me=FALSE;
+}
+
+
 /*********************/
 /* helpers functions */
 /*********************/

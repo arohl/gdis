@@ -96,6 +96,7 @@ data->redraw_cumulative = 0;
 data->redraw_time = 0;
 data->colour_scheme = ELEM;
 data->rmax = RMAX_FUDGE;
+data->track_me=FALSE;
 data->snapshot_eps=FALSE;
 data->eps_file=NULL;
 
@@ -526,7 +527,8 @@ matrix_identity(data->ilatmat);
 matrix_identity(data->rlatmat);
 
 /* plots */
-data->plots = FALSE;
+data->plots=FALSE;
+data->plot=NULL;
 
 /* density of states (DOS) */
 data->spin_polarized=FALSE;

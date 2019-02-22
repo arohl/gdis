@@ -1096,6 +1096,7 @@ gint redraw_count;       /* current number of redraws */
 gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
+gboolean track_me;	 /* track an ongoing calculation --OVHPA*/
 gboolean snapshot_eps;   /* save an eps image to file eps_file */
 gchar *eps_file;         /* the said eps_file           --OVHPA*/
 gint fractional;
@@ -1291,6 +1292,7 @@ struct monty_pak monty;
 
 /* plots */
 gint plots;
+gpointer plot;
 
 /* What about a shared area for similar data
  * other that property_list / property_table 

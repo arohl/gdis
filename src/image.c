@@ -61,6 +61,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "plots.xpm"
 #include "to_eps.xpm"
 #include "to_png.xpm"
+/* NEW: tracking system --OVHPA*/
+#include "track.xpm"
 
 extern struct sysenv_pak sysenv;
 
@@ -254,7 +256,6 @@ if(sysenv.have_eps){
 }else{
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) to_png_xpm);
 }
-
       name = "image_to_eps";
       break;
     case IMAGE_PLUS:
@@ -269,7 +270,10 @@ if(sysenv.have_eps){
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) tools_xpm);
       name = "image_tools";
       break;
-
+    case IMAGE_TRACK:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) track_xpm);
+      name = "image_track";
+      break;
     default:
       pixbuf = NULL;
       name = NULL;

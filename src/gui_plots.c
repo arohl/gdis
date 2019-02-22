@@ -45,7 +45,6 @@ The GNU GPL can also be found at http://www.gnu.org
 /* global pak structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
-struct plot_pak *plot;
 struct graph_ui *graph_ui;
 /* radio buttons */
 /*1st page*/
@@ -66,7 +65,7 @@ GtkWidget *b_3_r;
 /*******************/
 /* plot type radio */
 /*******************/
-void plot_energy(){
+void plot_energy(struct plot_pak *plot){
 	/* switched to PLOT_ENERGY */
 	plot->type=PLOT_ENERGY;
 	plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
@@ -74,114 +73,127 @@ void plot_energy(){
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_force(){
+void plot_force(struct plot_pak *plot){
+	/* switched to PLOT_FORCE */
 	plot->type=PLOT_FORCE;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_FORCE;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_volume(){
+void plot_volume(struct plot_pak *plot){
+	/* switched to PLOT_VOLUME */
 	plot->type=PLOT_VOLUME;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_VOLUME;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_pressure(){
+void plot_pressure(struct plot_pak *plot){
+	/* switched to PLOT_PRESSURE */
 	plot->type=PLOT_PRESSURE;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_PRESSURE;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_band(){
+void plot_band(struct plot_pak *plot){
+	/* switched to PLOT_BAND */
         plot->type=PLOT_BAND;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_BAND;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_dos(){
+void plot_dos(struct plot_pak *plot){
+	/* switched to PLOT_DOS */
         plot->type=PLOT_DOS;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_DOS;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_bandos(){
+void plot_bandos(struct plot_pak *plot){
+	/* switched to PLOT_BANDOS */
         plot->type=PLOT_BANDOS;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_BANDOS;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_frequency(){
+void plot_frequency(struct plot_pak *plot){
+	/* switched to PLOT_FREQUENCY */
         plot->type=PLOT_FREQUENCY;
 	plot->plot_sel=plot->plot_sel&63;/*reset 3rd page*/
 	plot->plot_sel+=PLOT_FREQUENCY;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_raman(){
+void plot_raman(struct plot_pak *plot){
+	/* switched to PLOT_RAMAN */
         plot->type=PLOT_RAMAN;
 	plot->plot_sel=plot->plot_sel&63;/*reset 3rd page*/
 	plot->plot_sel+=PLOT_FREQUENCY;/*selected*/
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_none(){
+void plot_none(struct plot_pak *plot){
 	plot->type=PLOT_NONE;
 	/* no plot type available */
 	gui_relation_update(plot->model);
 }
 
 void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpointer user_data){
+	struct model_pak *model=sysenv.active_model;
+	struct plot_pak *plot;
+	if(!model) return;
+	if(!(model->plot)) return;
+	plot=(struct plot_pak *)model->plot;
 //	GtkWidget *child=gtk_notebook_get_nth_page(notebook,page_num);/*in case we need/want to resize the current page*/
 	switch(page_num){/*pb is we don't know who is selected in page*/
 		case 0:/*Dynamics*/
-			if(plot->plot_sel&PLOT_ENERGY) plot_energy();
-			else if(plot->plot_sel&PLOT_FORCE) plot_force();
-			else if(plot->plot_sel&PLOT_VOLUME) plot_volume();
-			else if(plot->plot_sel&PLOT_PRESSURE) plot_pressure();
+			if(plot->plot_sel&PLOT_ENERGY) plot_energy(plot);
+			else if(plot->plot_sel&PLOT_FORCE) plot_force(plot);
+			else if(plot->plot_sel&PLOT_VOLUME) plot_volume(plot);
+			else if(plot->plot_sel&PLOT_PRESSURE) plot_pressure(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-			        if(!(plot->plot_mask&(15))) plot_none();
-			        else if(plot->plot_mask&PLOT_ENERGY) plot_energy();
-			        else if(plot->plot_mask&PLOT_FORCE) plot_force();
-			        else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
-			        else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
+			        if(!(plot->plot_mask&(15))) plot_none(plot);
+			        else if(plot->plot_mask&PLOT_ENERGY) plot_energy(plot);
+			        else if(plot->plot_mask&PLOT_FORCE) plot_force(plot);
+			        else if(plot->plot_mask&PLOT_VOLUME) plot_volume(plot);
+			        else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure(plot);
 			}
 			break;
 		case 1:/*Electronic*/
-			if(plot->plot_sel&PLOT_BAND) plot_band();
-			else if(plot->plot_sel&PLOT_DOS) plot_dos();
-			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos();
+			if(plot->plot_sel&PLOT_BAND) plot_band(plot);
+			else if(plot->plot_sel&PLOT_DOS) plot_dos(plot);
+			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(48))) plot_none();
-				else if(plot->plot_mask&PLOT_DOS) plot_dos();
-				else if(plot->plot_mask&PLOT_BAND) plot_band();
+                                if(!(plot->plot_mask&(48))) plot_none(plot);
+				else if(plot->plot_mask&PLOT_DOS) plot_dos(plot);
+				else if(plot->plot_mask&PLOT_BAND) plot_band(plot);
 			}
 			break;
 		case 2:/*Frequency*/
-			if(plot->plot_sel&PLOT_FREQUENCY) plot_frequency();
-			else if(plot->plot_sel&PLOT_RAMAN) plot_raman();
+			if(plot->plot_sel&PLOT_FREQUENCY) plot_frequency(plot);
+			else if(plot->plot_sel&PLOT_RAMAN) plot_raman(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(192))) plot_none();
-                                else if(plot->plot_mask&PLOT_FREQUENCY) plot_frequency();
-                                else if(plot->plot_mask&PLOT_RAMAN) plot_raman();
+                                if(!(plot->plot_mask&(192))) plot_none(plot);
+                                else if(plot->plot_mask&PLOT_FREQUENCY) plot_frequency(plot);
+                                else if(plot->plot_mask&PLOT_RAMAN) plot_raman(plot);
 			}
 			break;
 		default:
-			plot_none();
+			plot_none(plot);
 	}
 }
 /* prepare plot structure */
 void plot_initialize(struct model_pak *data){
+	struct plot_pak *plot;
 	int i,j;
 	gdouble y;
 	/* init the plot pak */
 	if (!data) return;
-	if(plot!=NULL) g_free(plot);/* FIXME: safe? */
 	plot=(struct plot_pak *)g_malloc(sizeof(struct plot_pak));
 	if(plot==NULL) return;
 	plot->xtics=1.0;
@@ -267,26 +279,14 @@ void plot_initialize(struct model_pak *data){
 		}
 		plot->frequency.xmax=((gint)(plot->frequency.xmax/1000)+1)*1000.0;
 	}
+	if(data->plot!=NULL) g_free(data->plot);
+	data->plot=(gpointer)plot;
 }
 /************************/
 /* plots dialog cleanup */
 /************************/
 void plot_cleanup(struct model_pak *model){
-	/* TODO: no cleanup to do? */
-	g_assert(model != NULL);
-	/*cleanup plot mess*/
-	if(plot!=NULL){
-		/* plot->graph is destroyed when closing graph */
-		g_free(plot->energy.data);
-		g_free(plot->force.data);
-		g_free(plot->volume.data);
-		g_free(plot->pressure.data);
-		g_free(plot->band.data);/*so what?*/
-		g_free(plot->dos.data);
-		g_free(plot->frequency.data);
-		g_free(plot);
-		plot=NULL;
-	}
+	/*no need to remove plot data <- we might still use them*/
 	model->plots=FALSE;
 }
 void plot_quit(GtkWidget *w, gpointer data){
@@ -302,10 +302,12 @@ void plot_quit(GtkWidget *w, gpointer data){
 void exec_plot(){
 	FILE *fp;
 	struct model_pak *data;
+	struct plot_pak *plot;
 	gpointer camera=NULL;
-	g_assert(plot != NULL);
 	data = sysenv.active_model;
 	g_assert(data != NULL);
+	plot=data->plot;
+	g_assert(plot != NULL);
 	/*get limit values if not auto*/
 	if(plot->type==PLOT_NONE) return;
 	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
@@ -352,6 +354,7 @@ void gui_plots_dialog(void){
 	/* special */
 	GtkWidget *ionic_box, *electronic_box, *frequency_box;
 	struct model_pak *data;
+	struct plot_pak *plot;
 	gpointer camera=NULL;
 	gint cur_frame;
 /* checks */
@@ -364,8 +367,9 @@ void gui_plots_dialog(void){
 /* initialization */
 	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
 	gui_mode_switch(FREE);
-	plot=NULL;
 	plot_initialize(data);
+	plot=data->plot;
+	if(plot == NULL) return;
 /*1- lock and try to NOT update model*/
         data->redraw=0;
         data->locked=TRUE;
@@ -417,16 +421,16 @@ void gui_plots_dialog(void){
 /* radio buttons */
 	new_radio_group(0, ionic_box, FF);
 /*by default any data not available _now_ will not be available later*/
-	b_1_e = add_radio_button("Energy / step", (gpointer) plot_energy,NULL);
+	b_1_e = add_radio_button("Energy / step", (gpointer) plot_energy,plot);
 	if (plot->type == PLOT_ENERGY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e), TRUE);
 	if (!(plot->plot_mask&PLOT_ENERGY)) gtk_widget_set_sensitive(b_1_e,FALSE);
-	b_1_f = add_radio_button("Forces / step", (gpointer) plot_force,NULL);
+	b_1_f = add_radio_button("Forces / step", (gpointer) plot_force,plot);
 	if (plot->type == PLOT_FORCE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f), TRUE);
 	if (!(plot->plot_mask&PLOT_FORCE)) gtk_widget_set_sensitive(b_1_f,FALSE);
-	b_1_v = add_radio_button("Volume / step", (gpointer) plot_volume,NULL);
+	b_1_v = add_radio_button("Volume / step", (gpointer) plot_volume,plot);
 	if (plot->type == PLOT_VOLUME) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v), TRUE);
 	if (!(plot->plot_mask&PLOT_VOLUME)) gtk_widget_set_sensitive(b_1_v,FALSE);
-	b_1_p = add_radio_button("Pressure / step", (gpointer) plot_pressure,NULL);
+	b_1_p = add_radio_button("Pressure / step", (gpointer) plot_pressure,plot);
 	if (plot->type == PLOT_PRESSURE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p), TRUE);
 	if (!(plot->plot_mask&PLOT_PRESSURE)) gtk_widget_set_sensitive(b_1_p,FALSE);
 /*Set availability of the whole selection TODO: base on plot->plot_mask?*/
@@ -468,13 +472,13 @@ void gui_plots_dialog(void){
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
 	new_radio_group(0, electronic_box, FF);
-	b_2_d = add_radio_button("Density Of States", (gpointer) plot_dos,NULL);
+	b_2_d = add_radio_button("Density Of States", (gpointer) plot_dos,plot);
 	if (plot->type == PLOT_DOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d), TRUE);
 	if (!(plot->plot_mask&PLOT_DOS)) gtk_widget_set_sensitive(b_2_d,FALSE);
-	b_2_b = add_radio_button("Band structure", (gpointer) plot_band,NULL);
+	b_2_b = add_radio_button("Band structure", (gpointer) plot_band,plot);
 	if (plot->type == PLOT_BAND) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b), TRUE);
 	if (!(plot->plot_mask&PLOT_BAND)) gtk_widget_set_sensitive(b_2_b,FALSE);
-	b_2_bd = add_radio_button("Band / DOS", (gpointer) plot_bandos,NULL);
+	b_2_bd = add_radio_button("Band / DOS", (gpointer) plot_bandos,plot);
 	if (plot->type == PLOT_BANDOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd), TRUE);
 	if ((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS) gtk_widget_set_sensitive(b_2_bd,FALSE);
 /* Set availability */
@@ -517,10 +521,10 @@ void gui_plots_dialog(void){
         gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
         new_radio_group(0, frequency_box, FF);
-        b_3_f = add_radio_button("Vibrational", (gpointer) plot_frequency,NULL);
+        b_3_f = add_radio_button("Vibrational", (gpointer) plot_frequency,plot);
         if (plot->type == PLOT_FREQUENCY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f), TRUE);
 	if (!(plot->plot_mask&PLOT_FREQUENCY)) gtk_widget_set_sensitive(b_3_f,FALSE);
-        b_3_r = add_radio_button("Raman", (gpointer) plot_raman,NULL);
+        b_3_r = add_radio_button("Raman", (gpointer) plot_raman,plot);
         if (plot->type == PLOT_RAMAN) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r), TRUE);
 	if (!(plot->plot_mask&PLOT_RAMAN)) gtk_widget_set_sensitive(b_3_r,FALSE);
 /* Set availability */
@@ -542,10 +546,10 @@ void gui_plots_dialog(void){
         g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(plot_page_switch),NULL);
 	/*select in page 1*/
 	if(plot->plot_mask==PLOT_NONE) plot->type=PLOT_NONE;
-	else if(plot->plot_mask&PLOT_ENERGY) plot_energy();
-	else if(plot->plot_mask&PLOT_FORCE) plot_force();
-	else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
-	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
+	else if(plot->plot_mask&PLOT_ENERGY) plot_energy(plot);
+	else if(plot->plot_mask&PLOT_FORCE) plot_force(plot);
+	else if(plot->plot_mask&PLOT_VOLUME) plot_volume(plot);
+	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure(plot);
 /* That's all folks */
 //        sysenv.refresh_dialog=TRUE;
 if((plot->task)!=NULL) {
