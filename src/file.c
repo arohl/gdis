@@ -1264,6 +1264,7 @@ g_assert(fp != NULL);
 g_assert(model != NULL);
 
 file = get_file_info(GINT_TO_POINTER(model->id), BY_FILE_ID);
+if(file==NULL) return 5;/*SO WRONG!*/
 
 #if DEBUG_READ_RAW
 printf("reading frame: %d\n", n);

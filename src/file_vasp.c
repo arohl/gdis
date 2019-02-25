@@ -1718,6 +1718,7 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	int num_frames=1;
 	FILE *vf;
 	long int vfpos;
+	GList *list;
 	gchar *line;
 	g_return_val_if_fail(model != NULL, 1);
 	g_return_val_if_fail(filename != NULL, 2);
@@ -1778,38 +1779,58 @@ vfpos=ftell(vf);/*flag*/
 	vasp_xml_read_bands(vf,model);/* Read bands */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){
+		/*we never catch "/calculation" BUT we have "initialpos"*/
 		model->animation=FALSE;
-		if(vasp_xml_read_pos(vf,model)<0) return 3;
-	} else { /* we have num_frames-1 frames */
-		model->cur_frame=1;
-		if (num_frames <= 2){/* special cases, only initialpos and finalpos or single point calculation */
-			num_frames=1;
-			model->animation=FALSE;/* get rid of frame display */
+		line = g_strdup_printf("WARNING: incomplete calculation!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+		/*we can display only that as an info ;)*/
+	} else {
+		/* we have num_frames-1 frames */
+		/*set the current frame to origin*/
+		num_frames--;/*this is to cope with the above "initialpos only case"*/
+		if (num_frames <= 2){
 			if(fetch_in_file(vf,"finalpos")==0) {
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-				/*display at least the initial position, with a warning*/
-				if(fetch_in_file(vf,"initialpos")==0) return 3;
+				/*this is simply the first 2 steps of an incomplete calculation*/
+				model->animation=TRUE;
 				line = g_strdup_printf("WARNING: incomplete calculation!\n");
 				gui_text_show(ERROR, line);
 				g_free(line);
+			}else{
+				/*this is a special single point calculation:
+				 * 1- 1st SCF <calculation>
+				 * 2- finalpos summary  */
+				num_frames--;
+				if(num_frames==0) return 3;/*there should be no case where finalpos is the only frame*/
+				model->animation=FALSE;/* get rid of frame display */
+				/*TODO: add don't track information*/
+				/*removing finalpos*/
+				list=g_list_last(model->frame_list);
+				model->frame_list=g_list_remove(model->frame_list,list->data);
 			}
-			if(vasp_xml_read_pos(vf,model)<0) return 3;
 		} else {
 			model->animation=TRUE;
-			num_frames=num_frames-2;/* because the finalpos is already part of the ionic steps */
 			if(fetch_in_file(vf,"finalpos")==0) {
-				/*imcomplete calculation, go the the last valid <structure>*/
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-				while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				/*this is simply n first steps of an incomplete calculation*/
 				line = g_strdup_printf("WARNING: incomplete calculation!\n");
 				gui_text_show(ERROR, line);
 				g_free(line);
+			}else{
+				/*this is simply n+1 steps of a complete calculation*/
+				num_frames--;
+				/*TODO: trigger NO_TRACK*/
+				/*removing finalpos*/
+				list=g_list_last(model->frame_list);
+				model->frame_list=g_list_remove(model->frame_list,list->data);
 			}
-			if(vasp_xml_read_pos(vf,model)<0) return 3;
-			model->cur_frame = num_frames - 1;
 		}
 	}
+	/*read/display the last position!*/
+	model->cur_frame = num_frames - 1;/*when relevant*/
+	rewind(vf);
+	while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);/*flag*/
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	if(vasp_xml_read_pos(vf,model)<0) return 3;
 	/* at the end of file, or </modeling> tag */
 	model->num_frames = num_frames;
 	model->redraw = TRUE;
@@ -1832,8 +1853,10 @@ gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 /******************************/
 /* NEW: track running vasp xml*/
 /******************************/
+#define DEBUG_TRACK_VASP 0
 gboolean track_vasp(void *data){
 	fpos_t *vffpos=NULL;
+	long int vfpos;
 	FILE *vf;
 	GList *list;
 	gchar *line;
@@ -1843,30 +1866,47 @@ gboolean track_vasp(void *data){
 	/*is being called every 1s; every "return FALSE" will stop the timer!*/
 	if(model==NULL) return FALSE;
 	if(model->track_me==FALSE) return FALSE;
-	if((model->frame_list==NULL)||(model->num_frames<=2)) {
+	/*set tracking flag*/
+	if(model->basename==NULL) {/*should never happen*/
+		model->basename=g_strdup("unknown_VASP");
+	}
+	if(g_ascii_isalnum(model->basename[0])){
+		ptr=g_strdup_printf("%s%s","[?]",&(model->basename[0]));
+		g_free(model->basename);
+		model->basename=ptr;
+	}
+	if(model->frame_list==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME-LIST\n");
+#endif
 		/*there is no frame list 
 		 * BUT: it can mean that
 		 * we're waiting for the
 		 * first data to appear.*/
+		line=g_strdup(model->filename);
 		model_free(model);
 		model_init(model);
-		model->track_me=TRUE;/*because it got reset*/
-		if(read_xml_vasp(model->filename,model)==0){
+		if(read_xml_vasp(line,model)==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME-LIST -- NEW READ\n");
+#endif
 			if(model->num_frames>2){
 				tree_model_refresh(model);
 				redraw_canvas(ALL);
 			}
 		}
+		g_free(line);
+		model->track_me=TRUE;/*because it got reset*/
 		return TRUE;
-	}
-	if(model->basename==NULL) {/*should never happen*/
-		model->basename=g_strdup("unknown_VASP");
 	}
 	vf=fopen(model->filename, "r");
 	if(vf==NULL) return FALSE;/*output file can't be opened!*/
 	list=g_list_last(model->frame_list);
 	vffpos=(fpos_t *)list->data;
-	if(fsetpos(vf,vffpos)!=0){
+	if(fsetpos(vf,vffpos)!=0){/*go to last pos*/
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-POS -- vasprun.xml reset!\n");
+#endif
 		/*unable to set position...
 		* -> there is a chance that vasprun.xml
 		* is being overwritten...
@@ -1879,25 +1919,25 @@ gboolean track_vasp(void *data){
 	}
 	line = file_read_line(vf);
 	if(line==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-LINE\n");
+#endif
 		fclose(vf);
 		return FALSE;
 	}
 	if(find_in_string("finalpos",line)!=NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: FINALPOS\n");
+#endif
 		g_free(line);
 		fclose(vf);
 		return FALSE;/*TODO: catch that before*/
 	}
 	add_frames=0;
-	if(g_ascii_isalnum(model->basename[0])){
-		ptr=g_strdup_printf("%s%s","[/]",&(model->basename[0]));
-		g_free(model->basename);
-		model->basename=ptr;
-	}else{
-		if(model->basename[1]=='/') model->basename[1]='-';
-		else if(model->basename[1]=='-') model->basename[1]='\\';
-		else if(model->basename[1]=='\\') model->basename[1]='|';
-		else model->basename[1]='/';
-	}
+	if(model->basename[1]=='/') model->basename[1]='-';
+	else if(model->basename[1]=='-') model->basename[1]='\\';
+	else if(model->basename[1]=='\\') model->basename[1]='|';
+	else model->basename[1]='/';
         while (line){
 		/*there can be more that ONE frame*/
                 if (find_in_string("/calculation",line) != NULL) {
@@ -1915,22 +1955,33 @@ gboolean track_vasp(void *data){
                 line = file_read_line(vf);
         }
 	if(add_frames==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-ADD-FRAME\n");
+#endif
 		tree_model_refresh(model);
 		redraw_canvas(ALL);
 		fclose(vf);
-		return TRUE;/*we didn't get anything this time*/
+		return TRUE;//we didn't get anything this time
 	}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
+#endif
 	model->num_frames+=add_frames;
-	if(model->num_frames>2) {
-		model->animation=TRUE;/*just in case it wasn't set*/
-		list=g_list_last(model->frame_list);
-		vffpos=(fpos_t *)list->data;
-		fsetpos(vf,vffpos);
+	if(model->num_frames>1) {
+		if(!model->animation) model->animation=TRUE;
 		model->cur_frame = model->num_frames-1;
-		read_frame(vf,model->cur_frame,model);
+		rewind(vf);
+		while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+/*
+		vasp_xml_read_pos(vf,model);
+		fseek(vf,vfpos,SEEK_SET);
+*/
+		read_frame(vf,model->cur_frame-1,model);/*will almost always fail on cur_frame!*/
 	}
 	model->redraw = TRUE;
 	tree_model_refresh(model);
+	canvas_shuffle();
 	redraw_canvas(ALL);
 	/*if we didn't detect "/modeling" means this is not over*/
 	fclose(vf);
