@@ -1097,6 +1097,7 @@ gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
 gboolean track_me;	 /* track an ongoing calculation --OVHPA*/
+gint track_nb;		 /* track icon gadget --OVHPA*/
 gboolean snapshot_eps;   /* save an eps image to file eps_file */
 gchar *eps_file;         /* the said eps_file           --OVHPA*/
 gint fractional;

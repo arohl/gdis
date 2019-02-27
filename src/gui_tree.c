@@ -43,6 +43,10 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "polymer.xpm"
 #include "diamond2.xpm"
 #include "graph.xpm"
+#include "t1.xpm"
+#include "t2.xpm"
+#include "t3.xpm"
+
 
 /* top level data structure */
 extern struct sysenv_pak sysenv;
@@ -235,6 +239,23 @@ selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sysenv.tree));
 /* update name */
 gtk_tree_store_set(sysenv.tree_store, &root, TREE_NAME, model->basename, -1);
 
+/* update pixmap <- if tracking ON -- OVHPA*/
+if (model->track_me){
+	switch((model->track_nb)%3){
+	case 2:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t3_xpm);
+		break;
+	case 1:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t2_xpm);
+		break;
+	case 0:
+	default:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t1_xpm);
+	}
+	gtk_tree_store_set(sysenv.tree_store, &root, TREE_PIXMAP, pixbuf, -1);
+	model->track_nb++;
+}
+
 /* update any graphs */
 pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) graph_xpm);
 for (list=model->graph_list ; list ; list=g_slist_next(list))
@@ -310,6 +331,7 @@ else
       break;
     }
   }
+
 
 /* set the parent iterator data */
 gtk_tree_store_set(sysenv.tree_store, &root,

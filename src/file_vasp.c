@@ -1718,6 +1718,7 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	int num_frames=1;
 	FILE *vf;
 	long int vfpos;
+	long int p1,p2;
 	GList *list;
 	gchar *line;
 	g_return_val_if_fail(model != NULL, 1);
@@ -1727,6 +1728,8 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	error_table_clear();
 	/* some defaults */
 	sysenv.render.show_energy = TRUE;
+	model->animation=FALSE;
+	model->num_frames=-1;
 	/* start reading */
 	line = file_read_line(vf);
 	/* the first xml tag ie <?xml version="x.x" encoding="ISO-xxxx-x"?> */
@@ -1759,11 +1762,19 @@ vfpos=ftell(vf);/*flag*/
 vfpos=ftell(vf);/*flag*/
 	/* Counting the # of frames */
 	if(fetch_in_file(vf,"initialpos")==0) return 3;
-	line = file_read_line(vf);
-	while (line){
-		if (find_in_string("/calculation",line) != NULL) {
-			add_frame_offset(vf, model);
-			num_frames++;
+	line = file_read_line(vf);p1=0;
+	while (line){/*NEW: ensure that each frame is complete*/
+		if (find_in_string("</calculation>",line) != NULL) {
+			if(p1!=0){
+				p2=ftell(vf);/*flag*/
+				fseek(vf,p1,SEEK_SET);/* rewind to flag */
+				add_frame_offset(vf, model);
+				num_frames++;
+				fseek(vf,p2,SEEK_SET);/* forward to flag */
+			}
+		}
+		if (find_in_string("<calculation>",line) != NULL) {
+			p1=ftell(vf);/*flag*/
 		}
 		if (find_in_string("/modeling",line) != NULL) break;
 		g_free(line);
@@ -1779,8 +1790,7 @@ vfpos=ftell(vf);/*flag*/
 	vasp_xml_read_bands(vf,model);/* Read bands */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	if (num_frames == 1){
-		/*we never catch "/calculation" BUT we have "initialpos"*/
-		model->animation=FALSE;
+		/*we never catch "calculation" BUT we have "initialpos"*/
 		line = g_strdup_printf("WARNING: incomplete calculation!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
@@ -1846,7 +1856,7 @@ vfpos=ftell(vf);/*flag*/
 /* simplified frame reading */
 gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 	g_assert(vf != NULL);
-	if(fetch_in_file(vf,"scstep")==0) return 3;
+	if(fetch_in_file(vf,"structure")==0) return 3;
 	if(vasp_xml_read_pos(vf,model)<0) return 3;
 	return 0;
 }
@@ -1855,65 +1865,119 @@ gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 /******************************/
 #define DEBUG_TRACK_VASP 0
 gboolean track_vasp(void *data){
+	gpointer camera;
 	fpos_t *vffpos=NULL;
-	long int vfpos;
+	long int p1,p2;
 	FILE *vf;
 	GList *list;
 	gchar *line;
-	gchar *ptr;
 	gint add_frames;
 	struct model_pak *model=(struct model_pak *)data;
 	/*is being called every 1s; every "return FALSE" will stop the timer!*/
 	if(model==NULL) return FALSE;
 	if(model->track_me==FALSE) return FALSE;
-	/*set tracking flag*/
-	if(model->basename==NULL) {/*should never happen*/
-		model->basename=g_strdup("unknown_VASP");
-	}
-	if(g_ascii_isalnum(model->basename[0])){
-		ptr=g_strdup_printf("%s%s","[?]",&(model->basename[0]));
-		g_free(model->basename);
-		model->basename=ptr;
+	if(model->num_frames<0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
+#endif
+		/*this means that we need to try to reload model*/
+		line=g_strdup(model->filename);
+		model_free(model);
+		model_init(model);
+		if(read_xml_vasp(line,model)!=0){
+			/*catch case with model->num_frames<=0*/
+			strcpy(model->filename,line);/* strcpy is ok? */
+			model->track_me=TRUE;/*because it got reset with model_init*/
+			return TRUE;
+		}
+		model->track_me=TRUE;/*because it got reset with model_init*/
+		if(model->num_frames<0) return TRUE;
 	}
 	if(model->frame_list==NULL) {
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-FRAME-LIST\n");
 #endif
-		/*there is no frame list 
-		 * BUT: it can mean that
-		 * we're waiting for the
-		 * first data to appear.*/
-		line=g_strdup(model->filename);
-		model_free(model);
-		model_init(model);
-		if(read_xml_vasp(line,model)==0){
+		/*if there is no frame list and model->num_frames>0 -> num_frames=1*/
+		if(model->num_frames!=1){
+			/*problem with data! -> reset (next time)*/
 #if DEBUG_TRACK_VASP
-fprintf(stdout,"TRACK: NO-FRAME-LIST -- NEW READ\n");
+fprintf(stdout,"TRACK: NO-FRAME INVALID-NUM %i\n",model->num_frames);
 #endif
-			if(model->num_frames>2){
-				tree_model_refresh(model);
-				redraw_canvas(ALL);
-			}
+			model->num_frames=-1;
+			return TRUE;
 		}
-		g_free(line);
-		model->track_me=TRUE;/*because it got reset*/
-		return TRUE;
+		vf=fopen(model->filename, "r");
+		if(vf==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME NO-FILE?\n");
+#endif
+			/*no file, but num_frame=1 -> reset*/
+			model->num_frames=-1;
+			return TRUE;
+		}
+		if(fetch_in_file(vf,"initialpos")==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME INVALID-INITIALPOS?\n");
+#endif
+			/*no initial data but num_frame=1 -> reset*/
+			fclose(vf);
+			model->num_frames=-1;
+			return TRUE;
+		}
+		add_frames=0;
+		line = file_read_line(vf);
+		p1=0;
+		while (line){
+			if (find_in_string("</calculation>",line) != NULL) {
+				if(p1!=0){
+					p2=ftell(vf);/*flag*/
+					fseek(vf,p1,SEEK_SET);/* rewind to flag */
+					add_frame_offset(vf, model);
+					add_frames++;
+					fseek(vf,p2,SEEK_SET);/* forward to flag */
+				}
+			}
+			if (find_in_string("<calculation>",line) != NULL) {
+				p1=ftell(vf);/*flag*/
+			}
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		if(add_frames==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME NO-FRAME\n");
+#endif
+			/*first step is not finished? be patient*/
+			fclose(vf);
+			return TRUE;
+		}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME %i-FRAME\n",add_frames);
+#endif
+		model->num_frames=add_frames;/*initialpos no longer counts*/
+		if(add_frames>1) model->animation=TRUE;
+		/*FIXME: single and finalpos?*/
+		fclose(vf);
+		return TRUE;/*<- do it later*/
 	}
 	vf=fopen(model->filename, "r");
-	if(vf==NULL) return FALSE;/*output file can't be opened!*/
+	if(vf==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FILE\n");
+#endif
+
+		return FALSE;/*output file can't be opened!*/
+	}
 	list=g_list_last(model->frame_list);
 	vffpos=(fpos_t *)list->data;
 	if(fsetpos(vf,vffpos)!=0){/*go to last pos*/
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-POS -- vasprun.xml reset!\n");
 #endif
-		/*unable to set position...
-		* -> there is a chance that vasprun.xml
-		* is being overwritten...
-		* TODO <- 1/ cleanup model
-		*      <- 2/ new model
-		*      <- 3/ read_xml_vasp
-		*      <- set tracking... */
+		/*vasprun.xml was deleted!*/
+		line=g_strdup_printf("vasprun.xml was deleted, stop tracking...\n");
+		gui_text_show(ITALIC,line);
+		g_free(line);
 		fclose(vf);
 		return FALSE;/*for now, just give up*/
 	}
@@ -1922,35 +1986,65 @@ fprintf(stdout,"TRACK: NO-POS -- vasprun.xml reset!\n");
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-LINE\n");
 #endif
+		/*vasprun.xml was overwritten.*/
+		line=g_strdup_printf("vasprun.xml was overwritten, restart tracking...\n");
+		gui_text_show(ITALIC,line);
+		g_free(line);
 		fclose(vf);
-		return FALSE;
+		line=g_strdup(model->filename);
+		model_free(model);
+		model_init(model);
+		if(read_xml_vasp(line,model)==0){
+			if(model->animation){
+				model->cur_frame = model->num_frames-1;
+			}
+			tree_model_refresh(model);
+			redraw_canvas(ALL);
+		}else{
+			/*read fail... not enough data yet?*/
+			model->num_frames=-1;
+			strcpy(model->filename,line);/* strcpy is ok? */
+		}
+		g_free(line);
+		model->track_me=TRUE;/*because it got reset*/
+		return TRUE;
 	}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: LINE-%s\n",line);
+#endif
 	if(find_in_string("finalpos",line)!=NULL) {
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: FINALPOS\n");
 #endif
 		g_free(line);
 		fclose(vf);
-		return FALSE;/*TODO: catch that before*/
+		return TRUE;
 	}
 	add_frames=0;
-	if(model->basename[1]=='/') model->basename[1]='-';
-	else if(model->basename[1]=='-') model->basename[1]='\\';
-	else if(model->basename[1]=='\\') model->basename[1]='|';
-	else model->basename[1]='/';
+	if(fetch_in_file(vf,"<calculation>")==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME\n");
+#endif
+		if(model->animation){
+			tree_model_refresh(model);
+			redraw_canvas(ALL);
+		}
+		fclose(vf);
+		return TRUE;//we didn't get anything this time
+	}
+	p1=ftell(vf);/*flag*/
         while (line){
 		/*there can be more that ONE frame*/
-                if (find_in_string("/calculation",line) != NULL) {
-                        add_frame_offset(vf, model);
-                        add_frames++;
-                }
-                if (find_in_string("/modeling",line) != NULL) {
-			/*important: this means that the reading is over!*/
-			/*TODO: detect that before in the first read!*/
-			g_free(line);
-			fclose(vf);
-			return FALSE;
+		if (find_in_string("</calculation>",line) != NULL) {
+			p2=ftell(vf);/*flag*/
+			fseek(vf,p1,SEEK_SET);/* rewind to flag */
+			add_frame_offset(vf, model);
+			add_frames++;
+			fseek(vf,p2,SEEK_SET);/* forward to flag */
 		}
+                if (find_in_string("<calculation>",line) != NULL) {
+			p1=ftell(vf);/*flag*/
+                }
                 g_free(line);
                 line = file_read_line(vf);
         }
@@ -1958,8 +2052,10 @@ fprintf(stdout,"TRACK: FINALPOS\n");
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-ADD-FRAME\n");
 #endif
-		tree_model_refresh(model);
-		redraw_canvas(ALL);
+		if(model->animation){
+			tree_model_refresh(model);
+			redraw_canvas(ALL);
+		}
 		fclose(vf);
 		return TRUE;//we didn't get anything this time
 	}
@@ -1969,15 +2065,33 @@ fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
 	model->num_frames+=add_frames;
 	if(model->num_frames>1) {
 		if(!model->animation) model->animation=TRUE;
+
 		model->cur_frame = model->num_frames-1;
-		rewind(vf);
-		while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);/*flag*/
-		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		list=g_list_last(model->frame_list);
+		vffpos=(fpos_t *)list->data;
+//vffpos=(fpos_t *)g_list_nth_data (model->frame_list,model->cur_frame);
+		fsetpos(vf,vffpos);
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ FRAME %i -- %p\n",model->cur_frame,vffpos);
+#endif
+		read_xml_vasp_frame(vf,model);
+
+		camera = camera_dup(model->camera);
+		model_prep(model);
+		model->camera = camera;
+		g_free(model->camera_default);
+		model->camera_default = camera;
+		
 /*
+		model->cur_frame = model->num_frames-1;
+		rewind(vf);vfpos=ftell(vf);//flag
+		while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);//flag
+		fseek(vf,vfpos,SEEK_SET);// rewind to flag 
+
 		vasp_xml_read_pos(vf,model);
 		fseek(vf,vfpos,SEEK_SET);
+		read_frame(vf,model->cur_frame,model);//will almost always fail on cur_frame!
 */
-		read_frame(vf,model->cur_frame-1,model);/*will almost always fail on cur_frame!*/
 	}
 	model->redraw = TRUE;
 	tree_model_refresh(model);
@@ -1991,17 +2105,6 @@ void track_vasp_cleanup(void *data){
 	gchar *ptr;
 	struct model_pak *model=(struct model_pak *)data;
 	if(model==NULL) return;/*why should this happen?*/
-	if(model->basename==NULL) {/*should never happen*/
-		model->basename=g_strdup("unknown_VASP");
-	}
-	/*remove temporary stuff*/
-	if(!g_ascii_isalnum(model->basename[0])){
-		ptr=g_strdup_printf("%s",&(model->basename[3]));
-		g_free(model->basename);
-		model->basename=ptr;
-		tree_model_refresh(model);
-		redraw_canvas(ALL);
-	}
 	ptr=g_strdup_printf("VASP TRACKING: STOP.\n");gui_text_show(ITALIC,ptr);g_free(ptr);
 	model->track_me=FALSE;
 }

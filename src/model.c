@@ -97,6 +97,7 @@ data->redraw_time = 0;
 data->colour_scheme = ELEM;
 data->rmax = RMAX_FUDGE;
 data->track_me=FALSE;
+data->track_nb=0;
 data->snapshot_eps=FALSE;
 data->eps_file=NULL;
 
