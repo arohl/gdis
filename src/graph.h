@@ -155,6 +155,8 @@ struct graph_pak
 	gchar *y_title;
 };
 gpointer graph_new(const gchar *, struct model_pak *);
+void graph_reset_data(struct graph_pak *graph);
+void graph_reset(struct graph_pak *graph);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
 void graph_set_color(gint size,gchar *color,gpointer data);

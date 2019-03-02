@@ -1323,6 +1323,8 @@ gdouble *freq_intens;
 
 /* uspex */
 gpointer uspex;
+/* vasp */
+gpointer vasp;
 
 /* element data */
 /*

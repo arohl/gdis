@@ -1263,8 +1263,9 @@ struct file_pak *file;
 g_assert(fp != NULL);
 g_assert(model != NULL);
 
+/*if model->id is not NULL this will fail! --OVHPA*/
 file = get_file_info(GINT_TO_POINTER(model->id), BY_FILE_ID);
-if(file==NULL) return 5;/*SO WRONG!*/
+//if(file==NULL) return 5;/*SO WRONG!*/
 
 #if DEBUG_READ_RAW
 printf("reading frame: %d\n", n);
@@ -1287,6 +1288,7 @@ printf("offset = %d\n", offset);
     return(2);
     }
 /* use supplied routine (if available) */
+  if(file==NULL) return 5;/*SO WRONG!*/
   if (file->read_frame) /*_BUG_ will fail if get_file_info return NULL (OVHPA)*/
     flag = file->read_frame(fp, model);
   else

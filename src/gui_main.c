@@ -1639,7 +1639,7 @@ case VASP:
 		track_vasp(model);/*be sure track_vasp is called before user changes model->track_me*/
 	}else{
 		model->track_me=TRUE;/*set TRUE first!*/
-		g_timeout_add_full(G_PRIORITY_DEFAULT,1000,track_vasp,model,track_vasp_cleanup);
+		g_timeout_add_full(G_PRIORITY_DEFAULT,2000,track_vasp,model,track_vasp_cleanup);
 		if(model->track_me) {
 			ptr=g_strdup_printf("VASP TRACKING: START.\n");
 			gui_text_show(ITALIC,ptr);

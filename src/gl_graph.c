@@ -142,6 +142,106 @@ n++;
 return(graph);
 }
 
+/**********************/
+/* reset a graph data */
+/**********************/
+void graph_reset_data(struct graph_pak *graph){
+GSList *list;//set_list;
+g_data_x *px;
+g_data_y *py;
+gdouble *ptr;
+/**/
+g_assert(graph != NULL);
+switch(graph->type){
+	case GRAPH_YX_TYPE:
+	case GRAPH_IY_TYPE:
+	case GRAPH_XY_TYPE:
+	case GRAPH_IX_TYPE:
+	case GRAPH_XX_TYPE:
+		/*the first data is a g_data_x*/
+		list=graph->set_list;
+		if(list==NULL) return;
+		px=(g_data_x *)list->data;
+		if(px!=NULL) {
+			if(px->x!=NULL) g_free(px->x);/*remove x data*/
+			px->x=NULL;
+			g_free(px);/*necessary?*/
+		}
+		list->data=NULL;
+		list=g_slist_next(list);
+		while(list){
+			/*every list is a py*/
+			py=(g_data_y *)list->data;
+			if(py==NULL) continue;/*empty data list legal*/
+			if(py->y!=NULL) g_free(py->y);
+			py->y=NULL;
+			if(py->idx!=NULL) g_free(py->idx);
+			py->idx=NULL;
+			if(py->symbol!=NULL) g_free(py->symbol);
+			py->symbol=NULL;
+			g_free(py);
+			list->data=NULL;
+			list=g_slist_next(list);
+		}
+		g_slist_free(graph->set_list);
+		graph->set_list=NULL;
+		return;
+	case GRAPH_REGULAR:
+	default:
+		list=graph->set_list;
+		if(list==NULL) return;
+		ptr=(gdouble *)list->data;
+		if(ptr!=NULL) g_free(ptr);
+		list->data=NULL;
+		list=g_slist_next(list);
+		while(list){
+			ptr=(gdouble *)list->data;
+			if(ptr!=NULL) g_free(ptr);
+			list->data=NULL;
+			list=g_slist_next(list);
+		}
+		g_slist_free(graph->set_list);
+		graph->set_list=NULL;
+}
+/**/
+}
+
+/*****************/
+/* reset a graph */
+/*****************/
+void graph_reset(struct graph_pak *graph){
+g_assert(graph != NULL);
+/**/
+graph->wavelength = 0.0;
+graph->grafted = FALSE;
+graph->xlabel = TRUE;
+graph->ylabel = TRUE;
+graph->xmin = 0.0;
+graph->xmax = 0.0;
+graph->ymin = 0.0;
+graph->ymax = 0.0;
+graph->xticks = 5;
+graph->yticks = 5;
+graph->size = 0;
+graph->select = -1;
+if(graph->select_label!=NULL) g_free(graph->select_label);
+graph->select_label = NULL;
+graph_reset_data(graph);
+//graph->set_list = NULL; <- set by previous
+graph->type=GRAPH_REGULAR;
+graph->require_xaxis=FALSE;
+graph->require_yaxis=FALSE;
+/*NEW: graph_controls*/
+if(graph->title!=NULL) g_free(graph->title);
+graph->title=NULL;
+if(graph->sub_title!=NULL) g_free(graph->sub_title);
+graph->sub_title=NULL;
+if(graph->x_title!=NULL) g_free(graph->x_title);
+graph->x_title=NULL;
+if(graph->y_title!=NULL) g_free(graph->y_title); 
+graph->y_title=NULL;
+}
+
 /**************/
 /* axes setup */
 /**************/

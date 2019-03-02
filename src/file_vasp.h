@@ -361,7 +361,33 @@ typedef struct {
 	gdouble job_nproc;
 /* RESULTS */
 } vasp_calc_struct;
-/*calculation structure*/
+typedef enum {
+	VASP_SINGLE=0,	/*single-point electronic calculation*/
+	VASP_RUN=1,	/*currently running calculation*/
+	VASP_OPT=2,	/*geometry optimization calculation*/
+	VASP_ELEC=4,	/*electronic structure calculation*/
+	VASP_FREQ=8,	/*vibrational modes calculation*/
+} vasp_calc_type;
+/* output structure */
+typedef struct {
+/*name*/
+	gchar *name;
+	gint version;
+	vasp_calc_struct *calc;/*calculation structure*/
+	/*extra information*/
+	vasp_calc_type calc_type;
+	gint n_scf;
+	gdouble *E;
+	gdouble *V;
+	gdouble *F;
+	gdouble *P;
+/*NEW: attach frame-dependent graphs*/
+	gpointer graph_energy;
+	gpointer graph_volume;
+	gpointer graph_forces;
+	gpointer graph_stress;
+} vasp_output_struct;
+/*execution structure*/
 typedef struct {
 	int job_id;
 	gboolean have_result;

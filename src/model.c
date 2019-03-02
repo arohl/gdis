@@ -554,6 +554,8 @@ data->freq_intens=NULL;
 
 /* uspex */
 data->uspex=NULL;
+/* vasp */
+data->vasp=NULL;
 
 /* no non-default element data for the model (yet) */
 data->elements = NULL;
