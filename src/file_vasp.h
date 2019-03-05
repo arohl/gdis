@@ -381,6 +381,7 @@ typedef struct {
 	gdouble *V;
 	gdouble *F;
 	gdouble *P;
+	long int last_pos;
 /*NEW: attach frame-dependent graphs*/
 	gpointer graph_energy;
 	gpointer graph_volume;

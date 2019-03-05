@@ -253,7 +253,28 @@ if (model->track_me){
 		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t1_xpm);
 	}
 	gtk_tree_store_set(sysenv.tree_store, &root, TREE_PIXMAP, pixbuf, -1);
-	model->track_nb++;
+}else{
+  if (model->id == MORPH)
+    pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) diamond2_xpm);
+  else
+  {
+  switch(model->periodic)
+    {
+    case 3:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) box_xpm);
+      break;
+    case 2:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) surface_xpm);
+      break;
+    case 1:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) polymer_xpm);
+      break;
+    default:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) methane_xpm);
+      break;
+    }
+  }
+  gtk_tree_store_set(sysenv.tree_store, &root, TREE_PIXMAP, pixbuf, -1);
 }
 
 /* update any graphs */

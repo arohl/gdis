@@ -257,7 +257,7 @@ ymax = max(graph->size, x);
 if (ymin < graph->ymin)
   graph->ymin = ymin;
   
-if (ymax > graph->ymin)
+if (ymax > graph->ymax)
   graph->ymax = ymax;
 }
 

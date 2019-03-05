@@ -1631,21 +1631,20 @@ gchar *ptr;
 /**/
 model = sysenv.active_model;
 if (!model) return;
+/*invert current tracking**/
+model->track_me=(model->track_me==FALSE);
 switch(model->id){
 case VASP:
-	if(model->track_me){
-		model->track_me=FALSE;
-		/*this is enough to have track_vasp return FALSE*/
-		track_vasp(model);/*be sure track_vasp is called before user changes model->track_me*/
-	}else{
-		model->track_me=TRUE;/*set TRUE first!*/
+	if(model->track_me) {
 		g_timeout_add_full(G_PRIORITY_DEFAULT,2000,track_vasp,model,track_vasp_cleanup);
 		if(model->track_me) {
 			ptr=g_strdup_printf("VASP TRACKING: START.\n");
 			gui_text_show(ITALIC,ptr);
 			g_free(ptr);
 		}
-		/*this timer is destroyed when track_vasp return FALSE at which point track_vasp_cleanup is called*/
+	}else{
+		track_vasp(model);/*will return FALSE**/
+		model->track_me=FALSE;/*just in case we need to be very clear*/
 	}
 	break;
 default:

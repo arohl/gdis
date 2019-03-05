@@ -1373,6 +1373,7 @@ int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
 	return 0;
 }
 int vasp_xml_plot_energy(struct model_pak *model){
+/* FIXME: should test line for NULL each time? */
 	int idx,jdx;
 	FILE *vf;
 	gchar *line;
@@ -1388,12 +1389,13 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	if(vasp_out->calc_type==VASP_SINGLE) return 0;
 	/*not an error but no energy graph on a frequency calculation*/
 	if(vasp_out->calc_type&VASP_FREQ) return 0;
-	if(model->num_frames<3) return 3;
+	if(model->num_frames<2) return 3;
 	/*populate Y first!*/
 	vf = fopen(model->filename, "rt");
 	if (!vf) return 1;
 	/*1- count n_scf*/
 	vasp_out->n_scf=0;
+	vasp_out->last_pos=ftell(vf);/*flag*/
 	/*skip first energy though*/
 	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
 	line = file_read_line(vf);
@@ -1432,6 +1434,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 		gy.y[1]=E;
 		gy.idx[1]=-1;/*not a STEP -> SCF*/
 		gy.symbol[1]=GRAPH_SYMB_CROSS;
+		vasp_out->last_pos=ftell(vf);/*flag*/
 //fprintf(stdout,"SCF: E[1]=%lf\n",E);
 	}else return 3;
 	g_free(line);
@@ -1458,10 +1461,12 @@ int vasp_xml_plot_energy(struct model_pak *model){
 				/*was a step*/
 //fprintf(stdout,"IONIC_STEP: E[%i]=%lf\n",jdx,E);
 				gy.idx[idx+1]=jdx;
-				gy.symbol[idx+1]=GRAPH_SYMB_SQUARE;
+				gy.symbol[idx+1]=GRAPH_SYMB_DIAM;
 				jdx++;
 			}
 			idx++;
+			g_free(line);
+			vasp_out->last_pos=ftell(vf);/*flag*/
 		}
 		if(E<min_E) min_E=E;
 		if(E>max_E) max_E=E;
@@ -1484,10 +1489,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 		gy.line=GRAPH_LINE_THICK;
 		gy.color=GRAPH_COLOR_DEFAULT;
 		graph_reset_data((struct graph_pak *)vasp_out->graph_energy);
-		/*do not update ymin,ymax*/
-		min_E=((struct graph_pak *)vasp_out->graph_energy)->ymin;
-		max_E=((struct graph_pak *)vasp_out->graph_energy)->ymax;
-		dat_graph_set_limits(0,vasp_out->n_scf,min_E,max_E,vasp_out->graph_energy);
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,vasp_out->graph_energy);
 		graph_set_xticks(TRUE,2,vasp_out->graph_energy);
 	}
 	/*X*/
@@ -1503,6 +1505,152 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	g_free(gy.y);
 	g_free(gy.idx);
 	g_free(gy.symbol);
+	return 0;
+}
+
+int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
+/*we have a previous graph and just want to update latest values*/
+	long int vfpos;
+	int idx,jdx,old_size;
+	int n_add,last_step=0;
+	gchar *line;
+	g_data_x gx,*px;
+	g_data_y gy,*py;
+	gdouble min_E,max_E,E;
+	vasp_output_struct *vasp_out;
+	struct graph_pak *graph;
+	GSList *list;
+	/*CHECKS*/
+	if(model==NULL) return 3;
+	if(model->vasp==NULL) return 3;
+	vasp_out=(vasp_output_struct *)model->vasp;
+	if(vasp_out->calc_type==VASP_SINGLE) return 0;
+	if(vasp_out->calc_type&VASP_FREQ) return 0;
+	if(model->num_frames<3) return 3;
+	graph=(struct graph_pak *)vasp_out->graph_energy;
+	if(graph==NULL) return 3;
+	if(graph->type==GRAPH_REGULAR) return 3;/*TO BE REMOVED*/
+	list=graph->set_list;
+	if(list==NULL) return 3;
+	/*SAVE px,py*/
+	px=(g_data_x *)list->data;
+	list=g_slist_next(list);
+	if(list==NULL) return 3;
+	py=(g_data_y *)list->data;
+	vfpos=ftell(vf);/*flag*/
+	fseek(vf,vasp_out->last_pos,SEEK_SET);/* goto last_pos */
+	old_size=px->x_size;
+	/*count additional energy data*/
+	if(fetch_in_file(vf,"<energy>")==0) {/*no new energy information*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return 3;/*no additional data*/
+	}
+	line = file_read_line(vf);
+	if (find_in_string("e_fr_energy",line) != NULL) n_add=1;
+	else n_add=0;
+	g_free(line);line = file_read_line(vf);
+	while(line){
+		if (find_in_string("<energy>",line) != NULL) {
+			g_free(line);line = file_read_line(vf);
+			if (find_in_string("e_fr_energy",line) != NULL) n_add++;
+		}
+		g_free(line);line = file_read_line(vf);
+	}
+	if(n_add==0) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return 3;/*no additional data*/
+	}
+//fprintf(stdout,"PLOT: ADD %i SCF.\n",n_add);
+	/*init gx,gy*/
+	gy.y_size=old_size+n_add;
+	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.mixed_symbol=TRUE;/*<- to differenciate between SCF and STEP*/
+	gy.sym_color=NULL;
+	gx.x_size=old_size+n_add;
+	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+	for(idx=vasp_out->n_scf;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+	/*COPY old px,py data*/
+	for(idx=0;idx<old_size;idx++){
+		gx.x[idx]=px->x[idx];
+		gy.y[idx]=py->y[idx];
+		gy.idx[idx]=py->idx[idx];
+		if(gy.idx[idx]>0) last_step=gy.idx[idx];/*get the latest step*/
+		gy.symbol[idx]=py->symbol[idx];
+	}
+	/*RESET graph*/
+	gy.type=GRAPH_IY_TYPE;
+	gy.line=GRAPH_LINE_THICK;
+	gy.color=GRAPH_COLOR_DEFAULT;
+	min_E=graph->ymin;
+	max_E=graph->ymax;
+	graph_reset_data(graph);
+	graph_set_xticks(TRUE,2,vasp_out->graph_energy);
+	/*X is now complete*/
+	dat_graph_set_x(gx,vasp_out->graph_energy);
+	dat_graph_set_type(GRAPH_IY_TYPE,vasp_out->graph_energy);/*useful?*/
+	g_free(gx.x);
+	/*get Y new data*/
+	fseek(vf,vasp_out->last_pos,SEEK_SET);/* goto last_pos */
+	idx=vasp_out->n_scf;
+	jdx=last_step+1;
+	while(TRUE){
+		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
+		line = file_read_line(vf);
+		if (find_in_string("e_fr_energy",line) != NULL) {
+			g_free(line);line = file_read_line(vf);
+			if (find_in_string("e_wo_entrp",line) == NULL) {
+				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				return 4;/*NOT OK*/
+			}
+			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
+			gy.y[idx]=E;
+			if(fetch_in_file(vf,"</energy>")==0) break;/*unfinished calculation?*/
+			g_free(line);line = file_read_line(vf);
+			if(!line) {/*sometime, we'll reach EOF here*/
+				/*which means it's a STEP*/
+//fprintf(stdout,"EOF! ADD-STEP: E[%i]=%lf\n",jdx,E);
+				gy.idx[idx]=jdx;
+				gy.symbol[idx]=GRAPH_SYMB_DIAM;
+				vasp_out->last_pos=ftell(vf);/*flag <- this one will work?*/
+				if(E<min_E) min_E=E;
+				if(E>max_E) max_E=E;
+				break;
+			}
+			if (find_in_string("scstep",line) != NULL) {
+				/*was a SCF*/
+				gy.idx[idx]=-1;
+				gy.symbol[idx]=GRAPH_SYMB_CROSS;
+//fprintf(stdout,"ADD-SCF: E[%i]=%lf\n",idx,E);
+			}else{
+				/*was a STEP*/
+				gy.idx[idx]=jdx;
+				gy.symbol[idx]=GRAPH_SYMB_DIAM;
+//fprintf(stdout,"ADD-STEP: E[%i]=%lf\n",jdx,E);
+				jdx++;
+			}
+			idx++;
+			g_free(line);
+			vasp_out->last_pos=ftell(vf);/*flag*/
+			if(E<min_E) min_E=E;
+			if(E>max_E) max_E=E;
+		}
+	}
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	/*Y is now complete*/
+	dat_graph_add_y(gy,vasp_out->graph_energy);
+	g_free(gy.y);
+	g_free(gy.idx);
+	g_free(gy.symbol);
+	/*reset limits -- if necessary*/
+	vasp_out->n_scf+=n_add;/*keep up with SCF numbers*/
+	if((min_E<graph->ymin)||(max_E>graph->ymax)){
+//fprintf(stdout,"LIM: min_E=%lf max_E=%lf ymin=%lf ymax=%lf\n",min_E,max_E,graph->ymin,graph->ymax);
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,vasp_out->graph_energy);
+	}else{
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E,max_E,vasp_out->graph_energy);
+	}
 	return 0;
 }
 
@@ -2050,25 +2198,39 @@ gboolean track_vasp(void *data){
 	gchar *line;
 	gint add_frames;
 	struct model_pak *model=(struct model_pak *)data;
+	struct model_pak *new_model;
+	vasp_output_struct *vasp_out;
 	/*is being called every 1s; every "return FALSE" will stop the timer!*/
 	if(model==NULL) return FALSE;
 	if(model->track_me==FALSE) return FALSE;
+	vasp_out=(vasp_output_struct *)model->vasp;
+	model->track_nb=(model->track_nb+1)%3;
 	if(model->num_frames<0){
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 #endif
 		/*this means that we need to try to reload model*/
 		line=g_strdup(model->filename);
-		model_free(model);
-		model_init(model);
-		if(read_xml_vasp(line,model)!=0){
-			/*catch case with model->num_frames<=0*/
-			strcpy(model->filename,line);/* strcpy is ok? */
-			model->track_me=TRUE;/*because it got reset with model_init*/
-			return TRUE;
+		new_model=model_new();
+		model_init(new_model);
+		if(read_xml_vasp(line,new_model)==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ SUCCESS\n");
+#endif
+			strcpy(new_model->filename,line);/* strcpy is ok? <- necessary?*/
+			/*refresh*/
+			model->t_next=new_model;
+			g_free(line);
+			return FALSE;/*we don't need to continue tracking on old model*/
+		}else{
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ FAIL\n");
+#endif
+		/*Can't open, GIVE UP*/
+		model_delete(new_model);
+		g_free(line);
+		return FALSE;
 		}
-		model->track_me=TRUE;/*because it got reset with model_init*/
-		if(model->num_frames<0) return FALSE;/*GIVE UP*/
 	}
 	if(model->frame_list==NULL) {
 #if DEBUG_TRACK_VASP
@@ -2130,8 +2292,12 @@ fprintf(stdout,"TRACK: NO-FRAME NO-FRAME\n");
 fprintf(stdout,"TRACK: NO-FRAME %i-FRAME\n",add_frames);
 #endif
 		model->num_frames=add_frames;/*initialpos no longer counts*/
-		if(add_frames>1) model->animation=TRUE;
 		fclose(vf);
+		if(add_frames>1) {
+			vasp_out->calc_type=VASP_RUN+VASP_OPT;
+			vasp_xml_plot_energy(model);
+			model->animation=TRUE;
+		}
 		return TRUE;/*do tracking later*/
 	}
 	vf=fopen(model->filename, "r");
@@ -2169,19 +2335,26 @@ fprintf(stdout,"TRACK: NO-LINE\n");
 		g_free(line);
 		fclose(vf);
 		line=g_strdup(model->filename);
-		model_free(model);
-		model_init(model);
-		if(read_xml_vasp(line,model)==0){
-			tree_model_refresh(model);
-			redraw_canvas(ALL);
+		new_model=model_new();
+		model_init(new_model);
+		if(read_xml_vasp(line,new_model)==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NEW-READ SUCCESS\n");
+#endif
+			strcpy(new_model->filename,line);/* strcpy is ok? <- necessary?*/
+			/*refresh*/
+			model->t_next=new_model;
+			g_free(line);
+			return FALSE;/*we don't need to continue tracking on old model*/
 		}else{
-			/*read fail... not enough data yet?*/
-			model->num_frames=-1;
-			strcpy(model->filename,line);/* strcpy is ok? */
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NEW-READ FAIL\n");
+#endif
+			/*Can't open, keep trying*/
+			model_delete(new_model);
+			g_free(line);
+			return TRUE;
 		}
-		g_free(line);
-		model->track_me=TRUE;/*because it got reset*/
-		return TRUE;/*do tracking later*/
 	}
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: LINE-%s\n",line);
@@ -2223,33 +2396,41 @@ fprintf(stdout,"TRACK: NO-FRAME\n");
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-ADD-FRAME\n");
 #endif
+		vasp_xml_update_plot_energy(vf,model);/*update now*/
 		fclose(vf);
 		if(model->animation){
 			sysenv.refresh_dialog=TRUE;
 			tree_model_refresh(model);
 			redraw_canvas(ALL);
-			vasp_xml_plot_energy(model);
 		}
 		return TRUE;//we didn't get anything this time
 	}
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
 #endif
+	if((model->num_frames<2)&&((model->num_frames+add_frames)>1)){
+		/*we need to set animation*/
+		model->animation=TRUE;
+		model->num_frames+=add_frames;
+		vasp_out->calc_type=VASP_RUN+VASP_OPT;
+		/*we need to plot the new graph*/
+		fclose(vf);
+		vasp_xml_plot_energy(model);
+		return TRUE;/*That's enough for now!*/
+	}
+	vasp_xml_update_plot_energy(vf,model);/*update now*/
+	/*if there is no plot update will fail*/
 	model->num_frames+=add_frames;
 	if(model->num_frames>1) {
-		if(!model->animation) model->animation=TRUE;
-
 		model->cur_frame = model->num_frames-1;
 		list=g_list_last(model->frame_list);
 		vffpos=(fpos_t *)list->data;
-//vffpos=(fpos_t *)g_list_nth_data (model->frame_list,model->cur_frame);
+//		vffpos=(fpos_t *)g_list_nth_data (model->frame_list,model->cur_frame);
 		fsetpos(vf,vffpos);
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: READ FRAME %i -- %p\n",model->cur_frame,vffpos);
 #endif
 		read_xml_vasp_frame(vf,model);
-		vasp_xml_plot_energy(model);
-
 
 		camera = camera_dup(model->camera);
 		model_prep(model);
@@ -2279,9 +2460,30 @@ fprintf(stdout,"TRACK: READ FRAME %i -- %p\n",model->cur_frame,vffpos);
 void track_vasp_cleanup(void *data){
 	gchar *ptr;
 	struct model_pak *model=(struct model_pak *)data;
+	struct model_pak *other_model;
 	if(model==NULL) return;/*why should this happen?*/
 	ptr=g_strdup_printf("VASP TRACKING: STOP.\n");gui_text_show(ITALIC,ptr);g_free(ptr);
 	model->track_me=FALSE;
+	/*check if another active model need tracking?*/
+	if(model->t_next!=NULL){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
+#endif
+		other_model=model->t_next;
+		tree_model_add(other_model);
+		tree_select_model(model);
+		tree_select_delete();
+		tree_select_model(other_model);
+		other_model->track_me=TRUE;
+		g_timeout_add_full(G_PRIORITY_DEFAULT,2000,track_vasp,other_model,track_vasp_cleanup);
+		ptr=g_strdup_printf("VASP TRACKING: (RE-)START.\n");
+		gui_text_show(ITALIC,ptr);
+		g_free(ptr);
+		canvas_shuffle();
+		sysenv.refresh_dialog=TRUE;
+		tree_model_refresh(other_model);
+		redraw_canvas(ALL);
+	}
 }
 
 
