@@ -497,7 +497,7 @@ if(dy.y_size==0) {
 py=g_malloc(sizeof(g_data_y));
 g_assert(py != NULL);
 py->y_size=dy.y_size;
-py->y=g_malloc(dy.y_size*sizeof(gdouble));
+py->y=g_malloc(dy.y_size*sizeof(gdouble));/*_BUG_ triggered #06/06/2019*/
 memcpy(py->y,dy.y,dy.y_size*sizeof(gdouble));
 if(dy.idx==NULL) py->idx=NULL;
 else{

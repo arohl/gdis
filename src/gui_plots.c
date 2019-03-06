@@ -925,7 +925,7 @@ void spin_update_num(void){
 	gdouble my_x=0.;
 	graph_symbol symb;
 	graph_color color;
-	gint idx=(gint)GRAPH_UI.num_number;
+	gint idx;
 /* --- detect if graph_active has change and react accordingly*/
 	g_assert(graph != NULL);
 	data = sysenv.active_model;

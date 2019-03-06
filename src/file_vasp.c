@@ -1441,7 +1441,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	min_E=E;
 	max_E=E;
 	idx=1;jdx=1;
-	while(TRUE){
+	while(idx<(vasp_out->n_scf+1)){
 		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
 		line = file_read_line(vf);
 		if (find_in_string("e_fr_energy",line) != NULL) {
@@ -1595,13 +1595,16 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	fseek(vf,vasp_out->last_pos,SEEK_SET);/* goto last_pos */
 	idx=vasp_out->n_scf;
 	jdx=last_step+1;
-	while(TRUE){
+	while(idx<gy.y_size){/*while reading there is a risk that additional energy pops-up, hence the idx check*/
 		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
 		line = file_read_line(vf);
 		if (find_in_string("e_fr_energy",line) != NULL) {
 			g_free(line);line = file_read_line(vf);
 			if (find_in_string("e_wo_entrp",line) == NULL) {
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				g_free(gy.y);
+				g_free(gy.idx);
+				g_free(gy.symbol);
 				return 4;/*NOT OK*/
 			}
 			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
@@ -1639,7 +1642,7 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	}
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	/*Y is now complete*/
-	dat_graph_add_y(gy,vasp_out->graph_energy);
+	dat_graph_add_y(gy,vasp_out->graph_energy);/*_BUG_ triggered #06/06/2019*/
 	g_free(gy.y);
 	g_free(gy.idx);
 	g_free(gy.symbol);
@@ -2418,6 +2421,7 @@ fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
 		vasp_xml_plot_energy(model);
 		return TRUE;/*That's enough for now!*/
 	}
+/*_BUG_ triggered 06/03/2019*/
 	vasp_xml_update_plot_energy(vf,model);/*update now*/
 	/*if there is no plot update will fail*/
 	model->num_frames+=add_frames;
@@ -2464,6 +2468,7 @@ void track_vasp_cleanup(void *data){
 	if(model==NULL) return;/*why should this happen?*/
 	ptr=g_strdup_printf("VASP TRACKING: STOP.\n");gui_text_show(ITALIC,ptr);g_free(ptr);
 	model->track_me=FALSE;
+	tree_model_refresh(model);/*reset model pixmap*/
 	/*check if another active model need tracking?*/
 	if(model->t_next!=NULL){
 #if DEBUG_TRACK_VASP

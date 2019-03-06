@@ -320,6 +320,8 @@ gint idx;
 gdouble d;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->energy.size<1) return;
 /*always auto*/
 xmin=plot->energy.xmin;
 xmax=plot->energy.xmax;
@@ -357,8 +359,8 @@ for(idx=1;idx<gy.y_size;idx++){
 	gy.y[idx]=plot->energy.data[idx-1];
 	gy.idx[idx]=idx;
 	gy.symbol[idx]=GRAPH_SYMB_DIAM;
-	gy.type=GRAPH_IY_TYPE;
 }
+gy.type=GRAPH_IY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
@@ -382,6 +384,8 @@ gint idx;
 gdouble d;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->force.size<1) return;
 /*always auto*/
 xmin=plot->force.xmin;
 xmax=plot->force.xmax;
@@ -419,8 +423,8 @@ for(idx=1;idx<gy.y_size;idx++){
         gy.y[idx]=plot->force.data[idx-1];
         gy.idx[idx]=idx;
         gy.symbol[idx]=GRAPH_SYMB_DIAM;
-        gy.type=GRAPH_IY_TYPE;
 }
+gy.type=GRAPH_IY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
@@ -444,6 +448,8 @@ gint idx;
 gdouble d;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->volume.size<1) return;
 /*always auto*/
 xmin=plot->volume.xmin;
 xmax=plot->volume.xmax;
@@ -481,8 +487,8 @@ for(idx=1;idx<gy.y_size;idx++){
         gy.y[idx]=plot->volume.data[idx-1];
         gy.idx[idx]=idx;
         gy.symbol[idx]=GRAPH_SYMB_DIAM;
-        gy.type=GRAPH_IY_TYPE;
 }
+gy.type=GRAPH_IY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
@@ -506,6 +512,8 @@ gint idx;
 gdouble d;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->pressure.size<1) return;
 /*always auto*/
 xmin=plot->pressure.xmin;
 xmax=plot->pressure.xmax;
@@ -543,8 +551,8 @@ for(idx=1;idx<gy.y_size;idx++){
         gy.y[idx]=plot->pressure.data[idx-1];
         gy.idx[idx]=idx;
         gy.symbol[idx]=GRAPH_SYMB_DIAM;
-        gy.type=GRAPH_IY_TYPE;
 }
+gy.type=GRAPH_IY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
@@ -567,6 +575,8 @@ g_data_y gy;
 gint idx;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->ndos<1) return;
 /*always auto*/
 xmin=plot->dos.xmin;
 xmax=plot->dos.xmax;
@@ -602,8 +612,8 @@ for(idx=0;idx<gy.y_size;idx++){
         gy.y[idx]=plot->dos.data[idx*2+1];
         gy.idx[idx]=-1;
         gy.symbol[idx]=GRAPH_SYMB_NONE;
-        gy.type=GRAPH_XY_TYPE;
 }
+gy.type=GRAPH_XY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
@@ -627,6 +637,7 @@ gint idx,jdx;
 gdouble scale;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+#ifdef UNUSED_BUT_SET
 /*always auto*/
 xmin=plot->dos.ymin;
 xmax=plot->dos.ymax;
@@ -636,6 +647,7 @@ if(ymin==ymax) {
 	ymin=ymin-1.0;
 	ymax=ymax+1.0;
 }
+#endif //UNUSED_BUT_SET
 /*calculate scale*/
 scale=plot->band.xmax*0.5/plot->dos.ymax;
 plot->graph=graph_new("BANDOS", model);
@@ -723,6 +735,9 @@ gint idx,jdx;
 gdouble d;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->nkpoints<1) return;
+if(model->nbands<1) return;
 /*always auto*/
 xmin=plot->band.xmin;
 xmax=plot->band.xmax;
@@ -761,8 +776,8 @@ for(idx=0;idx<model->nkpoints;idx++){
         gy.y[idx]=model->band_up[jdx+idx*model->nbands]-model->efermi;
         gy.idx[idx]=-1;
         gy.symbol[idx]=GRAPH_SYMB_NONE;
-        gy.type=GRAPH_XY_TYPE;
 }
+gy.type=GRAPH_XY_TYPE;
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
 dat_graph_add_y(gy,plot->graph);
@@ -786,6 +801,8 @@ g_data_y gy;
 gint idx,jdx;
 gdouble xmin,xmax;
 gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->nfreq<1) return;
 /*always auto*/
 xmin=plot->frequency.xmin;
 xmax=plot->frequency.xmax;
@@ -840,10 +857,10 @@ while(idx<gx.x_size){
         gy.symbol[idx]=GRAPH_SYMB_NONE;
 	gy.symbol[idx+1]=GRAPH_SYMB_SQUARE;/*the actual peak*/
 	gy.symbol[idx+2]=GRAPH_SYMB_NONE;
-        gy.type=GRAPH_XY_TYPE;
 	jdx+=2;
 	idx+=3;
 }
+gy.type=GRAPH_XY_TYPE;
 dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
 gy.line=GRAPH_LINE_THICK;
 gy.color=GRAPH_COLOR_DEFAULT;
