@@ -373,7 +373,7 @@ typedef struct {
 /*name*/
 	gchar *name;
 	gint version;
-	vasp_calc_struct *calc;/*calculation structure*/
+//	vasp_calc_struct *calc;/*calculation structure*/
 	/*extra information*/
 	vasp_calc_type calc_type;
 	gint n_scf;
@@ -406,6 +406,7 @@ int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc);
 void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
 void vasprun_free(vasp_calc_struct *calc);
+void vasp_out_free(vasp_output_struct * vo);
 
 gint vasp_load_poscar5(FILE *vf,struct model_pak *model);
 

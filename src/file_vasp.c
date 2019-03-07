@@ -1441,7 +1441,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	min_E=E;
 	max_E=E;
 	idx=1;jdx=1;
-	while(idx<(vasp_out->n_scf+1)){
+	while(idx<(vasp_out->n_scf-1)){
 		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
 		line = file_read_line(vf);
 		if (find_in_string("e_fr_energy",line) != NULL) {
@@ -1527,6 +1527,7 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	if(vasp_out->calc_type==VASP_SINGLE) return 0;
 	if(vasp_out->calc_type&VASP_FREQ) return 0;
 	if(model->num_frames<3) return 3;
+	if(vasp_out->graph_energy==NULL) return 3;
 	graph=(struct graph_pak *)vasp_out->graph_energy;
 	if(graph==NULL) return 3;
 	if(graph->type==GRAPH_REGULAR) return 3;/*TO BE REMOVED*/
@@ -1916,8 +1917,6 @@ fprintf(stdout,"#DBG: spin=down kpt=%i band=%i eval=%lf\n",ik,ib,model->band_up[
 	return 0;
 }
 
-
-
 int vasp_xml_read_dos(FILE *vf, struct model_pak *model){
 	/* get the final density of states (total dos only) */
 	gchar *line;
@@ -1988,6 +1987,31 @@ fprintf(stdout,"#DBG: CATCH SPIN DOWN: %i %lf \t %lf\n",idx,model->dos_eval[idx]
 	}
 	return 0;
 }
+/******************************/
+/* free vasp_output_structure */
+/******************************/
+void vasp_out_reset(vasp_output_struct * vo){
+	if(vo==NULL) return;
+	if(vo->name!=NULL) g_free(vo->name);
+	vo->name=NULL;
+	if(vo->E!=NULL) g_free(vo->E);
+	vo->E=NULL;
+	if(vo->V!=NULL) g_free(vo->V);
+	vo->V=NULL;
+	if(vo->F!=NULL) g_free(vo->F);
+	vo->F=NULL;
+	if(vo->P!=NULL) g_free(vo->P);
+	vo->P=NULL;
+	/*use graph_free?*/
+	if(vo->graph_energy!=NULL) graph_reset(vo->graph_energy);
+	vo->graph_energy=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+}
 /* here will be some more features */
 /* general parser / writter */
 gint read_xml_vasp(gchar *filename, struct model_pak *model){
@@ -2016,15 +2040,23 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	sysenv.render.show_energy = TRUE;
 	model->animation=FALSE;
 	model->num_frames=-1;
-	if(model->vasp!=NULL) g_free(model->vasp);/*<- not sure it's enough! TODO: create a proper free function*/
+	if(model->vasp!=NULL) {
+		vasp_out_reset((vasp_output_struct *)model->vasp);
+		g_free(model->vasp);
+		model->vasp=NULL;
+	}
 	vasp_out=g_malloc(sizeof(vasp_output_struct));
 	model->vasp=(gpointer)vasp_out;
+	vasp_out->name=NULL;
 	vasp_out->n_scf=0;
 	vasp_out->E=NULL;
 	vasp_out->V=NULL;
 	vasp_out->F=NULL;
 	vasp_out->P=NULL;
 	vasp_out->graph_energy=NULL;
+	vasp_out->graph_volume=NULL;
+	vasp_out->graph_forces=NULL;
+	vasp_out->graph_stress=NULL;
 	/* start reading */
 	line = file_read_line(vf);
 	/* the first xml tag ie <?xml version="x.x" encoding="ISO-xxxx-x"?> */
@@ -2047,6 +2079,7 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 			return 3;/* not a valid vaspxml */
 		}
 	}
+	model->id=VASP;/*from here we can say for sure this is a valid VASP model**/
 vfpos=ftell(vf);/*flag*/
 	/* <incar> tag - if none, rewind and ignore */
 	if(fetch_in_file(vf,"<incar>")==0) fseek(vf,vfpos,SEEK_SET);
@@ -2158,7 +2191,7 @@ vfpos=ftell(vf);/*flag*/
 		}
 	}
 	/*read/display the last position!*/
-	model->cur_frame = num_frames-1;/*when relevant*/
+	model->cur_frame = num_frames-1;
 	rewind(vf);
 	while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);/*flag*/
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
@@ -2178,7 +2211,6 @@ vfpos=ftell(vf);/*flag*/
 	fclose(vf);
 /*now plot graphs*/
 	vasp_xml_plot_energy(model);
-
 	return(0);
 }
 /* simplified frame reading */
@@ -2203,11 +2235,11 @@ gboolean track_vasp(void *data){
 	struct model_pak *model=(struct model_pak *)data;
 	struct model_pak *new_model;
 	vasp_output_struct *vasp_out;
-	/*is being called every 1s; every "return FALSE" will stop the timer!*/
+	/*is being called every TRACKING_TIMEOUT; every "return FALSE" will stop the timer!*/
 	if(model==NULL) return FALSE;
+	model->track_nb=(model->track_nb+1)%3;
 	if(model->track_me==FALSE) return FALSE;
 	vasp_out=(vasp_output_struct *)model->vasp;
-	model->track_nb=(model->track_nb+1)%3;
 	if(model->num_frames<0){
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
@@ -2477,10 +2509,17 @@ fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
 		other_model=model->t_next;
 		tree_model_add(other_model);
 		tree_select_model(model);
+		if(model->vasp!=NULL) {
+			vasp_out_reset((vasp_output_struct *)model->vasp);
+			/*optional (tree_select_delete should do that)*/
+			g_free(model->vasp);
+			model->vasp=NULL;
+		}
 		tree_select_delete();
 		tree_select_model(other_model);
+		model=NULL;/*_BUG_ spotted*/
 		other_model->track_me=TRUE;
-		g_timeout_add_full(G_PRIORITY_DEFAULT,2000,track_vasp,other_model,track_vasp_cleanup);
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,other_model,track_vasp_cleanup);
 		ptr=g_strdup_printf("VASP TRACKING: (RE-)START.\n");
 		gui_text_show(ITALIC,ptr);
 		g_free(ptr);

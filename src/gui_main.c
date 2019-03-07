@@ -1636,7 +1636,7 @@ model->track_me=(model->track_me==FALSE);
 switch(model->id){
 case VASP:
 	if(model->track_me) {
-		g_timeout_add_full(G_PRIORITY_DEFAULT,2000,track_vasp,model,track_vasp_cleanup);
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,model,track_vasp_cleanup);
 		if(model->track_me) {
 			ptr=g_strdup_printf("VASP TRACKING: START.\n");
 			gui_text_show(ITALIC,ptr);

@@ -67,7 +67,7 @@ model->graph_list = g_slist_remove(model->graph_list, graph);
 if (model->graph_active == graph)
   model->graph_active = NULL;
 
-free_slist(graph->set_list);
+graph_reset(graph);//free_slist(graph->set_list);
 g_free(graph->treename);
 g_free(graph); 
 }
@@ -84,7 +84,7 @@ for (list=model->graph_list ; list ; list=g_slist_next(list))
   {
   graph = list->data;
 
-  free_slist(graph->set_list);
+  graph_reset(graph);//free_slist(graph->set_list);
   g_free(graph->treename);
   g_free(graph); 
   }

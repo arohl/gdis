@@ -934,6 +934,10 @@ g_free(data->title);
 
 space_free(&data->sginfo);
 
+/*free vasp pointer (data must have been wiped before!)*/
+g_free(data->vasp);
+data->vasp=NULL;
+
 #if DEBUG_FREE_MODEL
 printf("freeing zone data...\n");
 #endif
