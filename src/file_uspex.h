@@ -303,6 +303,7 @@ typedef struct {
 typedef struct {
 /*name*/
         gchar *name;
+	gchar *res_folder;			/*current result folder*/
         gint version;
 	gint index;				/*index is the # of result folder*/
 	uspex_calc_struct *calc;
@@ -317,6 +318,7 @@ typedef struct {
 	gdouble min_F;				/*NEW: fitness data*/
 	gdouble max_F;				/*NEW: fitness data*/
         uspex_individual *ind;
+	long int last_ind_pos;			/*NEW: last position in the Individuals file*/
         gint num_best;
         gint *best_ind;				/*NEW: {ID - GEN} there can be several best in a generation*/
 /*interpretation*/

@@ -1421,6 +1421,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	rewind(vf);
 	if(fetch_in_file(vf,"<energy>")==0) return 4;/*NO energy... but, n_scf>0 ??*/
 	line = file_read_line(vf);
+	if(line==NULL) return 4;/*this is not normal*/
 	if (find_in_string("alphaZ",line) == NULL) return 4;/*this is not normal*/
 	g_free(line);
 	/*first value is discarded, look for next one (hence repetition)*/
@@ -1443,15 +1444,15 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	idx=1;jdx=1;
 	while(idx<(vasp_out->n_scf-1)){
 		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
-		line = file_read_line(vf);
+		line = file_read_line(vf);if(line==NULL) break;
 		if (find_in_string("e_fr_energy",line) != NULL) {
-			g_free(line);line = file_read_line(vf);
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
 			if (find_in_string("e_wo_entrp",line) == NULL) return 4;/*NOT OK*/
 			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
 			gy.y[idx+1]=E;
 			/*detect if SCF is a IONIC STEP*/
 			if(fetch_in_file(vf,"</energy>")==0) break;/*unfinished calculation?*/
-			g_free(line);line = file_read_line(vf);
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
 			if (find_in_string("scstep",line) != NULL) {
 				/*was a SCF*/
 				gy.idx[idx+1]=-1;
@@ -1513,7 +1514,7 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	long int vfpos;
 	int idx,jdx,old_size;
 	int n_add,last_step=0;
-	gchar *line;
+	gchar *line=NULL;
 	g_data_x gx,*px;
 	g_data_y gy,*py;
 	gdouble min_E,max_E,E;
@@ -1547,12 +1548,17 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 		return 3;/*no additional data*/
 	}
 	line = file_read_line(vf);
+	if(line==NULL) return 4;/*this is not normal*/
 	if (find_in_string("e_fr_energy",line) != NULL) n_add=1;
 	else n_add=0;
 	g_free(line);line = file_read_line(vf);
 	while(line){
 		if (find_in_string("<energy>",line) != NULL) {
 			g_free(line);line = file_read_line(vf);
+			if(line==NULL){
+				/*very rare _BUG_ ~once per 72h of continuous update*/
+				return 3;
+			}
 			if (find_in_string("e_fr_energy",line) != NULL) n_add++;
 		}
 		g_free(line);line = file_read_line(vf);
@@ -1598,9 +1604,9 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	jdx=last_step+1;
 	while(idx<gy.y_size){/*while reading there is a risk that additional energy pops-up, hence the idx check*/
 		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
-		line = file_read_line(vf);
+		line = file_read_line(vf);if(line==NULL) break;
 		if (find_in_string("e_fr_energy",line) != NULL) {
-			g_free(line);line = file_read_line(vf);
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
 			if (find_in_string("e_wo_entrp",line) == NULL) {
 				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 				g_free(gy.y);
@@ -2261,10 +2267,10 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: READ FAIL\n");
 #endif
-		/*Can't open, GIVE UP*/
+		/*Can't open, but don't GIVE UP*/
 		model_delete(new_model);
 		g_free(line);
-		return FALSE;
+		return TRUE;
 		}
 	}
 	if(model->frame_list==NULL) {

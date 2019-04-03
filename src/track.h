@@ -22,6 +22,10 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* simple header for tracking system functions */
 
+/* USPEX tracking */
+gboolean track_uspex(void *data);
+void track_uspex_cleanup(void *data);
+
 /* VASP is the "model" prototype*/
 gboolean track_vasp(void *data);
 void track_vasp_cleanup(void *data);

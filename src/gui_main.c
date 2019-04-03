@@ -1634,6 +1634,19 @@ if (!model) return;
 /*invert current tracking**/
 model->track_me=(model->track_me==FALSE);
 switch(model->id){
+case USPEX:
+	if(model->track_me) {
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_uspex,model,track_uspex_cleanup);
+		if(model->track_me) {
+			ptr=g_strdup_printf("USPEX TRACKING: START.\n");
+			gui_text_show(ITALIC,ptr);
+			g_free(ptr);
+		}
+	}else{
+		track_uspex(model);/*will return FALSE**/
+		model->track_me=FALSE;/*just in case we need to be very clear*/
+	}
+	break;
 case VASP:
 	if(model->track_me) {
 		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,model,track_vasp_cleanup);

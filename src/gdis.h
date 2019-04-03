@@ -76,7 +76,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define LINELEN  300
 
 /* timings (in ms)*/
-#define TRACKING_TIMEOUT 500
+#define TRACKING_TIMEOUT 1000
 
 /* maths */
 #define PI 3.1415926535897932384626433832795
