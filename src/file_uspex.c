@@ -2868,6 +2868,7 @@ fprintf(stdout,"-SENT\n");
 			for(jdx=idx;jdx<(_UO.num_struct+add_ind);jdx++){
 				if((_UO.ind[jdx].gen==gen)&&(_UO.ind[jdx].have_data)) num++;
 			}
+/*TRY here*/	if(num==0) continue;
 			gy->y_size=num;
 			gy->y=g_malloc(num*sizeof(gdouble));
 			gy->idx=g_malloc(num*sizeof(gint32));
