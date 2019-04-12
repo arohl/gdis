@@ -2308,7 +2308,6 @@ EX19?   Gen   ID  Origin        Composition     Enthalpy(eV)    V(A^3)  KPOINTS 
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"#DBG: read_ind: gen=%i ",gen);
 #endif
-		if(gen>_UO.num_gen) _UO.num_gen=gen;
 		ptr=ptr2+1;
 		__SKIP_BLANK(ptr);
 		/*get index*/
@@ -2317,6 +2316,7 @@ fprintf(stdout,"#DBG: read_ind: gen=%i ",gen);
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"idx=%i ",idx);
 #endif
+		if(gen>_UO.num_gen) _UO.num_gen=gen;/*FIX _BUG_ where gen is incorrectly updated*/
 		_UO.ind[idx].gen=gen;
 		ptr=ptr2+1;
 		/*jump to [ ... ] part*/
@@ -2478,6 +2478,7 @@ void uspex_graph_comp_update(gint add_ind, uspex_output_struct *uspex_output){
 		_lst=g_slist_remove(graph->set_list,list->data);
 		if(_lst==NULL) return;/*NO GOOD*/
 		graph->set_list=_lst;
+		graph->size--;
 	}
 /*2- we need to process only the add_ind last individuals*/
 	for(idx=_UO.num_struct+add_ind-1;idx>=_UO.num_struct;idx--){
@@ -2526,12 +2527,18 @@ fprintf(stdout,"COMP ERROR: invalid composition!\n");
 			for(jdx=0;jdx<px->x_size;jdx++) if(px->x[jdx]==comp) comp_ix=jdx;
 			if(comp_ix<0){
 				/*composition was not found <- NEW composition*/
+/*FIXME: problem with new Y set and hull*/
 				/*X set*/
 				px->x_size++;
 				gx=g_malloc0(sizeof(g_data_x));
 				gx->x=g_realloc(px->x,(px->x_size)*sizeof(gdouble));
 				/*find NEW composition index*/
-				comp_ix=0;while(comp<gx->x[comp_ix]) comp_ix++;
+				comp_ix=0;
+				while(comp<gx->x[comp_ix]) comp_ix++;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G set=%i\n",comp,_UO.ind[idx].E,comp_ix);
+#endif
+
 				for(jdx=px->x_size-1;jdx>comp_ix;jdx--) gx->x[jdx]=gx->x[jdx-1];
 				gx->x[comp_ix]=comp;
 				px->x=gx->x;
@@ -2564,7 +2571,7 @@ fprintf(stdout,"COMP ERROR: no Y list!\n");
 #if DEBUG_TRACK_USPEX
 /*NEW structure are set in green for DEBUG visibility.*/
 gy->sym_color[0]=GRAPH_COLOR_GREEN;
-fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G\n",comp,gy->y[0]);
+//fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G\n",comp,gy->y[0]);
 #endif
 				gy->type=GRAPH_XX_TYPE;
 				gy->line=GRAPH_LINE_NONE;
