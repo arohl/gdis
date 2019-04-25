@@ -36,6 +36,18 @@ The GNU GPL can also be found at http://www.gnu.org
 #define READ_RECORD fread(&sysenv.fortran_buffer, sizeof(int), 1, fp)
 #define WRITE_RECORD fwrite(&sysenv.fortran_buffer, sizeof(int), 1, fp)
 
+/* useful ADDONs --OVHPA*/
+#define __Q(a) #a
+#define __SKIP_BLANK(pointer) while(!g_ascii_isgraph(*pointer)&&(*(pointer)!='\0')) pointer++
+#define __SKIP_NUM(pointer) while(g_ascii_isdigit(*pointer)&&(*(pointer)!='\0')) pointer++
+/*WARN: it is still unsafe to mix fseek/ftell with fgetpos/fsetpos*/
+#define __GET_LAST_LINE(fp,buffer) do{\
+        fseek(fp,-2,SEEK_END);\
+        while(fgetc(fp)!='\n') fseek(fp,-2,SEEK_CUR);\
+        fseek(fp,+1,SEEK_CUR);\
+        buffer = file_read_line(fp);\
+}while(0)
+
 /* enumerated types for POV-Ray colour-style selection */
 enum {HSV,	  			/*Colour-wheel style red-green-blue */
 	  REDWHITEBLUE		/* Red-fades to white-fades to blue */
