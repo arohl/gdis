@@ -4553,7 +4553,7 @@ if(offset){
 		fgetpos(vf,offset);/* FLAG */
 		g_free(line);
 		line = file_read_line(vf);
-#ifdef DEBUG_TRACK_USPEX
+#if DEBUG_TRACK_USPEX
                 new_frm=old_frm;
 #endif
 		/*now start*/
