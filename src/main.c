@@ -613,7 +613,7 @@ sysenv.viewer_exe = g_strdup("display");
 sysenv.gulp_exe = g_strdup("gulp");
 sysenv.gamess_exe = g_strdup("run_gms_for_gdis");
 sysenv.vasp_exe = g_strdup("vasp");
-sysenv.uspex_exe = g_strdup("run_uspex");
+sysenv.uspex_exe = g_strdup("USPEX");
 sysenv.mpirun_exe = g_strdup("mpirun");
 #endif
 

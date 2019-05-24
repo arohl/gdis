@@ -2662,4 +2662,129 @@ property_add_ranked(7, "Formula", name, model);
 	return 0;
 }
 
+/***********************************************************/
+/* There is still some function using the old VASP4 format */
+/* reading is identical to VASP5 except that lable must be */
+/* explicitely provided.                           --OVHPA */
+/***********************************************************/
+gint vasp_load_poscar4(FILE *vf,struct model_pak *model,char *label){
+	gint idx,ix;
+	gchar *line;
+	gchar *spec;
+	gchar *name;
+	gdouble  a0;
+	/*atom determination*/
+	gchar *ptr;
+	gchar *ptr2;
+	gchar *ptr3;
+	gchar sym[3];
+	struct core_pak *core;
+	gboolean is_direct;
+	/*read a vasp4 formated POSCAR*/
+	if(vf==NULL) return 1;
+	if(model==NULL) return 1;
+	if(feof(vf)) return 1;
+	/*we are good to go*/
+	line = file_read_line(vf);/*title*/
+	if(line==NULL) return 1;
+	/*add local structure title to properties?*/
+	line = file_read_line(vf);/*lattice parameter*/
+	if(line==NULL) return 1;
+	sscanf(line,"%lf%*s",&(a0));
+	idx=0;
+	line = file_read_line(vf);/*basis*/
+	while (idx<3) {
+		sscanf(line," %lf %lf %lf%*s",&model->latmat[idx],&model->latmat[idx+3],&model->latmat[idx+6]);
+		/*multiply everything by lattice parameter so a0 -> 1*/
+		model->latmat[idx]*=a0;
+		model->latmat[idx+3]*=a0;
+		model->latmat[idx+6]*=a0;
+		idx+=1;
+		g_free(line);
+		line = file_read_line(vf);
+		if(line == NULL) return -1;/*incomplete basis*/
+	}
+	ptr3=label;
+	ptr2=&(line[0]);
+	sym[2]='\0';/*always*/
+	model->num_atoms=0;
+	/*FIX _BUG_ core list grow!*/
+	core_delete_all(model);
+	spec=NULL;
+	name=g_strdup_printf("%c",'\0');
+	do{
+		ptr=ptr2;
+		ix=(gint)g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		while(*ptr3==' ') ptr3++;
+		sym[0]=*ptr3;
+		ptr3++;
+		if((*ptr3==' ')||(*ptr3=='\0')||(*ptr3=='\n')) sym[1]='\0';
+		else sym[1]=*ptr3;
+		ptr3++;
+		for(idx=0;idx<ix;idx++){
+			core=new_core(sym,model);
+			core->charge=0.;/*no such information on POSCAR*/
+			model->cores=g_slist_append(model->cores,core);
+		}
+		g_free(spec);
+		spec=g_strdup_printf("%s%s(%i)",name,sym,ix);
+		g_free(name);
+		name=g_strdup(spec);
+		model->num_atoms+=ix;
+	}while(1);
+	g_free(spec);/*FIX _VALGRIND_BUG_*/
+	g_free(label);/*FIX _VALGRIND_BUG_*/
+	property_add_ranked(7, "Formula", name, model);
+	g_free(name);/*FIX _VALGRIND_BUG_*/
+	g_free(line);
+	/*Always true in VASP*/
+	model->fractional=TRUE;
+	model->coord_units=ANGSTROM;
+	model->construct_pbc = TRUE;
+	model->periodic = 3;
+	line = file_read_line(vf);/*direct/cartesian switch*/
+	if((line[0]=='d')||(line[0]=='D')) is_direct=TRUE;
+	else if((line[0]=='c')||(line[0]=='C')||(line[0]=='k')||(line[0]=='K')) is_direct=FALSE;
+	else {/*no info: bailout*/
+		core_delete_all(model);
+		return -2;
+	}
+	line = file_read_line(vf);
+	if((line[0]=='s')||(line[0]=='S')) {
+		/*Selective switch: skip*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	/*now start registering atoms*/
+	for(idx=0;idx<(model->num_atoms-1);idx++){
+		core=g_slist_nth_data(model->cores,idx);
+		sscanf(line," %lf %lf %lf%*s",&core->x[0],&core->x[1],&core->x[2]);
+		if(!is_direct){
+			core->x[0]/=(model->latmat[0]+model->latmat[1]+model->latmat[2]);
+			core->x[1]/=(model->latmat[3]+model->latmat[4]+model->latmat[5]);
+			core->x[2]/=(model->latmat[6]+model->latmat[7]+model->latmat[8]);
+		}
+		g_free(line);
+		line = file_read_line(vf);
+		if(line==NULL){
+			/*problem reading atoms: bailout*/
+			core_delete_all(model);
+			return -2;
+		}
+	}
+	/*do the last one outside of loop to avoid file_read_linegoing too far */
+	core=g_slist_nth_data(model->cores,model->num_atoms-1);
+	sscanf(line," %lf %lf %lf%*s",&core->x[0],&core->x[1],&core->x[2]);
+	if(!is_direct){
+		core->x[0]/=(model->latmat[0]+model->latmat[1]+model->latmat[2]);
+		core->x[1]/=(model->latmat[3]+model->latmat[4]+model->latmat[5]);
+		core->x[2]/=(model->latmat[6]+model->latmat[7]+model->latmat[8]);
+	}
+	g_free(line);
+	/*should be all done*/
+	return 0;
+}
+
+
 

@@ -321,6 +321,9 @@ typedef struct {
 	long int last_ind_pos;			/*NEW: last position in the Individuals file*/
         gint num_best;
         gint *best_ind;				/*NEW: {ID - GEN} there can be several best in a generation*/
+/*references*/
+	gint *natom_refs;			/*NEW: number of atoms in each reference*/
+	gdouble *ef_refs;			/*NEW: energy of reference*/
 /*interpretation*/
         gpointer graph;
         gpointer graph_best;

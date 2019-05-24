@@ -2459,12 +2459,18 @@ void uspex_graph_comp_update(gint add_ind, uspex_output_struct *uspex_output){
 	gint idx,jdx;
 	gint species;
 	struct graph_pak *graph;
+	/*ADDON: references*/
+	gdouble ef;
+	gint spe_index;
+	gboolean is_ref;
+/**/
 	if(add_ind < 1) return;/*nothing to do*/
 	if(uspex_output == NULL) return;
 	if(_UO.calc==NULL) return;
 	if(!_UO.calc->_calctype_var) return;/*not a VARCOMP*/
 	if(_UO.calc->_nspecies<2) return;/*not a VARCOMP*/
 	if(_UO.graph_comp == NULL) return;/*TODO: prepare a new graph?*/
+if((_UO.ef_refs==NULL)||(_UO.natom_refs==NULL)) return;/*NEW: no ref?*/
 /*1- remove the convex hull graph for each COMP_X graph*/
 	for(species=0;species<_UO.calc->_nspecies;species++){
 		graph=(struct graph_pak *)_UO.graph_comp[species];
@@ -2495,13 +2501,25 @@ fprintf(stdout,"COMP ERROR: no graph!\n");
 fprintf(stdout,"COMP ERROR: no list!\n");
 				continue;/*ie ERROR*/
 			}
+/*NEW: is_ref?*/
+			is_ref=TRUE;
+			ef=_UO.ef_refs[species]/_UO.natom_refs[species];
+			for(spe_index=0;spe_index<_UO.calc->_nspecies;spe_index++){
+				if((spe_index!=species)&&(_UO.ind[idx].atoms[species]!=0)) is_ref=FALSE;
+				if((spe_index==species)&&(_UO.ind[idx].atoms[species]==0)) is_ref=FALSE;
+			}
+			if(is_ref){
+				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef){
+					_UO.ef_refs[spe_index]=_UO.ind[idx].energy;
+					_UO.natom_refs[spe_index]=_UO.ind[idx].natoms;
+				}
+			}
+/*END: new*/
 			px=(g_data_x *)list->data;
 			/*there should be no case with a NULL px*/
 			atm_sum=0;
 			for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) {
 				atm_sum+=_UO.ind[idx].atoms[jdx];
-//fprintf(stdout,"#DBG i=%i N_ATOM[i]=%i ATOM_SUM=%i\n",jdx,_UO.ind[idx].atoms[jdx],atm_sum);
-
 			}
 			if(atm_sum==0) {
 fprintf(stdout,"COMP ERROR: atom sum is NULL!\n");
@@ -2547,7 +2565,16 @@ fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G set=%i\n",comp,_UO.in
 				gy->idx=g_malloc0(sizeof(gint32));
 				gy->symbol=g_malloc0(sizeof(graph_symbol));
 				gy->sym_color=g_malloc0(sizeof(graph_color));
-				gy->y[0]=_UO.ind[idx].E;/*TODO: check limits*/
+/*NEW: refs*/
+				ef=_UO.ind[idx].energy;
+				for(spe_index=0;spe_index<_UO.calc->_nspecies;spe_index++)
+					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+				gy->y[0]=ef;
+				if(ef<graph->ymin){
+					graph->ymin=ef-(graph->ymax-ef)*0.05;
+				}
+/*end NEW*/
+//				gy->y[0]=_UO.ind[idx].E;/*TODO: check limits*/
 				gy->y_size=1;
 				if(_UO.ind[idx].struct_number>0){
 					gy->idx[0]=_UO.ind[idx].struct_number;
@@ -2593,7 +2620,16 @@ fprintf(stdout,"COMP_ ERROR: no Y list!\n");
 				gy->sym_color=g_realloc(py->sym_color,(py->y_size)*sizeof(graph_color));
 				if((gy->y==NULL)||(gy->idx==NULL)||(gy->symbol==NULL)) return;/*can't realloc, will probably FAIL*/
 				/*add the new data at the end of the set*/
-				gy->y[py->y_size-1]=_UO.ind[idx].E;
+/*NEW: refs*/
+				ef=_UO.ind[idx].energy;
+				for(spe_index=0;spe_index<_UO.calc->_nspecies;spe_index++)
+					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+				gy->y[py->y_size-1]=ef;
+				if(ef<graph->ymin){
+					graph->ymin=ef-(graph->ymax-ef)*0.05;
+				}
+/*END new*/
+//				gy->y[py->y_size-1]=_UO.ind[idx].E;
 				gy->sym_color[py->y_size-1]=GRAPH_COLOR_DEFAULT;
 				if(_UO.ind[idx].struct_number>0){
 					gy->idx[py->y_size-1]=_UO.ind[idx].struct_number;
@@ -2944,7 +2980,7 @@ fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 #endif
 /*X set*/
 	px=(g_data_x *)list->data;
-	if(px->x_size>=_UO.num_best) return;/*nothing to do*/
+//	if(px->x_size>=_UO.num_best) return;/*nothing to do*/
 	gx=g_malloc0(sizeof(g_data_x));
 	gx->x_size=_UO.num_gen+1;
 	gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
@@ -3496,17 +3532,6 @@ if(!vf){
 	g_free(line);
 	g_free(aux_file);
 }else{
-/*	
-	if (!vf) {
-		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
-			line = g_strdup_printf("ERROR: can't open USPEX BESTIndividuals_relaxed file!\n");
-		else line = g_strdup_printf("ERROR: can't open USPEX BESTIndividuals file?!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-		g_free(aux_file);
-		goto uspex_fail;
-	}
-*/
 	g_free(aux_file);
 	/*count the number of BEST structures*/
 	line = file_read_line(vf);/*TITLE LINE, DISCARD*/
@@ -3835,10 +3860,35 @@ fprintf(stdout,"-SENT\n");
 /* --- variable composition */
 	/*there is extra graphs for variable composition*/
 if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
+/*NEW: create a reference to calculate E_f*/
+	gdouble ef;
+	gboolean is_ref;
+	gint  spe_index;
 	_UO.graph_comp=g_malloc(_UC._nspecies*sizeof(gpointer));
+	_UO.ef_refs=g_malloc0(_UC._nspecies*sizeof(gdouble));
+	_UO.natom_refs=g_malloc0(_UC._nspecies*sizeof(gint));
+	for(spe_index=0;spe_index<_UC._nspecies;spe_index++){
+		ef=1.0/0.0;/*+inf*/
+		for(idx=0;idx<_UO.num_struct;idx++){
+			is_ref=TRUE;
+			for(jdx=0;jdx<_UC._nspecies;jdx++) {
+				if((spe_index!=jdx)&&(_UO.ind[idx].atoms[jdx]!=0)) is_ref=FALSE;
+				if((spe_index==jdx)&&(_UO.ind[idx].atoms[jdx]==0)) is_ref=FALSE;
+			}
+			if(is_ref){
+				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef){
+					ef=_UO.ind[idx].energy/(gdouble)_UO.ind[idx].natoms;
+					_UO.ef_refs[spe_index]=_UO.ind[idx].energy;
+					_UO.natom_refs[spe_index]=_UO.ind[idx].natoms;
+				}
+			}
+		}
+	}
+/*END new*/
+
 	for(species_index=0;species_index<_UC._nspecies;species_index++){
-		min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
-		max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
+//		min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
+//		max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
 		n_compo=2;
 		gx.x_size=n_compo;
 		gx.x=g_malloc(n_compo*sizeof(gdouble));
@@ -3867,7 +3917,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			gx.x_size=n_compo;
 		}
 		c_min=g_malloc(n_compo*sizeof(gdouble));/*we need a list of minimum for convex hull*/
-		for(idx=0;idx<n_compo;idx++) c_min[idx]=max_E;
+		for(idx=0;idx<n_compo;idx++) c_min[idx]=1.0/0.0;/*+inf*/
 #if DEBUG_USPEX_READ
 	fprintf(stdout,"Species %s detected %i compositions!\n",elements[_UC.atomType[species_index]].symbol,n_compo);
 	fprintf(stdout,"C = { ");for(idx=0;idx<n_compo;idx++) fprintf(stdout,"%f ",gx.x[idx]);
@@ -3877,7 +3927,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		_UO.graph_comp[species_index]=graph_new(line, model);
 		g_free(line);
 		dat_graph_set_x(gx,_UO.graph_comp[species_index]);
-		dat_graph_set_limits(0.,1.,min_E,max_E,_UO.graph_comp[species_index]);
+//		dat_graph_set_limits(0.,1.,min_E,max_E,_UO.graph_comp[species_index]);
 		dat_graph_set_type(GRAPH_XX_TYPE,_UO.graph_comp[species_index]);
 		line=g_strdup_printf("<big>Structure energy vs. %s composition</big>",elements[_UC.atomType[species_index]].symbol);
 		dat_graph_set_title(line,_UO.graph_comp[species_index]);
@@ -3888,6 +3938,8 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		g_free(line);
 		dat_graph_set_y_title("Structure energy (eV)",_UO.graph_comp[species_index]);
 		/*dynamically create y*/
+		min_E=1.0/0.0;/*+inf*/
+		max_E=-1.0/0.0;/*-inf*/
 		for(jdx=0;jdx<n_compo;jdx++){
 			num=0;gy.y=NULL;gy.idx=NULL;gy.mixed_symbol=FALSE;/*no cross symbol is the default*/
 			for(idx=0;idx<_UO.num_struct;idx++){
@@ -3911,7 +3963,15 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 					g_free(gy.idx);
 					g_free(gy.symbol);
 				}
-				c[num-1]=_UO.ind[idx].E;
+/*NEW: modify with the reference*/
+				ef=_UO.ind[idx].energy;
+				for(spe_index=0;spe_index<_UC._nspecies;spe_index++)
+					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+				c[num-1]=ef;
+				if(ef<min_E) min_E=ef;
+				if(ef>max_E) max_E=ef;
+/*END new*/
+//				c[num-1]=_UO.ind[idx].E;
 				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
 				if(_UO.ind[idx].struct_number>0) {
 					c_idx[num-1]=_UO.ind[idx].struct_number;
@@ -3931,6 +3991,8 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			gy.sym_color=g_malloc0(num*sizeof(graph_color));
 			for(idx=0;idx<num;idx++) gy.sym_color[idx]=GRAPH_COLOR_DEFAULT;
 			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+			ef=(max_E-min_E)*0.05;
+			dat_graph_set_limits(0.,1.,min_E-ef,max_E+ef,_UO.graph_comp[species_index]);
 			dat_graph_add_y(gy,_UO.graph_comp[species_index]);
 			if(num>0){
 				g_free(gy.y);

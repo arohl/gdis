@@ -3736,14 +3736,19 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec){
  *	distant server. See TODO */
 	fprintf(stderr,"USPEX calculation can't be done in this environment.\n");return;
 #else 
-	/*direct launch*/
+	/*direct launch: NEW - only use the USPEX own interface*/
+	cmd = g_strdup_printf("%s -r > uspex.log",(*uspex_exec).job_uspex_exe);
+
+#ifdef NO_NO_NO
 if(uspex_gui.have_v1010){
 	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s > uspex.log",(*uspex_exec).job_uspex_exe);
-	else cmd = g_strdup_printf("%s -m > uspex.log",(*uspex_exec).job_uspex_exe);
+	else cmd = g_strdup_printf("%s -r > uspex.log",(*uspex_exec).job_uspex_exe);
 }else{
 	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s -9 > uspex.log",(*uspex_exec).job_uspex_exe);
 	else cmd = g_strdup_printf("%s -m9 > uspex.log",(*uspex_exec).job_uspex_exe);
 }
+#endif //NO_NO_NO
+
 #endif
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*uspex_exec).job_path);
