@@ -2370,8 +2370,10 @@ fprintf(stdout,"e=%lf ",_UO.ind[idx].energy);
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"e/atm=%lf ",_UO.ind[idx].E);
 #endif
-		if(_UO.ind[idx].E<_UO.min_E) _UO.min_E=_UO.ind[idx].E;
-		if(_UO.ind[idx].E>_UO.max_E) _UO.max_E=_UO.ind[idx].E;
+		if(_UO.ind[idx].energy<10000.000){
+			if(_UO.ind[idx].E<_UO.min_E) _UO.min_E=_UO.ind[idx].E;
+			if(_UO.ind[idx].E>_UO.max_E) _UO.max_E=_UO.ind[idx].E;
+		}
 		ptr=ptr2+1;
 		__SKIP_BLANK(ptr);
 		/*get volume*/
@@ -2842,8 +2844,10 @@ fprintf(stdout,"#DBG update_graph_all: fixed GEN=%i num=%i ",gen,num);
 		if((_UO.ind[jdx].gen==gen)&&(_UO.ind[jdx].have_data)){
 			idx=jdx;
 			gy->y[ix]=_UO.ind[jdx].E;
-			if(gy->y[ix]<min_E) min_E=gy->y[ix];
-			if(gy->y[ix]>max_E) max_E=gy->y[ix];
+			if(_UO.ind[jdx].energy<10000.000){
+				if(gy->y[ix]<min_E) min_E=gy->y[ix];
+				if(gy->y[ix]>max_E) max_E=gy->y[ix];
+			}
 			gy->symbol[ix]=GRAPH_SYMB_SQUARE;
 			gy->sym_color[ix]=GRAPH_COLOR_DEFAULT;
 			if(_UO.ind[jdx].struct_number>0) {
@@ -2913,8 +2917,10 @@ fprintf(stdout,"#DBG update_graph_all: GEN=%i num=%i ",gen,num);
 					idx=jdx;
 					/*should we check idx>(num_struct+add_ind)?*/
 					gy->y[ix]=_UO.ind[jdx].E;
-					if(gy->y[ix]<min_E) min_E=gy->y[ix];
-					if(gy->y[ix]>max_E) max_E=gy->y[ix];
+					if(_UO.ind[jdx].energy<10000.000){
+						if(gy->y[ix]<min_E) min_E=gy->y[ix];
+						if(gy->y[ix]>max_E) max_E=gy->y[ix];
+					}
 					gy->symbol[ix]=GRAPH_SYMB_SQUARE;
 					gy->sym_color[ix]=GRAPH_COLOR_DEFAULT;
 					if(_UO.ind[jdx].struct_number>0) {
@@ -3038,8 +3044,10 @@ fprintf(stdout,"#DBG update_graph_best: num=%i ",num);
 		for(jdx=0;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen){
 				gy.y[ix]=_UO.ind[_UO.best_ind[jdx+1]].E;
-				if(gy.y[ix]<min_E) min_E=gy.y[ix];
-				if(gy.y[ix]>max_E) max_E=gy.y[ix];
+				if(_UO.ind[ix].energy<10000.000){
+					if(gy.y[ix]<min_E) min_E=gy.y[ix];
+					if(gy.y[ix]>max_E) max_E=gy.y[ix];
+				}
 				if(_UO.ind[_UO.best_ind[jdx+1]].struct_number>0) {
 					gy.idx[ix]=_UO.ind[_UO.best_ind[jdx+1]].struct_number;
 					gy.symbol[ix]=GRAPH_SYMB_SQUARE;
@@ -3706,11 +3714,13 @@ if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 }else{
 	_UO.graph_best=graph_new("e_BEST", model);
 	/*determine limits*/
-	min_E=_UO.ind[_UO.best_ind[1]].E;
-	max_E=_UO.ind[_UO.best_ind[1]].E;
+	min_E=1.0/0.0;/*+inf*/
+	max_E=-1.0/0.0;/*-inf*/
 	for(idx=0;idx<_UO.num_best;idx++){
-		if(_UO.ind[_UO.best_ind[2*idx+1]].E < min_E) min_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
-		if(_UO.ind[_UO.best_ind[2*idx+1]].E > max_E) max_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
+		if(_UO.ind[_UO.best_ind[2*idx+1]].energy<10000.000){
+			if(_UO.ind[_UO.best_ind[2*idx+1]].E < min_E) min_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
+			if(_UO.ind[_UO.best_ind[2*idx+1]].E > max_E) max_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
+		}
 	}
 	/*for case where energy is not properly calculated*/
 	if(max_E==min_E) {
@@ -3860,14 +3870,75 @@ fprintf(stdout,"-SENT\n");
 /* --- variable composition */
 	/*there is extra graphs for variable composition*/
 if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
-/*NEW: create a reference to calculate E_f*/
+/*create a reference to calculate E_f*/
 	gdouble ef;
 	gboolean is_ref;
 	gint  spe_index;
+	gint tmp_nspecies = 0;
 	_UO.graph_comp=g_malloc(_UC._nspecies*sizeof(gpointer));
 	_UO.ef_refs=g_malloc0(_UC._nspecies*sizeof(gdouble));
 	_UO.natom_refs=g_malloc0(_UC._nspecies*sizeof(gint));
-	for(spe_index=0;spe_index<_UC._nspecies;spe_index++){
+/*NEW: read chem.in (if available)*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"chem.in");
+	vf = fopen(aux_file, "rt");
+	if (!vf) {
+		/*there is no error if the file is not here!*/
+	}else{
+		gint tmp_species  = 0;
+		gdouble tmp_e_ref=0.0;
+		line = file_read_line(vf);
+		while((line)&&(!feof(vf))){
+			ptr=&(line[0]);
+			if((find_in_string("pictave",line) != NULL)
+				||(find_in_string("Pictave",line) != NULL)
+				||(find_in_string("PICTAVE",line) != NULL)){
+				_UO.pictave=TRUE;
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			tmp_species=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+			if(ptr2==NULL){/*skip*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			ptr=ptr2+1;
+			tmp_nspecies=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+			if(ptr2==NULL){/*skip*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			ptr=ptr2+1;
+			tmp_e_ref=(gdouble)g_ascii_strtod(ptr,NULL);
+			if((tmp_species<1)||(tmp_nspecies<1)||(tmp_e_ref==0.)){
+				/*wrong values: SKIP*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			tmp_species--;
+			_UO.natom_refs[tmp_species]=tmp_nspecies;
+			_UO.ef_refs[tmp_species]=tmp_e_ref;
+#if DEBUG_USPEX_READ
+fprintf(stdout,"READ: REF[%i] NATOMS=%i E_REF=%lf\n",tmp_species,tmp_nspecies,tmp_e_ref);
+#endif
+			/*EOL*/
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		fclose(vf);
+	}
+	g_free(aux_file);
+/*END new*/
+if(_UO.pictave){
+	tmp_nspecies = _UC._nspecies-1;
+}else{
+	tmp_nspecies = _UC._nspecies;
+}
+	for(spe_index=0;spe_index<tmp_nspecies;spe_index++){
+		if(_UO.natom_refs[spe_index]!=0) continue;
 		ef=1.0/0.0;/*+inf*/
 		for(idx=0;idx<_UO.num_struct;idx++){
 			is_ref=TRUE;
@@ -3884,20 +3955,16 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			}
 		}
 	}
-/*END new*/
-
-	for(species_index=0;species_index<_UC._nspecies;species_index++){
-//		min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
-//		max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
+/*determine the different compositions*/
+	for(species_index=0;species_index<tmp_nspecies;species_index++){
 		n_compo=2;
 		gx.x_size=n_compo;
 		gx.x=g_malloc(n_compo*sizeof(gdouble));
-		/*determine the different compositions*/
 		gx.x[0]=0.;
 		gx.x[1]=1.;
 		for(idx=0;idx<_UO.num_struct;idx++){
 			if(!_UO.ind[idx].have_data) continue;
-			c_sum=0;for(ix=0;ix<_UO.calc->_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
+			c_sum=0;for(ix=0;ix<tmp_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
 			if(c_sum==0) continue;/*something stupid here!*/
 			compo=(gdouble)(_UO.ind[idx].atoms[species_index])/c_sum;
 			if((compo>=1.0)||(compo<=0.0)) {
@@ -3927,7 +3994,6 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		_UO.graph_comp[species_index]=graph_new(line, model);
 		g_free(line);
 		dat_graph_set_x(gx,_UO.graph_comp[species_index]);
-//		dat_graph_set_limits(0.,1.,min_E,max_E,_UO.graph_comp[species_index]);
 		dat_graph_set_type(GRAPH_XX_TYPE,_UO.graph_comp[species_index]);
 		line=g_strdup_printf("<big>Structure energy vs. %s composition</big>",elements[_UC.atomType[species_index]].symbol);
 		dat_graph_set_title(line,_UO.graph_comp[species_index]);
@@ -3944,7 +4010,7 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 			num=0;gy.y=NULL;gy.idx=NULL;gy.mixed_symbol=FALSE;/*no cross symbol is the default*/
 			for(idx=0;idx<_UO.num_struct;idx++){
 				if(!_UO.ind[idx].have_data) continue;
-				c_sum=0;for(ix=0;ix<_UO.calc->_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
+				c_sum=0;for(ix=0;ix<tmp_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
 				compo=(gdouble)(_UO.ind[idx].atoms[species_index])/c_sum;
 				if((compo-gx.x[jdx])!=0.0) continue;
 				num++;
@@ -3964,14 +4030,17 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 					g_free(gy.symbol);
 				}
 /*NEW: modify with the reference*/
-				ef=_UO.ind[idx].energy;
-				for(spe_index=0;spe_index<_UC._nspecies;spe_index++)
-					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
-				c[num-1]=ef;
-				if(ef<min_E) min_E=ef;
-				if(ef>max_E) max_E=ef;
+				if(_UO.ind[idx].energy<10000.000){
+					ef=_UO.ind[idx].energy;
+					for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
+						ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+					c[num-1]=ef;
+					if(ef<min_E) min_E=ef;
+					if(ef>max_E) max_E=ef;
+				}else{
+					c[num-1]=10000.000;/*but no update of graph limits*/
+				}
 /*END new*/
-//				c[num-1]=_UO.ind[idx].E;
 				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
 				if(_UO.ind[idx].struct_number>0) {
 					c_idx[num-1]=_UO.ind[idx].struct_number;

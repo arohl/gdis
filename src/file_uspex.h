@@ -324,6 +324,7 @@ typedef struct {
 /*references*/
 	gint *natom_refs;			/*NEW: number of atoms in each reference*/
 	gdouble *ef_refs;			/*NEW: energy of reference*/
+	gboolean pictave;			/*NEW: if true, last species is a fake atom*/
 /*interpretation*/
         gpointer graph;
         gpointer graph_best;
