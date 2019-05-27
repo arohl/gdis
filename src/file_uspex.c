@@ -2587,9 +2587,11 @@ fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G set=%i\n",comp,_UO.in
 				}
 /*end NEW*/
 				gy->y_size=1;
+				gy->sym_color[0]=GRAPH_COLOR_DEFAULT;
 				if(_UO.ind[idx].struct_number>0){
 					gy->idx[0]=_UO.ind[idx].struct_number;
 					gy->symbol[0]=GRAPH_SYMB_SQUARE;
+					gy->mixed_symbol=FALSE;
 				}else{
 					gy->idx[0]=-1*idx;
 					gy->symbol[0]=GRAPH_SYMB_CROSS;
@@ -2603,7 +2605,8 @@ gy->sym_color[0]=GRAPH_COLOR_GREEN;
 				gy->type=GRAPH_XX_TYPE;
 				gy->line=GRAPH_LINE_NONE;
 				gy->color=GRAPH_COLOR_DEFAULT;
-				_lst=g_slist_insert_before(graph->set_list,g_slist_nth(graph->set_list,comp_ix+1),(gpointer)gy);
+				_lst=g_slist_insert(graph->set_list,(gpointer)gy,comp_ix);/*TRY*/
+//				_lst=g_slist_insert_before(graph->set_list,g_slist_nth(graph->set_list,comp_ix+1),(gpointer)gy);
 				if(_lst!=NULL) graph->set_list=_lst;
 				else{
 fprintf(stdout,"COMP ERROR: list insert fail!\n");
@@ -2698,15 +2701,14 @@ fprintf(stdout,"#DBG update_graph_comp: recalculate hull\n");
 		c_gy.line=GRAPH_LINE_DASH;
 		c_gy.color=GRAPH_COLOR_DEFAULT;
 		/*create the mini array*/
-		c_min=g_malloc(n_compo*sizeof(gdouble));
+		c_min=g_malloc0(n_compo*sizeof(gdouble));
 		idx=0;
 		list=g_slist_next(list);
-		while(list){
+		for(idx=0;(list)&&(idx<n_compo);idx++){
 			py=(g_data_y *)list->data;
 			c_min[idx]=py->y[0];
 			for(jdx=0;jdx<py->y_size;jdx++) if(py->y[jdx]<c_min[idx]) c_min[idx]=py->y[jdx];
 			list=g_slist_next(list);
-			idx++;
 		}
 	/*look for the minimum of minimum*/
 		min=0;

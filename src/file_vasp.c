@@ -1821,8 +1821,12 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	}
 	if (line == NULL) return -1;/*incomplete positions*/
 	g_free(line);
-	if (idx != model->num_atoms) /* This should not happen */
-		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->num_atoms,idx);
+	if (idx != model->num_atoms){
+		if (model->track_me==FALSE)
+			fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->num_atoms,idx);
+		else
+			model->num_atoms = idx;
+	}
 	/* look for energies */
 	vasp_xml_read_energy(vf,model);
 	vasp_xml_read_forces(vf,model);
