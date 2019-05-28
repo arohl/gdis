@@ -2397,8 +2397,14 @@ fprintf(stdout,"d=%lf ",_UO.ind[idx].density);
 		ptr=ptr2+1;
 		__SKIP_BLANK(ptr);
 		/*get fitness*/
-		_UO.ind[idx].fitness=10000;
-		_UO.ind[idx].fitness=g_ascii_strtod(ptr,&ptr2);
+		if(*ptr=='N') {
+			_UO.ind[idx].fitness=10000;
+			ptr+=3;/*N/A*/
+			__SKIP_BLANK(ptr);
+			ptr2=ptr;
+		}else{
+			_UO.ind[idx].fitness=g_ascii_strtod(ptr,&ptr2);
+		}
 		if(ptr2==NULL) goto end_loop_ind;
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"f=%lf ",_UO.ind[idx].fitness);
@@ -2417,7 +2423,6 @@ get_symmetry:
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"sym=%i ",_UO.ind[idx].symmetry);
 #endif
-                /*-> ignore the "N/A" possibility on symmetry*/
 end_loop_ind:
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
 fprintf(stdout,"\n");
@@ -2858,7 +2863,8 @@ fprintf(stdout,"#DBG update_graph_all: fixed GEN=%i num=%i ",gen,num);
 				if(gy->y[ix]>max_E) max_E=gy->y[ix];
 			}
 			gy->symbol[ix]=GRAPH_SYMB_SQUARE;
-			gy->sym_color[ix]=GRAPH_COLOR_DEFAULT;
+			if(add_gen>0) gy->sym_color[ix]=GRAPH_COLOR_DEFAULT;
+			else gy->sym_color[ix]=GRAPH_COLOR_GREEN;
 			if(_UO.ind[jdx].struct_number>0) {
 				gy->idx[ix]=_UO.ind[jdx].struct_number;
 				if(is_best_ind(uspex_output,jdx)) gy->sym_color[ix]=GRAPH_COLOR_RED;
@@ -2868,7 +2874,7 @@ fprintf(stdout,"#DBG update_graph_all: fixed GEN=%i num=%i ",gen,num);
 				gy->mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 			}
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i ",jdx,ix,gy->y[ix],ix,gy->symbol[ix]);
+fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i struct=%i",jdx,ix,gy->y[ix],ix,gy->symbol[ix],gy->idx[ix]);
 #endif
 			ix++;
 		}
@@ -2931,17 +2937,17 @@ fprintf(stdout,"#DBG update_graph_all: GEN=%i num=%i ",gen,num);
 						if(gy->y[ix]>max_E) max_E=gy->y[ix];
 					}
 					gy->symbol[ix]=GRAPH_SYMB_SQUARE;
-					gy->sym_color[ix]=GRAPH_COLOR_DEFAULT;
+					gy->sym_color[ix]=GRAPH_COLOR_GREEN;
 					if(_UO.ind[jdx].struct_number>0) {
 						gy->idx[ix]=_UO.ind[jdx].struct_number;
-						if(is_best_ind(uspex_output,jdx)) gy->sym_color[ix]=GRAPH_COLOR_RED;
+// should not happen -> 			if(is_best_ind(uspex_output,jdx)) gy->sym_color[ix]=GRAPH_COLOR_RED;
 					} else {
 						gy->idx[ix]=-1*jdx;
 						gy->symbol[ix]=GRAPH_SYMB_CROSS;
 						gy->mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 					}
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i ",jdx,ix,gy->y[ix],ix,gy->symbol[ix]);
+fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i struct=%i ",jdx,ix,gy->y[ix],ix,gy->symbol[ix],gy->idx[ix]);
 #endif
 					ix++;
 				}
@@ -3586,6 +3592,7 @@ fprintf(stdout,"#DBG: N_BEST=%i ",_UO.num_best);
 		_UO.best_ind[idx]=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
 		if(ptr2!=NULL) {
 			ptr=ptr2+1;
+			__SKIP_BLANK(ptr);
 			_UO.best_ind[idx+1]=(gint)g_ascii_strtoull(ptr,NULL,10);
 		}
 #if DEBUG_USPEX_READ
@@ -4755,7 +4762,7 @@ if((new_gen-old_gen)>0){
 			ptr=&(line[0]);
 			__SKIP_BLANK(ptr);
 		}
-		/*counting*/
+		/*we have to count because there is no way to know how many BEST structure per generation*/
 		idx=0;
 		while(line){
 			idx++;
@@ -4792,6 +4799,7 @@ fprintf(stdout,"TRACK: ADD-%i-BEST\n",idx);
 			_UO.best_ind[idx]=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
 			if(ptr2!=NULL){
 				ptr=ptr2+1;
+				__SKIP_BLANK(ptr);
 				_UO.best_ind[idx+1]=(gint)g_ascii_strtoull(ptr,NULL,10);
 			}
 #if DEBUG_TRACK_USPEX
