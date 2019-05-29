@@ -2281,6 +2281,11 @@ fprintf(stdout,"#DBG: update_individuals skip to %li\n",vfpos);
 			/*skip additionnal header lines*/
 			g_free(line);
 			line = file_read_line(vf);
+			if(line==NULL){
+				/*not ready yet...*/
+				fclose(vf);
+				return -1;/*fail*/
+			}
 			ptr=&(line[0]);
 			__SKIP_BLANK(ptr);
 		}
@@ -2486,6 +2491,7 @@ else tmp_nspecies=_UO.calc->_nspecies;
 	for(species=0;species<tmp_nspecies;species++){
 		graph=(struct graph_pak *)_UO.graph_comp[species];
 		if(graph==NULL) return;/*NO GOOD*/
+		if(graph->size<2) return;/*actually, we have to try and build the COMP_X graphs again...*/
 		if(graph->set_list==NULL) return;/*NO GOOD*/
 		list=g_slist_last(graph->set_list);
 		if(list==NULL) return;/*NO GOOD*/
@@ -2711,7 +2717,9 @@ fprintf(stdout,"#DBG update_graph_comp: recalculate hull\n");
 		list=g_slist_next(list);
 		for(idx=0;(list)&&(idx<n_compo);idx++){
 			py=(g_data_y *)list->data;
-			c_min[idx]=py->y[0];
+// FIXME update trouble with tracking FIXME
+			if(py->y!=NULL) c_min[idx]=py->y[0];
+			else continue;
 			for(jdx=0;jdx<py->y_size;jdx++) if(py->y[jdx]<c_min[idx]) c_min[idx]=py->y[jdx];
 			list=g_slist_next(list);
 		}
@@ -4546,11 +4554,11 @@ gboolean track_uspex(void *data){
 	/*is being called every TRACKING_TIMEOUT; every "return FALSE" will stop the timer!*/
 	if(data==NULL) return FALSE;/*STOP TRACKING if there is no model*/
 	model=(struct model_pak *)data;
-	if(model->uspex==NULL) return FALSE;/*no model, no tracking*/
+//	if(model->uspex==NULL) return FALSE;/*no model, no tracking*/
 	model->track_nb=(model->track_nb+1)%3;
 	if(model->track_me==FALSE) return FALSE;/*tracking is over*/
 	/**/
-	if(model->uspex==NULL){
+	if(model->uspex==NULL){/*contradict no model, no tracking*/
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 #endif
@@ -4558,7 +4566,10 @@ fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 		line=g_strdup(model->filename);
 		new_model=model_new();
                 model_init(new_model);
-		if(read_output_uspex(line,model)==0){
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: TRY-READ: %s\n",line);
+#endif
+		if(read_output_uspex(line,new_model)==0){
 			/*NEW reading is valid!*/
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: READ SUCCESS\n");
@@ -4570,6 +4581,8 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 		}else{
 			model_delete(new_model);
 			g_free(line);
+			if(model->uspex!=NULL) g_free(model->uspex);
+			model->uspex=NULL;
 			return TRUE;/*we fail to read the file, but won't give up!*/
 		}
 		
@@ -4579,6 +4592,8 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 	uspex_output=(uspex_output_struct *)model->uspex;
 	uspex_calc=(uspex_calc_struct *)_UO.calc;
 	if(uspex_calc==NULL) {
+		/*try to get it*/
+//		uspex_calc=
 		line = g_strdup_printf("USPEX TRACKING: missing calculation setting!\n");
 		gui_text_show(ERROR,line);
 		g_free(line);
@@ -4885,6 +4900,9 @@ fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
                 model=NULL;/*_BUG_ spotted*/
                 other_model->track_me=TRUE;
                 g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_uspex,other_model,track_uspex_cleanup);
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: RE-START\n");
+#endif
                 ptr=g_strdup_printf("USPEX TRACKING: (RE-)START.\n");
                 gui_text_show(ITALIC,ptr);
                 g_free(ptr);

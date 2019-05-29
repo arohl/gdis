@@ -50,6 +50,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "file_uspex.h"
 #include "gui_defs.h"
 #include "gui_uspex.h"
+#include "track.h"
 
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
@@ -3738,17 +3739,6 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec){
 #else 
 	/*direct launch: NEW - only use the USPEX own interface*/
 	cmd = g_strdup_printf("%s -r > uspex.log",(*uspex_exec).job_uspex_exe);
-
-#ifdef NO_NO_NO
-if(uspex_gui.have_v1010){
-	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s > uspex.log",(*uspex_exec).job_uspex_exe);
-	else cmd = g_strdup_printf("%s -r > uspex.log",(*uspex_exec).job_uspex_exe);
-}else{
-	if(uspex_gui.have_octave) cmd = g_strdup_printf("%s -9 > uspex.log",(*uspex_exec).job_uspex_exe);
-	else cmd = g_strdup_printf("%s -m9 > uspex.log",(*uspex_exec).job_uspex_exe);
-}
-#endif //NO_NO_NO
-
 #endif
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*uspex_exec).job_path);
@@ -3762,11 +3752,13 @@ if(uspex_gui.have_v1010){
 /* cleanup task: load result */
 /*****************************/
 void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
-	/*USPEX process has exit, DO NOT try to load the result -- yet*/
-	/*sync_ wait for result?*/
-	while(!(*uspex_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
-	/*TODO: connect an empty model that will be updated with uspex results AS THEY ARRIVE TODO*/
-/*just wipe the structure*/
+	gchar *line;
+	/*USPEX process ENDED*/
+//	while(!(*uspex_exec).have_result) usleep(500*1000);/*wait for end of process*/
+	line = g_strdup_printf("USPEX job finished!");
+	gui_text_show(ITALIC,line);
+	g_free(line);
+	/*CLEANUP*/
 	sysenv.uspex_calc_list=g_slist_remove(sysenv.uspex_calc_list,uspex_exec);/*does not free, does it?*/
 	g_free(uspex_exec);
 }
@@ -3774,6 +3766,10 @@ void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
 /* Enqueue a uspex calculation */
 /******************************/
 void uspex_exec_calc(){
+	FILE *fp;
+	gint idx;
+	gchar *filename;
+	struct model_pak *result_model;
 	uspex_exec_struct *uspex_exec;
 	/*this will sync then enqueue a USPEX calculation*/
 	if(save_uspex_calc()) return;/*sync and save all file*/
@@ -3781,14 +3777,43 @@ void uspex_exec_calc(){
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_id=g_slist_length(sysenv.uspex_calc_list);
 	uspex_exec->have_result=FALSE;
+	uspex_exec->task_pid=0;
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
+/*Get the future valid index*/
+	idx=1;
+	do{
+		filename=g_strdup_printf("%s/results%i/OUTPUT.txt",(*uspex_exec).job_path,idx);
+		fp=fopen(filename,"rt");
+		if(fp==NULL) break;
+		fclose(fp);
+		idx++;
+	}while(TRUE);
+	(*uspex_exec).index=idx;
+	filename=g_strdup_printf("%s/results%i/OUTPUT.txt",(*uspex_exec).job_path,(*uspex_exec).index);
 	/*prepend to calc list*/
 	sysenv.uspex_calc_list = g_slist_prepend (sysenv.uspex_calc_list,uspex_exec);
 	/*launch uspex in a task*/
 	GUI_LOCK(uspex_gui.button_save);
 	GUI_LOCK(uspex_gui.button_exec);
 	task_new("USPEX", &run_uspex_exec,uspex_exec,&cleanup_uspex_exec,uspex_exec,sysenv.active_model);
+	/*let's try something else.. we set a minimum model, and send it to tracking*/
+	result_model=model_new();
+	model_init(result_model);
+	strcpy(result_model->filename,filename);
+	result_model->uspex=NULL;
+	result_model->track_me = TRUE;
+	g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_uspex,result_model,track_uspex_cleanup);
+/*draw a dummy model*/
+	g_free(result_model->basename);
+	result_model->basename = g_strdup("new_USPEX");
+	sysenv.active_model = result_model;
+	model_prep(result_model);
+	result_model->mode = FREE;
+	result_model->rmax = 5.0*RMAX_FUDGE;
+	tree_model_add(result_model);
+	tree_select_model(result_model);
+	redraw_canvas(SINGLE);
 	/*when task is launched, close dialog*/
 	uspex_cleanup();
 	GUI_CLOSE(uspex_gui.window);
