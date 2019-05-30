@@ -2455,333 +2455,354 @@ gboolean is_best_ind(uspex_output_struct *uspex_output,gint ix){
 		if(ix==_UO.best_ind[2*idx+1]) return TRUE;
 	return FALSE;
 }
-/***********************/
-/* update COMP_X graph */
-/***********************/
-void uspex_graph_comp_update(gint add_ind, uspex_output_struct *uspex_output){
-	GSList *list;
-	GSList *_lst;
-	g_data_x *gx;
-	g_data_y *gy;
-	g_data_x *px;
-	g_data_y *py;
-	gdouble comp;
-	gint comp_ix;
-	gint atm_sum;
-	gint idx,jdx;
-	gint species;
-	struct graph_pak *graph;
-	/*ADDON: references*/
-	gdouble ef;
+/****************/
+/* update e_ref */
+/****************/
+void uspex_update_eref(uspex_output_struct *uspex_output){
+	gint  idx, jdx;
+	gdouble ef_ref;
+	gboolean isref;
 	gint spe_index;
-	gboolean is_ref;
-	gint tmp_nspecies = 0;
-/**/
-	if(add_ind < 1) return;/*nothing to do*/
-	if(uspex_output == NULL) return;
-	if(_UO.calc==NULL) return;
-	if(!_UO.calc->_calctype_var) return;/*not a VARCOMP*/
-	if(_UO.calc->_nspecies<2) return;/*not a VARCOMP*/
-	if(_UO.graph_comp == NULL) return;/*TODO: prepare a new graph?*/
-if((_UO.ef_refs==NULL)||(_UO.natom_refs==NULL)) return;/*NEW: no ref?*/
-/*NEW*/
-if(_UO.pictave) tmp_nspecies=_UO.calc->_nspecies-1;
-else tmp_nspecies=_UO.calc->_nspecies;
-/*1- remove the convex hull set for each COMP_X graph*/
-	for(species=0;species<tmp_nspecies;species++){
-		graph=(struct graph_pak *)_UO.graph_comp[species];
-		if(graph==NULL) return;/*NO GOOD*/
-		if(graph->size<2) return;/*actually, we have to try and build the COMP_X graphs again...*/
-		if(graph->set_list==NULL) return;/*NO GOOD*/
-		list=g_slist_last(graph->set_list);
-		if(list==NULL) return;/*NO GOOD*/
-		_lst=g_slist_remove(graph->set_list,list->data);
-		if(_lst==NULL) return;/*NO GOOD*/
-		graph->set_list=_lst;
-		graph->size--;
-	}
-/*1b- look for new references*/
-	for(idx=_UO.num_struct+add_ind-1;idx>=_UO.num_struct;idx--){
-		for(species=0;species<tmp_nspecies;species++){
-			is_ref=TRUE;
-			ef=_UO.ef_refs[species]/_UO.natom_refs[species];
-			for(spe_index=0;spe_index<_UO.calc->_nspecies;spe_index++){
-				if((spe_index!=species)&&(_UO.ind[idx].atoms[species]!=0)) is_ref=FALSE;
-				if((spe_index==species)&&(_UO.ind[idx].atoms[species]==0)) is_ref=FALSE;
+	gint n_species;
+	gint tmp_nspec;
+	FILE *vf;
+	gchar *line;
+	gchar *aux_file;
+	gchar *ptr,*ptr2;
+	/**/
+	if(uspex_output==NULL) return;
+	n_species=_UO.calc->_nspecies;
+	if( n_species<1) return;
+	/*we update e_ref OR create it*/
+	if(_UO.ef_refs==NULL) _UO.ef_refs=g_malloc0(n_species*sizeof(gdouble));
+	if(_UO.natom_refs==NULL) _UO.natom_refs=g_malloc0(n_species*sizeof(gint));
+	_UO.pictave=FALSE;/*default*/
+/*NEW: first assign automatic values*/
+	for(spe_index=0;spe_index<n_species;spe_index++){
+		ef_ref=1.0/0.0;/*+inf*/
+		for(idx=0;idx<_UO.num_struct;idx++){
+			isref=TRUE;
+			for(jdx=0;jdx<n_species;jdx++) {
+				if((spe_index!=jdx)&&(_UO.ind[idx].atoms[jdx]!=0)) isref=FALSE;
+				if((spe_index==jdx)&&(_UO.ind[idx].atoms[jdx]==0)) isref=FALSE;
 			}
-			if(is_ref){
-				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef){
-#if DEBUG_TRACK_USPEX
-fprintf(stdout,"COMP: new ref! SPE[%i] NATOMS=%i E_REF=%lf\n",spe_index,_UO.natom_refs[spe_index],_UO.ef_refs[spe_index]);
-#endif
+			if(isref){
+				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef_ref){
+					ef_ref=_UO.ind[idx].energy/(gdouble)_UO.ind[idx].natoms;
 					_UO.ef_refs[spe_index]=_UO.ind[idx].energy;
 					_UO.natom_refs[spe_index]=_UO.ind[idx].natoms;
 				}
 			}
 		}
 	}
-/*2- we need to process only the add_ind last individuals*/
-	for(idx=_UO.num_struct+add_ind-1;idx>=_UO.num_struct;idx--){
-		/*These are the new ones*/
-		if(_UO.ind[idx].atoms==NULL){
-fprintf(stdout,"COMP ERROR: no Atoms in Individual!\n");
-			return;
-		}
-		for(species=0;species<tmp_nspecies;species++){
-			graph=(struct graph_pak *)_UO.graph_comp[species];
-			if(graph==NULL) {
-fprintf(stdout,"COMP ERROR: no graph!\n");
-				continue;/*ie ERROR*/
-			}
-			list=graph->set_list;/*X set*/
-			if(list==NULL) {
-fprintf(stdout,"COMP ERROR: no list!\n");
-				continue;/*ie ERROR*/
-			}
-			px=(g_data_x *)list->data;
-			/*there should be no case with a NULL px*/
-			atm_sum=0;
-			for(jdx=0;jdx<tmp_nspecies;jdx++) {
-				atm_sum+=_UO.ind[idx].atoms[jdx];
-			}
-			if(atm_sum==0) {
-fprintf(stdout,"COMP ERROR: atom sum is NULL!\n");
-				continue;/*ie ERROR*/
-}
-			if(_UO.ind[idx].atoms[species]==NAN){
-fprintf(stdout,"COMP ERROR: NAN in atom!\n");
+/*NOW read chem.in (if any)*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"chem.in");
+	vf = fopen(aux_file, "rt");
+	if (vf) {
+		/*we have a chem.in file*/
+		line = file_read_line(vf);
+		while((line)&&(!feof(vf))){
+			ptr=&(line[0]);
+			if((find_in_string("pictave",line) != NULL)
+				||(find_in_string("Pictave",line) != NULL)
+				||(find_in_string("PICTAVE",line) != NULL)){
+				_UO.pictave=TRUE;
+				g_free(line);
+				line = file_read_line(vf);
 				continue;
 			}
-			comp=(gdouble)(_UO.ind[idx].atoms[species])/atm_sum;
-#if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG COMP=%G ATOM_SUM=%i NATOMS=%i\n",comp,atm_sum,_UO.ind[idx].natoms);
-#endif
-			if((comp<0.0)||(comp>1.0)) {
-fprintf(stdout,"COMP ERROR: invalid composition!\n");
-				continue;/*ie ERROR*/
-}
-			/*try to find the composition*/
-			comp_ix=-1;
-			for(jdx=0;jdx<px->x_size;jdx++) if(px->x[jdx]==comp) comp_ix=jdx;
-			if(comp_ix<0){
-				/*composition was not found <- NEW composition*/
-/*FIXME: problem with new Y set and hull*/
-				/*X set*/
-				px->x_size++;
-				gx=g_malloc0(sizeof(g_data_x));
-				gx->x=g_realloc(px->x,(px->x_size)*sizeof(gdouble));
-				/*find NEW composition index*/
-				comp_ix=0;
-				while(comp<gx->x[comp_ix]) comp_ix++;
-#if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G set=%i\n",comp,_UO.ind[idx].E,comp_ix);
-#endif
-
-				for(jdx=px->x_size-1;jdx>comp_ix;jdx--) gx->x[jdx]=gx->x[jdx-1];
-				gx->x[comp_ix]=comp;
-				px->x=gx->x;
-				gx->x=NULL;
-				g_free(gx);
-				/*Y set*/
-				gy=g_malloc0(sizeof(g_data_y));
-				gy->y=g_malloc0(sizeof(gdouble));
-				gy->idx=g_malloc0(sizeof(gint32));
-				gy->symbol=g_malloc0(sizeof(graph_symbol));
-				gy->sym_color=g_malloc0(sizeof(graph_color));
-/*NEW: refs*/
-				ef=_UO.ind[idx].energy;
-				for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
-					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
-				gy->y[0]=ef;
-				if(ef<graph->ymin){
-					graph->ymin=ef-(graph->ymax-ef)*0.05;
-				}
-/*end NEW*/
-				gy->y_size=1;
-				gy->sym_color[0]=GRAPH_COLOR_DEFAULT;
-				if(_UO.ind[idx].struct_number>0){
-					gy->idx[0]=_UO.ind[idx].struct_number;
-					gy->symbol[0]=GRAPH_SYMB_SQUARE;
-					gy->mixed_symbol=FALSE;
-				}else{
-					gy->idx[0]=-1*idx;
-					gy->symbol[0]=GRAPH_SYMB_CROSS;
-					gy->mixed_symbol=TRUE;
-				}
-#if DEBUG_TRACK_USPEX
-/*NEW structure are set in green for DEBUG visibility.*/
-gy->sym_color[0]=GRAPH_COLOR_GREEN;
-//fprintf(stdout,"#DBG update_graph_comp: (comp=%G NEW) E=%G\n",comp,gy->y[0]);
-#endif
-				gy->type=GRAPH_XX_TYPE;
-				gy->line=GRAPH_LINE_NONE;
-				gy->color=GRAPH_COLOR_DEFAULT;
-				_lst=g_slist_insert(graph->set_list,(gpointer)gy,comp_ix);/*TRY*/
-//				_lst=g_slist_insert_before(graph->set_list,g_slist_nth(graph->set_list,comp_ix+1),(gpointer)gy);
-				if(_lst!=NULL) graph->set_list=_lst;
-				else{
-fprintf(stdout,"COMP ERROR: list insert fail!\n");
-					g_free(gy);
-				}
-				gy=NULL;
-				graph->size++;
-			}else{
-				/*composition was found*/
-				jdx=-1;while((list)&&(jdx<comp_ix)){
-					jdx++;
-					list=g_slist_next(list);
-				}
-				if(list==NULL) {
-fprintf(stdout,"COMP_ ERROR: no Y list!\n");
-					continue;/*ie ERROR*/
-				}
-				py=(g_data_y *)list->data;
-				py->y_size++;
-				gy=g_malloc0(sizeof(g_data_y));
-				gy->y=g_realloc(py->y,(py->y_size)*sizeof(gdouble));
-				gy->idx=g_realloc(py->idx,(py->y_size)*sizeof(gint32));
-				gy->symbol=g_realloc(py->symbol,(py->y_size)*sizeof(graph_symbol));
-				gy->sym_color=g_realloc(py->sym_color,(py->y_size)*sizeof(graph_color));
-				if((gy->y==NULL)||(gy->idx==NULL)||(gy->symbol==NULL)) return;/*can't realloc, will probably FAIL*/
-				/*add the new data at the end of the set*/
-/*NEW: refs*/
-				ef=_UO.ind[idx].energy;
-				for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
-					ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
-				gy->y[py->y_size-1]=ef;
-				if(ef<graph->ymin){
-					graph->ymin=ef-(graph->ymax-ef)*0.05;
-				}
-/*END new*/
-				gy->sym_color[py->y_size-1]=GRAPH_COLOR_DEFAULT;
-				if(_UO.ind[idx].struct_number>0){
-					gy->idx[py->y_size-1]=_UO.ind[idx].struct_number;
-					gy->symbol[py->y_size-1]=GRAPH_SYMB_SQUARE;
-				}else{
-					gy->idx[py->y_size-1]=-1*idx;
-					gy->symbol[py->y_size-1]=GRAPH_SYMB_CROSS;
-					gy->mixed_symbol=TRUE;
-				}
-#if DEBUG_TRACK_USPEX
-/*NEW structure are set in green for DEBUG visibility.*/
-gy->sym_color[py->y_size-1]=GRAPH_COLOR_GREEN;
-fprintf(stdout,"#DBG update_graph_comp: (comp=%G idx=%i) E=%G\n",comp,idx,gy->y[py->y_size-1]);
-#endif
-				gy->type=GRAPH_XX_TYPE;
-				gy->line=GRAPH_LINE_NONE;
-				gy->color=GRAPH_COLOR_DEFAULT;
-				/*COPY*/
-				py->y=gy->y;
-				gy->y=NULL;
-				py->idx=gy->idx;
-				gy->idx=NULL;
-				py->symbol=gy->symbol;
-				gy->symbol=NULL;
-				py->sym_color=gy->sym_color;
-				gy->sym_color=NULL;
-				g_free(gy);
+			spe_index=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+			if(ptr2==NULL){/*skip*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
 			}
+			ptr=ptr2+1;
+			tmp_nspec=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+			if(ptr2==NULL){/*skip*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			ptr=ptr2+1;
+			ef_ref=(gdouble)g_ascii_strtod(ptr,NULL);
+			if((spe_index<1)||(tmp_nspec<1)||(ef_ref==0.)){
+				/*wrong values: SKIP*/
+				g_free(line);
+				line = file_read_line(vf);
+				continue;
+			}
+			spe_index--;
+			_UO.natom_refs[spe_index]=tmp_nspec;
+			_UO.ef_refs[spe_index]=ef_ref;
+#if DEBUG_USPEX_TRACK
+fprintf(stdout,"READ: REF[%i] NATOMS=%i E_REF=%lf\n",spe_index,tmp_nspec,ef_ref);
+#endif
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		fclose(vf);
+	}
+	g_free(aux_file);
+/*check if we have all references*/
+	if(_UO.pictave){
+		tmp_nspec = n_species-1;
+	}else{
+		tmp_nspec = n_species;
+	}
+	_UO.have_ref=TRUE;
+	for(spe_index=0;spe_index<tmp_nspec;spe_index++){
+		if(_UO.natom_refs[spe_index]==0) {
+			_UO.have_ref=FALSE;
 		}
 	}
-/*3- re calculate and re-add the convex hull*/
-#if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG update_graph_comp: recalculate hull\n");
-#endif
-	/*TODO: this should be a single function*/
-	for(species=0;species<tmp_nspecies;species++){
-		gint min;
-		gint med;
-		gint max;
-		gint n_compo;
-		gdouble compo;
-		gdouble min_E;
-		gdouble max_E;
-		g_data_y c_gy;
-		gdouble *c_min;
-		graph=(struct graph_pak *)_UO.graph_comp[species];
-		list=graph->set_list;
-		px=(g_data_x *)list->data;
-		n_compo=px->x_size;/*number of compositions*/
-		c_gy.y_size=n_compo;
-		c_gy.y=g_malloc(n_compo*sizeof(gdouble));
-		c_gy.idx=g_malloc(n_compo*sizeof(gint32));
-		c_gy.symbol=g_malloc(n_compo*sizeof(graph_symbol));
-		c_gy.sym_color=NULL;//g_malloc(n_compo*sizeof(graph_color));
-		c_gy.mixed_symbol=TRUE;
-		c_gy.type=GRAPH_IY_TYPE;
-		c_gy.line=GRAPH_LINE_DASH;
-		c_gy.color=GRAPH_COLOR_DEFAULT;
-		/*create the mini array*/
-		c_min=g_malloc0(n_compo*sizeof(gdouble));
-		idx=0;
-		list=g_slist_next(list);
-		for(idx=0;(list)&&(idx<n_compo);idx++){
-			py=(g_data_y *)list->data;
-// FIXME update trouble with tracking FIXME
-			if(py->y!=NULL) c_min[idx]=py->y[0];
-			else continue;
-			for(jdx=0;jdx<py->y_size;jdx++) if(py->y[jdx]<c_min[idx]) c_min[idx]=py->y[jdx];
-			list=g_slist_next(list);
+}
+/***********************/
+/* update COMP_X graph */
+/***********************/
+void uspex_graph_comp_update(struct model_pak *model){
+//uspex_output_struct *uspex_output){
+/*NEW: due to possibly changing references, we delete/redraw the whole graph each time*/
+	gboolean new_graph;
+	g_data_x  gx;
+	g_data_y  gy;
+	gint idx,jdx;
+	gint min,max;
+	gint num,med;
+	gint gen,cur;
+	gchar  *line;
+	gint n_compo;
+	gdouble compo;
+	gint c_sum,ix;
+	gint32 *c_idx;
+	gdouble *c, *c_min;
+	graph_color *c_col;
+	gint species_index;
+	gdouble min_E,max_E;
+	graph_symbol *c_sym;
+/*ADDON: references*/
+	gdouble ef;
+	gint spe_index;
+	gint tmp_nspecies = 0;
+	uspex_output_struct *uspex_output;
+/*init*/
+	if(model==NULL) return;/*FAIL*/
+	uspex_output=(uspex_output_struct *)model->uspex;
+	if(uspex_output == NULL) return;/*FAIL*/
+	if(!_UO.calc->_calctype_var) return;/*not a VARCOMP*/
+	if(_UO.calc->_nspecies<2) return;/*not a VARCOMP*/
+	new_graph=FALSE;
+	if(_UO.graph_comp == NULL) {/*create if not exists*/
+		_UO.graph_comp=g_malloc(_UO.calc->_nspecies*sizeof(gpointer));
+		new_graph=TRUE;
+	}
+	uspex_update_eref(uspex_output);/*update each time*/
+	if(_UO.pictave) tmp_nspecies=_UO.calc->_nspecies-1;
+	else tmp_nspecies=_UO.calc->_nspecies;
+/*for the different compositions*/
+	gen=_UO.num_gen;
+	for(species_index=0;species_index<tmp_nspecies;species_index++){
+		if(!new_graph) graph_reset_data(_UO.graph_comp[species_index]);
+		n_compo=2;gx.x_size=n_compo;
+		gx.x=g_malloc(n_compo*sizeof(gdouble));
+		gx.x[0]=0.;gx.x[1]=1.;
+		for(idx=0;idx<_UO.num_struct;idx++){
+			if(!_UO.ind[idx].have_data) continue;
+			c_sum=0;for(ix=0;ix<tmp_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
+			if(c_sum==0) continue;/*something stupid here!*/
+			compo=(gdouble)(_UO.ind[idx].atoms[species_index])/c_sum;
+			if((compo>=1.0)||(compo<=0.0)) {
+				continue;/*rejected*/
+			}
+			jdx=0;
+			while((jdx<n_compo)&&(compo>gx.x[jdx])) jdx++;
+			if((compo-gx.x[jdx])==0.) continue;/*we already have that one*/
+			c=g_malloc((n_compo+1)*sizeof(gdouble));
+			/*FIX 7a93da*/
+			for(jdx=0;(compo>gx.x[jdx])&&(jdx<n_compo);jdx++) c[jdx]=gx.x[jdx];
+			c[jdx]=compo;
+			for( ;jdx<n_compo;jdx++) c[jdx+1]=gx.x[jdx];
+			g_free(gx.x);
+			gx.x=c;n_compo++;gx.x_size=n_compo;
 		}
-	/*look for the minimum of minimum*/
+		c_min=g_malloc(n_compo*sizeof(gdouble));/*we need a list of minimum for convex hull*/
+		for(idx=0;idx<n_compo;idx++) c_min[idx]=1.0/0.0;/*+inf*/	
+#if DEBUG_USPEX_READ || DEBUG_USPEX_TRACK
+fprintf(stdout,"USPEX COMP: Species %s detected %i compositions!\n",elements[_UO.calc->atomType[species_index]].symbol,n_compo);
+fprintf(stdout,"C = { ");for(idx=0;idx<n_compo;idx++) fprintf(stdout,"%f ",gx.x[idx]);
+fprintf(stdout,"}\n");
+#endif
+		line=g_strdup_printf("COMP_%s",elements[_UO.calc->atomType[species_index]].symbol);
+		if(new_graph) _UO.graph_comp[species_index]=graph_new(line, model);
+		g_free(line);
+		dat_graph_set_x(gx,_UO.graph_comp[species_index]);
+		dat_graph_set_type(GRAPH_XX_TYPE,_UO.graph_comp[species_index]);
+		line=g_strdup_printf("<big>Structure energy vs. %s composition</big>",elements[_UO.calc->atomType[species_index]].symbol);
+		dat_graph_set_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		line=g_strdup_printf("%s atomic composition (n<sub>%s</sub>/n<sub>total</sub>)",
+		elements[_UO.calc->atomType[species_index]].symbol,elements[_UO.calc->atomType[species_index]].symbol);
+		dat_graph_set_x_title(line,_UO.graph_comp[species_index]);
+		g_free(line);
+		dat_graph_set_y_title("Structure energy (eV)",_UO.graph_comp[species_index]);
+	/*dynamically create y*/
+		min_E=1.0/0.0;/*+inf*/
+		max_E=-1.0/0.0;/*-inf*/
+		for(jdx=0;jdx<n_compo;jdx++){
+			num=0;
+			gy.y=NULL;
+			gy.idx=NULL;
+			gy.symbol=NULL;
+			gy.sym_color=NULL;
+			gy.mixed_symbol=FALSE;/*no cross symbol is the default*/
+			for(idx=0;idx<_UO.num_struct;idx++){
+				if(!_UO.ind[idx].have_data) continue;
+				c_sum=0;for(ix=0;ix<tmp_nspecies;ix++) c_sum+=_UO.ind[idx].atoms[ix];
+				compo=(gdouble)(_UO.ind[idx].atoms[species_index])/c_sum;
+				if((compo-gx.x[jdx])!=0.0) continue;
+				num++;
+				if(gy.y==NULL){
+					c=g_malloc(1*sizeof(gdouble));
+					c_idx=g_malloc(1*sizeof(gint32));
+					c_sym=g_malloc(1*sizeof(graph_symbol));
+					c_col=g_malloc(1*sizeof(graph_color));
+				}else{
+					c=g_malloc(num*sizeof(gdouble));
+					memcpy(c,gy.y,(num-1)*sizeof(gdouble));
+					c_idx=g_malloc(num*sizeof(gint32));
+					memcpy(c_idx,gy.idx,(num-1)*sizeof(gint32));
+					c_sym=g_malloc(num*sizeof(graph_symbol));
+					memcpy(c_sym,gy.symbol,(num-1)*sizeof(graph_symbol));
+					c_col=g_malloc(num*sizeof(graph_color));
+					memcpy(c_col,gy.sym_color,(num-1)*sizeof(graph_color));
+					g_free(gy.y);
+					g_free(gy.idx);
+					g_free(gy.symbol);
+					g_free(gy.sym_color);
+				}
+/*NEW: modify with the reference*/
+				if(_UO.have_ref){
+					if(_UO.ind[idx].energy<10000.000){
+						ef=_UO.ind[idx].energy;
+						for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
+						ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+						c[num-1]=ef;
+						if(ef<min_E) min_E=ef;
+						if(ef>max_E) max_E=ef;
+					}else{
+						c[num-1]=10000.000;/*but no update of graph limits*/
+					}
+				}else{
+					/*at first approximation, without references, use energy per atom*/
+					ef=_UO.ind[idx].E;
+					c[num-1]=ef;
+					if(_UO.ind[idx].energy<10000.000){
+						if(ef<min_E) min_E=ef;
+						if(ef>max_E) max_E=ef;
+					}
+				}
+/*END new*/
+				cur=_UO.ind[idx].gen;
+				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
+				if(_UO.ind[idx].struct_number>0) {
+					c_idx[num-1]=_UO.ind[idx].struct_number;
+					c_sym[num-1]=GRAPH_SYMB_SQUARE;
+				}else{
+					c_idx[num-1]=-1*idx;
+					c_sym[num-1]=GRAPH_SYMB_CROSS;
+					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
+				}
+				if(cur==gen){
+					c_col[num-1]=GRAPH_COLOR_GREEN;
+				}else{
+					c_col[num-1]=GRAPH_COLOR_DEFAULT;
+				}
+				gy.y=c;
+				gy.idx=c_idx;
+				gy.symbol=c_sym;
+				gy.sym_color=c_col;
+				gy.type=GRAPH_XX_TYPE;
+			}
+			gy.y_size=num;
+			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+			dat_graph_set_limits(0.,1.,min_E-0.05*(max_E-min_E),max_E+0.05*(max_E-min_E),_UO.graph_comp[species_index]);
+			dat_graph_add_y(gy,_UO.graph_comp[species_index]);
+			if(num>0){
+				g_free(gy.y);
+				g_free(gy.idx);
+				g_free(gy.symbol);
+				g_free(gy.sym_color);
+			}
+		}
+		/*set ticks*/
+		graph_set_xticks(TRUE,3,_UO.graph_comp[species_index]);graph_set_yticks(TRUE,5,_UO.graph_comp[species_index]);
+/* +++ add a set for convex hull*/
+		gy.y_size=n_compo;
+		gy.y=g_malloc(n_compo*sizeof(gdouble));
+		gy.idx=g_malloc(n_compo*sizeof(gint32));
+		gy.symbol=g_malloc(n_compo*sizeof(graph_symbol));
+		gy.sym_color=NULL;
+		gy.mixed_symbol=TRUE;/*symbol for convex hull only appear on stable species*/
+		gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
+		gy.line=GRAPH_LINE_DASH;
+		gy.color=GRAPH_COLOR_DEFAULT;
+		/*1- look for the minimum of minimum*/
 		min=0;
-		for(idx=0;idx<n_compo;idx++) if(c_min[idx]<c_min[min]) min=idx;
-		c_gy.y[min]=c_min[min];
-		c_gy.idx[min]=-1;
-		c_gy.symbol[min]=GRAPH_SYMB_DIAM;
+		for(idx=0;idx<n_compo;idx++)
+		if(c_min[idx]<c_min[min]) min=idx;
+		gy.y[min]=c_min[min];
+		gy.idx[min]=-1;
+		gy.symbol[min]=GRAPH_SYMB_DIAM;
 		max=min;
-	/*left*/
+		/* +++ left */
 		while(min!=0){
-			min_E=(c_min[min]-c_min[0])/(px->x[min]-px->x[0]);
+			min_E=(c_min[min]-c_min[0])/(gx.x[min]-gx.x[0]);
 			med=0;
 			for(idx=min-1;idx>0;idx--){
-				compo=(c_min[min]-c_min[idx])/(px->x[min]-px->x[idx]);
+				compo=(c_min[min]-c_min[idx])/(gx.x[min]-gx.x[idx]);
 				if(compo>min_E){
 					min_E=compo;
 					med=idx;
 				}
 			}
-			c_gy.y[med]=c_min[med];
-			c_gy.idx[med]=-1;
-			c_gy.symbol[med]=GRAPH_SYMB_DIAM;
-			if(px->x[med]==0.) max_E=c_gy.y[med];
-			else max_E=(c_gy.y[min]-(c_gy.y[med]*px->x[min]/px->x[med]))/(1.0-(px->x[min]/px->x[med]));
+			gy.y[med]=c_min[med];
+			gy.idx[med]=-1;
+			gy.symbol[med]=GRAPH_SYMB_DIAM;
+			if(gx.x[med]==0.) max_E=gy.y[med];
+			else max_E=(gy.y[min]-(gy.y[med]*gx.x[min]/gx.x[med]))/(1.0-(gx.x[min]/gx.x[med]));
 			for(idx=min-1;idx>med;idx--){
-				c_gy.y[idx]=min_E*px->x[idx]+max_E;/*linear*/
-				c_gy.idx[idx]=-1;
-				c_gy.symbol[idx]=GRAPH_SYMB_NONE;
+				gy.y[idx]=min_E*gx.x[idx]+max_E;/*ie y=ax+b*/
+				gy.idx[idx]=-1;
+				gy.symbol[idx]=GRAPH_SYMB_NONE;
 			}
 			min=med;
 		}
-	/*right*/
-		while(max!=n_compo-1){
-			max_E=(c_min[n_compo-1]-c_min[max])/(px->x[n_compo-1]-px->x[max]);
-			med=n_compo-1;
-			for(idx=max+1;idx<(n_compo-1);idx++){
-				compo=(c_min[idx]-c_min[max])/(px->x[idx]-px->x[max]);
-				if(compo<max_E){
-					max_E=compo;
-					med=idx;
-				}
+/* +++ right */
+	while(max!=n_compo-1){
+		max_E=(c_min[n_compo-1]-c_min[max])/(gx.x[n_compo-1]-gx.x[max]);
+		med=n_compo-1;
+		for(idx=max+1;idx<(n_compo-1);idx++){
+			compo=(c_min[idx]-c_min[max])/(gx.x[idx]-gx.x[max]);
+			if(compo<max_E) {
+				max_E=compo;
+				med=idx;
 			}
-			c_gy.y[med]=c_min[med];
-			c_gy.idx[med]=-1;
-			c_gy.symbol[med]=GRAPH_SYMB_DIAM;
-			if(px->x[max]==0.) min_E=c_gy.y[max];
-			else min_E=(c_gy.y[med]-c_gy.y[max]*(px->x[med]/px->x[max]))/(1.0-(px->x[med]/px->x[max]));
-			for(idx=max+1;idx<med;idx++){
-				c_gy.y[idx]=max_E*px->x[idx]+min_E;
-				c_gy.idx[idx]=-1;
-				c_gy.symbol[idx]=GRAPH_SYMB_NONE;
-			}
-			max=med;
 		}
-	/*done*/
-		dat_graph_add_y(c_gy,graph);
-		g_free(c_min);
-		g_free(c_gy.y);
-		g_free(c_gy.idx);
-		g_free(c_gy.symbol);
+		gy.y[med]=c_min[med];
+		gy.idx[med]=-1;
+		gy.symbol[med]=GRAPH_SYMB_DIAM;
+		if(gx.x[max]==0.) min_E=gy.y[max];
+		else min_E=(gy.y[med]-gy.y[max]*(gx.x[med]/gx.x[max]))/(1.0-(gx.x[med]/gx.x[max]));
+		for(idx=max+1;idx<med;idx++){
+			gy.y[idx]=max_E*gx.x[idx]+min_E;/*ie y=ax+b*/
+			gy.idx[idx]=-1;
+			gy.symbol[idx]=GRAPH_SYMB_NONE;
+		}
+		max=med;
+		}
+		dat_graph_add_y(gy,_UO.graph_comp[species_index]);
+		g_free(c_min);g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);g_free(gx.x);
 	}
 }
 /********************/
@@ -2882,7 +2903,7 @@ fprintf(stdout,"#DBG update_graph_all: fixed GEN=%i num=%i ",gen,num);
 				gy->mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 			}
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i struct=%i",jdx,ix,gy->y[ix],ix,gy->symbol[ix],gy->idx[ix]);
+fprintf(stdout,"E[%i]=e[%i]=%lf c[%i]=%i struct=%i ",jdx,ix,gy->y[ix],ix,gy->symbol[ix],gy->idx[ix]);
 #endif
 			ix++;
 		}
@@ -3330,6 +3351,7 @@ fprintf(stdout,"#DBG: FILE: %s VERS: %i NSPE: %i\n",filename,_UO.version,nspecie
 	g_free(aux_file);
 	uspex_calc=_UO.calc;
 	_UC.path=g_strdup(_UO.res_folder);
+	model->id=USPEX;
 /* --- ANYTHING but VCNEB, and TPS (and unsupported)*/
 if((_UC.calculationMethod==US_CM_USPEX)
 	||(_UC.calculationMethod==US_CM_META)
@@ -3717,7 +3739,7 @@ fprintf(stdout,"-SENT\n");
 	}
 /* +++ prepare BEST graph*/
 if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
-	_UO.graph_best=graph_new("e_BEST", model);
+	_UO.graph_best=graph_new("BEST", model);
 	dat_graph_set_limits(0,1,-1.,0.,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph_best);
 	dat_graph_set_title("<big>Best structures per generation</big>",_UO.graph_best);
@@ -3736,7 +3758,7 @@ if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 	graph_set_xticks(TRUE,2,_UO.graph_best);
 	graph_set_yticks(TRUE,2,_UO.graph_best);
 }else{
-	_UO.graph_best=graph_new("e_BEST", model);
+	_UO.graph_best=graph_new("BEST", model);
 	/*determine limits*/
 	min_E=1.0/0.0;/*+inf*/
 	max_E=-1.0/0.0;/*-inf*/
@@ -3894,91 +3916,19 @@ fprintf(stdout,"-SENT\n");
 /* --- variable composition */
 	/*there is extra graphs for variable composition*/
 if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
-/*create a reference to calculate E_f*/
 	gdouble ef;
-	gboolean is_ref;
-	gint  spe_index;
-	gint tmp_nspecies = 0;
+	gint spe_index;
+	gint tmp_nspecies;
+/*create a reference to calculate E_f*/
 	_UO.graph_comp=g_malloc(_UC._nspecies*sizeof(gpointer));
-	_UO.ef_refs=g_malloc0(_UC._nspecies*sizeof(gdouble));
-	_UO.natom_refs=g_malloc0(_UC._nspecies*sizeof(gint));
-/*NEW: read chem.in (if available)*/
-	_UO.pictave=FALSE;
-	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"chem.in");
-	vf = fopen(aux_file, "rt");
-	if (!vf) {
-		/*there is no error if the file is not here!*/
+	_UO.ef_refs=NULL;
+	_UO.natom_refs=NULL;
+	_UO.have_ref=FALSE;
+	uspex_update_eref(uspex_output);
+	if(_UO.pictave){
+		tmp_nspecies=_UC._nspecies-1;
 	}else{
-		gint tmp_species  = 0;
-		gdouble tmp_e_ref=0.0;
-		line = file_read_line(vf);
-		while((line)&&(!feof(vf))){
-			ptr=&(line[0]);
-			if((find_in_string("pictave",line) != NULL)
-				||(find_in_string("Pictave",line) != NULL)
-				||(find_in_string("PICTAVE",line) != NULL)){
-				_UO.pictave=TRUE;
-				g_free(line);
-				line = file_read_line(vf);
-				continue;
-			}
-			tmp_species=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
-			if(ptr2==NULL){/*skip*/
-				g_free(line);
-				line = file_read_line(vf);
-				continue;
-			}
-			ptr=ptr2+1;
-			tmp_nspecies=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
-			if(ptr2==NULL){/*skip*/
-				g_free(line);
-				line = file_read_line(vf);
-				continue;
-			}
-			ptr=ptr2+1;
-			tmp_e_ref=(gdouble)g_ascii_strtod(ptr,NULL);
-			if((tmp_species<1)||(tmp_nspecies<1)||(tmp_e_ref==0.)){
-				/*wrong values: SKIP*/
-				g_free(line);
-				line = file_read_line(vf);
-				continue;
-			}
-			tmp_species--;
-			_UO.natom_refs[tmp_species]=tmp_nspecies;
-			_UO.ef_refs[tmp_species]=tmp_e_ref;
-#if DEBUG_USPEX_READ
-fprintf(stdout,"READ: REF[%i] NATOMS=%i E_REF=%lf\n",tmp_species,tmp_nspecies,tmp_e_ref);
-#endif
-			/*EOL*/
-			g_free(line);
-			line = file_read_line(vf);
-		}
-		fclose(vf);
-	}
-	g_free(aux_file);
-/*END new*/
-if(_UO.pictave){
-	tmp_nspecies = _UC._nspecies-1;
-}else{
-	tmp_nspecies = _UC._nspecies;
-}
-	for(spe_index=0;spe_index<tmp_nspecies;spe_index++){
-		if(_UO.natom_refs[spe_index]!=0) continue;
-		ef=1.0/0.0;/*+inf*/
-		for(idx=0;idx<_UO.num_struct;idx++){
-			is_ref=TRUE;
-			for(jdx=0;jdx<_UC._nspecies;jdx++) {
-				if((spe_index!=jdx)&&(_UO.ind[idx].atoms[jdx]!=0)) is_ref=FALSE;
-				if((spe_index==jdx)&&(_UO.ind[idx].atoms[jdx]==0)) is_ref=FALSE;
-			}
-			if(is_ref){
-				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef){
-					ef=_UO.ind[idx].energy/(gdouble)_UO.ind[idx].natoms;
-					_UO.ef_refs[spe_index]=_UO.ind[idx].energy;
-					_UO.natom_refs[spe_index]=_UO.ind[idx].natoms;
-				}
-			}
-		}
+		tmp_nspecies=_UC._nspecies;
 	}
 /*determine the different compositions*/
 	for(species_index=0;species_index<tmp_nspecies;species_index++){
@@ -4055,6 +4005,7 @@ if(_UO.pictave){
 					g_free(gy.symbol);
 				}
 /*NEW: modify with the reference*/
+if(_UO.have_ref){
 				if(_UO.ind[idx].energy<10000.000){
 					ef=_UO.ind[idx].energy;
 					for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
@@ -4065,6 +4016,15 @@ if(_UO.pictave){
 				}else{
 					c[num-1]=10000.000;/*but no update of graph limits*/
 				}
+}else{
+				/*at first approximation, without references, use energy per atom*/
+				ef=_UO.ind[idx].E;
+				c[num-1]=ef;
+				if(_UO.ind[idx].energy<10000.000){
+					if(ef<min_E) min_E=ef;
+					if(ef>max_E) max_E=ef;
+				}
+}
 /*END new*/
 				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
 				if(_UO.ind[idx].struct_number>0) {
@@ -4085,8 +4045,7 @@ if(_UO.pictave){
 			gy.sym_color=g_malloc0(num*sizeof(graph_color));
 			for(idx=0;idx<num;idx++) gy.sym_color[idx]=GRAPH_COLOR_DEFAULT;
 			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
-			ef=(max_E-min_E)*0.05;
-			dat_graph_set_limits(0.,1.,min_E-ef,max_E+ef,_UO.graph_comp[species_index]);
+			dat_graph_set_limits(0.,1.,min_E-0.05*(max_E-min_E),max_E+0.05*(max_E-min_E),_UO.graph_comp[species_index]);
 			dat_graph_add_y(gy,_UO.graph_comp[species_index]);
 			if(num>0){
 				g_free(gy.y);
@@ -4466,8 +4425,15 @@ while(g_ascii_isalpha(*ptr)) ptr++;
 sscanf(ptr,"%i%*s",&idx);
 g_free(line);/*FIX: _VALGRIND_BUG_*/
 fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+#ifdef NO_NO_NO
+idx=model->cur_frame;
+line = file_read_line(vf);
+fprintf(stdout,"_BUG_ idx=%i line=%s\n",idx,line);
+#endif
+
+
         if(vasp_load_poscar5(vf,model)<0) return 3;
-if(_UO.ind[idx].have_data){
+if(_UO.ind[idx].have_data){/*_BUG_ out of index*/
 	line=g_strdup_printf("%lf eV",_UO.ind[idx].energy);
 	property_add_ranked(3, "Energy", line, model);
 	model->volume=_UO.ind[idx].volume;
@@ -4574,7 +4540,6 @@ fprintf(stdout,"TRACK: TRY-READ: %s\n",line);
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: READ SUCCESS\n");
 #endif
-			strcpy(new_model->filename,line);/* strcpy is ok? <- necessary?*/
 			model->t_next=new_model;
 			g_free(line);
 			return FALSE;/*stop this tracking, but restart on new tracking*/
@@ -4657,8 +4622,9 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 		return FALSE;
 	}
 	/*2- prepare & replace*/
-	for(idx=0;idx<(new_ind-old_ind);idx++){
-		jdx=old_ind+1+idx;/*because old_ind=num_struct-1*/
+	for(jdx=new_ind;jdx>old_ind;jdx--){/*_BUG_*/
+//	for(idx=0;idx<(new_ind-old_ind);idx++){
+//		jdx=old_ind+1+idx;/*because old_ind=num_struct-1*/
 		ind[jdx].have_data=FALSE;
 		ind[jdx].struct_number=-1;
 		ind[jdx].gen=0;
@@ -4702,26 +4668,101 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 		g_free(line);
 		return FALSE;
 	}
+#ifdef NO_NO_NO
+/*unfortunately, using frame offset is (_VERY_) buggy, so we need to reconstruct everything*/
+offset=g_malloc0(sizeof(fpos_t));
+line = file_read_line(vf);
+ptr=&(line[0]);
+if((*ptr=='E')&&(*(ptr+1)=='A')) {
+	rewind(vf);
+	add_frame_offset(vf, model);
+	model->num_frames=1;
+	ptr=ptr+2;
+	jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
+	if(jdx==0){/*that may be a META calculation*/
+		/*we have to look for the next EA*/
+fprintf(stdout,"META spotted\n");
+		line = file_read_line(vf);
+		g_free(line);
+		while(line){
+			ptr=&(line[0]);
+			if((*ptr=='E')&&(*(ptr+1)=='A')) {
+				fsetpos(vf,offset);/* REWIND to FLAG */
+				break;
+			}
+			g_free(line);
+			fgetpos(vf,offset);/* FLAG */
+			line = file_read_line(vf);
+		}
+	}else{
+		/*register the same line twice*/
+		rewind(vf);/*because stupid*/
+		add_frame_offset(vf, model);
+		model->num_frames=1;
+	}
+}else{
+	g_free(line);
+	line = g_strdup_printf("USPEX TRACKING: invalid gatheredPOSCARS file?!\n");
+	gui_text_show(ERROR, line);
+	g_free(line);
+	return TRUE;/*keep trying*/
+}
+g_free(line);
+line = file_read_line(vf);
+fgetpos(vf,offset);/* FLAG */
+g_free(line);
+line = file_read_line(vf);
+idx=2;
+while((line)&&(idx<(new_ind+1))){
+	ptr=&(line[0]);
+	if((*ptr=='E')&&(*(ptr+1)=='A')) {
+		fsetpos(vf,offset);/* REWIND to FLAG */
+		ptr=ptr+2;
+		jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
+		if(add_frame_offset(vf, model)==1){
+fprintf(stdout,"ERROR: can't register frame!\n");
+		}
+		model->num_frames++;
+		_UO.ind[idx].struct_number=jdx;/*<- important; also _BUG_*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: UPDATE-STRUCTURE-%i for ind=%i\n",jdx,idx);
+#endif
+		idx++;ptr='\0';
+		g_free(line);
+		line = file_read_line(vf);
+		fgetpos(vf,offset);/* FLAG */
+	}
+	g_free(line);
+	fgetpos(vf,offset);/* FLAG */
+	line = file_read_line(vf);
+}
+g_free(offset);
+#endif
+
 /*we use fsetpos/fgetpos because mixing with fseek/ftell is not safe*/
-offset = g_list_nth_data(model->frame_list,model->num_frames-1);
+offset = (fpos_t *) g_list_nth_data(model->frame_list,model->num_frames-1);
 if(offset){
 	if (fsetpos(vf,offset)){
 		/*can't get position*/
 		line = g_strdup_printf("USPEX TRACKING: can't get structure geometry!\n");
 		gui_text_show(WARNING, line);
 		g_free(line);
+		fclose(vf);
+		return TRUE;/*keep trying*/
 	}else{
-		/*at position*/
+		/*at position, _BUG_ FIX: we create a new offset to not overwrite the previous one*/
+		offset=g_malloc0(sizeof(fpos_t));
 		line = file_read_line(vf);
 		fgetpos(vf,offset);/* FLAG */
+/*skip the already known structure*/
 		g_free(line);
 		line = file_read_line(vf);
 #if DEBUG_TRACK_USPEX
                 new_frm=old_frm;
 #endif
 		/*now start*/
-		idx=old_ind+1;/*because old_ind=num_struct-1*/
-		while(line){
+		idx=old_ind+1;/*+1 because old_ind=num_struct-1*/
+		while((line)&&(idx<(new_ind+1))){
 			ptr=&(line[0]);
 			if((*ptr=='E')&&(*(ptr+1)=='A')) {
 				fsetpos(vf,offset);/* REWIND to FLAG */
@@ -4729,7 +4770,7 @@ if(offset){
 				model->num_frames++;
 				ptr=ptr+2;
 				jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
-				_UO.ind[idx].struct_number=jdx;/*<- important*/
+				_UO.ind[idx].struct_number=jdx;/*<- important; also _BUG_*/
 #if DEBUG_TRACK_USPEX
 new_frm++;
 fprintf(stdout,"TRACK: ADD-STRUCTURE-%i for ind=%i\n",jdx,idx);
@@ -4745,6 +4786,7 @@ fprintf(stdout,"TRACK: ADD-STRUCTURE-%i for ind=%i\n",jdx,idx);
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: %i-FRAMES-ADDED\n",new_frm-old_frm);
 #endif
+		g_free(offset);
 	}
 }else{
 	/*new structure? <- this shoud not happen...*/
@@ -4843,12 +4885,13 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 	graph_set_xticks(TRUE,idx,_UO.graph);
 	graph_set_yticks(TRUE,5,_UO.graph);
 
-if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
-	/*8- update COMP graph*/
-	uspex_graph_comp_update(new_ind-old_ind,uspex_output);
-}
-	/*9- update num_struct*/
+	/*8- update num_struct*/
 	_UO.num_struct=new_ind+1;
+
+if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
+	/*9- update COMP graph*/
+	uspex_graph_comp_update(model);
+}
 
 
 }/*^^^ everything but VCNEB and TPS*/

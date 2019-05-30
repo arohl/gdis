@@ -322,6 +322,7 @@ typedef struct {
         gint num_best;
         gint *best_ind;				/*NEW: {ID - GEN} there can be several best in a generation*/
 /*references*/
+	gboolean have_ref;			/*NEW: have formation energy references*/
 	gint *natom_refs;			/*NEW: number of atoms in each reference*/
 	gdouble *ef_refs;			/*NEW: energy of reference*/
 	gboolean pictave;			/*NEW: if true, last species is a fake atom*/

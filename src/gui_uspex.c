@@ -3318,8 +3318,10 @@ void uspex_gui_sync(){
 			idx=0;
 			while((idx<uspex_gui.calc._nspecies)&&(*ptr!='\0')){
 				uspex_gui.calc.numSpecies[idx+jdx*uspex_gui.calc._nspecies]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+				if(ptr2==NULL) break;/*_BUG_ fix #1*/
+				if(*ptr2=='\0') break;/*_BUG_ fix #2*/
 				ptr=ptr2+1;
-				while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+				while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;/*_BUG_*/
 				idx++;
 			}
 			jdx++;
@@ -3478,8 +3480,10 @@ if(uspex_gui.auto_C_lat){
 			if(g_ascii_strtoull(ptr,&ptr2,10)==G_MAXUINT64) break;/*FIX: 38832a*/
 			if(ptr2==ptr) break;/*not a valid integer*/
 			uspex_gui.calc._nsplits++;
+			if(ptr2==NULL) break;/*_BUG_ fix #1*/
+			if(*ptr2=='\0') break;/*_BUG_ fix #2*/
 			ptr=ptr2+1;
-			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;/*_BUG_*/
 		}
 		/*get them*/
 		uspex_gui.calc.splitInto=g_malloc(uspex_gui.calc._nsplits*sizeof(gint));
@@ -3487,8 +3491,10 @@ if(uspex_gui.auto_C_lat){
 		ptr=text;idx=0;
 		while((idx<uspex_gui.calc._nsplits)&&(*ptr!='\0')){
 			uspex_gui.calc.splitInto[idx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+			if(ptr2==NULL) break;/*_BUG_ fix #1*/
+			if(*ptr2=='\0') break;/*_BUG_ fix #2*/
 			ptr=ptr2+1;
-			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;/*_BUG_*/
 			idx++;
 		}
 	}
@@ -3777,7 +3783,6 @@ void uspex_exec_calc(){
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_id=g_slist_length(sysenv.uspex_calc_list);
 	uspex_exec->have_result=FALSE;
-	uspex_exec->task_pid=0;
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
 /*Get the future valid index*/
