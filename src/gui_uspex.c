@@ -3732,7 +3732,7 @@ void uspex_cleanup(){
 /*****************************************/
 /* Execute or enqueue a uspex calculation */
 /*****************************************/
-void run_uspex_exec(uspex_exec_struct *uspex_exec){
+void run_uspex_exec(uspex_exec_struct *uspex_exec,struct task_pak *task){
 	/* Execute a uspex task TODO distant job */
 	gchar *cmd;
 	gchar *cwd;/*for push/pull*/
@@ -3748,11 +3748,12 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec){
 #endif
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*uspex_exec).job_path);
-	task_sync(cmd);
+	task->is_async = TRUE;
+	task_async(cmd,&(task->pid));
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/
 	g_free(cmd);
-	(*uspex_exec).have_result=TRUE;
+//	(*uspex_exec).have_result=TRUE;
 }
 /*****************************/
 /* cleanup task: load result */
@@ -3782,7 +3783,7 @@ void uspex_exec_calc(){
 /*copy structure to the list*/
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_id=g_slist_length(sysenv.uspex_calc_list);
-	uspex_exec->have_result=FALSE;
+//	uspex_exec->have_result=FALSE;
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
 /*Get the future valid index*/

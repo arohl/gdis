@@ -42,9 +42,11 @@ extern struct sysenv_pak sysenv;
 #include <sys/wait.h>
 #endif
 
+
 /**********************************************/
 /* execute task in thread created by the pool */
 /**********************************************/
+#define DEBUG_TASK_PROCESS 0
 void task_process(struct task_pak *task, gpointer data)
 {
 /* checks */
@@ -54,7 +56,7 @@ if (task->status != QUEUED)
   return;
 
 /* setup for current task */
-task->pid = getpid();
+if(!task->is_async) task->pid = getpid();
 /* TODO - should be mutex locking this */
 task->status = RUNNING;
 
@@ -63,6 +65,23 @@ task->status = RUNNING;
 
 /* execute the primary task */
 task->primary(task->ptr1, task);
+if(task->is_async){
+  pid_t w;
+  gint status;
+   /*here we NEED to wait for async task to die*/
+  do{
+    w = waitpid(task->pid, &status,WUNTRACED|WCONTINUED);
+    if(w==-1) fprintf(stdout,"TASK %i incorrect termination!\n",task->pid);
+    if(WIFSIGNALED(status)) task->status=KILLED;/*<-necessary?*/
+#if DEBUG_TASK_PROCESS
+  /*do we have checkpoint/restart?*/
+    if(WIFSTOPPED(status))
+  	fprintf(stdout,"TASK %i stopped!\n",task->pid);
+    else if(WIFCONTINUED(status))
+  	fprintf(stdout,"TASK %i continued!\n",task->pid);
+#endif
+  } while((!WIFEXITED(status))&&(!WIFSIGNALED(status)));
+}
 
 /* NB: GUI updates should ALL be done in the cleanup task, since we */
 /* do the threads enter to avoid problems - this locks the GUI */
@@ -150,6 +169,7 @@ struct task_pak *task;
 /* duplicate the task data */
 task = g_malloc(sizeof(struct task_pak));
 sysenv.task_list = g_slist_prepend(sysenv.task_list, task);
+task->is_async = FALSE;
 task->pid = -1;
 task->status = QUEUED;
 task->time = NULL;
@@ -193,6 +213,7 @@ struct task_pak *task;
 /* duplicate the task data */ 
 task = g_malloc(sizeof(struct task_pak));
 sysenv.task_list = g_slist_prepend(sysenv.task_list, task);
+task->is_async = FALSE;
 task->pid = -1;
 task->status = QUEUED;
 task->time = NULL;
@@ -221,12 +242,48 @@ g_thread_pool_push(sysenv.thread_pool, task, NULL);
 		if(task->status==QUEUED){
 			/*temporarily increase the pool size to immediately get the system task to start*/
 			gint max=g_thread_pool_get_max_threads(sysenv.thread_pool);
-			g_thread_pool_set_max_threads(sysenv.thread_pool,max+1,NULL);
+			g_thread_pool_set_max_threads(sysenv.thread_pool,max+2,NULL);
 			while(task->status==QUEUED) usleep(50*1000);/*sleep 50ms until sys task is started*/
 			g_thread_pool_set_max_threads(sysenv.thread_pool,max,NULL);/*go back to former thread pool size*/
 		}
 	}
 }
+/*********************************************/
+/* NEW - async call gives correct thread PID */
+/*********************************************/
+#define DEBUG_TASK_ASYNC 0
+gint task_async(const gchar *command,pid_t *pid)
+{
+gint status;
+gchar **argv;
+GError *error=NULL;
+
+/* checks */
+if (!command)
+  return(1);
+
+#if _WIN32
+chdir(sysenv.cwd);
+system(command);
+#else
+/* setup the command vector */
+argv = g_malloc(4 * sizeof(gchar *));
+*(argv) = g_strdup("/bin/sh");
+*(argv+1) = g_strdup("-c");
+*(argv+2) = g_strdup(command);
+*(argv+3) = NULL;
+
+status=g_spawn_async(sysenv.cwd,argv,NULL,G_SPAWN_DO_NOT_REAP_CHILD,NULL,NULL,pid,&error);
+
+g_strfreev(argv);
+#endif
+
+if (!status)
+  printf("task_async() error: %s\n", error->message);
+
+return(status);
+}
+
 
 /**************************************/
 /* platform independant task spawning */

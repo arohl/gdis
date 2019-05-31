@@ -9,6 +9,7 @@ enum {RUNNING, QUEUED, KILLED, COMPLETED, REMOVED};
 struct task_pak
 {
 /* control */
+gboolean is_async;/*we NEED async tasks to get correct task PID*/
 gint pid;
 gint ppid;
 gint status;
@@ -55,6 +56,7 @@ gint update_task_info(void);
 void task_status_update(struct task_pak *);
 void task_dialog(void);
 gint task_sync(const gchar *);
+gint task_async(const gchar *command,pid_t *pid);
 
 void task_queue_init(void);
 void task_queue_free(void);

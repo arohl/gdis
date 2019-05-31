@@ -3013,6 +3013,7 @@ void uspex_graph_best_update(uspex_output_struct *uspex_output){
 	g_data_x *gx;
 	g_data_x *px;
 	g_data_y  gy;/*NOT a pointer*/
+	g_data_y *py;
 	gdouble min_E,max_E,d;
 	struct graph_pak *graph;
 	uspex_calc_struct *uspex_calc;
@@ -3041,52 +3042,122 @@ fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 	px->x_size=gx->x_size;
 	g_free(gx);
 /*Y sets*/
-	min_E = graph->ymin;
-	max_E = graph->ymax;
-	gen=graph->size-1;
+	min_E = 1.0/0.0;/*+inf*/
+	max_E =-1.0/0.0;/*-inf*/
+	gen=graph->size;/*this is the previous size of the graph*/
+	if(gen>0) gen--;/*account for the blank first set*/
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG update_graph_best: update gen=%i\n",gen);
+fprintf(stdout,"#DBG update_graph_best: update from gen=%i\n",gen);
 #endif
-	/*we only need to update BEST graph on complete Y sets*/
-	if(gen==0){
+	if(gen<=1){
+/*in that case, we will *create* the new graph*/
 		/*this is probably the first time we update BEST graph*/
-		/*so we need to deal with the 'fake' first set...*/
-		gy.y_size=0;
-		gy.y=g_malloc0(sizeof(gdouble));gy.y[0] = NAN;
-		gy.idx=g_malloc0(sizeof(gint32));gy.idx[0]=-1;
-		gy.symbol=g_malloc0(sizeof(graph_symbol));gy.sym_color=NULL;
-		gy.symbol[0]=GRAPH_SYMB_CROSS;gy.mixed_symbol=TRUE;
-		gy.color=GRAPH_COLOR_DEFAULT;
-		gy.type=GRAPH_IX_TYPE;
-		gy.line=GRAPH_LINE_NONE;
-		dat_graph_add_y(gy,_UO.graph_best);
-		g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);
-		gen++;
+		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
+			dat_graph_set_sub_title("<small>(From <b>BESTIndividuals_relaxed</b> file)</small>",graph);
+		else
+			dat_graph_set_sub_title("<small>(From <b>BESTIndividuals</b> file)</small>",graph);
+		gen=0;
+		if(!((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP))) {
+			/*so we need to deal with the 'fake' first set...*/
+			gy.y_size=0;
+			gy.y=g_malloc0(sizeof(gdouble));gy.y[0] = NAN;
+			gy.idx=g_malloc0(sizeof(gint32));gy.idx[0]=-1;
+			gy.symbol=g_malloc0(sizeof(graph_symbol));gy.sym_color=NULL;
+			gy.symbol[0]=GRAPH_SYMB_CROSS;gy.mixed_symbol=TRUE;
+			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.type=GRAPH_IX_TYPE;
+			gy.line=GRAPH_LINE_NONE;
+			dat_graph_add_y(gy,graph);
+			g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);
+			gen=1;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG update_graph_best: created gen=0\n");
+#endif
+		}
 	}else{
-		/*eliminate the last set (BEST lines)*/
-		list=g_slist_remove(graph->set_list,(g_slist_last(graph->set_list))->data);
-		if(list!=graph->set_list) graph->set_list=list;
-		gen--;/*correction*/
-	}
-	for(;gen<_UO.num_gen;gen++){
-		/*fill all remaining generation Y sets*/
+		/*we start updating from gen, but [gen] set contains the lowest energy line*/
+		/*reform data*/
+		list=g_slist_last(graph->set_list);
+		if(list==NULL){
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"USPEX-UPDATE-BEST: BIG trouble! Can't find last set!\n");
+#endif
+			return;
+		}
+		idx=0;/*FIX _BUG_*/
+		py=(g_data_y *)list->data;
 		num=0;gy.mixed_symbol=FALSE;
-		for(jdx=0;jdx<(2*_UO.num_best);jdx+=2){
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen) num++;
 		}
-		if(num==0) continue;/*correction*/
-		gy.y_size=num;
-		gy.y=g_malloc0(num*sizeof(gdouble));
-		gy.type=GRAPH_IX_TYPE;
-		gy.idx=g_malloc0(num*sizeof(gint32));
-		gy.symbol=g_malloc0(num*sizeof(graph_symbol));
-		gy.sym_color=NULL;
+		if(num==0){
+			/*_BUG_ the set contains no data?*/
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG update_graph_best: num=%i ",num);
+fprintf(stdout,"USPEX-UPDATE-BEST: NO DATA gen=%i num_gen=%i\n",gen,_UO.num_gen);
+#endif
+			num++;
+		}
+		py->y_size=num;/*NEW SIZE*/
+		py->type=GRAPH_IX_TYPE;/*change of type*/
+		g_free(py->y);py->y=NULL;py->y=g_malloc0(num*sizeof(gdouble));
+		g_free(py->idx);py->idx=NULL;py->idx=g_malloc0(num*sizeof(gint32));
+		g_free(py->symbol);py->symbol=NULL;py->symbol=g_malloc0(num*sizeof(graph_symbol));
+		py->sym_color=NULL;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG update_graph_best: gen=%i num=%i ",gen,num);
 #endif
 		ix=0;
 		for(jdx=0;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen){
+				idx=jdx;
+				py->y[ix]=_UO.ind[_UO.best_ind[jdx+1]].E;/*_BUG_*/
+				if(_UO.ind[ix].energy<10000.000){
+					if(py->y[ix]<min_E) min_E=py->y[ix];
+					if(py->y[ix]>max_E) max_E=py->y[ix];
+				}
+				if(_UO.ind[_UO.best_ind[jdx+1]].struct_number>0) {
+					py->idx[ix]=_UO.ind[_UO.best_ind[jdx+1]].struct_number;
+					py->symbol[ix]=GRAPH_SYMB_SQUARE;
+				}else{
+					py->idx[ix]=-1*_UO.best_ind[jdx+1];
+					py->symbol[ix]=GRAPH_SYMB_CROSS;
+					py->mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
+				}
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"e[%i]=%lf ",ix,py->y[ix]);
+#endif
+				ix++;
+			}
+		}
+		py->color=GRAPH_COLOR_DEFAULT;
+		py->line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+/*ne need to re-register py*/
+		gen++;
+	}
+	idx=0;
+	while(gen<=_UO.num_gen){
+		num=0;gy.mixed_symbol=FALSE;
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
+			if(_UO.best_ind[jdx]==gen) num++;
+		}
+		if(num==0) {
+			/*in case of an unfinished calculation...*/
+			gen++;
+			continue;
+		}
+		gy.y_size=num;
+		gy.y=g_malloc(num*sizeof(gdouble));
+		gy.type=GRAPH_IX_TYPE;
+		gy.idx=g_malloc(num*sizeof(gint32));
+		gy.symbol=g_malloc(num*sizeof(graph_symbol));
+		gy.sym_color=NULL;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG update_graph_best: gen=%i num=%i ",gen,num);
+#endif
+		ix=0;
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
+			if(_UO.best_ind[jdx]==gen){
+				idx=jdx;
 				gy.y[ix]=_UO.ind[_UO.best_ind[jdx+1]].E;
 				if(_UO.ind[ix].energy<10000.000){
 					if(gy.y[ix]<min_E) min_E=gy.y[ix];
@@ -3111,37 +3182,35 @@ fprintf(stdout,"-SENT\n");
 #endif
 		gy.color=GRAPH_COLOR_DEFAULT;
 		gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
-		dat_graph_add_y(gy,graph);
+		dat_graph_add_y(gy,_UO.graph_best);
 		g_free(gy.y);
 		g_free(gy.idx);
 		g_free(gy.symbol);
+		/*to next gen*/
+		gen++;
 	}
 	/*update limits*/
-	if((min_E<graph->ymin)||(max_E>graph->ymax))
-		d=(max_E-min_E)*0.05;
-	else
-		d=0.;
-	dat_graph_set_limits(0,_UO.num_gen-1,min_E-d,max_E+d,graph);
-	/*create the last set of best BEST*/
+	d=(max_E-min_E)*0.05;
+	dat_graph_set_limits(0,_UO.num_gen,min_E-d,max_E+d,graph);
+/* +++ add a set for lowest energy values*/
 	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.15;
-	gy.y_size=_UO.num_gen+1;
+	gy.y_size=_UO.num_gen;
 	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
-//	gy.idx=NULL;
-	gy.idx=g_malloc0(gy.y_size*sizeof(gint32));
+	gy.idx=NULL;
 	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
 	gy.sym_color=NULL;
-	gy.type=GRAPH_IY_TYPE;
+	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
 	gy.color=GRAPH_COLOR_DEFAULT;
 	gen=0;
-	if(!((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))) {
+	if(!((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP))) {
+		/*fake first point*/
 		gy.y[0]=NAN;/*not a value*/
 		gy.symbol[0]=GRAPH_SYMB_NONE;
-		gy.idx[0]=-1;
 		gen=1;
 	}
 	idx=0;
-	while(gen<=_UO.num_gen){
+	while(gen<_UO.num_gen){
 		min_E=max_E;
 		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
 			/*get the minimum value of this gen*/
@@ -3151,14 +3220,17 @@ fprintf(stdout,"-SENT\n");
 			}
 		}
 		gy.y[gen]=min_E;
-		gy.idx[gen]=-1*gen;
 		gy.symbol[gen]=GRAPH_SYMB_NONE;
 		gen++;
 	}
 	dat_graph_add_y(gy,_UO.graph_best);
 	g_free(gy.y);
-	g_free(gy.idx);
 	g_free(gy.symbol);
+/* +++ ticks */
+	if(_UO.num_gen>15) ix=5;
+	else ix=_UO.num_gen+1;
+	graph_set_xticks(TRUE,ix,graph);
+	graph_set_yticks(TRUE,5,graph);
 }
 
 
@@ -3211,9 +3283,11 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	g_return_val_if_fail(model != NULL, 1);
 	g_return_val_if_fail(filename != NULL, 2);
 	if (find_in_string("OUTPUT.txt",filename) == NULL){
+if(!model->silent){
 		line = g_strdup_printf("ERROR: Please load USPEX OUTPUT.txt file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		return -1;
 	}
 	/*allocs*/
@@ -3222,9 +3296,11 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	uspex_output=model->uspex;
 	vf = fopen(filename, "rt");
 	if (!vf) {
+if(!model->silent){
 		line = g_strdup_printf("ERROR: Can't open USPEX OUTPUT.txt file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		return -1;
 	}
 	error_table_clear();
@@ -3318,6 +3394,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 #if DEBUG_USPEX_READ
 fprintf(stdout,"#DBG: FILE: %s VERS: %i NSPE: %i\n",filename,_UO.version,nspecies);
 #endif
+if(!model->silent){
 	if(_UO.version==0){
 		line=g_strdup_printf("USPEX version undetected!\n");
 		gui_text_show(ERROR, line);
@@ -3336,15 +3413,18 @@ fprintf(stdout,"#DBG: FILE: %s VERS: %i NSPE: %i\n",filename,_UO.version,nspecie
 		line=g_strdup_printf("USPEX OUTPUT.txt is missing nspecies information!\n");
 		gui_text_show(WARNING, line);
 	}
+}
 /* --- and close */
 	fclose(vf);vf=NULL;
 /* --- READ Parameters.txt */
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Parameters.txt");
 	_UO.calc=read_uspex_parameters(aux_file,nspecies);
 	if(_UO.calc==NULL){
+if(!model->silent){
 		line = g_strdup_printf("ERROR: reading USPEX REAL Parameter.txt file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3362,11 +3442,13 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"gatheredPOSCARS");
 	vf = fopen(aux_file, "rt");
 	if (!vf) {
+if(!model->silent){
 		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
 			 line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS_relaxed file!\n");
 		else line = g_strdup_printf("ERROR: can't open USPEX gatheredPOSCARS file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3428,9 +3510,11 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Individuals");
 	vf = fopen(aux_file, "rt");
 	if (!vf) {
+if(!model->silent){
 		line = g_strdup_printf("ERROR: can't open USPEX Individuals file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3465,9 +3549,11 @@ if((_UC.calculationMethod==US_CM_USPEX)
 /* ^^^ NEW: everyone reads Individuals first, then Individuals_relaxed (if exists)*/
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Individuals");
 	if(read_individuals_uspex(aux_file,model)!=0) {
+if(!model->silent){
 		line = g_strdup_printf("ERROR: reading USPEX Individuals file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3484,9 +3570,11 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	if(read_individuals_uspex(aux_file,model)!=0) {
 		/*failure to load Individuals_relaxed is not an error, thus not fatal*/
 		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP)){
+if(!model->silent){
 			line = g_strdup_printf("WARNING: error reading USPEX Individuals_relaxed file!\n");
 			gui_text_show(WARNING, line);
 			g_free(line);
+}
 		}
 	}
 	g_free(aux_file);
@@ -3497,11 +3585,13 @@ if((_UC.calculationMethod==US_CM_USPEX)
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"gatheredPOSCARS");
 	vf = fopen(aux_file, "rt");
 	if (!vf) {
+if(!model->silent){
 		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP)) 
 			line = g_strdup_printf("ERROR: can't re-open USPEX gatheredPOSCARS_relaxed file?!\n");
 		else line = g_strdup_printf("ERROR: can't re-open USPEX gatheredPOSCARS file?!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3559,11 +3649,13 @@ if(_UC.atomType==NULL){
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"gatheredPOSCARS");
 	vf = fopen(aux_file, "rt");
 	if (!vf) {
+if(!model->silent){
 		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
 			line = g_strdup_printf("ERROR: can't re-open USPEX gatheredPOSCARS_relaxed file?!\n");
 		else line = g_strdup_printf("ERROR: can't re-open USPEX gatheredPOSCARS file?!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -3578,11 +3670,13 @@ if(_UC.atomType==NULL){
 /* NEW: No BESTIndividuals file is no fatal, to cope with tracking*/
 if(!vf){
 	_UO.best_ind=NULL;/*make _sure_ array is null*/
+if(!model->silent){
 	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
 		line = g_strdup_printf("can't open USPEX BESTIndividuals_relaxed file.\n");
 	else line = g_strdup_printf("can't open USPEX BESTIndividuals file.\n");
 	gui_text_show(WARNING, line);
 	g_free(line);
+}
 	g_free(aux_file);
 }else{
 	g_free(aux_file);
@@ -4133,9 +4227,11 @@ while(max!=n_compo-1){
 	tree_model_refresh(model);
 	model->redraw = TRUE;
 	/* always show this information */
+if(!model->silent){
 	line=g_strdup_printf("USPEX: %i structures detected.\n",model->num_frames);
 	gui_text_show(ITALIC,line);
 	g_free(line);
+}
 	model_prep(model);
 }/* ^^^ end ANYTHING but VCNEB, and TPS*/
 /* --- VCNEB method*/
@@ -4152,9 +4248,11 @@ if(_UO.version<1010){
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
 	f_src = fopen(aux_file, "rt");
 	if(!f_src) {
+if(!model->silent){
 		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -4162,9 +4260,11 @@ if(_UO.version<1010){
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs5");
 	f_dest = fopen(aux_file, "w");
 	if(!f_dest) {
+if(!model->silent){
 		line = g_strdup_printf("ERROR: can't WRITE into USPEX transitionPath_POSCARs5 file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -4210,9 +4310,11 @@ else{
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
 	vf = fopen(aux_file, "rt");
 	if(!vf){
+if(!model->silent){
 		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		g_free(aux_file);
 		goto uspex_fail;
 	}
@@ -4259,9 +4361,11 @@ else{
 	vf=fopen(aux_file,"rt");
 	if (!vf) {
 		g_free(_UO.ind);
+if(!model->silent){
 		line = g_strdup_printf("ERROR: can't open USPEX Energy file!\n");
 		gui_text_show(ERROR, line);
 		g_free(line);
+}
 		goto uspex_fail;
 	}
 	/*first get to the first data line*/
@@ -4348,10 +4452,12 @@ fprintf(stdout,"#DBG: VCNEB Image %i: natoms=%i energy=%lf e=%lf\n",_UO.ind[idx]
 	vf=fopen(aux_file,"rt");
         if (!vf) {/*very unlikely: we just create/read it*/
 		g_free(_UO.ind);
+if(!model->silent){
 		if(_UO.version<1010) line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs5 file!\n");
 		else line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
                 gui_text_show(ERROR, line);
                 g_free(line);
+}
 		g_free(aux_file);
                 goto uspex_fail;
         }
@@ -4381,7 +4487,9 @@ fprintf(stdout,"#DBG: VCNEB Image %i: natoms=%i energy=%lf e=%lf\n",_UO.ind[idx]
         tree_model_refresh(model);
         model->redraw = TRUE;
         /* always show this information */
+if(!model->silent){
         gui_text_show(ITALIC,g_strdup_printf("USPEX: %i structures detected.\n",model->num_frames));
+}
         model_prep(model);
 }/* ^^^ end VCNEB method*/
 else{/*calculation method is not supported*/
@@ -4399,9 +4507,11 @@ else{/*calculation method is not supported*/
 	error_table_print_all();
 	return 0;
 uspex_fail:
+if(!model->silent){
 	line = g_strdup_printf("ERROR: loading USPEX failed!\n");
 	gui_text_show(ERROR, line);
 	g_free(line);
+}
 	return 3;
 }
 /********************/
@@ -4425,11 +4535,6 @@ while(g_ascii_isalpha(*ptr)) ptr++;
 sscanf(ptr,"%i%*s",&idx);
 g_free(line);/*FIX: _VALGRIND_BUG_*/
 fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-#ifdef NO_NO_NO
-idx=model->cur_frame;
-line = file_read_line(vf);
-fprintf(stdout,"_BUG_ idx=%i line=%s\n",idx,line);
-#endif
 
 
         if(vasp_load_poscar5(vf,model)<0) return 3;
@@ -4532,6 +4637,7 @@ fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 		line=g_strdup(model->filename);
 		new_model=model_new();
                 model_init(new_model);
+		new_model->silent=TRUE;
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: TRY-READ: %s\n",line);
 #endif
@@ -4668,77 +4774,6 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 		g_free(line);
 		return FALSE;
 	}
-#ifdef NO_NO_NO
-/*unfortunately, using frame offset is (_VERY_) buggy, so we need to reconstruct everything*/
-offset=g_malloc0(sizeof(fpos_t));
-line = file_read_line(vf);
-ptr=&(line[0]);
-if((*ptr=='E')&&(*(ptr+1)=='A')) {
-	rewind(vf);
-	add_frame_offset(vf, model);
-	model->num_frames=1;
-	ptr=ptr+2;
-	jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
-	if(jdx==0){/*that may be a META calculation*/
-		/*we have to look for the next EA*/
-fprintf(stdout,"META spotted\n");
-		line = file_read_line(vf);
-		g_free(line);
-		while(line){
-			ptr=&(line[0]);
-			if((*ptr=='E')&&(*(ptr+1)=='A')) {
-				fsetpos(vf,offset);/* REWIND to FLAG */
-				break;
-			}
-			g_free(line);
-			fgetpos(vf,offset);/* FLAG */
-			line = file_read_line(vf);
-		}
-	}else{
-		/*register the same line twice*/
-		rewind(vf);/*because stupid*/
-		add_frame_offset(vf, model);
-		model->num_frames=1;
-	}
-}else{
-	g_free(line);
-	line = g_strdup_printf("USPEX TRACKING: invalid gatheredPOSCARS file?!\n");
-	gui_text_show(ERROR, line);
-	g_free(line);
-	return TRUE;/*keep trying*/
-}
-g_free(line);
-line = file_read_line(vf);
-fgetpos(vf,offset);/* FLAG */
-g_free(line);
-line = file_read_line(vf);
-idx=2;
-while((line)&&(idx<(new_ind+1))){
-	ptr=&(line[0]);
-	if((*ptr=='E')&&(*(ptr+1)=='A')) {
-		fsetpos(vf,offset);/* REWIND to FLAG */
-		ptr=ptr+2;
-		jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
-		if(add_frame_offset(vf, model)==1){
-fprintf(stdout,"ERROR: can't register frame!\n");
-		}
-		model->num_frames++;
-		_UO.ind[idx].struct_number=jdx;/*<- important; also _BUG_*/
-#if DEBUG_TRACK_USPEX
-fprintf(stdout,"TRACK: UPDATE-STRUCTURE-%i for ind=%i\n",jdx,idx);
-#endif
-		idx++;ptr='\0';
-		g_free(line);
-		line = file_read_line(vf);
-		fgetpos(vf,offset);/* FLAG */
-	}
-	g_free(line);
-	fgetpos(vf,offset);/* FLAG */
-	line = file_read_line(vf);
-}
-g_free(offset);
-#endif
-
 /*we use fsetpos/fgetpos because mixing with fseek/ftell is not safe*/
 offset = (fpos_t *) g_list_nth_data(model->frame_list,model->num_frames-1);
 if(offset){

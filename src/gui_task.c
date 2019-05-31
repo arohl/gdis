@@ -51,7 +51,7 @@ extern struct sysenv_pak sysenv;
 #endif
 
 /* task manager globals */
-gdouble max_threads=1;
+gdouble max_threads=-1;
 gint task_show_running = 1;
 gint task_show_queued = 0;
 gint task_show_completed = 1;
@@ -281,7 +281,7 @@ for (me = 0; me < psarray->len; me++)
     found = TRUE;
 
       #if DEBUG_CALC_TASK_INFO
-      printf("pid: %d time:%s\n", child_pid, ctime(&oldest_time));
+      printf("pid: %d time:%s\n", tdata->pid, ctime(&oldest_time));
       #endif
     break;
     }

@@ -1096,6 +1096,7 @@ gint redraw_count;       /* current number of redraws */
 gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
+gboolean silent;	 /* when a new calculation, silent error messages about non-ready output*/
 gboolean track_me;	 /* track an ongoing calculation --OVHPA*/
 struct model_pak *t_next;/* continous tracking through next model --OVHPA*/
 gint track_nb;		 /* track icon gadget --OVHPA*/
