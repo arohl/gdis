@@ -1392,7 +1392,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	if(vasp_out->calc_type==VASP_SINGLE) return 0;
 	/*not an error but no energy graph on a frequency calculation*/
 	if(vasp_out->calc_type&VASP_FREQ) return 0;
-	if(model->num_frames<2) return 3;
+	if(model->num_frames<1) return 3;
 	/*populate Y first!*/
 	vf = fopen(model->filename, "rt");
 	if (!vf) return 1;
@@ -1530,7 +1530,7 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	vasp_out=(vasp_output_struct *)model->vasp;
 	if(vasp_out->calc_type==VASP_SINGLE) return 0;
 	if(vasp_out->calc_type&VASP_FREQ) return 0;
-	if(model->num_frames<3) return 3;
+	if(model->num_frames<1) return 3;
 	if(vasp_out->graph_energy==NULL) return 3;
 	graph=(struct graph_pak *)vasp_out->graph_energy;
 	if(graph==NULL) return 3;
@@ -2350,7 +2350,7 @@ fprintf(stdout,"TRACK: NO-FRAME %i-FRAME\n",add_frames);
 #endif
 		model->num_frames=add_frames;/*initialpos no longer counts*/
 		fclose(vf);
-		if(add_frames>1) {
+		if(add_frames>=1) {
 			vasp_out->calc_type=VASP_RUN+VASP_OPT;
 			vasp_xml_plot_energy(model);
 			model->animation=TRUE;
