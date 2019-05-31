@@ -3812,7 +3812,8 @@ void uspex_exec_calc(){
 	g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_uspex,result_model,track_uspex_cleanup);
 /*draw a dummy model*/
 	g_free(result_model->basename);
-	result_model->basename = g_strdup("new_USPEX");
+if(GUI_ENTRY_LENGTH(uspex_gui.name)>0) GUI_ENTRY_GET_TEXT(uspex_gui.name,result_model->basename);
+else result_model->basename = g_strdup("new_USPEX");
 	sysenv.active_model = result_model;
 	model_prep(result_model);
 	result_model->mode = FREE;

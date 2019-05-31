@@ -2721,9 +2721,9 @@ fprintf(stdout,"}\n");
 				gy.idx=c_idx;
 				gy.symbol=c_sym;
 				gy.sym_color=c_col;
-				gy.type=GRAPH_XX_TYPE;
 			}
 			gy.y_size=num;
+			gy.type=GRAPH_XX_TYPE;
 			gy.color=GRAPH_COLOR_DEFAULT;
 			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 			dat_graph_set_limits(0.,1.,min_E-0.05*(max_E-min_E),max_E+0.05*(max_E-min_E),_UO.graph_comp[species_index]);
@@ -2861,6 +2861,7 @@ void uspex_graph_all_update(gint add_gen,gint add_ind,uspex_output_struct *uspex
 		if((_UO.ind[jdx].gen==gen)&&(_UO.ind[jdx].have_data)) num++;
 	}
 	idx=first_i;
+	if(num==0) return;/*no update at all?*/
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"#DBG update_graph_all: (add_gen=%i add_ind=%i) num=%i/y_size=%i of gen=%i idx=%i\n",add_gen,add_ind,num,py->y_size,gen,first_i);
 #endif
@@ -2872,7 +2873,10 @@ fprintf(stdout,"#DBG update_graph_all: (add_gen=%i add_ind=%i) num=%i/y_size=%i 
 		gy->idx=g_realloc(py->idx,num*sizeof(gint32));
 		gy->symbol=g_realloc(py->symbol,num*sizeof(graph_symbol));
 		gy->sym_color=g_realloc(py->sym_color,num*sizeof(graph_color));
-		if((gy->y==NULL)||(gy->idx==NULL)||(gy->symbol==NULL)) return;/*can't realloc, will probably FAIL*/
+		if((gy->y==NULL)||(gy->idx==NULL)||(gy->symbol==NULL)) {
+			g_free(gy);/*FIX: memory leak*/
+			return;/*can't realloc, will probably FAIL*/
+		}
 	}else{
 		gy->y=py->y;
 		gy->idx=py->idx;
@@ -3109,7 +3113,6 @@ fprintf(stdout,"#DBG update_graph_best: gen=%i num=%i ",gen,num);
 		ix=0;
 		for(jdx=0;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen){
-				idx=jdx;
 				py->y[ix]=_UO.ind[_UO.best_ind[jdx+1]].E;/*_BUG_*/
 				if(_UO.ind[ix].energy<10000.000){
 					if(py->y[ix]<min_E) min_E=py->y[ix];
@@ -3202,6 +3205,7 @@ fprintf(stdout,"-SENT\n");
 	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
 	gy.color=GRAPH_COLOR_DEFAULT;
+	gy.mixed_symbol=FALSE;
 	gen=0;
 	if(!((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP))) {
 		/*fake first point*/
@@ -3455,8 +3459,10 @@ if(!model->silent){
 	strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
 	g_free(aux_file);
 	/*seems good so far*/
+if(!model->silent){
 	g_free(model->basename);
 	model->basename=g_strdup_printf("uspex");
+}
 	model->num_frames=0;
 /* +++ register frames, calculate max_struct (according to gatherPOSCARS - it can change)*/
 	max_num_p=0;/*FIX: f70d36*/
@@ -3536,7 +3542,7 @@ if(!model->silent){
 		_UO.ind[idx].struct_number=-1;
 		_UO.ind[idx].gen=0;
 		_UO.ind[idx].natoms=0;
-		_UO.ind[idx].atoms=g_malloc(_UO.calc->_nspecies*sizeof(gint));
+		_UO.ind[idx].atoms=g_malloc0(_UO.calc->_nspecies*sizeof(gint));
 		_UO.ind[idx].energy=0.;
 		_UO.ind[idx].E=0.;
 		_UO.ind[idx].fitness=0.;
@@ -4040,11 +4046,11 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 				continue;/*rejected*/
 			}
 			jdx=0;
-			while((jdx<n_compo)&&(compo>gx.x[jdx])) jdx++;
+			while((jdx<(n_compo-1))&&(compo>gx.x[jdx])) jdx++;/*n_compo-1 because of out of bounds _BUG_?*/
 			if((compo-gx.x[jdx])==0.) continue;/*we already have that one*/
 			c=g_malloc((n_compo+1)*sizeof(gdouble));
 			/*FIX 7a93da*/
-			for(jdx=0;(compo>gx.x[jdx])&&(jdx<n_compo);jdx++) c[jdx]=gx.x[jdx];
+			for(jdx=0;(compo>gx.x[jdx])&&(jdx<(n_compo-1));jdx++) c[jdx]=gx.x[jdx];/*same _BUG_*/
 			c[jdx]=compo;
 			for( ;jdx<n_compo;jdx++) c[jdx+1]=gx.x[jdx];
 			g_free(gx.x);
@@ -4478,8 +4484,10 @@ if(!model->silent){
         }
 	strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
 	g_free(aux_file);
+if(!model->silent){
 	g_free(model->basename);
 	model->basename=g_strdup_printf("uspex");
+}
 	rewind(vf);
 	read_frame_uspex(vf,model);/*open first frame*/
 	fclose(vf);vf=NULL;
@@ -4638,6 +4646,7 @@ fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 		new_model=model_new();
                 model_init(new_model);
 		new_model->silent=TRUE;
+		new_model->basename = g_strdup(model->basename);
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: TRY-READ: %s\n",line);
 #endif
