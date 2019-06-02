@@ -3762,7 +3762,7 @@ void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
 	gchar *line;
 	/*USPEX process ENDED*/
 //	while(!(*uspex_exec).have_result) usleep(500*1000);/*wait for end of process*/
-	line = g_strdup_printf("USPEX job finished!");
+	line = g_strdup_printf("USPEX job finished!\n");
 	gui_text_show(ITALIC,line);
 	g_free(line);
 	/*CLEANUP*/

@@ -3037,7 +3037,7 @@ void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 	gchar *line;
 	/*sync_ wait for result?*/
 //	while(!(*vasp_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
-	line = g_strdup_printf("VASP job finished!");
+	line = g_strdup_printf("VASP job finished!\n");
 	gui_text_show(ITALIC,line);
 	g_free(line);
 /*just wipe the structure*/

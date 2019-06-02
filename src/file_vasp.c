@@ -147,19 +147,27 @@ int vasp_xml_read_kpoints(FILE *vf,struct model_pak *model){
 int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 /* This is the 'full length' INCAR (mostly ignored). */
 	gchar *line;
+	gchar *ptr;
 	int isok=0;
-	int ii=0;
 	int ispin=0;
 	line = file_read_line(vf);
 	while (line) {
 	        if (find_in_string("/parameters",line) != NULL) break;
 		if (find_in_string("SYSTEM",line) != NULL) {
 			g_free(model->basename);
-			model->basename=g_malloc((strlen(line)-35)*sizeof(gchar));
-			sscanf(line," <i type=\"string\" name=\"SYSTEM\"> %s",model->basename);
-			/*get rid of the </i> part*/
-			while((model->basename[ii] != '<')&&(model->basename[ii] != '\0')) ii++;
-			model->basename[ii]='\0';
+/*FIX a BUG in line/basename memory access*/
+			ptr=&(line[0]);
+			while((*ptr!='>')&&(*ptr!='\0')) ptr++;
+			if(*ptr=='\0'){
+				model->basename=g_strdup_printf("unknown");/*which should not happen*/
+			}else{
+				ptr++;
+				__SKIP_BLANK(ptr);
+				model->basename=g_strdup_printf("%s",ptr);
+				ptr=&(model->basename[0]);
+				while((*ptr!='<')&&(*ptr!='\0')) ptr++;
+				*ptr='\0';
+			}
 		}
 		/*fill needed properties*/
 		if (find_in_string("NBANDS",line) != NULL)
