@@ -3042,7 +3042,7 @@ void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 	g_free(line);
 /*just wipe the structure*/
 	sysenv.vasp_calc_list=g_slist_remove(sysenv.vasp_calc_list,vasp_exec);/*does not free, does it?*/
-	g_free(vasp_exec);
+//	g_free(vasp_exec); _BUG_ vasp_exec can be FREE by the first steps of tracking.
 }
 /******************************/
 /* Enqueue a vasp calculation */

@@ -3767,7 +3767,7 @@ void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
 	g_free(line);
 	/*CLEANUP*/
 	sysenv.uspex_calc_list=g_slist_remove(sysenv.uspex_calc_list,uspex_exec);/*does not free, does it?*/
-	g_free(uspex_exec);
+//	g_free(uspex_exec); _BUG_ uspex_exec can be FREE by the first steps of tracking.
 }
 /******************************/
 /* Enqueue a uspex calculation */
