@@ -2473,13 +2473,13 @@ fprintf(stdout,"TRACK: NO-ADD-FRAME\n");
 #if DEBUG_TRACK_VASP
 fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
 #endif
-	if((model->num_frames<2)&&((model->num_frames+add_frames)>1)){
+	if((!model->animation)&&((model->num_frames+add_frames)>1)){
 		/*we need to set animation*/
 		model->animation=TRUE;
 		model->num_frames+=add_frames;
 		vasp_out->calc_type=VASP_RUN+VASP_OPT;/*_BUG_*/
-		/*we need to plot the new graph*/
 		fclose(vf);
+		/*we need to plot the new graph*/
 		vasp_xml_plot_energy(model);
 		return TRUE;/*That's enough for now!*/
 	}
