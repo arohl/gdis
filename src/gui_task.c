@@ -430,7 +430,8 @@ if (task)
     }
   else
     update = FALSE;
-
+/*_BUG_ (fixed) access after free --OVHPA*/
+  if(task==NULL) return TRUE;
   switch (task->status)
     {
     case RUNNING:
@@ -643,7 +644,10 @@ while (list)
   task = list->data;
   list = g_slist_next(list);
   if (task->status == COMPLETED || task->status == KILLED)
-    {
+    {/*FIX _BUG_ use after free --OVHPA*/
+    GtkTreeSelection *selection=gtk_tree_view_get_selection(GTK_TREE_VIEW(task_list_tv));
+	/*UNSELECT ALL before removing*/
+    gtk_tree_selection_unselect_all (selection);
     sysenv.task_list = g_slist_remove(sysenv.task_list, task);
     task_free(task);
     }
