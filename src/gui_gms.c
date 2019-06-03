@@ -89,7 +89,7 @@ extern struct sysenv_pak sysenv;
 /* run a gamess file */
 /*********************/
 #define DEBUG_EXEC_GAMESS 0
-gint exec_gamess(gchar *input)
+gint exec_gamess(gchar *input,struct task_pak *task)
 {
 gchar *cmd, hostname[256];
 
@@ -155,7 +155,10 @@ cmd = g_strdup_printf("%s/%s %s", sysenv.gamess_path, sysenv.gamess_exe, input);
 #if DEBUG_EXEC_GAMESS
 printf("executing: [%s]\n",cmd);
 #else
-task_sync(cmd);
+
+task->is_async = TRUE;
+//task->status_file = g_build_filename(sysenv.cwd,???,NULL);/*what should be the status file?*/
+task_async(cmd,&(task->pid));
 #endif
 
 g_free(cmd);
@@ -167,7 +170,7 @@ return(0);
 /* execute a gamess run (task) */
 /*****************************/
 #define DEBUG_EXEC_GAMESS_TASK 0
-void exec_gamess_task(struct model_pak *model)
+void exec_gamess_task(struct model_pak *model,struct task_pak *task)
 {
 gchar *out;
 
@@ -189,7 +192,7 @@ model->gamess.out_file = out;
 
 /* save input file and execute */
 file_save_as(model->gamess.temp_file, model);
-exec_gamess(model->gamess.temp_file);
+exec_gamess(model->gamess.temp_file,task);
 }
 
 /*****************************/

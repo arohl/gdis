@@ -104,7 +104,7 @@ printf("Skipping GULP execution on user request.\n");
   return;
   }
 
-exec_gulp(model->gulp.temp_file, model->gulp.out_file);
+bg_exec_gulp(model->gulp.temp_file, model->gulp.out_file, task);
 }
 
 /*****************************/

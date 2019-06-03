@@ -25,6 +25,7 @@ gchar *message;
 
 gchar *status_file;
 FILE *status_fp;
+long int status_fp_pos;
 gint status_index;
 GString *status_text;
 /* JJM DEBUG
@@ -57,6 +58,7 @@ void task_status_update(struct task_pak *);
 void task_dialog(void);
 gint task_sync(const gchar *);
 gint task_async(const gchar *command,pid_t *pid);
+gint task_sync_now(const gchar *);
 
 void task_queue_init(void);
 void task_queue_free(void);
@@ -71,3 +73,6 @@ void task_system_new(const gchar *label,
               gpointer func2, gpointer arg2,
               gpointer model);
 gint exec_gulp(const gchar *, const gchar *);
+gint bg_exec_gulp(const gchar *, const gchar *, struct task_pak *);
+
+

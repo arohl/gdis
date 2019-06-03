@@ -4403,9 +4403,50 @@ cmd = g_strdup_printf("%s < %s > %s", sysenv.gulp_path, input, output);
 printf("executing: [%s]\n",cmd);
 #endif
 
-task_sync(cmd);
+status=task_sync_now(cmd);/*this is the new async interface --OVHPA*/
 
 /* done */
 g_free(cmd);
 return(status);
 }
+
+/*******************************************/
+/* run a gulp file, asynchronously --OVHPA */
+/*******************************************/
+#define DEBUG_BG_EXEC_GULP 0
+gint bg_exec_gulp(const gchar *input, const gchar *output, struct task_pak *task)
+{
+gint status=0;
+gchar *cmd;
+
+/* checks */
+if (!sysenv.gulp_path)
+  return(-1);
+
+/* delete the old file to be sure output is only data from current run */
+chdir(sysenv.cwd);
+unlink(output);
+
+/* put the GULP path in quotes to avoid problems with spaces in pathnames etc */
+/* TODO - need to do the same with input/output names? */
+
+#ifdef _WIN32
+/*not sure if WIN32 can handle waitpid properly though...*/
+cmd = g_strdup_printf("\"%s\" < %s > %s", sysenv.gulp_path, input, output);
+#else
+cmd = g_strdup_printf("%s < %s > %s", sysenv.gulp_path, input, output);
+#endif
+
+
+#if DEBUG_EXEC_GULP
+printf("background executing: [%s]\n",cmd);
+#endif
+
+task->is_async = TRUE;/*use async waitpid*/
+status=task_async(cmd,&(task->pid));
+
+/* done */
+g_free(cmd);
+return(status);
+}
+

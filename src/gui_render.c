@@ -340,7 +340,7 @@ else
 /*****************************/
 /* task orientated rendering */
 /*****************************/
-void povray_exec_task(gpointer ptr)
+void povray_exec_task(gpointer ptr,struct task_pak *task)
 {
 GString *cmd;
 gchar *file;
@@ -362,7 +362,9 @@ g_free(file);
 /* don't do continuous display updates */
 g_string_sprintfa(cmd, " -D");
 
-task_sync(cmd->str);
+task->is_async = TRUE;
+//task->status_file = g_build_filename(sysenv.cwd,???,NULL);/*what should be the status file?*/
+task_async(cmd->str,&(task->pid));
 
 g_string_free(cmd, TRUE);
 }

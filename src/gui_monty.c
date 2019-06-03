@@ -600,7 +600,7 @@ void write_input_file(gchar *input_file, gpointer data)
   fclose(fp);
 }
 
-gint exec_monty(const gchar *input)
+gint exec_monty(const gchar *input,struct task_pak *task)
 {
   gint status=0;
   gchar *cmd;
@@ -620,8 +620,10 @@ gint exec_monty(const gchar *input)
 #if DEBUG_MONTY_GUI
   printf("executing: [%s]\n",cmd);
 #endif
-  
-  task_sync(cmd);
+ 
+  task->is_async = TRUE;
+//task->status_file = g_build_filename(sysenv.cwd,???,NULL);/*what should be the status file?*/
+  status=task_async(cmd,&(task->pid));
   
   /* done */
   g_free(cmd);
@@ -661,7 +663,7 @@ void exec_monty_task(gpointer ptr, gpointer data)
     write_input_file(inpfile, model);
     g_free(inpfile);
     
-    exec_monty("input.monty2");
+    exec_monty("input.monty2",task);
 }
 
 void gui_monty_task(GtkWidget *w, gpointer data)

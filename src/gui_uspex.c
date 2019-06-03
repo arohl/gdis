@@ -3749,6 +3749,7 @@ void run_uspex_exec(uspex_exec_struct *uspex_exec,struct task_pak *task){
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*uspex_exec).job_path);
 	task->is_async = TRUE;
+	task->status_file = g_build_filename((*uspex_exec).job_path,"uspex.log", NULL);
 	task_async(cmd,&(task->pid));
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/

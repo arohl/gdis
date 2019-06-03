@@ -147,6 +147,7 @@ g_free(task->status_file);
 
 if (task->status_fp)
   fclose(task->status_fp);
+task->status_fp=NULL;
 
 g_string_free(task->status_text, TRUE);
 
@@ -181,6 +182,7 @@ task->locked_model = model;
 
 task->status_file = NULL;
 task->status_fp = NULL;
+task->status_fp_pos = 0L;
 task->status_index = -1;
 task->status_text = g_string_new(NULL);
 
@@ -225,6 +227,7 @@ task->locked_model = model;
 
 task->status_file = NULL;
 task->status_fp = NULL;
+task->status_fp_pos = 0L;
 task->status_index = -1;
 task->status_text = g_string_new(NULL);
 
@@ -283,6 +286,50 @@ if (!status)
 
 return(status);
 }
+/***********************************************************************/
+/* Create a simple async task and wait for it replace direct execution */
+/***********************************************************************/
+gint task_sync_now(const gchar *command)
+{
+pid_t pid,w;
+gint status;
+gchar **argv;
+GError *error=NULL;
+
+/* checks */
+if (!command)
+  return(1);
+
+#if _WIN32
+/*not sure waitpid would work here*/
+chdir(sysenv.cwd);
+system(command);
+#else
+/* setup the command vector */
+argv = g_malloc(4 * sizeof(gchar *));
+*(argv) = g_strdup("/bin/sh");
+*(argv+1) = g_strdup("-c");
+*(argv+2) = g_strdup(command);
+*(argv+3) = NULL;
+
+status=g_spawn_async(sysenv.cwd,argv,NULL,G_SPAWN_DO_NOT_REAP_CHILD,NULL,NULL,&pid,&error);
+
+g_strfreev(argv);
+#endif
+
+if (!status)
+  printf("task_sync_now() launch error: %s\n", error->message);
+
+do{
+    w = waitpid(pid, &status,WNOHANG|WUNTRACED|WCONTINUED);/*we are not within thread exec*/
+    if(w==-1) fprintf(stdout,"process %i incorrect termination!\n",pid);
+    usleep(500*1000);/*NEW: usleep because not inside a task_new */
+} while((!WIFEXITED(status))&&(!WIFSIGNALED(status)));
+
+
+return(status);
+}
+
 
 
 /**************************************/
@@ -368,12 +415,12 @@ if (task->status_file)
   if (!task->status_fp)
     {
     task->status_index = 0;
-/* exit if we've read in the file and closed it (due to completion) */
-    if (strlen((task->status_text)->str))
-      return;
+/*with async tasks, we can update status file each time. --OVHPA*/
+if((!task->is_async)&&(strlen((task->status_text)->str))) return;
     task->status_fp = fopen(task->status_file, "rt");
+    if(task->status_fp==NULL) return;/*_BUG_ avoid fseek when task is being removed*/
     }
-
+  fseek(task->status_fp,task->status_fp_pos,SEEK_SET);/* rewind to flag */
   line = file_read_line(task->status_fp);
   while (line)
     {
@@ -383,6 +430,7 @@ if (task->status_file)
       g_string_append(task->status_text, line);
 
     g_free(line);
+    task->status_fp_pos = ftell(task->status_fp);/*flag*/ 
     line = file_read_line(task->status_fp);
     }
 

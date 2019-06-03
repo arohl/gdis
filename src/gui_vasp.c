@@ -3023,6 +3023,7 @@ void run_vasp_exec(vasp_exec_struct *vasp_exec,struct task_pak *task){
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*vasp_exec).job_path);
 	task->is_async = TRUE;
+	task->status_file = g_build_filename((*vasp_exec).job_path,"vasp.log", NULL);
 	task_async(cmd,&(task->pid));
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/
