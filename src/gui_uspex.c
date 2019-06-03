@@ -3765,9 +3765,6 @@ void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
 	line = g_strdup_printf("USPEX job finished!\n");
 	gui_text_show(ITALIC,line);
 	g_free(line);
-	/*CLEANUP*/
-	sysenv.uspex_calc_list=g_slist_remove(sysenv.uspex_calc_list,uspex_exec);/*does not free, does it?*/
-//	g_free(uspex_exec); _BUG_ uspex_exec can be FREE by the first steps of tracking.
 }
 /******************************/
 /* Enqueue a uspex calculation */
@@ -3782,8 +3779,6 @@ void uspex_exec_calc(){
 	if(save_uspex_calc()) return;/*sync and save all file*/
 /*copy structure to the list*/
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
-	uspex_exec->job_id=g_slist_length(sysenv.uspex_calc_list);
-//	uspex_exec->have_result=FALSE;
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
 /*Get the future valid index*/
@@ -3797,8 +3792,6 @@ void uspex_exec_calc(){
 	}while(TRUE);
 	(*uspex_exec).index=idx;
 	filename=g_strdup_printf("%s/results%i/OUTPUT.txt",(*uspex_exec).job_path,(*uspex_exec).index);
-	/*prepend to calc list*/
-	sysenv.uspex_calc_list = g_slist_prepend (sysenv.uspex_calc_list,uspex_exec);
 	/*launch uspex in a task*/
 	GUI_LOCK(uspex_gui.button_save);
 	GUI_LOCK(uspex_gui.button_exec);

@@ -390,10 +390,6 @@ typedef struct {
 } vasp_output_struct;
 /*execution structure*/
 typedef struct {
-	int job_id;
-	gboolean have_result;
-	gboolean have_gui;
-	/*job related*/
 	gchar *job_vasp_exe;
 	gchar *job_mpirun;
 	gchar *job_path;

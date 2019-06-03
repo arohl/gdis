@@ -3027,7 +3027,6 @@ void run_vasp_exec(vasp_exec_struct *vasp_exec,struct task_pak *task){
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/
 	g_free(cmd);
-//	(*vasp_exec).have_result=TRUE;
 }
 /*****************************/
 /* cleanup task: load result */
@@ -3036,13 +3035,9 @@ void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 	/*VASP process has exit, try to load the result*/
 	gchar *line;
 	/*sync_ wait for result?*/
-//	while(!(*vasp_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
 	line = g_strdup_printf("VASP job finished!\n");
 	gui_text_show(ITALIC,line);
 	g_free(line);
-/*just wipe the structure*/
-	sysenv.vasp_calc_list=g_slist_remove(sysenv.vasp_calc_list,vasp_exec);/*does not free, does it?*/
-//	g_free(vasp_exec); _BUG_ vasp_exec can be FREE by the first steps of tracking.
 }
 /******************************/
 /* Enqueue a vasp calculation */
@@ -3055,15 +3050,10 @@ void exec_calc(){
 	if(save_vasp_calc()) return;/*sync and save all file*/
 /*copy structure to the list*/
 	vasp_exec=g_malloc(sizeof(vasp_exec_struct));
-	vasp_exec->job_id=g_slist_length(sysenv.vasp_calc_list);
-	vasp_exec->have_result=FALSE;
-	vasp_exec->have_gui=TRUE;
 	vasp_exec->job_vasp_exe=g_strdup_printf("%s",vasp_gui.calc.job_vasp_exe);
 	vasp_exec->job_mpirun=g_strdup_printf("%s",vasp_gui.calc.job_mpirun);
 	vasp_exec->job_path=g_strdup_printf("%s",vasp_gui.calc.job_path);
 	vasp_exec->job_nproc=vasp_gui.calc.job_nproc;
-	/*prepend to calc list*/
-	sysenv.vasp_calc_list = g_slist_prepend (sysenv.vasp_calc_list,vasp_exec);
 	/*launch vasp in a task*/
 	GUI_LOCK(vasp_gui.button_save);
 	GUI_LOCK(vasp_gui.button_exec);

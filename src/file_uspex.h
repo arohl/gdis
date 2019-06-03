@@ -333,14 +333,11 @@ typedef struct {
 } uspex_output_struct;
 /* execution structure */
 typedef struct {
-	int job_id;
 	gint index;				/*index is the result# folder*/
-	gboolean have_result;
 	/*job related*/
 	gchar *job_uspex_exe;
 	gchar *job_path;
 } uspex_exec_struct;
-
 /*methods of interest*/
 void init_uspex_parameters(uspex_calc_struct *uspex_calc);
 void free_uspex_parameters(uspex_calc_struct *uspex_calc);

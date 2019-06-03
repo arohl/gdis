@@ -387,8 +387,6 @@ struct light_pak *light;
 FILE *fp;
 
 /* top level structure initialization */
-sysenv.vasp_calc_list = NULL;/*to be removed soon*/
-sysenv.uspex_calc_list = NULL;
 sysenv.max_threads = -1;
 sysenv.task_list = NULL;
 sysenv.host_list = NULL;
