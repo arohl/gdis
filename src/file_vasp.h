@@ -405,4 +405,4 @@ void vasprun_free(vasp_calc_struct *calc);
 void vasp_out_free(vasp_output_struct * vo);
 
 gint vasp_load_poscar5(FILE *vf,struct model_pak *model);
-
+gint vasp_load_poscar4(FILE *vf,struct model_pak *model,char *label);

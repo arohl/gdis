@@ -310,6 +310,7 @@ typedef struct {
         /* optimization */
 	gboolean have_supercell;		/*NEW: deal with supecell automagic*/
         gboolean have_fitness;
+	gboolean have_vasp4;			/*FIX many bugs due to VASP4 format*/
 /*structures*/
         gint num_gen;
         gint num_struct;

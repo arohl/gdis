@@ -673,8 +673,8 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 			/*look for atomType*/
 			_UC.atomType = g_malloc(_UC._nspecies*sizeof(gint));
 			for(i=0;i<_UC._nspecies;i++) _UC.atomType[i]=0;
-			ptr=&(line[0]);i=0;
-			while((*ptr!='\n')&&(*ptr!='\0')){
+			ptr=&(line[0]);i=0;/*FIX _BUG_ when i=_UC._nspecies*/
+			while((*ptr!='\n')&&(*ptr!='\0')&&(i<_UC._nspecies)){
 				__SKIP_BLANK(ptr);
 				if(g_ascii_isdigit(*ptr)) _UC.atomType[i]=(gint)g_ascii_strtoull (ptr,NULL,10);/*user provided Z number*/
 				else _UC.atomType[i]=elem_symbol_test(ptr);/*try user provided symbol*/
@@ -715,8 +715,8 @@ else n_size=_UC._nspecies;
 			_UC.numSpecies = g_malloc(n_size*_UC._var_nspecies*sizeof(gint));
 			for(i=0;i<n_size*_UC._var_nspecies;i++) _UC.numSpecies[i]=0;
 			for(j=0;j<_UC._var_nspecies;j++){
-				ptr=&(line[0]);i=0;
-				while((*ptr!='\n')&&(*ptr!='\0')){
+				ptr=&(line[0]);i=0;/*FIX _BUG_ when i=n_size*/
+				while((*ptr!='\n')&&(*ptr!='\0')&&(i<n_size)){
 					__SKIP_BLANK(ptr);
 					_UC.numSpecies[i+j*n_size]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
 					ptr=ptr2+1;
@@ -1011,8 +1011,8 @@ else n_size=_UC._nspecies;
 /*TODO: deal with META parenthesis here!*/
 _UC._isfixed = g_malloc(_UC._num_opt_steps*sizeof(gboolean));
 for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=TRUE;
-j=0;i=0;n_size=0;
-while((*ptr!='\n')&&(*ptr!='\0')){
+j=0;i=0;n_size=0;/*FIX _BUG_ i=_UC._num_opt_steps*/
+while((*ptr!='\n')&&(*ptr!='\0')&&(i<_UC._num_opt_steps)){
 	__SKIP_BLANK(ptr);
 	if(*ptr=='(') {
 		n_size=1;
@@ -2466,6 +2466,9 @@ fprintf(stdout,"\n");
 		_UO.last_ind_pos=ftell(vf);
 		line = file_read_line(vf);
 	}
+	/*FIX a _BUG_ with EX13 where all energy are = 100000.000*/
+	if(_UO.min_E>10000.000) _UO.min_E=_UO.ind[1].E;
+	if(_UO.max_E<-10000.000) _UO.max_E=_UO.ind[1].E;
 	return 0;
 }
 /*****************/
@@ -3307,10 +3310,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	graph_symbol *c_sym;
 	gint species_index;
 	/* results */
-	FILE *f_src;
-	FILE *f_dest;
 	gint natoms=0;
-	gchar *atoms;
 	uspex_output_struct *uspex_output;
 	uspex_calc_struct *uspex_calc;
 	/* checks */
@@ -3330,8 +3330,17 @@ if(!model->silent){
 		g_free(model->uspex);
 		model->uspex=NULL;
 	}
-	model->uspex=g_malloc(sizeof(uspex_output_struct));
-	uspex_output=model->uspex;
+/*initialize uspex_output <- should have its own function*/
+	uspex_output = g_malloc(sizeof(uspex_output_struct));
+	model->uspex = (gpointer) uspex_output;
+	_UO.name=NULL;
+	_UO.res_folder=NULL;
+	_UO.calc=NULL;
+	_UO.ind=NULL;
+	_UO.best_ind=NULL;
+	_UO.natom_refs=NULL;
+	_UO.ef_refs=NULL;
+/*end of init*/
 	vf = fopen(filename, "rt");
 	if (!vf) {
 if(!model->silent){
@@ -3470,6 +3479,7 @@ if(!model->silent){
 	uspex_calc=_UO.calc;
 	_UC.path=g_strdup(_UO.res_folder);
 	model->id=USPEX;
+	_UO.have_vasp4=FALSE;
 /* --- ANYTHING but VCNEB, and TPS (and unsupported)*/
 if((_UC.calculationMethod==US_CM_USPEX)
 	||(_UC.calculationMethod==US_CM_META)
@@ -3517,14 +3527,26 @@ if(!model->silent){
 		g_free(line);
 		line = file_read_line(vf);
 	}
+/*some version use VASP4 format :( -> EX19 with USPEX v10.0.0*/
+if(find_in_string("Direct",line) != NULL) {
+	_UO.have_vasp4=TRUE;
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	idx=0;
+	while((idx<6)&&(!feof(vf))){
+		idx++;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+}
 	ptr=&(line[0]);
 	atom_n=g_malloc(_UO.calc->_nspecies*sizeof(gint));
 	natoms=0;
 	jdx=0;
 	while((*ptr!='\0')&&(*ptr!='\n')){
-		__SKIP_BLANK(ptr);
+//		__SKIP_BLANK(ptr);
+		while(!g_ascii_isdigit(*ptr)&&(*(ptr)!='\0')) ptr++;
 		/*we also need a ratio for supercell calculations*/
-		atom_n[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+		atom_n[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);/*valgrind _BUG_ */
 		natoms+=atom_n[jdx];
 		ptr=ptr2+1;
 		jdx++;
@@ -3778,8 +3800,10 @@ fprintf(stdout,"\n");
 /* +++ prepare ALL graph*/
 	_UO.graph=graph_new("ALL", model);
 	/*process ALL graph ; ALL graph is _always_ enthalpy*/
-	min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
-	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
+	if(_UO.min_E==_UO.max_E) d=0.05*_UO.max_E;
+	else d=(_UO.max_E-_UO.min_E)*0.05;
+	min_E=_UO.min_E-d;
+	max_E=_UO.max_E+d;
 	/*NEW - x dat*/
 	gx.x_size=_UO.num_gen+1;
 	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
@@ -3906,12 +3930,16 @@ if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 			if(_UO.ind[_UO.best_ind[2*idx+1]].E > max_E) max_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
 		}
 	}
-	/*for case where energy is not properly calculated*/
-	if(max_E==min_E) {
-		min_E-=0.1;
-		max_E+=0.1;
+	/*FIX a _BUG_ in EX13 (all energy are 100000.000)*/
+	if((min_E>10000.000)&&(max_E<-10000.000)) {
+		min_E=_UO.ind[1].E-_UO.ind[1].E*0.5;
+		max_E=_UO.ind[1].E+_UO.ind[1].E*0.5;
 	}
 	/*process BEST graph*/
+	if(max_E==min_E) {
+		min_E-=1.0;
+		max_E+=1.0;
+	}
 	d=(max_E-min_E)*0.05;
 	min_E-=d;
 	max_E+=d;
@@ -3962,7 +3990,20 @@ if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 		}
 		/*NEW - y dat*/
 		if(num==0) {
-			/*in case of an unfinished calculation...*/
+			/*FIX _BUG_ this can be normal in case of META/MINHOP*/
+			gy.y_size=0;
+			gy.y=g_malloc(1*sizeof(gdouble));
+			gy.y[0]=NAN;
+			gy.type=GRAPH_IX_TYPE;
+			gy.idx=NULL;
+			gy.symbol=NULL;
+			gy.sym_color=NULL;
+			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+			dat_graph_add_y(gy,_UO.graph_best);
+			g_free(gy.y);
+			//g_free(gy.idx);
+			//g_free(gy.symbol);
 			gen++;
 			continue;
 		}
@@ -3990,7 +4031,7 @@ fprintf(stdout,"#DBG graph_best: num=%i ",num);
 					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 				}
 #if DEBUG_USPEX_READ
-fprintf(stdout,"e[%i]=%lf ",ix,gy.y[ix]);
+fprintf(stdout,"gen=%i e[%i]=%lf ",gen,ix,gy.y[ix]);
 #endif
 				ix++;
 			}
@@ -4099,9 +4140,9 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 		c_min=g_malloc(n_compo*sizeof(gdouble));/*we need a list of minimum for convex hull*/
 		for(idx=0;idx<n_compo;idx++) c_min[idx]=1.0/0.0;/*+inf*/
 #if DEBUG_USPEX_READ
-	fprintf(stdout,"Species %s detected %i compositions!\n",elements[_UC.atomType[species_index]].symbol,n_compo);
-	fprintf(stdout,"C = { ");for(idx=0;idx<n_compo;idx++) fprintf(stdout,"%f ",gx.x[idx]);
-	fprintf(stdout,"}\n");
+fprintf(stdout,"Species %s detected %i compositions!\n",elements[_UC.atomType[species_index]].symbol,n_compo);
+fprintf(stdout,"C = { ");for(idx=0;idx<n_compo;idx++) fprintf(stdout,"%f ",gx.x[idx]);
+fprintf(stdout,"}\n");
 #endif
 		line=g_strdup_printf("COMP_%s",elements[_UC.atomType[species_index]].symbol);
 		_UO.graph_comp[species_index]=graph_new(line, model);
@@ -4282,75 +4323,7 @@ if(!model->silent){
 /* --- VCNEB method*/
 else if(_UC.calculationMethod==US_CM_VCNEB){
 /* +++ transitionPath_POSCARs conversion to VASP5 format*/
-if(_UO.version<1010){
-	atoms = g_strdup_printf("%s",elements[_UC.atomType[0]].symbol);
-	for(idx=1;idx<_UC._nspecies;idx++){
-		line = g_strdup_printf("%s %s",atoms,elements[_UC.atomType[idx]].symbol);
-		g_free(atoms);
-		atoms=line;
-	}
-/* open transitionPath_POSCARs and start to convert to transitionPath_POSCARs5 */
-	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
-	f_src = fopen(aux_file, "rt");
-	if(!f_src) {
-if(!model->silent){
-		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-}
-		g_free(aux_file);
-		goto uspex_fail;
-	}
-	g_free(aux_file);
-	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs5");
-	f_dest = fopen(aux_file, "w");
-	if(!f_dest) {
-if(!model->silent){
-		line = g_strdup_printf("ERROR: can't WRITE into USPEX transitionPath_POSCARs5 file!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-}
-		g_free(aux_file);
-		goto uspex_fail;
-	}
-	g_free(aux_file);
-/*get the total number of atoms*/
-	for(idx=0;idx<5;idx++){
-		line = file_read_line(f_src);
-		g_free(line);
-	}
-	natoms=1;/*there is at least one atom*/
-	ptr=&(line[0]);
-	do{
-		natoms+=(gint)g_ascii_strtod(ptr,&ptr2);
-		if(ptr2==ptr) break;
-		ptr=ptr2;
-	}while(1);
-#if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG: USPEX[VCNEB]: NATOMS=%i ATOMS=%s\n",natoms,atoms);
-#endif
-	/*translate input VASP4 into proper VASP5*/
-	rewind(f_src);
-	idx=0;
-	_UO.num_struct=0;
-	line = file_read_line(f_src);
-	while(line){
-		fprintf(f_dest,"%s",line);
-		if (find_in_string("Image",line) != NULL) {
-			idx=0;
-			_UO.num_struct++;
-		}
-		if(idx==4) fprintf(f_dest,"%s\n",atoms);
-		idx++;
-		g_free(line);
-		line = file_read_line(f_src);
-	}
-	fclose(f_src);
-	fclose(f_dest);
-	g_free(atoms);
-}/* ^^^ end transitionPath_POSCARs conversion*/
-/* +++ VER 10.1 and sup. of USPEX uses a VASP5 format for transitionPath_POSCARs!*/
-else{
+if(_UO.version<1010) _UO.have_vasp4=TRUE;
 	/*read the number of structures*/
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
 	vf = fopen(aux_file, "rt");
@@ -4386,7 +4359,6 @@ if(!model->silent){
 	}while(1);
 	/*all done*/
 	fclose(vf);
-}
 /* --- read energies from the Energy file */
 	_UO.ind=g_malloc((1+_UO.num_struct)*sizeof(uspex_individual));
         for(idx=0;idx<=_UO.num_struct;idx++) {
@@ -4492,14 +4464,20 @@ fprintf(stdout,"#DBG: VCNEB Image %i: natoms=%i energy=%lf e=%lf\n",_UO.ind[idx]
 	graph_set_yticks(TRUE,5,_UO.graph_best);
 /* --- reopen transitionPath_POSCARs or the newly created transitionPath_POSCARs5 file for reading
  * ^^^ this will be our new model file*/
+aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
+#ifdef NO_NO_NO
 	if(_UO.version<1010) aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs5");
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
+#endif
 	vf=fopen(aux_file,"rt");
         if (!vf) {/*very unlikely: we just create/read it*/
 		g_free(_UO.ind);
 if(!model->silent){
+line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
+#ifdef NO_NO_NO
 		if(_UO.version<1010) line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs5 file!\n");
 		else line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
+#endif
                 gui_text_show(ERROR, line);
                 g_free(line);
 }
@@ -4559,6 +4537,7 @@ if(!model->silent){
 	gui_text_show(ERROR, line);
 	g_free(line);
 }
+//	uspex_output->name=g_strdup("failed");
 	return 3;
 }
 /********************/
@@ -4583,8 +4562,17 @@ sscanf(ptr,"%i%*s",&idx);
 g_free(line);/*FIX: _VALGRIND_BUG_*/
 fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 
-
-        if(vasp_load_poscar5(vf,model)<0) return 3;
+	if(_UO.have_vasp4) {
+		/*we need to create the atoms label*/
+		line=g_strdup(" ");
+		for(idx=0;idx<_UO.calc->_nspecies;idx++){
+			ptr=g_strdup_printf("%s %s",line,elements[_UO.calc->atomType[idx]].symbol);
+			g_free(line);
+			line=ptr;
+		}
+		idx=vasp_load_poscar4(vf,model,line);
+	}else idx=vasp_load_poscar5(vf,model);
+	if(idx<0) return 3;
 if(_UO.ind[idx].have_data){/*_BUG_ out of index*/
 	line=g_strdup_printf("%lf eV",_UO.ind[idx].energy);
 	property_add_ranked(3, "Energy", line, model);
