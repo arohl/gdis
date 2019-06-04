@@ -1369,6 +1369,9 @@ surf->surface.region[0] = model->surface.region[0];
 surf->surface.region[1] = model->surface.region[1];
 surf->surface.shift = model->surface.shift;
 surf->surface.converge_eatt = model->surface.converge_eatt;
+surf->surface.converge_r1 = model->surface.converge_r1;
+surf->surface.converge_r2 = model->surface.converge_r2;
+
 surf->sginfo.lookup = FALSE;
 
 /* which energy to converge */
@@ -1600,6 +1603,12 @@ fprintf(fp, "----------------------------------------------\n");
 /* save run type */
 run = model->gulp.run;
 
+#if DEBUG_EXEC_REGCON_TASK
+printf("run type %i\n", run);
+printf("converge r1 %i\n", model->surface.converge_r1);
+printf("converge r2 %i\n", model->surface.converge_r2);
+#endif
+  
 fprintf(fp, "Beginning unrelaxed convergence...\n");
 
 /* converge region 2 size */
@@ -1714,6 +1723,7 @@ g_free(model);
 /*********************************/
 /* region convergence task setup */
 /*********************************/
+#define DEBUG_NEW_REGCON_TASK 0
 void new_regcon_task(struct model_pak *model,
                      struct plane_pak *plane,
                      struct shift_pak *shift)
@@ -1727,6 +1737,12 @@ struct model_pak *temp;
 g_assert(model != NULL);
 g_assert(plane != NULL);
 g_assert(shift != NULL);
+
+#if DEBUG_NEW_REGCON_TASK
+printf("new_regcon_task\n");
+printf("model->surface.converge_r1 %i\n", model->surface.converge_r1);
+printf("model->surface.converge_r2 %i\n", model->surface.converge_r2);
+#endif
 
 /* NEW - prevent deletion */
 shift->locked = TRUE;
@@ -1776,12 +1792,14 @@ connect_molecules(temp);
 
 /* NEW - no dependence once we've spawned the task */
 temp->surface.converge_eatt = model->surface.converge_eatt;
+temp->surface.converge_r1 = model->surface.converge_r1;
+temp->surface.converge_r2 = model->surface.converge_r2;
 temp->surface.model = NULL;
 temp->surface.shift = shift->shift;
 temp->surface.region[0] = shift->region[0];
 temp->surface.region[1] = shift->region[1];
 ARR3SET(temp->surface.miller, plane->index);
-
+  
 /* append the required plane and shift to the temporary model */
 plane2 = plane_new(temp->surface.miller, model);
 plane2->shifts = g_slist_append(plane2->shifts, shift);
