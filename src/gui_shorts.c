@@ -365,9 +365,9 @@ printf("[%p type %d]", relation, type);
 if (model)
   {
   if (direct)
-    printf("[model %d][value %p]", model->number, value);
+    printf("[model %d][value %p]", model->id, value);
   else
-    printf("[model %d][value %p][offset %d]", model->number, value, relation->offset);
+    printf("[model %d][value %p][offset %d]", model->id, value, relation->offset);
   }
 printf("\n");
 #endif
