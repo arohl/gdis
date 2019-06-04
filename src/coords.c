@@ -267,6 +267,10 @@ void make_axes(struct model_pak *data)
 VEC3SET(data->axes[0].x, 1.0, 0.0, 0.0);
 VEC3SET(data->axes[1].x, 0.0, 1.0, 0.0);
 VEC3SET(data->axes[2].x, 0.0, 0.0, 1.0);
+/*solve a long time valgind _BUG_*/
+VEC3SET(data->axes[3].x, 0.0, 0.0, 0.0);
+VEC3SET(data->axes[4].x, 0.0, 0.0, 0.0);
+VEC3SET(data->axes[5].x, 0.0, 0.0, 0.0);
 }
 
 /********/
@@ -723,11 +727,11 @@ for (n=8 ; n-- ; )
 for (n=6 ; n-- ; )
   {
   ARR3SET(vec4, data->axes[n].x);
-  vec4[3] = 0.0;
+//  vec4[3] = 0.0;
   if (data->axes_type != CARTESIAN)
     {
     vec4mat(mat4, vec4);
-    normalize(vec4, 3);
+    normalize(vec4, 3);/*valgrind _BUG_*/
     }
   ARR3SET(data->axes[n].rx, vec4);
   VEC3MUL(data->axes[n].rx, 0.06*data->rmax);

@@ -2239,6 +2239,36 @@ if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 #undef __OUT_BK_STRING
 #undef __OUT_TMAT_DOUBLE
 }
+/**********************/
+/* reset uspex_output */
+/**********************/
+void uspex_output_reset(uspex_output_struct *uo){
+	if(uo==NULL) return;
+	if(uo->name!=NULL) g_free(uo->name);
+	uo->name=NULL;
+	if(uo->res_folder!=NULL) g_free(uo->res_folder);
+	uo->res_folder=NULL;
+	if(uo->calc!=NULL) {
+		free_uspex_parameters(uo->calc);
+		g_free(uo->calc);
+	}
+	uo->calc=NULL;
+	if(uo->ind!=NULL) g_free(uo->ind);
+	uo->ind=NULL;
+	if(uo->best_ind!=NULL) g_free(uo->best_ind);
+	uo->best_ind=NULL;
+	if(uo->natom_refs!=NULL) g_free(uo->natom_refs);
+	uo->natom_refs=NULL;
+	if(uo->ef_refs!=NULL) g_free(uo->ef_refs);
+	uo->ef_refs=NULL;
+/*uo->graph_comp will be taken care of by free_model*/
+}
+/**********************************/
+/* free uspex_output from outside */
+/**********************************/
+void free_uspex_out(gpointer data){
+	uspex_output_reset((uspex_output_struct *)data);
+}
 /***************************/
 /* NEW: update Individuals */
 /***************************/
@@ -3295,7 +3325,11 @@ if(!model->silent){
 		return -1;
 	}
 	/*allocs*/
-	if(model->uspex!=NULL) g_free(model->uspex);
+	if(model->uspex!=NULL) {
+		free_uspex_out(model->uspex);
+		g_free(model->uspex);
+		model->uspex=NULL;
+	}
 	model->uspex=g_malloc(sizeof(uspex_output_struct));
 	uspex_output=model->uspex;
 	vf = fopen(filename, "rt");
@@ -3459,10 +3493,14 @@ if(!model->silent){
 	strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
 	g_free(aux_file);
 	/*seems good so far*/
+	if(model->basename==NULL) model->basename=g_strdup_printf("uspex");
+	uspex_output->name=g_strdup(model->basename);
+/*
 if(!model->silent){
 	g_free(model->basename);
 	model->basename=g_strdup_printf("uspex");
 }
+*/
 	model->num_frames=0;
 /* +++ register frames, calculate max_struct (according to gatherPOSCARS - it can change)*/
 	max_num_p=0;/*FIX: f70d36*/
@@ -4238,6 +4276,7 @@ if(!model->silent){
 	gui_text_show(ITALIC,line);
 	g_free(line);
 }
+
 	model_prep(model);
 }/* ^^^ end ANYTHING but VCNEB, and TPS*/
 /* --- VCNEB method*/
@@ -4633,11 +4672,10 @@ gboolean track_uspex(void *data){
 	/*is being called every TRACKING_TIMEOUT; every "return FALSE" will stop the timer!*/
 	if(data==NULL) return FALSE;/*STOP TRACKING if there is no model*/
 	model=(struct model_pak *)data;
-//	if(model->uspex==NULL) return FALSE;/*no model, no tracking*/
 	model->track_nb=(model->track_nb+1)%3;
 	if(model->track_me==FALSE) return FALSE;/*tracking is over*/
 	/**/
-	if(model->uspex==NULL){/*contradict no model, no tracking*/
+	if(model->uspex==NULL){
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
 #endif
@@ -4661,7 +4699,11 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 		}else{
 			model_delete(new_model);
 			g_free(line);
-			if(model->uspex!=NULL) g_free(model->uspex);
+			if(model->uspex!=NULL) {
+				free_uspex_out(model->uspex);
+				g_free(model->uspex);
+				model->uspex=NULL;
+			}
 			model->uspex=NULL;
 			return TRUE;/*we fail to read the file, but won't give up!*/
 		}
@@ -4976,12 +5018,14 @@ fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
                 other_model=model->t_next;
                 tree_model_add(other_model);
                 tree_select_model(model);
+#ifdef NO_NO_NO
                 if(model->uspex!=NULL) {
-//                        uspex_out_reset((uspex_output_struct *)model->uspex);
                         /*optional (tree_select_delete should do that)*/
+			free_uspex_out(model->uspex);
                         g_free(model->uspex);
                         model->uspex=NULL;
                 }
+#endif
                 tree_select_delete();
                 tree_select_model(other_model);
                 model=NULL;/*_BUG_ spotted*/

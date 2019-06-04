@@ -130,7 +130,8 @@ gtk_tree_model_get(GTK_TREE_MODEL(sysenv.tree_store), &iter,
 /* alter the selection iter and then remove old iter */
 next = iter;
 tree_select_next(&next);
-gtk_tree_store_remove(sysenv.tree_store, &iter);
+if(!gtk_tree_store_remove(sysenv.tree_store, &iter)) gtk_tree_selection_unselect_all (selection);/*FIX _BUG_*/
+
 
 /* data pointer cleanup */
 switch (depth)

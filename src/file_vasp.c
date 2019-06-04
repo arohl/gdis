@@ -1422,9 +1422,9 @@ int vasp_xml_plot_energy(struct model_pak *model){
 //fprintf(stdout,"FOUND N_SCF=%i\n",vasp_out->n_scf);
 	if(vasp_out->n_scf < 3) return 0;/*NOT enough energy data*/
 	gy.y_size=vasp_out->n_scf;
-	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
-	gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
-	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc0(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
 	gy.mixed_symbol=TRUE;/*<- to differenciate between SCF and STEP*/
 	gy.sym_color=NULL;
 	gy.y[0]=NAN;/*frame 0 does not exist*/
@@ -1506,7 +1506,7 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	}
 	/*X*/
 	gx.x_size=vasp_out->n_scf;/*frame 0 does not count*/
-	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+	gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
 	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
 	dat_graph_set_x(gx,vasp_out->graph_energy);
 	dat_graph_set_type(GRAPH_IY_TYPE,vasp_out->graph_energy);
@@ -1581,13 +1581,13 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 //fprintf(stdout,"PLOT: ADD %i SCF.\n",n_add);
 	/*init gx,gy*/
 	gy.y_size=old_size+n_add;
-	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
-	gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
-	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc0(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
 	gy.mixed_symbol=TRUE;/*<- to differenciate between SCF and STEP*/
 	gy.sym_color=NULL;
 	gx.x_size=old_size+n_add;
-	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+	gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
 	for(idx=vasp_out->n_scf;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
 	/*COPY old px,py data*/
 	for(idx=0;idx<old_size;idx++){
@@ -2033,6 +2033,13 @@ void vasp_out_reset(vasp_output_struct * vo){
 	if(vo->graph_volume) graph_reset(vo->graph_volume);
 	vo->graph_volume=NULL;
 }
+/*******************************************/
+/* free vasp_output_structure from outside */
+/*******************************************/
+void free_vasp_out(gpointer data){
+	vasp_out_reset((vasp_output_struct *)data);
+
+}
 /* here will be some more features */
 /* general parser / writter */
 gint read_xml_vasp(gchar *filename, struct model_pak *model){
@@ -2069,7 +2076,7 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	vasp_out=g_malloc(sizeof(vasp_output_struct));
 	model->vasp=(gpointer)vasp_out;
 	vasp_out->name=NULL;
-	vasp_out->n_scf=0;
+	vasp_out->n_scf=0;vasp_out->calc_type=VASP_SINGLE;/*FIX valgrind _BUG_ 0x4B41D1 0x4B41F3*/
 	vasp_out->E=NULL;
 	vasp_out->V=NULL;
 	vasp_out->F=NULL;
@@ -2266,8 +2273,8 @@ gboolean track_vasp(void *data){
 	vasp_output_struct *vasp_out;
 	/*is being called every TRACKING_TIMEOUT; every "return FALSE" will stop the timer!*/
 	if(model==NULL) return FALSE;
+	if(model->track_me==FALSE) return FALSE;/*FIX valgrind _BUG_ 0x4B75FF*/
 	model->track_nb=(model->track_nb+1)%3;
-	if(model->track_me==FALSE) return FALSE;
 	vasp_out=(vasp_output_struct *)model->vasp;
 	if((model->num_frames<0)||(vasp_out==NULL)){
 #if DEBUG_TRACK_VASP
