@@ -1716,6 +1716,7 @@ gint dump_uspex_parameters(gchar *filename,uspex_calc_struct *uspex_calc){
         if(uspex_calc==NULL) return -1;
 	/*check integrity of uspex_calc structure.
 	 *ie: check if mandatory settings are set.*/
+/*NEW: mandatory _UC.atomType can be omitted for META/MINHOP*/
 	if(_UC.atomType==NULL) {
 		line = g_strdup_printf("ERROR: USPEX - missing atomType!\n");
 		gui_text_show(ERROR, line);g_free(line);
@@ -2028,7 +2029,9 @@ zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=(_UC.vacuumSize[i
 	if(_UC.numProcessors>1) __OUT_INT(numProcessors);
 /*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
 	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
-	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
+//	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
+/*NEW: whichCluster seems necessary for some calculations*/
+	__OUT_INT(whichCluster);
 	if((_UC.whichCluster==2)&&(_UC.remoteFolder!=NULL)) __OUT_STRING(remoteFolder);
 	if(_UC.PhaseDiagram) __OUT_BOOL(PhaseDiagram);
 /*note that mandatory block will always make is_w>0*/
@@ -3128,21 +3131,24 @@ fprintf(stdout,"USPEX-UPDATE-BEST: BIG trouble! Can't find last set!\n");
 			if(_UO.best_ind[jdx]==gen) num++;
 		}
 		if(num==0){
-			/*_BUG_ the set contains no data?*/
+			/*_BUG_ this can be normal in META/MINHOP calculation*/
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"USPEX-UPDATE-BEST: NO DATA gen=%i num_gen=%i\n",gen,_UO.num_gen);
 #endif
-			num++;
-		}
-		py->y_size=num;/*NEW SIZE*/
-		py->type=GRAPH_IX_TYPE;/*change of type*/
-		g_free(py->y);py->y=NULL;py->y=g_malloc0(num*sizeof(gdouble));
-		g_free(py->idx);py->idx=NULL;py->idx=g_malloc0(num*sizeof(gint32));
-		g_free(py->symbol);py->symbol=NULL;py->symbol=g_malloc0(num*sizeof(graph_symbol));
-		py->sym_color=NULL;
+			py->y_size=0;
+			py->type=GRAPH_IX_TYPE;/*change of type*/
+			py->y[0]=NAN;
+		}else{
+			py->y_size=num;/*NEW SIZE*/
+			py->type=GRAPH_IX_TYPE;/*change of type*/
+			g_free(py->y);py->y=NULL;py->y=g_malloc0(num*sizeof(gdouble));
+			g_free(py->idx);py->idx=NULL;py->idx=g_malloc0(num*sizeof(gint32));
+			g_free(py->symbol);py->symbol=NULL;py->symbol=g_malloc0(num*sizeof(graph_symbol));
+			py->sym_color=NULL;
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"#DBG update_graph_best: gen=%i num=%i ",gen,num);
 #endif
+		}
 		ix=0;
 		for(jdx=0;jdx<(2*_UO.num_best);jdx+=2){
 			if(_UO.best_ind[jdx]==gen){
@@ -3177,7 +3183,18 @@ fprintf(stdout,"e[%i]=%lf ",ix,py->y[ix]);
 			if(_UO.best_ind[jdx]==gen) num++;
 		}
 		if(num==0) {
-			/*in case of an unfinished calculation...*/
+			/*this can be normal in META/MINHOP calculation*/
+			gy.y_size=0;
+			gy.y=g_malloc(1*sizeof(gdouble));
+			gy.y[0]=NAN;
+			gy.idx=NULL;
+			gy.symbol=NULL;
+			gy.sym_color=NULL;
+			gy.type=GRAPH_IX_TYPE;
+			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+			dat_graph_add_y(gy,_UO.graph_best);
+			g_free(gy.y);
 			gen++;
 			continue;
 		}
@@ -4087,6 +4104,7 @@ fprintf(stdout,"-SENT\n");
 /* +++ ticks */
 	if(_UO.num_gen>15) ix=5;
 	else ix=_UO.num_gen+1;
+	if(ix<2) ix=2;/*FIX a _BUG_ with META calculation*/
 	graph_set_xticks(TRUE,ix,_UO.graph);
 	graph_set_yticks(TRUE,5,_UO.graph);
 	graph_set_xticks(TRUE,ix,_UO.graph_best);
