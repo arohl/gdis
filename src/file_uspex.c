@@ -2025,13 +2025,13 @@ for(i=1;i<_UC._num_opt_steps;i++) zero_check|=(_UC.KresolStart[i]!=(0.2-(gdouble
 /*do not print vacuumSize if all of them are 10. (default)*/
 zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=(_UC.vacuumSize[i]!=10.0);
 	if(zero_check && (_UC.vacuumSize!=NULL)) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
-	if(_UC.numParallelCalcs>1) __OUT_INT(numParallelCalcs);
 	if(_UC.numProcessors>1) __OUT_INT(numProcessors);
 /*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
 	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
 //	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
 /*NEW: whichCluster seems necessary for some calculations*/
 	__OUT_INT(whichCluster);
+	__OUT_INT(numParallelCalcs);
 	if((_UC.whichCluster==2)&&(_UC.remoteFolder!=NULL)) __OUT_STRING(remoteFolder);
 	if(_UC.PhaseDiagram) __OUT_BOOL(PhaseDiagram);
 /*note that mandatory block will always make is_w>0*/
@@ -2170,12 +2170,13 @@ is_w=0;
 	__TITLE(line);
 	g_free(line);
 if(_UC.calculationMethod==US_CM_VCNEB){
-	if(_UC.vcnebType!=110) __OUT_INT(vcnebType);
-	if(_UC.numImages!=9) __OUT_INT(numImages);
-	if(_UC.numSteps!=200) __OUT_INT(numSteps);
+	__OUT_INT(vcnebType);
+	__OUT_INT(numImages);
+	__OUT_INT(numSteps);
 	if(_UC.optReadImages!=2) __OUT_INT(optReadImages);
-	if((_UC._vcnebtype_method==1)&&(_UC.optimizerType!=1)) __OUT_INT(optimizerType);
-	if((_UC._vcnebtype_method==2)&&(_UC.optimizerType!=2)) __OUT_INT(optimizerType);
+	__OUT_INT(optimizerType);
+//	if((_UC._vcnebtype_method==1)&&(_UC.optimizerType!=1)) __OUT_INT(optimizerType);
+//	if((_UC._vcnebtype_method==2)&&(_UC.optimizerType!=2)) __OUT_INT(optimizerType);
 	if(_UC.optRelaxType!=3) __OUT_INT(optRelaxType);
 	if(_UC.dt!=0.05) __OUT_DOUBLE(dt);
 	if(_UC.ConvThreshold!=0.003) __OUT_DOUBLE(ConvThreshold);
@@ -2592,6 +2593,70 @@ fprintf(stdout,"READ: REF[%i] NATOMS=%i E_REF=%lf\n",spe_index,tmp_nspec,ef_ref)
 			_UO.have_ref=FALSE;
 		}
 	}
+}
+/*********************/
+/* update PATH graph */
+/*********************/
+void uspex_graph_path_update(struct model_pak *model){
+	uspex_output_struct *uspex_output;
+	g_data_x   gx;
+	g_data_y   gy;
+	gint idx, jdx;
+	gdouble min_E;
+	gdouble max_E;
+/**/
+	if(model==NULL) return;/*FAIL*/
+	uspex_output=(uspex_output_struct *)model->uspex;
+	if(uspex_output == NULL) return;/*FAIL*/
+	if(_UO.calc->calculationMethod!=US_CM_VCNEB) return;/*not a VCNEB job*/
+	if(_UO.graph_best == NULL) {/*create if not exists*/
+		_UO.graph_best=graph_new("PATH", model);
+	}else{/*reset otherwise*/
+		graph_reset_data(_UO.graph_best);
+	}
+/*X -> image coordinate*/
+	gx.x_size=_UO.num_struct+1;
+	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+	dat_graph_set_x(gx,_UO.graph_best);
+	dat_graph_set_type(GRAPH_IY_TYPE,_UO.graph_best);
+	g_free(gx.x);
+	dat_graph_set_title("<big>Structure energy vs. Image number</big>",_UO.graph_best);
+	dat_graph_set_sub_title("<small>(From <b>Energy</b> file)</small>",_UO.graph_best);
+	dat_graph_set_x_title("Image number (iteration)",_UO.graph_best);
+	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
+/*Y -> image data*/
+	gy.y_size=_UO.num_struct+1;
+	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc(gy.y_size*sizeof(gint32));
+	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.sym_color=NULL;
+	gy.y[0]=NAN;/*not a value*/
+	/*recalculate limit each time*/
+	_UO.min_E=+1.0/0.0;/*+inf*/
+	_UO.max_E=-1.0/0.0;/*-inf*/
+	for(idx=1;idx<(_UO.num_struct+1);idx++){
+		gy.y[idx]=_UO.ind[idx].E;
+		gy.idx[idx]=idx;
+		gy.symbol[idx]=GRAPH_SYMB_DIAM;
+		gy.type=GRAPH_IY_TYPE;
+		if(gy.y[idx]<_UO.min_E) _UO.min_E=gy.y[idx];
+		if(gy.y[idx]>_UO.max_E) _UO.max_E=gy.y[idx];
+	}
+	min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
+	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
+	dat_graph_set_limits(0,_UO.num_struct+1,min_E,max_E,_UO.graph_best);
+	gy.line=GRAPH_LINE_DASH;
+	gy.color=GRAPH_COLOR_DEFAULT;
+	dat_graph_add_y(gy,_UO.graph_best);
+	g_free(gy.y);
+	g_free(gy.idx);
+	g_free(gy.symbol);
+/*set ticks*/
+	if(_UO.num_struct>16) jdx=5;
+	else jdx=_UO.num_struct+2;
+	graph_set_xticks(TRUE,jdx,_UO.graph_best);
+	graph_set_yticks(TRUE,5,_UO.graph_best);
 }
 /***********************/
 /* update COMP_X graph */
@@ -4340,200 +4405,171 @@ if(!model->silent){
 }/* ^^^ end ANYTHING but VCNEB, and TPS*/
 /* --- VCNEB method*/
 else if(_UC.calculationMethod==US_CM_VCNEB){
-/* +++ transitionPath_POSCARs conversion to VASP5 format*/
-if(_UO.version<1010) _UO.have_vasp4=TRUE;
-	/*read the number of structures*/
-	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
-	vf = fopen(aux_file, "rt");
-	if(!vf){
-if(!model->silent){
-		line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-}
-		g_free(aux_file);
-		goto uspex_fail;
-	}
-	g_free(aux_file);
-	_UO.num_struct=0;
-	line = file_read_line(vf);
-	while(line){
-		if (find_in_string("Image",line) != NULL) _UO.num_struct++;
-		g_free(line);
-		line = file_read_line(vf);
-	}
-	/*get the total number of atoms*/
-	rewind(vf);
-	for(idx=0;idx<6;idx++){
-		line = file_read_line(vf);
-		g_free(line);
-	}
-	natoms=1;/*there is at least one atom*/
-	ptr=&(line[0]);
-	do{
-		natoms+=(gint)g_ascii_strtod(ptr,&ptr2);
-		if(ptr2==ptr) break;
-		ptr=ptr2;
-	}while(1);
-	/*all done*/
-	fclose(vf);
-/* --- read energies from the Energy file */
-	_UO.ind=g_malloc((1+_UO.num_struct)*sizeof(uspex_individual));
-        for(idx=0;idx<=_UO.num_struct;idx++) {
-                _UO.ind[idx].have_data=FALSE;
-                _UO.ind[idx].struct_number=-1;
-                _UO.ind[idx].gen=0;
-                _UO.ind[idx].natoms=0;
-                _UO.ind[idx].atoms=NULL;
-                _UO.ind[idx].energy=0.;
-                _UO.ind[idx].E=0.;
-                _UO.ind[idx].fitness=0.;
-                _UO.ind[idx].volume=0.;
-                _UO.ind[idx].density=0.;
-                _UO.ind[idx].symmetry=0;
-        }
+	if(_UO.version<1010) _UO.have_vasp4=TRUE;
+	/*get the (new) number of images from Energy file*/
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Energy");
 	vf=fopen(aux_file,"rt");
 	if (!vf) {
-		g_free(_UO.ind);
-if(!model->silent){
-		line = g_strdup_printf("ERROR: can't open USPEX Energy file!\n");
-		gui_text_show(ERROR, line);
-		g_free(line);
-}
+		if(!model->silent){
+			line=g_strdup_printf("USPEX: Energy file missing!\n");
+			gui_text_show(ERROR,line);
+			g_free(line);
+		}
+		g_free(aux_file);
 		goto uspex_fail;
 	}
-	/*first get to the first data line*/
+	g_free(aux_file);
 	line = file_read_line(vf);
-	ptr=&(line[0]);
-	__SKIP_BLANK(ptr);
-	while(!g_ascii_isdigit(*ptr)){
-		g_free(line);
-		line = file_read_line(vf);
+	while(line){
 		ptr=&(line[0]);
-		__SKIP_BLANK(ptr);
-	}/*line should now point to the first data line*/
-/* +++ NEW: prepare image graph at the same time*/
-	_UO.best_ind=g_malloc((1+_UO.num_struct)*sizeof(gint));
-	_UO.graph_best=graph_new("PATH", model);
-	_UO.num_gen=_UO.num_struct+1;/*because VCNEB start at image_1*/
-	/*X -> image coordinate*/
-	gx.x_size=_UO.num_gen;
-	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
-	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
-	dat_graph_set_x(gx,_UO.graph_best);
-	dat_graph_set_type(GRAPH_IY_TYPE,_UO.graph_best);
-	g_free(gx.x);
-	dat_graph_set_title("<big>Structure energy vs. Image number</big>",_UO.graph_best);
-	dat_graph_set_sub_title("<small>(From <b>Energy</b> file)</small>",_UO.graph_best);
-	dat_graph_set_x_title("Image number (iteration)",_UO.graph_best);
-	dat_graph_set_y_title("Structure energy (eV)",_UO.graph_best);
-	/*Y -> image data*/
-	gy.y_size=_UO.num_gen;
-	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
-	gy.idx=g_malloc(gy.y_size*sizeof(gint32));
-	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
-	gy.sym_color=NULL;
-	sscanf(line," %*i %lf %*s",&(gy.y[1]));
-	gy.y[1] /= (gdouble)natoms;
-	_UO.min_E=gy.y[1];
-	_UO.max_E=gy.y[1];
-	gy.y[0]=NAN;/*not a value*/
-	/*create a fake image_0*/
-	_UO.ind[0].gen=0;
-	_UO.ind[0].have_data=FALSE;
-	_UO.ind[0].struct_number=0;
-	for(idx=1;idx<_UO.num_gen;idx++){
-		if(!line) break;/*<- useful? */
-		sscanf(line," %*i %lf %*s",&(_UO.ind[idx].energy));
-		_UO.ind[idx].atoms=g_malloc(_UC._nspecies*sizeof(gint));
-		_UO.ind[idx].natoms=natoms;/*<-constant*/
-		_UO.ind[idx].E = _UO.ind[idx].energy / (gdouble)_UO.ind[idx].natoms;
-		_UO.ind[idx].gen=idx;
-		_UO.best_ind[idx]=idx;
-		_UO.ind[idx].struct_number=idx;
-		gy.y[idx]=_UO.ind[idx].E;
-		gy.idx[idx]=idx;
-		gy.symbol[idx]=GRAPH_SYMB_DIAM;
-		gy.type=GRAPH_IY_TYPE;
-		if(gy.y[idx]<_UO.min_E) _UO.min_E=gy.y[idx];
-		if(gy.y[idx]>_UO.max_E) _UO.max_E=gy.y[idx];
-#if DEBUG_USPEX_READ
-fprintf(stdout,"#DBG: VCNEB Image %i: natoms=%i energy=%lf e=%lf\n",_UO.ind[idx].gen,_UO.ind[idx].natoms,_UO.ind[idx].energy,_UO.ind[idx].E);
-#endif
+		while((!g_ascii_isdigit(*ptr))&&(*ptr!='\0')) ptr++;
+		if(find_in_string("VCNEB",line) != NULL){
+			/*there is a typo in "VCNEB Calcualtion Step" in v10.2 so we only look for VCNEB*/
+			_UO.num_gen=(gint)g_ascii_strtoull(ptr,NULL,10);/*indication of a change in data*/
+			g_free(line);
+			line = file_read_line(vf);/*should be a blank line*/
+			while(line){
+				if(find_in_string("Image",line) != NULL) break;
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			if(!line) {
+				/*fail: improper format*/
+				fclose(vf);
+				if(!model->silent){
+					line=g_strdup_printf("USPEX: wrong Energy file format!\n");
+					gui_text_show(ERROR,line);
+					g_free(line);
+				}
+				goto uspex_fail;
+			}
+			vfpos=ftell(vf);/* flag */
+		}else{
+			/*test: the last new_ind read is the good new_ind*/
+			_UO.num_struct=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+		}
 		g_free(line);
 		line = file_read_line(vf);
 	}
-	fclose(vf);vf=NULL;
-	g_free(aux_file);
-	min_E=_UO.min_E-(_UO.max_E-_UO.min_E)*0.05;
-	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.05;
-	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
-	gy.line=GRAPH_LINE_DASH;
-	gy.color=GRAPH_COLOR_DEFAULT;
-	dat_graph_add_y(gy,_UO.graph_best);
-	g_free(gy.y);
-	g_free(gy.idx);
-	g_free(gy.symbol);
-	/*set ticks*/
-	if(_UO.num_gen>15) ix=5;
-	else ix=_UO.num_gen+1;
-	graph_set_xticks(TRUE,ix,_UO.graph_best);
-	graph_set_yticks(TRUE,5,_UO.graph_best);
-/* --- reopen transitionPath_POSCARs or the newly created transitionPath_POSCARs5 file for reading
- * ^^^ this will be our new model file*/
-aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
-#ifdef NO_NO_NO
-	if(_UO.version<1010) aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs5");
-	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
+	if((_UO.num_gen>0)&&(_UO.num_struct>1)){
+		/*all pass*/
+#if DEBUG_USPEX_READ
+fprintf(stdout,"USPEX-VCNEB: detected %i STEPS and %i STRUCTURE in last STEP.\n",_UO.num_gen,_UO.num_struct);
 #endif
-	vf=fopen(aux_file,"rt");
-        if (!vf) {/*very unlikely: we just create/read it*/
-		g_free(_UO.ind);
-if(!model->silent){
-line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
-#ifdef NO_NO_NO
-		if(_UO.version<1010) line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs5 file!\n");
-		else line = g_strdup_printf("ERROR: can't open USPEX transitionPath_POSCARs file!\n");
-#endif
-                gui_text_show(ERROR, line);
-                g_free(line);
-}
-		g_free(aux_file);
-                goto uspex_fail;
-        }
-        model->num_frames=0;
-        vfpos=ftell(vf);/* flag */
-        line = file_read_line(vf);
-        while(!feof(vf)){
-		if (find_in_string("Image",line) != NULL) {
-                        fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-                        add_frame_offset(vf, model);
-                        model->num_frames++;
-                        g_free(line);
-                        line = file_read_line(vf);
+	}else{
+		fclose(vf);
+		if(!model->silent){
+			line=g_strdup_printf("USPEX: wrong number of STEPS or structure in Energy file format!\n");
+			gui_text_show(ERROR,line);
+			g_free(line);
 		}
-                vfpos=ftell(vf);/* flag */
-                g_free(line);
-                line = file_read_line(vf);
-        }
-	strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
-	g_free(aux_file);
-if(!model->silent){
-	g_free(model->basename);
-	model->basename=g_strdup_printf("uspex");
-}
+		goto uspex_fail;
+	}
+	/*create ind and populate energies*/
+	_UO.ind=g_malloc0((_UO.num_struct+1)*sizeof(uspex_individual));
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	_UO.last_ind_pos=vfpos;/*set it even if we don't need it*/
+	line = file_read_line(vf);
+	idx=1;
+	do{
+		if(!line) break;
+		sscanf(line," %*i %lf %*s",&(_UO.ind[idx].energy));
+		_UO.ind[idx].gen=_UO.num_gen;
+		if(_UO.ind[idx].energy<_UO.min_E) _UO.min_E=_UO.ind[idx].energy;
+		if(_UO.ind[idx].energy>_UO.max_E) _UO.max_E=_UO.ind[idx].energy;
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG: VCNEB Image %i: energy=%lf\n",idx,_UO.ind[idx].energy);
+#endif
+		g_free(line);
+		line = file_read_line(vf);
+		idx++;
+	}while(idx<=_UO.num_struct+1);
+	fclose(vf);
+	/*update structures WARNING the output file name has CHANGED in ver.10.3!*/
+	if(_UO.version<1030) aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
+	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARS");
+	vf=fopen(aux_file,"rt");
+	if(!vf){
+		/*no transitionPath_POSCARs file?*/
+		g_free(aux_file);
+		if(!model->silent){
+			if(_UO.version<1030) line=g_strdup_printf("USPEX: transitionPath_POSCARs file missing!\n");
+			else line=g_strdup_printf("USPEX: transitionPath_POSCARS file missing!\n");
+			gui_text_show(ERROR,line);
+			g_free(line);
+		}
+		g_free(_UO.ind);_UO.ind=NULL;
+		goto uspex_fail;
+	}
+	/*get atom information*/
+	if(!_UO.have_vasp4){
+		line = file_read_line(vf);
+		g_free(line);
+	}
+	for(idx=0;idx<5;idx++){
+		line = file_read_line(vf);
+		g_free(line);
+	}
+	line = file_read_line(vf);
+	natoms=0;
+	ptr=&(line[0]);
+	while((!g_ascii_isdigit(*ptr))&&(*ptr!='\0')) ptr++;
+	if(*ptr=='\0'){
+		if(!model->silent){
+			if(_UO.version<1030) line=g_strdup_printf("USPEX: wrong format of transitionPath_POSCARs file!\n");
+			else line=g_strdup_printf("USPEX: wrong format of transitionPath_POSCARS file!\n");
+			gui_text_show(ERROR,line);
+			g_free(line);
+		}
+		g_free(_UO.ind);_UO.ind=NULL;
+		goto uspex_fail;
+	}
+	idx=0;
+	_UO.ind[0].natoms=0;
+	_UO.ind[0].atoms=g_malloc(_UC._nspecies*sizeof(gint));
+	do{
+		_UO.ind[0].atoms[idx]=(gint)g_ascii_strtod(ptr,&ptr2);
+		_UO.ind[0].natoms+=_UO.ind[0].atoms[idx];
+		if(ptr2==ptr) break;
+		ptr=ptr2;
+	}while((idx<_UC._nspecies)&&(*ptr!='\0'));
+	/*update frames*/
+	rewind(vf);
+	model->num_frames=0;
+	vfpos=ftell(vf);/* flag */
+	line = file_read_line(vf);
+	idx=1;
+	while(!feof(vf)){
+		if (find_in_string("Image",line) != NULL) {
+			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+			add_frame_offset(vf, model);
+			model->num_frames++;
+			g_free(line);
+			line = file_read_line(vf);
+			_UO.ind[idx].struct_number=model->num_frames;
+			_UO.ind[idx].natoms=_UO.ind[0].natoms;/*constant*/
+			_UO.ind[idx].E = _UO.ind[idx].energy / (gdouble)_UO.ind[idx].natoms;
+			idx++;
+		}
+		vfpos=ftell(vf);/* flag */
+		g_free(line);
+		line = file_read_line(vf);
+	}
 	rewind(vf);
 	read_frame_uspex(vf,model);/*open first frame*/
 	fclose(vf);vf=NULL;
-        /*refresh model*/
-        tree_model_refresh(model);
-        model->redraw = TRUE;
-        /* always show this information */
+	strcpy(model->filename,aux_file);// which means that we "forget" about OUTPUT.txt
+	g_free(aux_file);
+	_UO.graph_best=NULL;
+	uspex_graph_path_update(model);
+	/*refresh model*/
+	tree_model_refresh(model);
+	model->redraw = TRUE;
+	/* always show this information */
 if(!model->silent){
-        gui_text_show(ITALIC,g_strdup_printf("USPEX: %i structures detected.\n",model->num_frames));
+	gui_text_show(ITALIC,g_strdup_printf("USPEX: %i structures detected.\n",model->num_frames));
 }
-        model_prep(model);
+	model_prep(model);
 }/* ^^^ end VCNEB method*/
 else{/*calculation method is not supported*/
 	line = g_strdup_printf("ERROR: USPEX unsupport method!\n");
@@ -4541,11 +4577,8 @@ else{/*calculation method is not supported*/
 	g_free(line);
 	goto uspex_fail;
 }
-	/*g_free some data*/
-//	g_free(res_folder);
 	/*update some properties*/
 	model->num_species=_UO.calc->_nspecies;
-
 	/*end*/
 	error_table_print_all();
 	return 0;
@@ -4555,7 +4588,6 @@ if(!model->silent){
 	gui_text_show(ERROR, line);
 	g_free(line);
 }
-//	uspex_output->name=g_strdup("failed");
 	return 3;
 }
 /********************/
@@ -4721,7 +4753,6 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 	uspex_calc=(uspex_calc_struct *)_UO.calc;
 	if(uspex_calc==NULL) {
 		/*try to get it*/
-//		uspex_calc=
 		line = g_strdup_printf("USPEX TRACKING: missing calculation setting!\n");
 		gui_text_show(ERROR,line);
 		g_free(line);
@@ -4986,10 +5017,183 @@ if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 }
 
 
-}/*^^^ everything but VCNEB and TPS*/
+}/*^^^ everything but VCNEB (no TPS support yet)*/
 else if(_UC.calculationMethod==US_CM_VCNEB){
-	/*X- update PATH graph*/
-
+	old_ind=_UO.num_struct;
+	old_gen=_UO.num_gen;
+#if DEBUG_TRACK_USPEX
+	old_frm=model->num_frames;
+#endif
+/*get the (new) number of images from Energy file*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Energy");
+	vf=fopen(aux_file,"rt");
+	if (!vf) {
+		/*if the Energy file is unavailable, be patient*/
+		g_free(aux_file);
+		return TRUE;/*try again later*/
+	}
+	g_free(aux_file);
+	line = file_read_line(vf);
+	while(line){
+		ptr=&(line[0]);
+		while((!g_ascii_isdigit(*ptr))&&(*ptr!='\0')) ptr++;
+		if(find_in_string("VCNEB",line) != NULL){
+			/*there is a typo in "VCNEB Calcualtion Step" in v10.2 so we only look for VCNEB*/
+			new_gen=(gint)g_ascii_strtoull(ptr,NULL,10);/*indication of a change in data*/
+			g_free(line);
+			line = file_read_line(vf);/*should be a blank line*/
+			while(line){
+				if(find_in_string("Image",line) != NULL) break;
+				g_free(line);
+				line = file_read_line(vf);
+			}
+			if(!line) {
+				fclose(vf);
+				return TRUE;/*we couldn't find Image tag, be patient*/
+			}
+			vfpos=ftell(vf);/* flag */
+		}else{
+			/*test: the last new_ind read is the good new_ind*/
+			new_ind=(gint)g_ascii_strtoull(ptr,&(ptr2),10);
+		}
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	if(new_gen<=old_gen){
+		/*no new data*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: NO-NEW-IMAGE gen=%i num=%i\n",new_gen,new_ind);
+#endif
+		fclose(vf);
+		sysenv.refresh_dialog=TRUE;
+		tree_model_refresh(model);
+		redraw_canvas(ALL);
+		return TRUE;
+	}
+	/*there is NEW data, update ind*/
+	_UO.last_ind_pos=vfpos;
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	/*update ind, if needed*/
+	if(new_ind>old_ind){
+		/*in VCNEB it is possible that the number of images increases*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: ADD-%i-IMAGE(S) (N_image=%i)\n",(new_ind-old_ind),new_ind);
+#endif
+		ind=g_realloc(_UO.ind,(new_ind+1)*sizeof(uspex_individual));
+		if(ind) _UO.ind=ind;
+		else {
+			/*realloc failed*/
+			line = g_strdup_printf("USPEX TRACKING: Individuals re-allocation FAILED!\n");
+			gui_text_show(ERROR, line);
+			g_free(line);
+			fclose(vf);
+			return FALSE;
+		}
+		for(idx=new_ind;idx>old_ind;idx--){
+			_UO.ind[idx].have_data=FALSE;
+			_UO.ind[idx].struct_number=-1;
+			_UO.ind[idx].gen=0;
+			_UO.ind[idx].natoms=0;
+			_UO.ind[idx].atoms=NULL;
+			_UO.ind[idx].energy=0.;
+			_UO.ind[idx].E=0.;
+			_UO.ind[idx].fitness=0.;
+			_UO.ind[idx].volume=0.;
+			_UO.ind[idx].density=0.;
+			_UO.ind[idx].symmetry=0;
+		}
+	}else if(new_ind<old_ind){
+		/*in VCNEB it is also possible that the number of images goes down*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: DEL-%i-IMAGE(S) (N_image=%i)\n",(old_ind-new_ind),new_ind);
+#endif
+		ind=g_realloc(_UO.ind,(new_ind+1)*sizeof(uspex_individual));
+		if(ind) _UO.ind=ind;
+		else {
+			/*realloc failed*/
+			line = g_strdup_printf("USPEX TRACKING: Individuals re-allocation FAILED!\n");
+			gui_text_show(ERROR, line);
+			g_free(line);
+			fclose(vf);
+			return FALSE;
+		}
+	}
+#if DEBUG_TRACK_USPEX
+if(new_ind==old_ind) fprintf(stdout,"TRACK: UPDATE-%i-IMAGE(S)\n",new_ind);
+#endif
+	/*now read new energy information*/
+	line = file_read_line(vf);
+	idx=1;
+	do{
+		if(!line) break;
+		sscanf(line," %*i %lf %*s",&(_UO.ind[idx].energy));
+		/*we don't need to set _UO.ind[idx].atoms since it's constant*/
+		_UO.ind[idx].natoms=_UO.ind[0].natoms;/*<- also constant*/
+		_UO.ind[idx].E = _UO.ind[idx].energy / (gdouble)_UO.ind[idx].natoms;
+		_UO.ind[idx].gen=new_gen;
+		if(_UO.ind[idx].energy<_UO.min_E) _UO.min_E=_UO.ind[idx].energy;
+		if(_UO.ind[idx].energy>_UO.max_E) _UO.max_E=_UO.ind[idx].energy;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG: VCNEB Image %i: energy=%lf\n",idx,_UO.ind[idx].energy);
+#endif
+		g_free(line);
+		line = file_read_line(vf);
+		idx++;
+	}while(idx<new_ind+1);
+	fclose(vf);
+	/*update structures*/
+	if(_UO.version<1030) aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARs");
+	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"transitionPath_POSCARS");
+	vf=fopen(aux_file,"rt");
+	if(!vf){
+		/*transitionPath_POSCARs unavailable, be patient*/
+		g_free(aux_file);
+		return TRUE;
+	}
+	g_free(aux_file);
+	/*we need to wipe the current frame list*/
+	model->num_frames=0;
+	free_list(model->frame_list);/*_BUG_*/
+	model->frame_list = NULL;
+	vfpos=ftell(vf);/* flag */
+	line = file_read_line(vf);
+	idx=1;
+#if DEBUG_TRACK_USPEX
+	new_frm=old_frm;
+#endif
+	while(line){
+		if (find_in_string("Image",line) != NULL) {
+			fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+			add_frame_offset(vf, model);/*_BUG_*/
+			model->num_frames++;
+			g_free(line);
+			line = file_read_line(vf);
+			if(!line) break;
+			_UO.ind[idx].struct_number=model->num_frames;
+#if DEBUG_TRACK_USPEX
+new_frm++;
+fprintf(stdout,"TRACK: ADD-STRUCTURE-%i for ind=%i line=%s\n",model->num_frames,idx,line);
+#endif
+			idx++;
+		}
+		vfpos=ftell(vf);/* flag */
+		g_free(line);
+		if(feof(vf)) break;
+		line = file_read_line(vf);/*_BUG_*/
+	}
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: %i-FRAMES-ADDED\n",new_frm-old_frm);
+#endif
+	rewind(vf);
+	read_frame_uspex(vf,model);/*open first frame*/
+	fclose(vf);vf=NULL;
+	/*refresh model*/
+	tree_model_refresh(model);
+	model->redraw = TRUE;
+	model_prep(model);
+	_UO.num_struct=new_ind;
+	_UO.num_gen=new_gen;
+	uspex_graph_path_update(model);
 }/*^^^ VCNEB calculation type*/
 else{
 	line = g_strdup_printf("USPEX TRACKING: unsupported calcultion type!\n");
@@ -4997,8 +5201,6 @@ else{
 	g_free(line);
 	return FALSE;
 }
-
-
 	/*last- refresh everything*/
 	model->redraw = TRUE;
 	sysenv.refresh_dialog=TRUE;
