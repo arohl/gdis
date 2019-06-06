@@ -116,6 +116,7 @@ void gui_uspex_init(struct model_pak *model){
 			for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui.calc.valences[idx]=0;
 		}
 	}
+	if(uspex_gui.calc.valences==NULL) uspex_gui.calc.valences = g_malloc0(uspex_gui.calc._nspecies*sizeof(gint));
 	uspex_gui.have_ZT=FALSE;
 	if(uspex_gui.calc.optType==US_OT_ZT){
 		uspex_gui.have_ZT=TRUE;
@@ -264,8 +265,8 @@ void gui_uspex_init(struct model_pak *model){
 		uspex_gui.calc.vacuumSize=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc.vacuumSize[idx]=10.;
 	}
-	uspex_gui._tmp_commandExecutable=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
-	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_commandExecutable[idx]=NULL;
+	uspex_gui._tmp_commandExecutable=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+//	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_commandExecutable[idx]=NULL;
 	if(uspex_gui.calc.commandExecutable!=NULL) {
 		/*cut*/
 		idx=0;/*for safety*/
@@ -283,6 +284,8 @@ void gui_uspex_init(struct model_pak *model){
 				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
 				line=ptr+1;
 				*ptr='\n';/*restore*/
+				idx++;
+				if(idx>uspex_gui.calc._num_opt_steps) break;
 			}
 		}
 	}
@@ -293,13 +296,14 @@ void gui_uspex_init(struct model_pak *model){
 	uspex_gui.auto_step=TRUE;/*auto step is ON by default*/
 	uspex_gui._tmp_ai_spe=NULL;
 	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);/*<- needed?*/
-	uspex_gui._potentials=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
-	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._potentials[idx]=NULL;
+	uspex_gui._potentials=g_malloc(uspex_gui.calc._nspecies*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui._potentials[idx]=NULL;
 	/**/
 	uspex_gui.have_v1010=TRUE;
 	uspex_gui.have_octave=TRUE;
 	if(sysenv.uspex_path!=NULL) uspex_gui.calc.job_uspex_exe=g_strdup(sysenv.uspex_path);
 	/*set everything for an update*/
+	uspex_gui._tmp_nspecies=uspex_gui.calc._nspecies;/*BACKUP*/
 	uspex_gui.is_dirty=TRUE;
 }
 /*****************************************************/
@@ -307,20 +311,38 @@ void gui_uspex_init(struct model_pak *model){
 /*****************************************************/
 void populate_atomType(void){
 	gint idx,jdx;
+	gint num;
 	gchar *line;
+	gint nspe,nval;
+	gchar sym[3];
 	/*this is call on new atomType information, so wipe previous information*/
 	GUI_COMBOBOX_WIPE(uspex_gui.atomType);
 	GUI_COMBOBOX_WIPE(uspex_gui.goodBonds);
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		line=g_strdup_printf("%s(%i) (V=%i)",
-			elements[uspex_gui.calc.atomType[idx]].symbol,uspex_gui.calc.numSpecies[idx],uspex_gui.calc.valences[idx]);
+/*there is a _BUG_ where numSpecies refers to number of molecules instead of number of elements!*/
+if(uspex_gui.calc._calctype_mol) num=uspex_gui.calc._var_nspecies;
+else num=uspex_gui.calc._nspecies;
+	for(idx=0;idx<num;idx++){
+		if(uspex_gui.calc.valences==NULL) nval=0;
+		else nval=uspex_gui.calc.valences[idx];
+		if(uspex_gui.calc.numSpecies==NULL) nspe=0;
+		else nspe=uspex_gui.calc.numSpecies[idx];
+		if(uspex_gui.calc.atomType==NULL) {
+			sym[0]='X';
+			sym[1]='X';
+			sym[2]='\0';
+		}else{
+			sym[0]=elements[uspex_gui.calc.atomType[idx]].symbol[0];
+			sym[1]=elements[uspex_gui.calc.atomType[idx]].symbol[1];
+			sym[2]='\0';
+		}
+		line=g_strdup_printf("%s(%i) (V=%i)",sym,nspe,nval);
 		GUI_COMBOBOX_ADD(uspex_gui.atomType,line);
 		g_free(line);
 	}
 /*only update goodBonds if needed*/
 if((uspex_gui.calc.goodBonds!=NULL)&&(uspex_gui.auto_bonds)){
 	gchar *tmp;
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+	for(idx=0;idx<num;idx++){
 		tmp=g_strdup("");
 		line=tmp;
 		for(jdx=0;jdx<uspex_gui.calc._nspecies;jdx++){
@@ -356,8 +378,9 @@ void load_parameters_dialog(void){
 			text=g_strdup_printf("%s",filename);
 			GUI_ENTRY_TEXT(uspex_gui.file_entry,text);
 			g_free(text);
+			uspex_gui._tmp_nspecies=uspex_gui.calc._nspecies;/*BACKUP*/
 			test_calc = read_uspex_parameters(filename,uspex_gui.calc._nspecies);
-			if(test_calc != NULL) {
+			if(test_calc == NULL) {
 				/*unable to open Parameters.txt*/
 			}else{
 				copy_uspex_parameters(test_calc,&(uspex_gui.calc));
@@ -823,6 +846,8 @@ if(uspex_gui.calc._calctype_var){
 		break;
 	case 5:////MINHOP -- no specific interface
 		break;
+	case 6:///COPEX -- no specific interface
+		break;
 	default:
 		break;
 	}
@@ -837,12 +862,6 @@ if(uspex_gui.calc._calctype_var){
         hide_specific&=(uspex_gui.calc._calctype_dim!=2);
         if(!hide_specific) GUI_NOTE_PAGE_SHOW(uspex_gui.specific_page);
         else GUI_NOTE_PAGE_HIDE(uspex_gui.specific_page);
-}
-/**************************************************/
-/* refresh the GUI with value from uspex_gui.calc */
-/**************************************************/
-void uspex_gui_refresh(){
-	/*refresh the whole GUI based on uspex_gui.calc information*/
 }
 /*******************************/
 /* selecting calculationMethod */
@@ -870,6 +889,9 @@ void uspex_method_selected(GUI_OBJ *w){
 		break;
 	case 5://MINHOP -- no specific interface
 		uspex_gui.calc.calculationMethod = US_CM_MINHOP;
+		break;
+	case 6://COPEX -- no specific interface
+		uspex_gui.calc.calculationMethod = US_CM_COPEX;
 		break;
 	default://UNKNOWN
 		uspex_gui.calc.calculationMethod = US_CM_UNKNOWN;
@@ -1297,12 +1319,17 @@ void update_numSpecies(void){
 	gchar *text;
 	gchar *tmp;
 	gint idx;
+	gint num;
 	/**/
+	if(uspex_gui.calc.numSpecies==NULL) return;/*FAIL*/
 	if(uspex_gui.calc._calctype_var) return;/*we only update 1-line numSpecies here*/
 GUI_UNLOCK(uspex_gui.numSpecies);
 	GUI_COMBOBOX_WIPE(uspex_gui.numSpecies);
 	text=g_strdup_printf("%i",uspex_gui.calc.numSpecies[0]);
-	for(idx=1;idx<uspex_gui.calc._nspecies;idx++) {
+/*there is a _BUG_ where numSpecies refers to number of molecules instead of number of elements!*/
+if(uspex_gui.calc._calctype_mol) num=uspex_gui.calc._var_nspecies;
+else num=uspex_gui.calc._nspecies;
+	for(idx=1;idx<num;idx++) {
 		tmp=g_strdup_printf("%s %i",text,uspex_gui.calc.numSpecies[idx]);
 		g_free(text);
 		text=tmp;
@@ -1389,6 +1416,7 @@ void apply_atom(){
 			/*select last*/
 			GUI_COMBOBOX_SET(uspex_gui.atomType,uspex_gui.calc._nspecies);
 		}
+		uspex_gui._tmp_nspecies=uspex_gui.calc._nspecies;/*BACKUP*/
 	}else{
 		/*get current typ*/
 		sscanf(text,"%[^(](%*i) (V=%*i)",tmp);
@@ -1484,6 +1512,7 @@ void remove_atom(){
 	/*select previous*/
 	if(index-1<0) index=1;
 	GUI_COMBOBOX_SET(uspex_gui.atomType,index-1);
+	uspex_gui._tmp_nspecies=uspex_gui.calc._nspecies;/*BACKUP*/
 }
 /***************************/
 /* select numSpecies block */
@@ -2354,7 +2383,8 @@ void populate_spe(void){
 	/*this only contain atom information*/
 	GUI_COMBOBOX_WIPE(uspex_gui.ai_spe);
 	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		line=g_strdup_printf("%s",elements[uspex_gui.calc.atomType[idx]].symbol);
+		if(uspex_gui.calc.atomType!=NULL) line=g_strdup_printf("%s",elements[uspex_gui.calc.atomType[idx]].symbol);
+		else line=g_strdup_printf("XX");
 		GUI_COMBOBOX_ADD(uspex_gui.ai_spe,line);
 		g_free(line);
 	}
@@ -3150,7 +3180,7 @@ void uspex_gdis_mol_selected(GUI_OBJ *w){
 /***************************/
 void spin_update_curr_mol(void){
 	gint i=uspex_gui._tmp_curr_mol;
-	GUI_COMBOBOX_SET(uspex_gui.mol_gdis,uspex_gui._tmp_mols_gdis[i]);
+	GUI_COMBOBOX_SET(uspex_gui.mol_gdis,uspex_gui._tmp_mols_gdis[i]);/*_BUG_ memory*/
 	if(uspex_gui._tmp_mols_gulp[i]){
 		GUI_TOGGLE_ON(uspex_gui.mol_gulp);
 	}else{
@@ -3827,6 +3857,576 @@ void quit_uspex_gui(GUI_OBJ *w, gpointer data){
 	uspex_cleanup();
 	dialog_destroy(w,model);
 }
+/**************************************************/
+/* refresh the GUI with value from uspex_gui.calc */
+/**************************************************/
+void uspex_gui_refresh(){
+	gint i,j,num;
+	gchar *line;
+	gchar *ptr;
+        /*refresh the whole GUI based on uspex_gui.calc information*/
+	switch(uspex_gui.calc.calculationMethod){
+		case US_CM_USPEX:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,0);
+		break;
+		case US_CM_META:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,1);
+		break;
+		case US_CM_VCNEB:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,2);
+		break;
+		case US_CM_PSO:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,3);
+		break;
+		case US_CM_TPS:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,4);
+		break;
+		case US_CM_MINHOP:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,5);
+		break;
+		case US_CM_COPEX:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,6);
+		break;
+		case US_CM_UNKNOWN:
+		default:
+		GUI_COMBOBOX_SET(uspex_gui.calculationMethod,0);
+	}
+	switch(uspex_gui.calc.calculationType){
+		case US_CT_300:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
+		break;
+		case US_CT_s300:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,1);
+		break;
+		case US_CT_301:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,2);
+		break;
+		case US_CT_s301:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,3);
+		break;
+		case US_CT_310:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,4);
+		break;
+		case US_CT_311:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,5);
+		break;
+		case US_CT_000:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,6);
+		break;
+		case US_CT_s000:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,7);
+		break;
+		case US_CT_001:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,8);
+		break;
+		case US_CT_110:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,9);
+		break;
+		case US_CT_200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,10);
+		break;
+		case US_CT_s200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,11);
+		break;
+		case US_CT_201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,12);
+		break;
+		case US_CT_s201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,13);
+		break;
+		case US_CT_m200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,14);
+		break;
+		case US_CT_sm200:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,15);
+		break;
+		default:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
+	}
+	GUI_SPIN_SET(uspex_gui._calctype_dim,(gdouble) uspex_gui.calc._calctype_dim);
+	if(uspex_gui.calc._calctype_mol) GUI_TOGGLE_ON(uspex_gui._calctype_mol);
+	else GUI_TOGGLE_OFF(uspex_gui._calctype_mol);
+	if(uspex_gui.calc._calctype_var) GUI_TOGGLE_ON(uspex_gui._calctype_var);
+	else GUI_TOGGLE_OFF(uspex_gui._calctype_var);
+	if(uspex_gui.calc._calctype_mag) {
+		GUI_TOGGLE_ON(uspex_gui._calctype_mag);
+		GUI_TOGGLE_ON(uspex_gui._calctype_mag_2);
+	}else{
+		GUI_TOGGLE_OFF(uspex_gui._calctype_mag);
+		GUI_TOGGLE_OFF(uspex_gui._calctype_mag_2);
+	}
+	if(uspex_gui.calc._calctype_mag){
+		GUI_ENTRY_SET(uspex_gui.mag_nm,uspex_gui.calc.magRatio[0],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_fmls,uspex_gui.calc.magRatio[1],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_fmhs,uspex_gui.calc.magRatio[2],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_afml,uspex_gui.calc.magRatio[3],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_afmh,uspex_gui.calc.magRatio[4],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_fmlh,uspex_gui.calc.magRatio[5],"%lf");
+		GUI_ENTRY_SET(uspex_gui.mag_aflh,uspex_gui.calc.magRatio[6],"%lf");
+	}
+	switch(uspex_gui.calc.optType){
+		case US_OT_ENTHALPY:
+		GUI_COMBOBOX_SET(uspex_gui.optType,0);
+		break;
+		case US_OT_VOLUME:
+		GUI_COMBOBOX_SET(uspex_gui.optType,1);
+		break;
+		case US_OT_HARDNESS:
+		GUI_COMBOBOX_SET(uspex_gui.optType,2);
+		break;
+		case US_OT_ORDER:
+		GUI_COMBOBOX_SET(uspex_gui.optType,3);
+		break;
+		case US_OT_DISTANCE:
+		GUI_COMBOBOX_SET(uspex_gui.optType,4);
+		break;
+		case US_OT_DIELEC_S:
+		GUI_COMBOBOX_SET(uspex_gui.optType,5);
+		break;
+		case US_OT_GAP:
+		GUI_COMBOBOX_SET(uspex_gui.optType,6);
+		break;
+		case US_OT_DIELEC_GAP:
+		GUI_COMBOBOX_SET(uspex_gui.optType,7);
+		break;
+		case US_OT_MAG:
+		GUI_COMBOBOX_SET(uspex_gui.optType,8);
+		break;
+		case US_OT_QE:
+		GUI_COMBOBOX_SET(uspex_gui.optType,9);
+		break;
+		case US_OT_2R:
+		GUI_COMBOBOX_SET(uspex_gui.optType,10);
+		break;
+		case US_OT_ZT:
+		GUI_COMBOBOX_SET(uspex_gui.optType,11);
+		break;
+		case US_OT_Fphon:
+		GUI_COMBOBOX_SET(uspex_gui.optType,12);
+		break;
+		case US_OT_BULK_M:
+		GUI_COMBOBOX_SET(uspex_gui.optType,13);
+		break;
+		case US_OT_SHEAR_M:
+		GUI_COMBOBOX_SET(uspex_gui.optType,14);
+		break;
+		case US_OT_YOUNG_M:
+		GUI_COMBOBOX_SET(uspex_gui.optType,15);
+		break;
+		case US_OT_POISSON:
+		GUI_COMBOBOX_SET(uspex_gui.optType,16);
+		break;
+		case US_OT_PUGH_R:
+		GUI_COMBOBOX_SET(uspex_gui.optType,17);
+		break;
+		case US_OT_VICKERS_H:
+		GUI_COMBOBOX_SET(uspex_gui.optType,18);
+		break;
+		case US_OT_FRACTURE:
+		GUI_COMBOBOX_SET(uspex_gui.optType,19);
+		break;
+		case US_OT_DEBYE_T:
+		GUI_COMBOBOX_SET(uspex_gui.optType,20);
+		break;
+		case US_OT_SOUND_V:
+		GUI_COMBOBOX_SET(uspex_gui.optType,21);
+		break;
+		case US_OT_SWAVE_V:
+		GUI_COMBOBOX_SET(uspex_gui.optType,22);
+		break;
+		case US_OT_PWAVE_V:
+		GUI_COMBOBOX_SET(uspex_gui.optType,23);
+		break;
+		case US_OT_UNKNOWN:
+		default:
+		GUI_COMBOBOX_SET(uspex_gui.optType,0);
+	}
+	if(uspex_gui.new_optType!=NULL){/*_BUG_ memory*/
+		uspex_gui.have_new_opt=TRUE;
+		if(uspex_gui._tmp_new_optType!=NULL) {
+			g_free(uspex_gui._tmp_new_optType);
+			uspex_gui._tmp_new_optType=NULL;
+		}
+		if(uspex_gui.calc.new_optType!=NULL){
+			uspex_gui._tmp_new_optType=g_strdup(uspex_gui.calc.new_optType);
+			GUI_ENTRY_TEXT(uspex_gui.new_optType,uspex_gui._tmp_new_optType);
+		}
+	}else{
+		uspex_gui.have_new_opt=FALSE;
+	}
+	opt_toggle();
+	populate_atomType();
+	uspex_gui.auto_bonds=(uspex_gui.calc.goodBonds==NULL);
+	if(!uspex_gui.calc._calctype_var) update_numSpecies();
+	else{
+		if(uspex_gui.calc.numSpecies!=NULL){
+			/*update numSpecies BLOCKS*/
+			GUI_UNLOCK(uspex_gui.numSpecies);
+			GUI_COMBOBOX_WIPE(uspex_gui.numSpecies);
+			if(uspex_gui.calc._calctype_mol) num=uspex_gui.calc._nmolecules;
+			else num=uspex_gui.calc._nspecies;
+			for(i=0;i<uspex_gui.calc._var_nspecies;i++){
+				line=g_strdup(" ");
+				for(j=0;j<uspex_gui.calc._nmolecules;j++){
+					ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.numSpecies[j+i*uspex_gui.calc._nmolecules]);
+					g_free(line);
+					line=ptr;
+				}
+				GUI_COMBOBOX_ADD(uspex_gui.numSpecies,line);
+				g_free(line);
+			}
+			GUI_COMBOBOX_ADD(uspex_gui.numSpecies,"ADD SPECIES BLOCK");
+			GUI_COMBOBOX_SET(uspex_gui.numSpecies,0);
+			GUI_LOCK(uspex_gui.numSpecies);
+		}
+	}
+	USPEX_SET_VAL(fitLimit,"%lf");
+	if(uspex_gui.calc.ldaU!=NULL){
+		line=g_strdup("");
+		for(i=0;i<uspex_gui.calc._nspecies;i++) line=g_strdup_printf("%s %f",line,uspex_gui.calc.ldaU[i]);
+		uspex_gui._tmp_ldaU=line;
+		line=NULL;
+	}else{
+		uspex_gui._tmp_ldaU=g_strdup("");
+	}
+	GUI_ENTRY_TEXT(uspex_gui.ldaU,uspex_gui._tmp_ldaU);
+	USPEX_SET_VAL(populationSize,"%i");
+	USPEX_SET_VAL(initialPopSize,"%i");
+	USPEX_SET_VAL(numGenerations,"%i");
+	USPEX_SET_VAL(stopCrit,"%i");
+	USPEX_SET_VAL(bestFrac,"%lf");
+	USPEX_SET_VAL(keepBestHM,"%i");
+	USPEX_SET_CHECK(reoptOld);
+	if(uspex_gui.calc.symmetries!=NULL) USPEX_SET_TEXT(symmetries);
+	USPEX_SET_VAL(fracGene,"%lf");
+	USPEX_SET_VAL(fracRand,"%lf");
+	USPEX_SET_VAL(fracTopRand,"%lf");
+	USPEX_SET_VAL(fracPerm,"%lf");
+	USPEX_SET_VAL(fracAtomsMut,"%lf");
+	USPEX_SET_VAL(fracRotMut,"%lf");
+	USPEX_SET_VAL(fracLatMut,"%lf");
+	USPEX_SET_VAL(fracSpinMut,"%lf");
+	USPEX_SET_VAL(howManySwaps,"%i");
+	if(uspex_gui.calc.specificSwaps!=NULL) USPEX_SET_TEXT(specificSwaps);
+	USPEX_SET_VAL(mutationDegree,"%lf");
+	USPEX_SET_VAL(mutationRate,"%lf");
+	USPEX_SET_VAL(DisplaceInLatmutation,"%lf");
+	USPEX_SET_CHECK(AutoFrac);
+/*TRY*/
+	uspex_gui.auto_C_ion=(uspex_gui.calc.IonDistances==NULL);
+	toggle_auto_C_ion();
+	USPEX_SET_VAL(minVectorLength,"%lf");
+	USPEX_SET_VAL(constraint_enhancement,"%i");
+	refresh_constraints();
+	uspex_gui.auto_C_lat=(uspex_gui.calc.Latticevalues==NULL);
+	toggle_auto_C_lat();
+	set_lattice_format();
+	if((uspex_gui.calc._nsplits>0)&&(uspex_gui.calc.splitInto!=NULL)){
+		line=g_strdup_printf("%i",uspex_gui.calc.splitInto[0]);
+		for(i=1;i<uspex_gui.calc._nsplits;i++){
+			ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.splitInto[i]);
+			g_free(line);
+			line=ptr;
+		}
+		GUI_ENTRY_TEXT(uspex_gui.splitInto,line);
+		g_free(line);
+	}
+	USPEX_SET_CHECK(pickUpYN);
+	USPEX_SET_VAL(pickUpGen,"%i");
+	USPEX_SET_VAL(pickUpFolder,"%i");
+num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
+	/*if we don't have abinitCode, set a default*/
+	if(uspex_gui.calc.abinitioCode==NULL) {
+		uspex_gui.calc.abinitioCode=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gint));
+		for(i=1;i<uspex_gui.calc._num_opt_steps;i++) uspex_gui.calc.abinitioCode[i]=1;
+	}
+	/*same with KresolStart*/
+	if(uspex_gui.calc.KresolStart==NULL) {
+		uspex_gui.calc.KresolStart=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
+		uspex_gui.calc.KresolStart[0]=0.2;
+		for(i=1;i<uspex_gui.calc._num_opt_steps;i++)
+			uspex_gui.calc.KresolStart[i]=0.2-(gdouble)(i)*(0.2-0.08)/(uspex_gui.calc._num_opt_steps-1);
+	}
+	/*same with vacuumSize*/
+	if(uspex_gui.calc.vacuumSize==NULL) {
+		uspex_gui.calc.vacuumSize=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
+		for(i=0;i<uspex_gui.calc._num_opt_steps;i++) uspex_gui.calc.vacuumSize[i]=10.;
+	}
+	/*(re-)create _tmp_commandExecutable _tmp_ai_input _tmp_ai_opt*/
+	if(uspex_gui._tmp_commandExecutable!=NULL) {
+		for(i=0;i<num;i++){
+			if(uspex_gui._tmp_commandExecutable[i]!=NULL) g_free(uspex_gui._tmp_commandExecutable[i]);
+			uspex_gui._tmp_commandExecutable[i]=NULL;
+		}
+		g_free(uspex_gui._tmp_commandExecutable);
+		uspex_gui._tmp_commandExecutable=NULL;
+	}
+	uspex_gui._tmp_commandExecutable=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	if(uspex_gui._tmp_ai_input!=NULL) {
+		for(i=0;i<num;i++) {
+			if(uspex_gui._tmp_ai_input[i]!=NULL) g_free(uspex_gui._tmp_ai_input[i]);
+			uspex_gui._tmp_ai_input[i]=NULL;
+		}
+		g_free(uspex_gui._tmp_ai_input);
+		uspex_gui._tmp_ai_input=NULL;
+	}
+	uspex_gui._tmp_ai_input=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	if(uspex_gui._tmp_ai_opt!=NULL){
+		for(i=0;i<num;i++) {
+			if(uspex_gui._tmp_ai_opt[i]!=NULL) g_free(uspex_gui._tmp_ai_opt[i]);
+			uspex_gui._tmp_ai_opt[i]=NULL;
+		}
+		g_free(uspex_gui._tmp_ai_opt);
+		uspex_gui._tmp_ai_opt=NULL;
+	}
+	uspex_gui._tmp_ai_opt=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	/*(re-)create _potentials (_nspecies values!)*/
+	if(uspex_gui._potentials!=NULL){
+		for(i=0;i<uspex_gui._tmp_nspecies;i++) {
+			if(uspex_gui._potentials[i]!=NULL) g_free(uspex_gui._potentials[i]);
+			uspex_gui._potentials[i]=NULL;
+		}
+		g_free(uspex_gui._potentials);
+		uspex_gui._potentials=NULL;
+	}
+	uspex_gui._potentials=g_malloc0(uspex_gui.calc._nspecies*sizeof(gchar *));
+	/*redefine commandExecutable*/
+	if(uspex_gui.calc.commandExecutable!=NULL) {
+		i=0;
+		line=&(uspex_gui.calc.commandExecutable[0]);
+		ptr=line;
+		while(*line!='\0'){
+			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
+			if(*ptr=='\0') {
+				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
+				break;
+			}else{
+				*ptr='\0';/*cut here*/
+				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
+				line=ptr+1;
+				*ptr='\n';/*restore*/
+				i++;
+				if(i>uspex_gui.calc._num_opt_steps) break;
+			}
+		}
+		uspex_gui.calc._isCmdList=!(i==0);
+	}else{
+		uspex_gui.calc._isCmdList=FALSE;
+	}
+	uspex_gui._tmp_num_opt_steps=(gdouble)uspex_gui.calc._num_opt_steps;
+	GUI_SPIN_SET(uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps);
+	uspex_gui._tmp_curr_step=1.;
+	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
+	GUI_LOCK(uspex_gui.ai_spe);
+	populate_spe();
+	GUI_COMBOBOX_SET(uspex_gui.ai_spe,0);
+	GUI_UNLOCK(uspex_gui.ai_spe);
+	change_ai_pot();
+	spin_update_curr_step();
+	uspex_gui.auto_step=TRUE;
+	toggle_auto_step();
+	USPEX_SET_VAL(numProcessors,"%i");
+	USPEX_SET_VAL(numParallelCalcs,"%i");
+	USPEX_SET_VAL(whichCluster,"%i");
+	if(uspex_gui.calc.remoteFolder!=NULL) USPEX_SET_TEXT(remoteFolder);
+	USPEX_SET_CHECK(PhaseDiagram);
+	USPEX_SET_VAL(RmaxFing,"%lf");
+	USPEX_SET_VAL(deltaFing,"%lf");
+	USPEX_SET_VAL(sigmaFing,"%lf");
+	USPEX_SET_VAL(antiSeedsActivation,"%i");
+	USPEX_SET_VAL(antiSeedsMax,"%lf");
+	USPEX_SET_VAL(antiSeedsSigma,"%lf");
+	USPEX_SET_CHECK(doSpaceGroup);
+	SG_toggle();
+	USPEX_SET_VAL(SymTolerance,"%lf");
+	USPEX_SET_VAL(repeatForStatistics,"%i");
+	USPEX_SET_VAL(stopFitness,"%lf");
+	USPEX_SET_VAL(fixRndSeed,"%i");
+	USPEX_SET_CHECK(collectForces);
+	USPEX_SET_CHECK(ordering_active);
+	USPEX_SET_CHECK(symmetrize);
+	if(uspex_gui.calc.valenceElectr==NULL){
+		line=g_strdup("");
+	}else{
+		line=g_strdup_printf("%i",uspex_gui.calc.valenceElectr[0]);
+		for(i=1;i<uspex_gui.calc._nspecies;i++){
+			ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.valenceElectr[i]);
+			g_free(line);
+			line=ptr;
+		}
+	}
+	GUI_ENTRY_TEXT(uspex_gui.valenceElectr,line);
+	g_free(line);
+	USPEX_SET_VAL(percSliceShift,"%lf");
+	GUI_COMBOBOX_SET(uspex_gui.dynamicalBestHM,uspex_gui.calc.dynamicalBestHM);
+	if(uspex_gui.calc.softMutOnly!=NULL) USPEX_SET_TEXT(softMutOnly);
+	USPEX_SET_VAL(maxDistHeredity,"%lf");
+	GUI_COMBOBOX_SET(uspex_gui.manyParents,uspex_gui.calc.manyParents);
+	USPEX_SET_VAL(minSlice,"%lf");
+	USPEX_SET_VAL(maxSlice,"%lf");
+	USPEX_SET_VAL(numberparents,"%i");
+	USPEX_SET_VAL(BoltzTraP_T_max,"%lf");
+	USPEX_SET_VAL(BoltzTraP_T_delta,"%lf");
+	USPEX_SET_VAL(BoltzTraP_T_efcut,"%lf");
+	USPEX_SET_VAL(TE_T_interest,"%lf");
+	USPEX_SET_VAL(TE_threshold,"%lf");
+	uspex_gui.have_ZT=FALSE;
+	if(uspex_gui.calc.optType==US_OT_ZT){
+		uspex_gui.have_ZT=TRUE;
+	}else{
+		if(uspex_gui.calc.new_optType!=NULL){
+			if(find_in_string("ZT",uspex_gui.calc.new_optType) != NULL) uspex_gui.have_ZT=TRUE;
+			if(find_in_string("14",uspex_gui.calc.new_optType) != NULL) uspex_gui.have_ZT=TRUE;
+		}
+	}
+	switch(uspex_gui.calc.TE_goal){
+		case US_BT_ZTxx:
+			GUI_COMBOBOX_SET(uspex_gui.TE_goal,1);
+			break;
+		case US_BT_ZTyy:
+			GUI_COMBOBOX_SET(uspex_gui.TE_goal,2);
+			break;
+		case US_BT_ZTzz:
+			GUI_COMBOBOX_SET(uspex_gui.TE_goal,3);
+			break;
+		case US_BT_ZT:
+			/* fall through */
+		default:
+			GUI_COMBOBOX_SET(uspex_gui.TE_goal,0);
+	}
+	//cmd_BoltzTraP is left alone (for future use)
+	USPEX_SET_VAL(thicknessS,"%lf");
+	USPEX_SET_VAL(thicknessB,"%lf");
+	USPEX_SET_VAL(reconstruct,"%i");
+	if(uspex_gui.calc.StoichiometryStart==NULL){
+		line=g_strdup("");
+	}else{
+		line=g_strdup_printf("%i",uspex_gui.calc.StoichiometryStart[0]);
+		for(i=1;i<uspex_gui.calc._nspecies;i++){
+			ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.StoichiometryStart[i]);
+			g_free(line);
+			line=ptr;
+		}
+	}
+	GUI_ENTRY_TEXT(uspex_gui.StoichiometryStart,line);
+	g_free(line);
+//	init_substrate_models();/*this is un-necessary*/
+	USPEX_SET_VAL(firstGeneMax,"%i");
+	USPEX_SET_VAL(minAt,"%i");
+	USPEX_SET_VAL(maxAt,"%i");
+	USPEX_SET_VAL(fracTrans,"%lf");
+	USPEX_SET_VAL(howManyTrans,"%lf");
+	if(uspex_gui.calc._nspetrans<1){
+		line=g_strdup("");
+	}else{
+		line=g_strdup_printf("%i",uspex_gui.calc.specificTrans[0]);
+		for(i=1;i<uspex_gui.calc._nspetrans;i++){
+			ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.specificTrans[i]);
+			g_free(line);
+			line=ptr;
+		}
+	}
+	GUI_ENTRY_TEXT(uspex_gui.specificTrans,line);
+	g_free(line);
+	USPEX_SET_VAL(ExternalPressure,"%lf");
+	USPEX_SET_VAL(GaussianWidth,"%lf");
+	USPEX_SET_VAL(GaussianHeight,"%lf");
+	GUI_COMBOBOX_SET(uspex_gui.FullRelax,uspex_gui.calc.FullRelax);
+//	init_metadynamics_models();/*this is un-necessary*/
+	USPEX_SET_VAL(maxVectorLength,"%lf");
+	USPEX_SET_VAL(PSO_softMut,"%lf");
+	USPEX_SET_VAL(PSO_BestStruc,"%lf");
+	USPEX_SET_VAL(PSO_BestEver,"%lf");
+	USPEX_SET_VAL(vcnebType,"%i");
+	GUI_COMBOBOX_SET(uspex_gui._vcnebtype_method,uspex_gui.calc._vcnebtype_method-1);
+	USPEX_SET_CHECK(_vcnebtype_img_num);
+	USPEX_SET_CHECK(_vcnebtype_spring);
+	USPEX_SET_VAL(numImages,"%i");
+	USPEX_SET_VAL(numSteps,"%i");
+	GUI_COMBOBOX_SET(uspex_gui.optReadImages,uspex_gui.calc.optReadImages);
+	GUI_COMBOBOX_SET(uspex_gui.optimizerType,uspex_gui.calc.optimizerType-1);
+	GUI_COMBOBOX_SET(uspex_gui.optRelaxType,uspex_gui.calc.optRelaxType-1);
+	USPEX_SET_VAL(dt,"%lf");
+	USPEX_SET_VAL(ConvThreshold,"%lf");
+	USPEX_SET_VAL(VarPathLength,"%lf");
+	USPEX_SET_VAL(K_min,"%lf");
+	USPEX_SET_VAL(K_max,"%lf");
+	USPEX_SET_VAL(Kconstant,"%lf");
+	USPEX_SET_CHECK(optFreezing);
+	GUI_COMBOBOX_SET(uspex_gui.optMethodCIDI,uspex_gui.calc.optMethodCIDI);
+	USPEX_SET_VAL(startCIDIStep,"%i");
+	if(uspex_gui.calc._npickimg<1){
+		line=g_strdup("");
+	}else{
+		line=g_strdup_printf("%i",uspex_gui.calc.pickupImages[0]);
+		for(i=1;i<uspex_gui.calc._npickimg;i++){
+			ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.pickupImages[i]);
+			g_free(line);
+			line=ptr;
+		}
+	}
+	GUI_ENTRY_TEXT(uspex_gui.pickupImages,line);
+	g_free(line);
+	switch(uspex_gui.calc.FormatType){
+		case 1:
+		GUI_COMBOBOX_SET(uspex_gui.FormatType,0);
+		break;
+		case 3:
+		GUI_COMBOBOX_SET(uspex_gui.FormatType,2);
+		break;
+		case 2:
+			/* fall through */
+		default:
+		GUI_COMBOBOX_SET(uspex_gui.FormatType,1);
+	}
+//	init_img_gdis_model();/*this is un-necessary*/
+	USPEX_SET_VAL(PrintStep,"%i");
+	USPEX_SET_VAL(numIterations,"%i");
+	if(uspex_gui.calc.speciesSymbol!=NULL) USPEX_SET_TEXT(speciesSymbol);
+	if(uspex_gui.calc.mass==NULL){
+		line=g_strdup("");
+	}else{
+		line=g_strdup_printf("%lf",uspex_gui.calc.mass[0]);
+		for(i=1;i<uspex_gui.calc._nspecies;i++){
+			ptr=g_strdup_printf("%s %lf",line,uspex_gui.calc.mass[i]);
+			g_free(line);
+			line=ptr;
+		}
+	}
+	GUI_ENTRY_TEXT(uspex_gui.mass,line);
+	g_free(line);
+	GUI_ENTRY_SET(uspex_gui.amplitudeShoot_AB,uspex_gui.calc.amplitudeShoot[0],"%lf");
+	GUI_ENTRY_SET(uspex_gui.amplitudeShoot_BA,uspex_gui.calc.amplitudeShoot[1],"%lf");
+	GUI_ENTRY_SET(uspex_gui.magnitudeShoot_success,uspex_gui.calc.magnitudeShoot[0],"%lf");
+	GUI_ENTRY_SET(uspex_gui.magnitudeShoot_failure,uspex_gui.calc.magnitudeShoot[1],"%lf");
+	USPEX_SET_VAL(shiftRatio,"%lf");
+	USPEX_SET_CHECK(orderParaType);
+	GUI_ENTRY_SET(uspex_gui.opCriteria_end,uspex_gui.calc.opCriteria[1],"%lf");
+	if(uspex_gui.calc.cmdOrderParameter!=NULL) USPEX_SET_TEXT(cmdOrderParameter);
+	if(uspex_gui.calc.cmdEnthalpyTemperature!=NULL) USPEX_SET_TEXT(cmdEnthalpyTemperature);
+	if(uspex_gui.calc.orderParameterFile!=NULL) USPEX_SET_TEXT(orderParameterFile);
+	if(uspex_gui.calc.enthalpyTemperatureFile) USPEX_SET_TEXT(enthalpyTemperatureFile);
+	if(uspex_gui.calc.trajectoryFile) USPEX_SET_TEXT(trajectoryFile);
+	if(uspex_gui.calc.MDrestartFile) USPEX_SET_TEXT(MDrestartFile);
+/*ADDON: molecular*/
+	//mol_model <- nothing to do
+	if(uspex_gui.calc._nmolecules < 1) uspex_gui.calc._nmolecules=1;
+	uspex_gui._tmp_num_mol=(gdouble)uspex_gui.calc._nmolecules;
+	uspex_gui._tmp_curr_mol=0.;
+	GUI_SPIN_SET(uspex_gui.num_mol,uspex_gui._tmp_num_mol);
+	GUI_SPIN_SET(uspex_gui.curr_mol,uspex_gui._tmp_curr_mol);
+	if(uspex_gui._tmp_mols_gdis!=NULL) g_free(uspex_gui._tmp_mols_gdis);
+	uspex_gui._tmp_mols_gdis=g_malloc0(uspex_gui.calc._nmolecules*sizeof(gint));
+	if(uspex_gui._tmp_mols_gulp!=NULL) g_free(uspex_gui._tmp_mols_gulp);
+	uspex_gui._tmp_mols_gulp=g_malloc0(uspex_gui.calc._nmolecules*sizeof(gboolean));
+	uspex_gui.mol_as_gulp=FALSE;
+	init_uspex_gdis_mol();/*this is un-necessary*/
+	GUI_COMBOBOX_SET(uspex_gui.mol_model,0);
+	spin_update_curr_mol();
+/*SPECIFIC*/
+	uspex_gui._tmp_nspecies=uspex_gui.calc._nspecies;/*BACKUP*/
+	update_specific();
+}
 /********************************/
 /* USPEX calculation main dialog */
 /********************************/
@@ -3838,45 +4438,39 @@ void gui_uspex_dialog(void){
 	GUI_OBJ *frame, *vbox, *hbox, *table;
 	GUI_OBJ *notebook, *page, *button, *label;
 	/* special */
+	uspex_output_struct *uspex_output;
 	struct model_pak *data;
 	gint idx;
 	gchar *tmp;
 /* checks */
 	data = sysenv.active_model;
 	if (!data) return;
-/* do we have a uspexrun.xml model?  */
-	if (data->id == USPEX) {
-		uspex_output_struct *uspex_output=data->uspex;
-		uspex_calc_struct *uspex_calc;
+/* do we have a Parameters.txt model?  */
+	if(data->uspex!=NULL) uspex_output=(uspex_output_struct *)data->uspex;
+	else uspex_output=NULL;
+	if((uspex_output!=NULL)&&(data->id == USPEX)) {/*data->id check necessary?*/
 		/*take GUI default from the opened USPEX output*/
-		free_uspex_parameters(&(uspex_gui.calc));
-		/*be careful to read Parameters.txt, specifically*/
-		title = g_strdup_printf("%s%s",_UO.calc->path,"Parameters.txt");
-		uspex_calc = read_uspex_parameters(title,data->num_species);
-		g_free(title);
-		if(uspex_calc){
+		init_uspex_parameters(&(uspex_gui.calc));
+		if(uspex_output->calc!=NULL){
 			uspex_gui.have_output=TRUE;
-			copy_uspex_parameters(uspex_calc,&(uspex_gui.calc));
+			copy_uspex_parameters(uspex_output->calc,&(uspex_gui.calc));
 			gui_uspex_init(data);
 		}else{
 			uspex_gui.have_output=FALSE;
-			init_uspex_parameters(&(uspex_gui.calc));
+			free_uspex_parameters(&(uspex_gui.calc));
 			gui_uspex_init(data);
 		}
-		g_free(uspex_calc);
 	} else {
 		uspex_gui.have_output=FALSE;
 		init_uspex_parameters(&(uspex_gui.calc));
 		gui_uspex_init(data);
 	}
 /*bailout process*/
-
 if(uspex_gui.calc.numSpecies==NULL){
 	title=g_strdup("USPEX model is missing numSpecies information!\n");
 	gui_text_show(ERROR,title);
 	g_free(title);
 }
-
 /* dialog setup */
 	title = g_strdup_printf("USPEX: %s", data->basename);
 	dialog = dialog_request(CUSPEX, title, NULL, uspex_cleanup,data);
@@ -3927,6 +4521,7 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"PSO");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"TPS");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"MINHOP");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"COPEX");
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USPEX\nSet the method of calculation.");
 	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"Type: ",1,3,1,2);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"300");
@@ -4002,21 +4597,21 @@ GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1: MIN Enthalpy (stable phases)");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"2: MIN Volume (densest structure)");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"3: MAX Hardness (hardest phase)");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX order (most order structure)");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Structure average difference");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"4: MAX Order (most order structure)");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"5: MAX Density");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"6: MAX Dielectric susceptibility");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"7: MAX Band gap");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"8: MAX electric energy storage capacity");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"9: MAX Magnetization");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"10: MAX Structure quasientropy");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"11: MAX? L/H eigenvalue difference of refractive index");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"14: MAX? ZT thermoelectric figure of merit");
-	GUI_COMBOBOX_ADD(uspex_gui.optType,"17: MAX? free energy at finite temperature");
+	GUI_COMBOBOX_ADD(uspex_gui.optType,"11: MAX L/H eigenvalue difference of refractive index");
+	GUI_COMBOBOX_ADD(uspex_gui.optType,"14: MAX ZT thermoelectric figure of merit");
+	GUI_COMBOBOX_ADD(uspex_gui.optType,"17: MAX free energy at finite temperature");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1101: MAX Bulk modulus");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1102: MAX Shear modulus");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1103: MAX Young modulus");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"1104: MAX Poisson Modulus");
-        GUI_COMBOBOX_ADD(uspex_gui.optType,"1105: MAX Pugh ratio");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1104: MAX Poisson ratio");
+        GUI_COMBOBOX_ADD(uspex_gui.optType,"1105: MAX Pugh modulus ratio");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1106: MAX Vickers hardness");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1107: MAX Fracture toughness");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1108: MAX Debye temperature");
@@ -4214,11 +4809,11 @@ GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.5 DEFAULT: 0.2\nMaximum 
 		title=g_strdup("");
 	}else{
 		title=g_strdup_printf("%i",uspex_gui.calc.specificTrans[0]);
-	}
-	for(idx=1;idx<uspex_gui.calc._nspetrans;idx++){
-		tmp=g_strdup_printf("%s %i",title,uspex_gui.calc.specificTrans[idx]);
-		g_free(title);
-		title=tmp;
+		for(idx=1;idx<uspex_gui.calc._nspetrans;idx++){
+			tmp=g_strdup_printf("%s %i",title,uspex_gui.calc.specificTrans[idx]);
+			g_free(title);
+			title=tmp;
+		}
 	}
 	GUI_TEXT_TABLE(table,uspex_gui.specificTrans,title,"Trans: ",2,4,17,18);
 	g_free(title);
@@ -4297,8 +4892,8 @@ GUI_TOOLTIP(uspex_gui.job_uspex_exe,"The USPEX script executable.");
 	GUI_OPEN_BUTTON_TABLE(table,button,load_uspex_exe,1,2,7,8);
 	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,7,8);
 GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.\n>2 - specific supercomputer.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
-GUI_TOOLTIP(button,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
+	GUI_CHECK_TABLE(table,uspex_gui.PhaseDiagram,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.PhaseDiagram,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
 /* line 8 */
 	GUI_CHECK_TABLE(table,button,uspex_gui.have_v1010,NULL,"Ver 10.1",0,1,8,9);/*not calling anything*/
 GUI_TOOLTIP(button,"Use USPEX v. 10.1 instead of 9.4.4.");
@@ -4326,7 +4921,7 @@ GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the gener
 	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,11,12);
 GUI_TOOLTIP(uspex_gui.pickUpFolder,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
 	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,11,12);/*not calling anything*/
-GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, 0PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
+GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, etc.");
 /* reserved for future use */
 	for(idx=12;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
 /* --- end page */
@@ -4346,15 +4941,15 @@ GUI_TOOLTIP(uspex_gui.repeatForStatistics,"repeatForStatistics: Ch. 4.12 DEFAULT
 GUI_TOOLTIP(uspex_gui.stopFitness,"stopFitness: Ch. 4.12 DEFAULT: none\nThe fitness value at which USPEX calculation will stop.\nSee also fitLimit in STRUCTURE page.");
 	GUI_ENTRY_TABLE(table,uspex_gui.fixRndSeed,uspex_gui.calc.fixRndSeed,"%i","RND_SEED:",2,3,1,2);
 GUI_TOOLTIP(uspex_gui.fixRndSeed,"fixRndSeed: Ch. 4.12 DEFAULT: 0\nFor non-zero values, fix the random seed\nto check that for two USPEX calculations\nwith the same seed produce the same results.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.collectForces,NULL,"CollectForces",3,4,1,2);/*not calling anything*/
-GUI_TOOLTIP(button,"collectForces: Ch. 4.12 DEFAULT: FALSE\nCollect relaxation information from VASP calculation\n(energies, forces, positions, geometry, and stress).");
+	GUI_CHECK_TABLE(table,uspex_gui.collectForces,uspex_gui.calc.collectForces,NULL,"CollectForces",3,4,1,2);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.collectForces,"collectForces: Ch. 4.12 DEFAULT: FALSE\nCollect relaxation information from VASP calculation\n(energies, forces, positions, geometry, and stress).");
 /* --- Seldom */
 	GUI_LABEL_TABLE(table,"Seldom",0,4,2,3);
 /* line 3 */
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.ordering_active,NULL,"ordering",0,1,3,4);/*not calling anything*/
-GUI_TOOLTIP(button,"ordering_active: Ch. 4.12 DEFAULT: TRUE\nSwitch the \"biasing of variation operators by local order parameters\".");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.symmetrize,NULL,"symmetrize",1,2,3,4);/*not calling anything*/
-GUI_TOOLTIP(button,"symmetrize: Ch. 4.13 DEFAULT: FALSE\nTransform all structure to \"standard symmetry-adapted crystallografic setting\".");
+	GUI_CHECK_TABLE(table,uspex_gui.ordering_active,uspex_gui.calc.ordering_active,NULL,"ordering",0,1,3,4);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.ordering_active,"ordering_active: Ch. 4.12 DEFAULT: TRUE\nSwitch the \"biasing of variation operators by local order parameters\".");
+	GUI_CHECK_TABLE(table,uspex_gui.symmetrize,uspex_gui.calc.symmetrize,NULL,"symmetrize",1,2,3,4);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.symmetrize,"symmetrize: Ch. 4.13 DEFAULT: FALSE\nTransform all structure to \"standard symmetry-adapted crystallografic setting\".");
         if(uspex_gui.calc.valenceElectr==NULL){
                 title=g_strdup("");
         }else{
@@ -4582,11 +5177,11 @@ GUI_TOOLTIP(uspex_gui.startCIDIStep,"startCIDIStep: Ch. 6.1 DEFAULT: 100\nStarti
 		title=g_strdup("");
 	}else{
 		title=g_strdup_printf("%i",uspex_gui.calc.pickupImages[0]);
-	}
-	for(idx=1;idx<uspex_gui.calc._npickimg;idx++){
-		tmp=g_strdup_printf("%s %i",title,uspex_gui.calc.pickupImages[idx]);
-		g_free(title);
-		title=tmp;
+		for(idx=1;idx<uspex_gui.calc._npickimg;idx++){
+			tmp=g_strdup_printf("%s %i",title,uspex_gui.calc.pickupImages[idx]);
+			g_free(title);
+			title=tmp;
+		}
 	}
 	GUI_TEXT_TABLE(table,uspex_gui.pickupImages,title,"Pickup:",2,3,10,11);
 	g_free(title);
@@ -4621,7 +5216,7 @@ GUI_TOOLTIP(uspex_gui.mol_gdis,"Select the molecule from GDIS model.");
 	GUI_SPIN_RANGE(uspex_gui.curr_mol,1.,(gdouble)uspex_gui.calc._nmolecules);
 GUI_TOOLTIP(uspex_gui.curr_mol,"Current molecule number.");
 	GUI_CHECK_TABLE(table,uspex_gui.mol_gulp,uspex_gui.mol_as_gulp,NULL,"GULP_FORM",2,3,14,15);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.optFreezing,"Use GULP chemical labels and charge Zmatrix form.");
+GUI_TOOLTIP(uspex_gui.mol_gulp,"Use GULP chemical labels and charge Zmatrix form.");
 	GUI_APPLY_BUTTON_TABLE(table,uspex_gui.mol_apply_button,apply_gdis_mol,3,4,14,15);	
 /* --- Surfaces */
 	GUI_LABEL_TABLE(table,"Surfaces",0,4,15,16);
@@ -4650,7 +5245,6 @@ GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.3 DEFAULT: 1\nNumber of re
 	GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,17,18);
 GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
 /* --- end page */
-
 /* initialize everything */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationType,0,uspex_type_selected);
@@ -4719,7 +5313,8 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_CLOSE_ACTION(uspex_gui.window,button,quit_uspex_gui,dialog);
 /* connect to signals */
 	GUI_PAGE_CHANGE(notebook,uspex_gui_page_switch,NULL);
-/* all done */
+/* all done, we need to copy uspex parameters from model again */
+if(uspex_gui.have_output) copy_uspex_parameters(uspex_output->calc,&(uspex_gui.calc));
 	uspex_gui_refresh();/*refresh once more*/
 	GUI_SHOW(uspex_gui.window);/*display*/
 	update_specific();

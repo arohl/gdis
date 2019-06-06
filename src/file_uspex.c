@@ -311,9 +311,10 @@ uspex_calc_struct *read_uspex_parameters(gchar *filename,gint safe_nspecies){
 	continue;\
 }
 #define __GET_CHARS(value) if (find_in_string(__Q(value),line) != NULL) {\
-	ptr = g_strdup_printf("%%s : %s",__Q(value));\
-	sscanf(line,ptr,&(_UC.value));\
-	g_free(ptr);g_free(line);line = file_read_line(vf);\
+	ptr=&(line[0]);\
+	for(i=0;i<strlen(line);i++) if((line[i]==' ')||(line[i]=='\n')) line[i]='\0';\
+	_UC.value=g_strdup_printf("%s",line);\
+	g_free(line);line = file_read_line(vf);\
 	continue;\
 }
 #define __COUNT_NUM(pointer,count) while(*pointer!='\0'){\
@@ -1421,7 +1422,15 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 		__GET_STRING(cmdOrderParameter);/*VER 10.1*/
 		__GET_STRING(cmdEnthalpyTemperature);/*VER 10.1*/
 		__GET_CHARS(orderParameterFile);/*VER 10.1*/
-		__GET_CHARS(enthalpyTemperatureFile);/*VER 10.1*/
+//		__GET_CHARS(enthalpyTemperatureFile);/*VER 10.1*/
+		if (find_in_string("enthalpyTemp",line) != NULL) {
+		/*FIX a typo in USPEX v10.3 EX26 where enthalpyTemperatureFile is written enthalpyTemptureFile! ^^'*/
+		        ptr=&(line[0]);
+		        for(i=0;i<strlen(line);i++) if((line[i]==' ')||(line[i]=='\n')) line[i]='\0';
+		        _UC.enthalpyTemperatureFile=g_strdup_printf("%s",line);
+		        g_free(line);line = file_read_line(vf);
+		        continue;
+		}
 		__GET_CHARS(trajectoryFile);/*VER 10.1*/
 		__GET_CHARS(MDrestartFile);/*VER 10.1*/
 		/*in case no match was done:*/
@@ -1474,7 +1483,7 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 }while(0)
 	/*1st free / init the destination*/
 	free_uspex_parameters(dest);
-	init_uspex_parameters(dest);
+//	init_uspex_parameters(dest);/*already included?*/
 	/*copy*/
 	_CP(name);
 	_STRCP(filename);
@@ -1492,7 +1501,21 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(_nspecies);
 	_COPY(atomType,_SRC._nspecies,gint);
 	_CP(_var_nspecies);
+/*there is a _BUG_ where numSpecies refers to number of molecules instead of number of elements!*/
+if(_SRC._calctype_mol) {
+	_COPY(numSpecies,_SRC._var_nspecies,gint);
+#ifdef NO_NO_NO
+	if((_SRC.numSpecies)!=NULL){
+		if(_DEST.numSpecies!=NULL) g_free(_DEST.numSpecies);
+		_DEST.numSpecies = g_malloc0(_SRC._nspecies*sizeof(gint));
+		memcpy(_DEST.numSpecies,_SRC.numSpecies,_SRC._nspecies*sizeof(gint));
+	}else{
+		_DEST.numSpecies=NULL;
+	}
+#endif
+}else{
 	_COPY(numSpecies,(_SRC._nspecies*_SRC._var_nspecies),gint);
+}
 	_CP(magRatio[0]);/*VER 10.1*/
 	_CP(magRatio[1]);/*VER 10.1*/
 	_CP(magRatio[2]);/*VER 10.1*/
@@ -2019,12 +2042,16 @@ if(!zero_check)
 //__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 }
 /*do not print KresolStart if linearly = {0.2~0.08}*/
+if(_UC.KresolStart!=NULL){
 zero_check=(_UC.KresolStart[0]!=0.2);
 for(i=1;i<_UC._num_opt_steps;i++) zero_check|=(_UC.KresolStart[i]!=(0.2-(gdouble)(i)*(0.2-0.08)/(_UC._num_opt_steps-1)));
-	if(zero_check && (_UC.KresolStart!=NULL)) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
+	if(zero_check) __OUT_BK_DOUBLE(KresolStart,"Kresolend",_UC._num_opt_steps);
+}
 /*do not print vacuumSize if all of them are 10. (default)*/
+if(_UC.vacuumSize!=NULL){
 zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=(_UC.vacuumSize[i]!=10.0);
-	if(zero_check && (_UC.vacuumSize!=NULL)) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
+	if(zero_check) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
+}
 	if(_UC.numProcessors>1) __OUT_INT(numProcessors);
 /*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
 	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
