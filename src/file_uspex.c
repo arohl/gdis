@@ -718,7 +718,7 @@ else n_size=_UC._nspecies;
 			for(j=0;j<_UC._var_nspecies;j++){
 				ptr=&(line[0]);i=0;/*FIX _BUG_ when i=n_size*/
 				while((*ptr!='\n')&&(*ptr!='\0')&&(i<n_size)){
-					__SKIP_BLANK(ptr);
+while((*ptr!='\0')&&(*ptr!='\n')&&(!g_ascii_isdigit(*ptr))) ptr++;/*fix _BUG_*/
 					_UC.numSpecies[i+j*n_size]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
 					ptr=ptr2+1;
 					i++;
@@ -2966,6 +2966,7 @@ void uspex_graph_all_update(gint add_gen,gint add_ind,uspex_output_struct *uspex
 	gen=px->x_size-1;
 	if(add_gen>0){
 		/*add new X elements*/
+if(px->x_size!=(_UO.num_gen+1)){/*fix _BUG_ in META*/
 		gtot-=add_gen;/*because update_individuals has already update num_gen*/
 		gx=g_malloc0(sizeof(g_data_x));
 		gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
@@ -2977,7 +2978,32 @@ void uspex_graph_all_update(gint add_gen,gint add_ind,uspex_output_struct *uspex
 		px->x=gx->x;
 		gx->x=NULL;
 		g_free(gx);
+}
 	}
+if((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP)){
+	if(graph->size<2){
+		/*we need to add the initial set (ie gen=0)*/
+		gy=g_malloc0(sizeof(g_data_y));
+		gy->y=g_malloc0(1*sizeof(gdouble));
+		gy->idx=g_malloc0(1*sizeof(gint32));
+		gy->symbol=g_malloc0(1*sizeof(graph_symbol));
+		gy->sym_color=g_malloc0(1*sizeof(graph_color));
+		gy->y[0]=_UO.ind[1].E;/*always the first set*/
+		gy->symbol[0]=GRAPH_SYMB_DIAM;
+		gy->sym_color[0]=GRAPH_COLOR_RED;/*always member of BEST*/
+		gy->type=GRAPH_IX_TYPE;
+		gy->line=GRAPH_LINE_NONE;
+		gy->color=GRAPH_COLOR_DEFAULT;
+		dat_graph_add_y(*gy,_UO.graph);
+		g_free(gy->y);
+		g_free(gy->idx);
+		g_free(gy->symbol);
+		g_free(gy->sym_color);
+		g_free(gy);
+		gen=1;
+		gtot=1;
+	}
+}
 	list=g_slist_nth(graph->set_list,gtot+1);/*+1 because of X set*/
 	if(list==NULL) return;/*problem of generation?*/
 	py=(g_data_y *)list->data;
@@ -3182,30 +3208,23 @@ fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 fprintf(stdout,"#DBG update_graph_best: update from gen=%i\n",gen);
 #endif
 	if(gen<=1){
-/*in that case, we will *create* the new graph*/
 		/*this is probably the first time we update BEST graph*/
-		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
-			dat_graph_set_sub_title("<small>(From <b>BESTIndividuals_relaxed</b> file)</small>",graph);
-		else
-			dat_graph_set_sub_title("<small>(From <b>BESTIndividuals</b> file)</small>",graph);
-		gen=0;
-		if(!((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP))) {
-			/*so we need to deal with the 'fake' first set...*/
-			gy.y_size=0;
-			gy.y=g_malloc0(sizeof(gdouble));gy.y[0] = NAN;
-			gy.idx=g_malloc0(sizeof(gint32));gy.idx[0]=-1;
-			gy.symbol=g_malloc0(sizeof(graph_symbol));gy.sym_color=NULL;
-			gy.symbol[0]=GRAPH_SYMB_CROSS;gy.mixed_symbol=TRUE;
-			gy.color=GRAPH_COLOR_DEFAULT;
-			gy.type=GRAPH_IX_TYPE;
-			gy.line=GRAPH_LINE_NONE;
-			dat_graph_add_y(gy,graph);
-			g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);
-			gen=1;
+		dat_graph_set_sub_title("<small>(From <b>BESTIndividuals</b> file)</small>",graph);
+		/*so we need to deal with the 'fake' first set...*/
+		gy.y_size=0;
+		gy.y=g_malloc0(sizeof(gdouble));gy.y[0] = NAN;
+		gy.idx=g_malloc0(sizeof(gint32));gy.idx[0]=-1;
+		gy.symbol=g_malloc0(sizeof(graph_symbol));gy.sym_color=NULL;
+		gy.symbol[0]=GRAPH_SYMB_CROSS;gy.mixed_symbol=TRUE;
+		gy.color=GRAPH_COLOR_DEFAULT;
+		gy.type=GRAPH_IX_TYPE;
+		gy.line=GRAPH_LINE_NONE;
+		dat_graph_add_y(gy,graph);
+		g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);
+		gen=1;
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"#DBG update_graph_best: created gen=0\n");
+fprintf(stdout,"#DBG update_graph_best: created fake gen=0\n");
 #endif
-		}
 	}else{
 		/*we start updating from gen, but [gen] set contains the lowest energy line*/
 		/*reform data*/
@@ -3225,7 +3244,7 @@ fprintf(stdout,"USPEX-UPDATE-BEST: BIG trouble! Can't find last set!\n");
 		if(num==0){
 			/*_BUG_ this can be normal in META/MINHOP calculation*/
 #if DEBUG_TRACK_USPEX
-fprintf(stdout,"USPEX-UPDATE-BEST: NO DATA gen=%i num_gen=%i\n",gen,_UO.num_gen);
+fprintf(stdout,"USPEX-UPDATE-BEST: NO DATA gen=%i num_gen=%i ",gen,_UO.num_gen);
 #endif
 			py->y_size=0;
 			py->type=GRAPH_IX_TYPE;/*change of type*/
@@ -3263,6 +3282,9 @@ fprintf(stdout,"e[%i]=%lf ",ix,py->y[ix]);
 				ix++;
 			}
 		}
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"-MOD\n");
+#endif
 		py->color=GRAPH_COLOR_DEFAULT;
 		py->line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 /*ne need to re-register py*/
@@ -3276,6 +3298,9 @@ fprintf(stdout,"e[%i]=%lf ",ix,py->y[ix]);
 		}
 		if(num==0) {
 			/*this can be normal in META/MINHOP calculation*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"USPEX-UPDATE-BEST: NO DATA gen=%i num_gen=%i ",gen,_UO.num_gen);
+#endif
 			gy.y_size=0;
 			gy.y=g_malloc(1*sizeof(gdouble));
 			gy.y[0]=NAN;
@@ -3288,6 +3313,9 @@ fprintf(stdout,"e[%i]=%lf ",ix,py->y[ix]);
 			dat_graph_add_y(gy,_UO.graph_best);
 			g_free(gy.y);
 			gen++;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"-SENT\n");
+#endif
 			continue;
 		}
 		gy.y_size=num;
@@ -3349,6 +3377,9 @@ fprintf(stdout,"-SENT\n");
 	gy.color=GRAPH_COLOR_DEFAULT;
 	gy.mixed_symbol=FALSE;
 	gen=0;
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"#DBG update_graph_best: lowest num_gen=%i ",_UO.num_gen);
+#endif
 	if(!((_UO.calc->calculationMethod==US_CM_META)||(_UO.calc->calculationMethod==US_CM_MINHOP))) {
 		/*fake first point*/
 		gy.y[0]=NAN;/*not a value*/
@@ -3369,17 +3400,174 @@ fprintf(stdout,"-SENT\n");
 		gy.symbol[gen]=GRAPH_SYMB_NONE;
 		gen++;
 	}
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"-ADD\n");
+#endif
 	dat_graph_add_y(gy,_UO.graph_best);
 	g_free(gy.y);
 	g_free(gy.symbol);
 /* +++ ticks */
 	if(_UO.num_gen>15) ix=5;
 	else ix=_UO.num_gen+1;
+if(ix<2) ix=2;
 	graph_set_xticks(TRUE,ix,graph);
 	graph_set_yticks(TRUE,5,graph);
 }
-
-
+/*******************/
+/* redo BEST graph */
+/*******************/
+void uspex_graph_best_redo(uspex_output_struct *uspex_output){
+/*in META/MINHOP calculation it is almost impossible to update BEST graph*/
+	gint ix;
+	gint idx,jdx;
+	gint gen,num;
+	GSList *list;
+	g_data_x  gx;
+	g_data_y  gy;
+	gdouble min_E,max_E,d;
+	struct graph_pak *graph;
+	uspex_calc_struct *uspex_calc;
+/**/
+	if(uspex_output==NULL) return;
+	if(_UO.graph_best==NULL) return;/*TODO: prepare a new graph*/
+	graph=(struct graph_pak *)_UO.graph_best;
+	if((_UO.best_ind==NULL)||(_UO.num_best==0)) return;
+	list=graph->set_list;
+	if(list==NULL) return;/*malformed graph <- should we fix it here?*/
+	if(_UO.calc==NULL) return;/*not properly loaded model*/
+	uspex_calc=_UO.calc;
+/*WIPE graph data*/
+	graph_reset_data(graph);
+	/*determine limits*/
+	min_E=1.0/0.0;/*+inf*/
+	max_E=-1.0/0.0;/*-inf*/
+	for(idx=0;idx<_UO.num_best;idx++){
+		if(_UO.ind[_UO.best_ind[2*idx+1]].energy<10000.000){
+			if(_UO.ind[_UO.best_ind[2*idx+1]].E < min_E) min_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
+			if(_UO.ind[_UO.best_ind[2*idx+1]].E > max_E) max_E=_UO.ind[_UO.best_ind[2*idx+1]].E;
+		}
+	}
+	/*FIX a _BUG_ in EX13 (all energy are 100000.000)*/
+	if((min_E>10000.000)&&(max_E<-10000.000)) {
+		min_E=_UO.ind[1].E-_UO.ind[1].E*0.5;
+		max_E=_UO.ind[1].E+_UO.ind[1].E*0.5;
+	}
+	/*process BEST graph*/
+	if(max_E==min_E) {
+		min_E-=1.0;
+		max_E+=1.0;
+	}
+	d=(max_E-min_E)*0.05;
+	min_E-=d;
+	max_E+=d;
+	gx.x_size=_UO.num_gen+1;
+	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+	dat_graph_set_x(gx,_UO.graph_best);
+	if(_UO.num_gen<1) dat_graph_set_limits(0,1,min_E,max_E,_UO.graph_best);
+	else dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
+	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph_best);
+	g_free(gx.x);
+	gen=0;
+	idx=0;
+	while(gen<=_UO.num_gen){
+		num=0;gy.mixed_symbol=FALSE;
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
+			if(_UO.best_ind[jdx]==gen) num++;
+		}
+		if(num==0) {
+			/*this can be normal in case of META/MINHOP*/
+			gy.y_size=0;
+			gy.y=g_malloc(1*sizeof(gdouble));
+			gy.y[0]=NAN;
+			gy.type=GRAPH_IX_TYPE;
+			gy.idx=NULL;
+			gy.symbol=NULL;
+			gy.sym_color=NULL;
+			gy.color=GRAPH_COLOR_DEFAULT;
+			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+			dat_graph_add_y(gy,_UO.graph_best);
+			g_free(gy.y);
+			gen++;
+			continue;
+		}
+		gy.y_size=num;
+		gy.y=g_malloc(num*sizeof(gdouble));
+		gy.type=GRAPH_IX_TYPE;
+		gy.idx=g_malloc(num*sizeof(gint32));
+		gy.symbol=g_malloc(num*sizeof(graph_symbol));
+		gy.sym_color=NULL;
+#if DEBUG_USPEX_READ
+fprintf(stdout,"#DBG graph_best: num=%i ",num);
+#endif
+		ix=0;
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
+			if(_UO.best_ind[jdx]==gen){
+				idx=jdx;
+				gy.y[ix]=_UO.ind[_UO.best_ind[jdx+1]].E;
+				if(_UO.ind[_UO.best_ind[jdx+1]].struct_number>0) {
+				gy.idx[ix]=_UO.ind[_UO.best_ind[jdx+1]].struct_number;
+				gy.symbol[ix]=GRAPH_SYMB_SQUARE;
+				}else{
+				gy.idx[ix]=-1*_UO.best_ind[jdx+1];
+				gy.symbol[ix]=GRAPH_SYMB_CROSS;
+				gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
+				}
+#if DEBUG_USPEX_READ
+fprintf(stdout,"gen=%i e[%i]=%lf ",gen,ix,gy.y[ix]);
+#endif
+			ix++;
+			}
+		}
+#if DEBUG_USPEX_READ
+fprintf(stdout,"-SENT\n");
+#endif
+		gy.color=GRAPH_COLOR_DEFAULT;
+		gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
+		dat_graph_add_y(gy,_UO.graph_best);
+		g_free(gy.y);
+		g_free(gy.idx);
+		g_free(gy.symbol);
+		/*to next gen*/
+		gen++;
+	}
+/* +++ add a set for lowest energy values*/
+	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.15;
+	gy.y_size=_UO.num_gen+1;
+	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+	gy.idx=NULL;
+	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.sym_color=NULL;
+	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
+	gy.line=GRAPH_LINE_DOT;
+	gy.color=GRAPH_COLOR_DEFAULT;
+	gen=0;
+	idx=0;
+	while(gen<=_UO.num_gen){
+		min_E=max_E;
+		for(jdx=idx;jdx<(2*_UO.num_best);jdx+=2){
+			/*get the minimum value of this gen*/
+			if(_UO.best_ind[jdx]==gen){
+				if(_UO.ind[_UO.best_ind[jdx+1]].E-min_E<0.) min_E=_UO.ind[_UO.best_ind[jdx+1]].E;
+				idx=jdx;
+			}
+		}
+		gy.y[gen]=min_E;
+		gy.symbol[gen]=GRAPH_SYMB_NONE;
+		gen++;
+	}
+	dat_graph_add_y(gy,_UO.graph_best);
+	g_free(gy.y);
+	g_free(gy.symbol);
+/* +++ ticks */
+	if(_UO.num_gen>15) ix=5;
+	else ix=_UO.num_gen+1;
+	if(ix<2) ix=2;/*FIX a _BUG_ with META calculation*/
+	graph_set_xticks(TRUE,ix,_UO.graph);
+	graph_set_yticks(TRUE,5,_UO.graph);
+	graph_set_xticks(TRUE,ix,_UO.graph_best);
+	graph_set_yticks(TRUE,5,_UO.graph_best);
+}
 /**********************************************************************************/
 /* Read uspex output                                                              */
 /* Require several files: OUTPUT.txt, Parameters.txt + calculation specific files.*/
@@ -3614,12 +3802,6 @@ if(!model->silent){
 	/*seems good so far*/
 	if(model->basename==NULL) model->basename=g_strdup_printf("uspex");
 	uspex_output->name=g_strdup(model->basename);
-/*
-if(!model->silent){
-	g_free(model->basename);
-	model->basename=g_strdup_printf("uspex");
-}
-*/
 	model->num_frames=0;
 /* +++ register frames, calculate max_struct (according to gatherPOSCARS - it can change)*/
 	max_num_p=0;/*FIX: f70d36*/
@@ -3652,7 +3834,6 @@ if(find_in_string("Direct",line) != NULL) {
 	natoms=0;
 	jdx=0;
 	while((*ptr!='\0')&&(*ptr!='\n')){
-//		__SKIP_BLANK(ptr);
 		while(!g_ascii_isdigit(*ptr)&&(*(ptr)!='\0')) ptr++;
 		/*we also need a ratio for supercell calculations*/
 		atom_n[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);/*valgrind _BUG_ */
@@ -3699,7 +3880,7 @@ if(!model->silent){
 	__SKIP_BLANK(ptr);
 	__SKIP_NUM(ptr);
 	__SKIP_BLANK(ptr);
-	max_num_i=(gint)g_ascii_strtoull(ptr,NULL,10);
+	max_num_i=(gint)g_ascii_strtoull(ptr,NULL,10);/*_BUG_*/
 	if(max_num_p<max_num_i) _UO.num_struct=max_num_i;
 	else _UO.num_struct=max_num_p;
 	_UO.num_struct+=1;/*so that idx structure <-> idx ind*/
@@ -3719,7 +3900,7 @@ if(!model->silent){
 		_UO.ind[idx].density=0.;
 		_UO.ind[idx].symmetry=0;
 	}
-	/*exept for META, _UO.ind[0] will contain no data!*/
+	/*_UO.ind[0] will always contain no data!*/
 /* +++ load Individuals*/
 /* ^^^ NEW: everyone reads Individuals first, then Individuals_relaxed (if exists)*/
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Individuals");
@@ -3733,6 +3914,7 @@ if(!model->silent){
 		goto uspex_fail;
 	}
 	g_free(aux_file);
+	n_data=0;for(idx=0;idx<_UO.num_struct;idx++) if(_UO.ind[idx].have_data) n_data++;
 	if(_UO.have_supercell){
 		/*rescale atoms,natoms in case of a supercell calculation NOTE: first supercell has to be [1,1,1]*/
 		for(idx=0;idx<_UO.num_struct;idx++) {
@@ -3742,6 +3924,10 @@ if(!model->silent){
 	}
 	g_free(atom_n);
 	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Individuals_relaxed");
+/*fix _BUG_ we need to backup some data for Individuals_relaxed*/
+num=_UO.num_gen;/*PUSH*/
+min_E=_UO.min_E;/*PUSH*/
+max_E=_UO.max_E;/*PUSH*/
 	if(read_individuals_uspex(aux_file,model)!=0) {
 		/*failure to load Individuals_relaxed is not an error, thus not fatal*/
 		if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP)){
@@ -3752,9 +3938,11 @@ if(!model->silent){
 }
 		}
 	}
+_UO.num_gen=num;/*PULL*/
+_UO.min_E=min_E;/*PULL*/
+_UO.max_E=max_E;/*PULL*/
 	g_free(aux_file);
-	n_data=0;for(idx=0;idx<_UO.num_struct;idx++) if(_UO.ind[idx].have_data) n_data++;
-/* +++ get gatherPOSCARS information for have_data=FALSE (is any)*/
+/* +++ get gatherPOSCARS information for have_data=FALSE (if any)*/
 	if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP))
 		aux_file = g_strdup_printf("%s%s",_UO.res_folder,"gatheredPOSCARS_relaxed");
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"gatheredPOSCARS");
@@ -3774,6 +3962,7 @@ if(!model->silent){
 	idx=0;
 /* +++ get atomTypes if missing from Paramters.txt <- and this is bad*/
 if(_UC.atomType==NULL){
+	/*gatheredPOSCARS_relaxed is always VASP5 format?*/
 	line = file_read_line(vf);
 	while((idx<5)&&(!feof(vf))){
 		idx++;
@@ -3842,7 +4031,7 @@ if(!model->silent){
 		aux_file = g_strdup_printf("%s%s",_UO.res_folder,"BESTIndividuals_relaxed");
 	else aux_file = g_strdup_printf("%s%s",_UO.res_folder,"BESTIndividuals");
 	vf = fopen(aux_file, "rt");
-/* NEW: No BESTIndividuals file is no fatal, to cope with tracking*/
+/* NEW: No BESTIndividuals file is not fatal, to cope with tracking*/
 if(!vf){
 	_UO.best_ind=NULL;/*make _sure_ array is null*/
 if(!model->silent){
@@ -3951,7 +4140,10 @@ fprintf(stdout,"\n");
 		g_free(gy.symbol);
 		/*END - NEW*/
 		gen=1;
-	} else _UO.ind[1].struct_number=0;
+	} else {
+		_UO.ind[1].struct_number=0;
+		_UO.ind[1].gen=0;
+	}
 	/*in both META and non-META case, frame_0 does not exists _BUT_ META have data for it*/
 	idx=0;
 	while(gen<=_UO.num_gen){
@@ -4057,7 +4249,8 @@ if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 	gx.x=g_malloc(gx.x_size*sizeof(gdouble));
 	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
 	dat_graph_set_x(gx,_UO.graph_best);
-	dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
+if(_UO.num_gen<1) dat_graph_set_limits(0,1,min_E,max_E,_UO.graph_best);
+else dat_graph_set_limits(0,_UO.num_gen,min_E,max_E,_UO.graph_best);
 	dat_graph_set_type(GRAPH_IX_TYPE,_UO.graph_best);
 	g_free(gx.x);
 	dat_graph_set_title("<big>Best structures per generation</big>",_UO.graph_best);
@@ -4626,6 +4819,7 @@ gint read_frame_uspex(FILE *vf, struct model_pak *model){
 	long int vfpos;/*to counter _BUG_ where loading a raw frame does not update model->cur_frame*/
 	gchar *ptr;
 	gint idx=0;
+	gint i=0;
 	/*read frame*/
         g_assert(vf != NULL);
 
@@ -4638,18 +4832,19 @@ while(g_ascii_isalpha(*ptr)) ptr++;
 sscanf(ptr,"%i%*s",&idx);
 g_free(line);/*FIX: _VALGRIND_BUG_*/
 fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-
 	if(_UO.have_vasp4) {
 		/*we need to create the atoms label*/
 		line=g_strdup(" ");
-		for(idx=0;idx<_UO.calc->_nspecies;idx++){
-			ptr=g_strdup_printf("%s %s",line,elements[_UO.calc->atomType[idx]].symbol);
+		for(i=0;i<_UO.calc->_nspecies;i++){
+			ptr=g_strdup_printf("%s %s",line,elements[_UO.calc->atomType[i]].symbol);
 			g_free(line);
 			line=ptr;
 		}
-		idx=vasp_load_poscar4(vf,model,line);
-	}else idx=vasp_load_poscar5(vf,model);
-	if(idx<0) return 3;
+		i=vasp_load_poscar4(vf,model,line);
+	} else {
+		i=vasp_load_poscar5(vf,model);
+	}
+	if(i<0) return 3;
 if(_UO.ind[idx].have_data){/*_BUG_ out of index*/
 	line=g_strdup_printf("%lf eV",_UO.ind[idx].energy);
 	property_add_ranked(3, "Energy", line, model);
@@ -4720,7 +4915,7 @@ gboolean track_uspex(void *data){
 	gchar *line;
 	gchar *aux_file;
 	gint check;
-	
+	gdouble min_E,max_E;
 	gint idx,jdx;
 	gint old_gen,new_gen;/*previous number of generation*/
 	gint old_ind,new_ind;/*previous number of individuals*/
@@ -4865,6 +5060,22 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 	if(new_gen>old_gen) update_individuals_uspex(aux_file,0L,model);
 	else update_individuals_uspex(aux_file,_UO.last_ind_pos,model);
 	g_free(aux_file);
+if((_UC.calculationMethod==US_CM_META)||(_UC.calculationMethod==US_CM_MINHOP)){
+	/*read Individuals_relaxed*/
+#if DEBUG_TRACK_USPEX
+fprintf(stdout,"TRACK: READ Individuals_relaxed\n");
+#endif
+/*fix _BUG_ because Individuals_relaxed have ONLY relaxed individuals*/
+check=_UO.num_gen;/*PUSH*/
+min_E=_UO.min_E;/*PUSH*/
+max_E=_UO.max_E;/*PUSH*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"Individuals_relaxed");
+	update_individuals_uspex(aux_file,0L,model);/*start over all relaxed structures*/
+	g_free(aux_file);
+_UO.num_gen=check;/*PULL*/
+_UO.min_E=min_E;/*PUSH*/
+_UO.max_E=max_E;/*PUSH*/
+}
 	/*4b- update model with new structure */
 	if(_UC.atomType==NULL){
 		line = g_strdup_printf("USPEX TRACKING: USPEX is missing atom type information!\n");
@@ -4920,7 +5131,8 @@ if(offset){
 				model->num_frames++;
 				ptr=ptr+2;
 				jdx=(gint)g_ascii_strtoull(ptr,NULL,10);
-				_UO.ind[idx].struct_number=jdx;/*<- important; also _BUG_*/
+//				_UO.ind[idx].struct_number=jdx;/*<- important; also _BUG_*/
+				_UO.ind[jdx].struct_number=model->num_frames-1;/*because not all ind have a frame!*/
 #if DEBUG_TRACK_USPEX
 new_frm++;
 fprintf(stdout,"TRACK: ADD-STRUCTURE-%i for ind=%i\n",jdx,idx);
@@ -5018,9 +5230,11 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 		}
 		fclose(vf);
 		/*6- update BEST graph*/
-		uspex_graph_best_update(uspex_output);
+		uspex_graph_best_redo(uspex_output);
+//		uspex_graph_best_update(uspex_output); FIXME
 		if(_UO.num_gen>15) idx=5;
 		else idx=_UO.num_gen+1;
+if(idx<2) idx=2;/*fix _BUG_ with META*/
 		graph_set_xticks(TRUE,idx,_UO.graph_best);
 		graph_set_yticks(TRUE,5,_UO.graph_best);
 
@@ -5032,6 +5246,7 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 	uspex_graph_all_update(new_gen-old_gen,new_ind-old_ind,uspex_output);
 	if(_UO.num_gen>15) idx=5;
 	else idx=_UO.num_gen+1;
+if(idx<2) idx=2;/*fix _BUG_ with META*/
 	graph_set_xticks(TRUE,idx,_UO.graph);
 	graph_set_yticks(TRUE,5,_UO.graph);
 

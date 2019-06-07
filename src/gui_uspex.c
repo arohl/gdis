@@ -4080,6 +4080,7 @@ void uspex_gui_refresh(){
 			GUI_LOCK(uspex_gui.numSpecies);
 		}
 	}
+set_numSpecies();/*fix _BUG_*/
 	USPEX_SET_VAL(fitLimit,"%lf");
 	if(uspex_gui.calc.ldaU!=NULL){
 		line=g_strdup("");
