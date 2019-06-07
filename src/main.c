@@ -387,9 +387,7 @@ struct light_pak *light;
 FILE *fp;
 
 /* top level structure initialization */
-sysenv.vasp_calc_list = NULL;/*to be removed soon*/
-sysenv.uspex_calc_list = NULL;
-sysenv.max_threads = 1;
+sysenv.max_threads = -1;
 sysenv.task_list = NULL;
 sysenv.host_list = NULL;
 sysenv.dialog_list = NULL;
@@ -613,7 +611,7 @@ sysenv.viewer_exe = g_strdup("display");
 sysenv.gulp_exe = g_strdup("gulp");
 sysenv.gamess_exe = g_strdup("run_gms_for_gdis");
 sysenv.vasp_exe = g_strdup("vasp");
-sysenv.uspex_exe = g_strdup("run_uspex");
+sysenv.uspex_exe = g_strdup("USPEX");
 sysenv.mpirun_exe = g_strdup("mpirun");
 #endif
 

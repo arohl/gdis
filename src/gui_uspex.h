@@ -21,7 +21,7 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* simple USPEX calcul interface */
-/* DEFINES: sync uspex_gui and uspex_gui.calc */
+/* sync uspex_gui to uspex_gui.calc */
 #define USPEX_REG_VAL(value,format) do{\
 	GUI_REG_VAL(uspex_gui.value,uspex_gui.calc.value,format);\
 }while(0)
@@ -30,6 +30,18 @@ The GNU GPL can also be found at http://www.gnu.org
 	if(GUI_ENTRY_LENGTH(uspex_gui.value)>0) GUI_ENTRY_GET_TEXT(uspex_gui.value,uspex_gui.calc.value);\
 	else uspex_gui.calc.value=NULL;\
 }while(0)
+/* sync uspex_gui.calc to uspex_gui */
+#define USPEX_SET_TEXT(key) do{\
+	GUI_ENTRY_TEXT(uspex_gui.key,uspex_gui.calc.key);\
+}while(0)
+#define USPEX_SET_VAL(key,format) do{\
+	GUI_ENTRY_SET(uspex_gui.key,uspex_gui.calc.key,format);\
+}while(0)
+#define USPEX_SET_CHECK(key) do{\
+	if(uspex_gui.calc.key) GUI_TOGGLE_ON(uspex_gui.key);\
+	else GUI_TOGGLE_OFF(uspex_gui.key);\
+}while(0)
+
 /*page numbers*/
 #define USPEX_PAGE_SYSTEM 0
 #define USPEX_PAGE_STRUCTURES 1
@@ -65,6 +77,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *new_optType;			/*VER 10.1*/
 	gchar *_tmp_new_optType;		/*VER 10.1*/
 	/*atoms definition: apply/remove*/
+	gint _tmp_nspecies;/*for BACKUP*/
 	GUI_OBJ *atomType;
 	GUI_OBJ *_atom_sym;
 	GUI_OBJ *_atom_typ;
@@ -174,7 +187,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *commandExecutable;
 	GUI_OBJ *whichCluster;
 	GUI_OBJ *remoteFolder;
-	//PhaseDiagram is auto-sync
+	GUI_OBJ *PhaseDiagram;
 /*4.9 fingerprint*/
 	GUI_OBJ *RmaxFing;
 	GUI_OBJ *deltaFing;
@@ -190,10 +203,10 @@ struct uspex_calc_gui{
 	GUI_OBJ *repeatForStatistics;
 	GUI_OBJ *stopFitness;
 	GUI_OBJ *fixRndSeed;
-	//collectForces is auto-sync
+	GUI_OBJ *collectForces;
 /*4.13 seldom used*/
-	//ordering_active is auto-sync
-	//symmetrize is auto-sync
+	GUI_OBJ *ordering_active;
+	GUI_OBJ *symmetrize;
 	GUI_OBJ *valenceElectr;
 	GUI_OBJ *percSliceShift;
 	GUI_OBJ *dynamicalBestHM;
@@ -317,3 +330,6 @@ struct uspex_calc_gui{
 /*methods of interest*/
 
 void uspex_gui_refresh();
+
+
+

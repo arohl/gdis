@@ -24,13 +24,10 @@ The GNU GPL can also be found at http://www.gnu.org
 
 typedef enum {
         GRAPH_REGULAR=0,	/*previous plain graph*/
-        GRAPH_FREQUENCY,	/*impulse graph for frequency*/
-        GRAPH_BAND,		/*kpoints/state energy graph */
-	GRAPH_DOS,		/*interleave e,dos plot*/
-        GRAPH_BANDOS,		/*dual BAND & DOS graph*/
 	/*  NEW - graph: generic data types*/
 	GRAPH_IY_TYPE,		/*nx integer {x} + ny sets of {nx real y for all x}*/
 	GRAPH_XY_TYPE,		/*nx real    {x} + ny sets of {nx real y for all x}*/
+	GRAPH_YX_TYPE,		/*interleave {y,x} set (for BANDOS)*/
 	GRAPH_IX_TYPE,		/*nx integer {x} + nx sets of {ny real y for one x}*/
 	GRAPH_XX_TYPE,		/*nx real    {x} + nx sets of {ny real y for one x}*/
 } graph_type;
@@ -81,7 +78,8 @@ typedef struct {
 	gint32 *idx;            /*index up to 2,147,483,647 (<0 = missing structure)*/
 	graph_type type;	/* NEW - type can change for each set! */
 	graph_symbol *symbol;	/*symbol for each data*/
-	gboolean mixed_symbol;
+	graph_color *sym_color; /*a color for each symbol*/
+	gboolean mixed_symbol;  /*preserve symbols from being changed all at once*/
 	graph_line line;	/*one line type per set*/
 	graph_color color;	/*TODO graph set color*/
 } g_data_y;
@@ -134,6 +132,8 @@ struct graph_pak
 	gint xlabel;
 	gint ylabel;
 	graph_type type;	/*TODO eliminate this*/
+	gboolean require_xaxis;
+	gboolean require_yaxis;
 	/* graph layout */
 	gint xticks;
 	gint yticks;
@@ -155,6 +155,8 @@ struct graph_pak
 	gchar *y_title;
 };
 gpointer graph_new(const gchar *, struct model_pak *);
+void graph_reset_data(struct graph_pak *graph);
+void graph_reset(struct graph_pak *graph);
 void graph_free_list(struct model_pak *);
 void graph_free(gpointer, struct model_pak *);
 void graph_set_color(gint size,gchar *color,gpointer data);
@@ -181,6 +183,8 @@ gdouble graph_ymin(gpointer);
 gdouble graph_ymax(gpointer);
 gdouble graph_wavelength(gpointer);
 /* dat_graph interface */
+void dat_graph_toggle_xaxis(gpointer pgraph);
+void dat_graph_toggle_yaxis(gpointer pgraph);
 void dat_graph_set_title(const gchar *title,gpointer pgraph);
 void dat_graph_set_sub_title(const gchar *title,gpointer pgraph);
 void dat_graph_set_x_title(const gchar *x_title,gpointer pgraph);

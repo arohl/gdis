@@ -200,4 +200,4 @@ void camera_rotate_animate(gint, gdouble *, gint, struct model_pak *);
 gdouble *camera_q(gpointer);
 void camera_rescale(gdouble, gpointer);
 
-
+void gui_track_output(void);

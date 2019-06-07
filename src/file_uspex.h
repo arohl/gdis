@@ -303,12 +303,14 @@ typedef struct {
 typedef struct {
 /*name*/
         gchar *name;
+	gchar *res_folder;			/*current result folder*/
         gint version;
 	gint index;				/*index is the # of result folder*/
 	uspex_calc_struct *calc;
         /* optimization */
 	gboolean have_supercell;		/*NEW: deal with supecell automagic*/
         gboolean have_fitness;
+	gboolean have_vasp4;			/*FIX many bugs due to VASP4 format*/
 /*structures*/
         gint num_gen;
         gint num_struct;
@@ -317,8 +319,14 @@ typedef struct {
 	gdouble min_F;				/*NEW: fitness data*/
 	gdouble max_F;				/*NEW: fitness data*/
         uspex_individual *ind;
+	long int last_ind_pos;			/*NEW: last position in the Individuals file*/
         gint num_best;
         gint *best_ind;				/*NEW: {ID - GEN} there can be several best in a generation*/
+/*references*/
+	gboolean have_ref;			/*NEW: have formation energy references*/
+	gint *natom_refs;			/*NEW: number of atoms in each reference*/
+	gdouble *ef_refs;			/*NEW: energy of reference*/
+	gboolean pictave;			/*NEW: if true, last species is a fake atom*/
 /*interpretation*/
         gpointer graph;
         gpointer graph_best;
@@ -326,14 +334,11 @@ typedef struct {
 } uspex_output_struct;
 /* execution structure */
 typedef struct {
-	int job_id;
 	gint index;				/*index is the result# folder*/
-	gboolean have_result;
 	/*job related*/
 	gchar *job_uspex_exe;
 	gchar *job_path;
 } uspex_exec_struct;
-
 /*methods of interest*/
 void init_uspex_parameters(uspex_calc_struct *uspex_calc);
 void free_uspex_parameters(uspex_calc_struct *uspex_calc);

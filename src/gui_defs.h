@@ -386,6 +386,13 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 }while(0)
 /*set the entry (entry) text ("text")*/
 #define GUI_ENTRY_TEXT(entry,text) gtk_entry_set_text(GTK_ENTRY(entry),text);
+/*set the entry (entry) with a value (value) of format (format).*/
+#define GUI_ENTRY_SET(entry,value,format) do{\
+	gchar *_text;\
+	_text=g_strdup_printf(format,value);\
+	gtk_entry_set_text(GTK_ENTRY(entry),_text);\
+	g_free(_text);\
+}while(0)
 /*connect entry (entry) on change with the function (function) passing data (data).*/
 #define GUI_ENTRY_CHANGE(entry,function,data) g_signal_connect(GTK_OBJECT(GTK_ENTRY(entry)),"changed",GTK_SIGNAL_FUNC(function),data)
 /*connect entry (entry) on activation (enter key) with the function (function) passing data (data).*/

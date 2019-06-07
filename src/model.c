@@ -96,6 +96,10 @@ data->redraw_cumulative = 0;
 data->redraw_time = 0;
 data->colour_scheme = ELEM;
 data->rmax = RMAX_FUDGE;
+data->silent=FALSE;
+data->track_me=FALSE;
+data->t_next=NULL;
+data->track_nb=0;
 data->snapshot_eps=FALSE;
 data->eps_file=NULL;
 
@@ -526,7 +530,8 @@ matrix_identity(data->ilatmat);
 matrix_identity(data->rlatmat);
 
 /* plots */
-data->plots = FALSE;
+data->plots=FALSE;
+data->plot=NULL;
 
 /* density of states (DOS) */
 data->spin_polarized=FALSE;
@@ -551,6 +556,8 @@ data->freq_intens=NULL;
 
 /* uspex */
 data->uspex=NULL;
+/* vasp */
+data->vasp=NULL;
 
 /* no non-default element data for the model (yet) */
 data->elements = NULL;
@@ -927,6 +934,19 @@ g_free(data->symmetry.pg_name);
 g_free(data->title);
 
 space_free(&data->sginfo);
+
+/*free vasp pointer*/
+if(data->vasp!=NULL){
+	free_vasp_out(data->vasp);
+	g_free(data->vasp);
+	data->vasp=NULL;
+}
+/*free uspex pointer*/
+if(data->uspex!=NULL){
+	free_uspex_out(data->uspex);
+	g_free(data->uspex);
+	data->uspex=NULL;
+}
 
 #if DEBUG_FREE_MODEL
 printf("freeing zone data...\n");

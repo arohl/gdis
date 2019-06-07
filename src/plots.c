@@ -21,7 +21,7 @@ The GNU GPL can also be found at http://www.gnu.org
 */
 
 /* plot simple data (energy, force, pressure, volume) */
-/* TODO plot complex data: (bands, dos, bandos, frequency, ...) */
+/* and complex data (bands, dos, bandos, frequency) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +48,6 @@ void plot_prepare_data(struct plot_pak *plot){
 	g_assert(plot->model != NULL);
 	model=plot->model;
 /* task cleanup set plots that does not depend on frames */
-	/* TODO: DOS/BAND */
 /* add BAND data */
 	if(plot->plot_mask&PLOT_BAND){
 	/*we have an array of [kpts_d,band_up,band_down] which size is [nkpoints*nbands]*/
@@ -315,291 +314,565 @@ if(plot->data_changed==FALSE) return;/*we do not need to reload data*/
 /* energy plot */
 /***************/
 void draw_plot_energy(struct model_pak *model,struct plot_pak *plot){
-        /*draw energy for each ionic step iterations*/
-	gdouble xmin,xmax;
-	gdouble ymin,ymax;
-	/* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{  
-                xmin=plot->energy.xmin;
-                xmax=plot->energy.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{  
-                ymin=plot->energy.ymin;
-                ymax=plot->energy.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("ENERGY",model);
-        graph_add_borned_data(plot->energy.size,plot->energy.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
-        /* set tics */
-        /* due to assert xtics and ytics needs to be set > 1 even if they are unused */
-	/* see FIXME in gl_graph.c */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx;
+gdouble d;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->energy.size<1) return;
+/*always auto*/
+xmin=plot->energy.xmin;
+xmax=plot->energy.xmax;
+ymin=plot->energy.ymin;
+ymax=plot->energy.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+d=ymax-ymin;
+ymin=ymin-d*0.05;
+ymax=ymax+d*0.05;
+plot->graph=graph_new("ENERGY", model);
+dat_graph_set_title("<big>Energy <i>vs.</i> Ionic step</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Ionic steps",plot->graph);
+dat_graph_set_y_title("Energy (eV)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_IY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=plot->energy.size+1;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=plot->energy.size+1;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+gy.y[0]=NAN;/*not a value*/
+for(idx=1;idx<gy.y_size;idx++){
+	gy.y[idx]=plot->energy.data[idx-1];
+	gy.idx[idx]=idx;
+	gy.symbol[idx]=GRAPH_SYMB_DIAM;
+}
+gy.type=GRAPH_IY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /**************/
 /* force plot */
 /**************/
 void draw_plot_force(struct model_pak *model,struct plot_pak *plot){
-        /*draw force for each ionic step iterations*/
-	gdouble xmin,xmax;
-	gdouble ymin,ymax;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-		xmin=plot->xmin;
-		xmax=plot->xmax;
-        }else{
-		xmin=plot->force.xmin;
-		xmax=plot->force.xmax;
-	}
-	if(plot->auto_y==FALSE){
-		ymin=plot->ymin;
-		ymax=plot->ymax;
-	}else{
-		ymin=plot->force.ymin;
-		ymax=plot->force.ymax;
-	}
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("FORCE",model);
-        graph_add_borned_data(plot->force.size,plot->force.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx;
+gdouble d;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->force.size<1) return;
+/*always auto*/
+xmin=plot->force.xmin;
+xmax=plot->force.xmax;
+ymin=plot->force.ymin;
+ymax=plot->force.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+d=ymax-ymin;
+ymin=ymin-d*0.05;
+ymax=ymax+d*0.05;
+plot->graph=graph_new("FORCE", model);
+dat_graph_set_title("<big>Force <i>vs.</i> Ionic step</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Ionic steps",plot->graph);
+dat_graph_set_y_title("Force (eV/Ang)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_IY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=plot->force.size+1;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=plot->force.size+1;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+gy.y[0]=NAN;/*not a value*/
+for(idx=1;idx<gy.y_size;idx++){
+        gy.y[idx]=plot->force.data[idx-1];
+        gy.idx[idx]=idx;
+        gy.symbol[idx]=GRAPH_SYMB_DIAM;
+}
+gy.type=GRAPH_IY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /***************/
 /* plot volume */
 /***************/
 void draw_plot_volume(struct model_pak *model,struct plot_pak *plot){
-        /*draw volume for each ionic step iterations*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{  
-                xmin=plot->volume.xmin;
-                xmax=plot->volume.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{  
-                ymin=plot->volume.ymin;
-                ymax=plot->volume.ymax;
-        }
-	if(ymin==ymax) {
-		ymin=ymin-1.0;
-		ymax=ymax+1.0;
-	}
-        plot->graph=graph_new("VOLUME",model);
-        graph_add_borned_data(plot->volume.size,plot->volume.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx;
+gdouble d;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->volume.size<1) return;
+/*always auto*/
+xmin=plot->volume.xmin;
+xmax=plot->volume.xmax;
+ymin=plot->volume.ymin;
+ymax=plot->volume.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+d=ymax-ymin;
+ymin=ymin-d*0.05;
+ymax=ymax+d*0.05;
+plot->graph=graph_new("VOLUME", model);
+dat_graph_set_title("<big>Volume <i>vs.</i> Ionic step</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Ionic steps",plot->graph);
+dat_graph_set_y_title("Volume (Ang<sup>3</sup>)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_IY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=plot->volume.size+1;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=plot->volume.size+1;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+gy.y[0]=NAN;/*not a value*/
+for(idx=1;idx<gy.y_size;idx++){
+        gy.y[idx]=plot->volume.data[idx-1];
+        gy.idx[idx]=idx;
+        gy.symbol[idx]=GRAPH_SYMB_DIAM;
+}
+gy.type=GRAPH_IY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /*****************/
 /* plot pressure */
 /*****************/
 void draw_plot_pressure(struct model_pak *model,struct plot_pak *plot){
-        /*draw volume for each ionic step iterations*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{
-                xmin=plot->pressure.xmin;
-                xmax=plot->pressure.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{
-                ymin=plot->pressure.ymin;
-                ymax=plot->pressure.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("PRESSURE",model);
-        graph_add_borned_data(plot->pressure.size,plot->pressure.data,xmin,xmax,ymin,ymax,GRAPH_REGULAR,plot->graph);
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx;
+gdouble d;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(plot->pressure.size<1) return;
+/*always auto*/
+xmin=plot->pressure.xmin;
+xmax=plot->pressure.xmax;
+ymin=plot->pressure.ymin;
+ymax=plot->pressure.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+d=ymax-ymin;
+ymin=ymin-d*0.05;
+ymax=ymax+d*0.05;
+plot->graph=graph_new("PRESSURE", model);
+dat_graph_set_title("<big>Pressure <i>vs.</i> Ionic step</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Ionic steps",plot->graph);
+dat_graph_set_y_title("Pressure (kB)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_IY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=plot->pressure.size+1;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=plot->pressure.size+1;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+gy.y[0]=NAN;/*not a value*/
+for(idx=1;idx<gy.y_size;idx++){
+        gy.y[idx]=plot->pressure.data[idx-1];
+        gy.idx[idx]=idx;
+        gy.symbol[idx]=GRAPH_SYMB_DIAM;
+}
+gy.type=GRAPH_IY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /************/
 /* plot DOS */
 /************/
 void draw_plot_dos(struct model_pak *model,struct plot_pak *plot){
-        /*draw density of state (dos)*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{
-                xmin=plot->dos.xmin;
-                xmax=plot->dos.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{
-                ymin=plot->dos.ymin;
-                ymax=plot->dos.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("DOS",model);
-        graph_add_borned_data(plot->dos.size,plot->dos.data,xmin,xmax,ymin,ymax,GRAPH_DOS,plot->graph);
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->ndos<1) return;
+/*always auto*/
+xmin=plot->dos.xmin;
+xmax=plot->dos.xmax;
+ymin=plot->dos.ymin;
+ymax=plot->dos.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to ymax limit for "readability"*/
+ymax=ymax+(ymax-ymin)*0.05;
+plot->graph=graph_new("DOS", model);
+dat_graph_toggle_yaxis(plot->graph);
+dat_graph_set_title("<big>Density of states</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Energy (eV)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_y_title("Density (state/eV)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_XY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=model->ndos;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=plot->dos.data[idx*2];
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=model->ndos;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will NOT set any structure*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+for(idx=0;idx<gy.y_size;idx++){
+        gy.y[idx]=plot->dos.data[idx*2+1];
+        gy.idx[idx]=-1;
+        gy.symbol[idx]=GRAPH_SYMB_NONE;
+}
+gy.type=GRAPH_XY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /***************/
 /* plot BANDOS */
 /***************/
 void draw_plot_bandos(struct model_pak *model,struct plot_pak *plot){
-        /*draw density of state (dos) AND bandstructure*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-	gint index;
-	int i;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{
-                xmin=plot->dos.ymin;
-                xmax=plot->dos.ymax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{
-                ymin=plot->band.ymin;
-                ymax=plot->band.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("BANDOS",model);
-	/*send dos*/
-        graph_add_borned_data(plot->dos.size,plot->dos.data,xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
-	/*send bands*/
-	graph_add_borned_data(plot->band.size+4,plot->band.data,xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
-        for(i=0;i<plot->nbands;i++){
-                index=4+(plot->band.size)*(i+1);
-                graph_add_borned_data(plot->band.size,&(plot->band.data[index]),xmin,xmax,ymin,ymax,GRAPH_BANDOS,plot->graph);
-        }
-        /* set tics */
-/*only ytics make sense though*/
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx,jdx;
+gdouble scale;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+#ifdef UNUSED_BUT_SET
+/*always auto*/
+xmin=plot->dos.ymin;
+xmax=plot->dos.ymax;
+ymin=plot->band.ymin;
+ymax=plot->band.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+#endif //UNUSED_BUT_SET
+/*calculate scale*/
+scale=plot->band.xmax*0.5/plot->dos.ymax;
+plot->graph=graph_new("BANDOS", model);
+dat_graph_toggle_xaxis(plot->graph);
+dat_graph_toggle_yaxis(plot->graph);
+dat_graph_set_title("<big>Density of states</big>",plot->graph);
+dat_graph_set_sub_title("<big>Band structure</big>",plot->graph);
+dat_graph_set_x_title("density (state/eV)\tk-points distance (Ang)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_y_title("Eigenvalues (eV)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_YX_TYPE,plot->graph);/*<-note the inversion!!*/
+/*set x*/
+gx.x_size=model->nkpoints+1;/*ADD DOS origin for the first set*/
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+gx.x[0]=-1.0*scale*plot->dos.ymax;
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx+1]=model->kpts_d[idx];
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*first set is DOS*/
+gy.y_size=2*model->ndos;/*interleaved data*/
+gy.y=g_malloc((model->ndos*2)*sizeof(gdouble));
+gy.idx=g_malloc((model->ndos*2)*sizeof(gint32));/*<- will NOT set any structure*/
+gy.symbol=g_malloc((model->ndos*2)*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+idx=0;
+while(idx<(model->ndos*2)){
+	/*idx   <- x: plot tags READ*/
+	gy.y[idx]=plot->dos.data[idx];
+	gy.idx[idx]=-1;
+	gy.symbol[idx]=GRAPH_SYMB_NONE;
+	idx++;
+	/*idx+1 <- y: plot tags IGNORED*/
+	gy.y[idx]=-1.0*scale*plot->dos.data[idx];
+	gy.idx[idx]=-1;
+	gy.symbol[idx]=GRAPH_SYMB_NONE;
+	idx++;
+}
+gy.type=GRAPH_YX_TYPE;/*<-note the inversion!!*/
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*next sets are BAND*/
+gy.y_size=model->nkpoints+1;/*add DOS origin*/
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will NOT set any structure*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+for(jdx=0;jdx<model->nbands;jdx++){
+gy.y[0]=NAN;
+for(idx=0;idx<model->nkpoints;idx++){
+        gy.y[idx+1]=model->band_up[jdx+idx*model->nbands]-model->efermi;
+        gy.idx[idx+1]=-1;
+        gy.symbol[idx+1]=GRAPH_SYMB_NONE;
+        gy.type=GRAPH_XY_TYPE;/*<- regular type!*/
+}
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+}
+xmin=-1.0*scale*plot->dos.ymax;
+xmax=plot->band.xmax;
+ymin=plot->band.ymin;
+ymax=plot->band.ymax;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);/*HARD part*/
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /*************/
 /* plot BAND */
 /*************/
 void draw_plot_band(struct model_pak *model,struct plot_pak *plot){
-        /*draw bandstructure*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-	gint index;
-	int i;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{
-                xmin=plot->band.xmin;
-                xmax=plot->band.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{
-                ymin=plot->band.ymin;
-                ymax=plot->band.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("BAND",model);
-	graph_add_borned_data(plot->band.size+4,plot->band.data,xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
-	for(i=0;i<plot->nbands;i++){
-		index=4+(plot->band.size)*(i+1);
-		graph_add_borned_data(plot->band.size,&(plot->band.data[index]),xmin,xmax,ymin,ymax,GRAPH_BAND,plot->graph);
-	}
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx,jdx;
+gdouble d;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->nkpoints<1) return;
+if(model->nbands<1) return;
+/*always auto*/
+xmin=plot->band.xmin;
+xmax=plot->band.xmax;
+ymin=plot->band.ymin;
+ymax=plot->band.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+d=ymax-ymin;
+ymin=ymin-d*0.05;
+ymax=ymax+d*0.05;
+plot->graph=graph_new("BAND", model);
+dat_graph_toggle_xaxis(plot->graph);
+dat_graph_set_title("<big>Band diagram</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("k-points distance (Ang)",plot->graph);
+dat_graph_set_y_title("Band eigenvalue (eV)",plot->graph);/*FIXME: add proper unit text!*/
+dat_graph_set_type(GRAPH_XY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=model->nkpoints;
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=model->kpts_d[idx];
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=model->nkpoints;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will NOT set any structure*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=FALSE;
+gy.sym_color=NULL;
+for(jdx=0;jdx<model->nbands;jdx++){
+for(idx=0;idx<model->nkpoints;idx++){
+        gy.y[idx]=model->band_up[jdx+idx*model->nbands]-model->efermi;
+        gy.idx[idx]=-1;
+        gy.symbol[idx]=GRAPH_SYMB_NONE;
+}
+gy.type=GRAPH_XY_TYPE;
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+}
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(TRUE,2,plot->graph);
+else graph_set_yticks(TRUE,plot->ytics,plot->graph);
 }
 /******************/
 /* plot frequency */
 /******************/
 void draw_plot_frequency(struct model_pak *model,struct plot_pak *plot){
-        /*draw all frequency values*/
-        gdouble xmin,xmax;
-        gdouble ymin,ymax;
-        /* get limits */
-        if(plot->auto_x==FALSE){
-                xmin=plot->xmin;
-                xmax=plot->xmax;
-        }else{
-                xmin=plot->frequency.xmin;
-                xmax=plot->frequency.xmax;
-        }
-        if(plot->auto_y==FALSE){
-                ymin=plot->ymin;
-                ymax=plot->ymax;
-        }else{
-                ymin=plot->frequency.ymin;
-                ymax=plot->frequency.ymax;
-        }
-        if(ymin==ymax) {
-                ymin=ymin-1.0;
-                ymax=ymax+1.0;
-        }
-        plot->graph=graph_new("FREQUENCY",model);
-        graph_add_borned_data(plot->frequency.size,plot->frequency.data,xmin,xmax,ymin,ymax,GRAPH_FREQUENCY,plot->graph);
-        /* set tics */
-        if(plot->xtics <= 1) graph_set_xticks(FALSE,2,plot->graph);
-        else graph_set_xticks(TRUE,plot->xtics,plot->graph);
-        if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
-        else graph_set_yticks(TRUE,plot->ytics,plot->graph);
+g_data_x gx;
+g_data_y gy;
+gint idx,jdx;
+gdouble xmin,xmax;
+gdouble ymin,ymax;
+/*avoid rare case _BUG_*/
+if(model->nfreq<1) return;
+/*always auto*/
+xmin=plot->frequency.xmin;
+xmax=plot->frequency.xmax;
+ymin=plot->frequency.ymin;
+ymax=plot->frequency.ymax;
+if(ymin==ymax) {
+	ymin=ymin-1.0;
+	ymax=ymax+1.0;
+}
+/*add 5% to y limits for "readability"*/
+ymax=ymax+(ymax-ymin)*0.05;
+plot->graph=graph_new("FREQ", model);
+dat_graph_set_title("<big>Vibrational frequency</big>",plot->graph);
+//dat_graph_set_sub_title("<small>(From <b>GDIS</b> data)</small>",plot->graph);
+dat_graph_set_x_title("Frequency (cm<sup>-1</sup>)",plot->graph);
+dat_graph_set_y_title("Intensity (arb. unit)",plot->graph);
+dat_graph_set_type(GRAPH_XY_TYPE,plot->graph);
+/*set x*/
+gx.x_size=1+model->nfreq*3;
+/*we triple the data as each freq f,
+  and intensity i is represented by: 
+  {(f,0),(f,i),(f,0)} points.
+  added one point: (0,0) for origin.*/
+gx.x=g_malloc(gx.x_size*sizeof(gdouble));
+gx.x[0]=0;
+idx=1;jdx=0;
+while(idx<gx.x_size){
+	gx.x[idx]=plot->frequency.data[jdx];
+	gx.x[idx+1]=plot->frequency.data[jdx];
+	gx.x[idx+2]=plot->frequency.data[jdx];
+	jdx+=2;
+	idx+=3;
+}
+dat_graph_set_x(gx,plot->graph);
+g_free(gx.x);
+/*set y*/
+gy.y_size=1+model->nfreq*3;
+gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc(gy.y_size*sizeof(gint32));/*<- will NOT set any structure*/
+gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+gy.mixed_symbol=TRUE;/*symbol are mixed by default*/
+gy.sym_color=NULL;
+gy.y[0]=0;
+idx=1;jdx=1;
+while(idx<gx.x_size){
+        gy.y[idx]=0.;
+	gy.y[idx+1]=plot->frequency.data[jdx];
+	gy.y[idx+2]=0.;
+        gy.idx[idx]=-1;
+	gy.idx[idx+1]=-1;
+	gy.idx[idx+2]=-1;
+        gy.symbol[idx]=GRAPH_SYMB_NONE;
+	gy.symbol[idx+1]=GRAPH_SYMB_SQUARE;/*the actual peak*/
+	gy.symbol[idx+2]=GRAPH_SYMB_NONE;
+	jdx+=2;
+	idx+=3;
+}
+gy.type=GRAPH_XY_TYPE;
+dat_graph_set_limits(xmin,xmax,ymin,ymax,plot->graph);
+gy.line=GRAPH_LINE_THICK;
+gy.color=GRAPH_COLOR_DEFAULT;
+dat_graph_add_y(gy,plot->graph);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*force TRUE on label*/
+if(plot->xtics <= 1) graph_set_xticks(TRUE,2,plot->graph);
+else graph_set_xticks(TRUE,plot->xtics,plot->graph);
+if(plot->ytics <= 1) graph_set_yticks(FALSE,2,plot->graph);
+else graph_set_yticks(FALSE,plot->ytics,plot->graph);
 }
 /****************************/
 /* Generic plotting routine */

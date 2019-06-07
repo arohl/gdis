@@ -64,14 +64,8 @@ struct plot_pak {
 	gint nbands;
 	gint nfreq;
 	gint nraman;
-        gdouble xmin;
-        gdouble xmax;
-        gdouble ymin;
-        gdouble ymax;
         gdouble xtics;
         gdouble ytics;
-        gboolean auto_x;
-        gboolean auto_y;
         gboolean data_changed;
 	struct task_pak *task;/*attached task*/
 };

@@ -318,10 +318,6 @@ GtkWidget *task_label;
 gint max_threads;
 GThreadPool *thread_pool;
 
-/* temporary vasp calculation tasks. Will remove when remote job execution is ready --OVHPA*/
-GSList *vasp_calc_list;
-GSList *uspex_calc_list;
-
 /* CURRENT - task successor (remote job execution) */
 GSList *host_list;
 
@@ -1096,6 +1092,10 @@ gint redraw_count;       /* current number of redraws */
 gint redraw_current;     /* current redraw time (micro-sec) */
 gint redraw_cumulative;  /* cumulative redraw time (micro-sec) */
 gint redraw_time;        /* average redraw time (micro-sec) */
+gboolean silent;	 /* when a new calculation, silent error messages about non-ready output*/
+gboolean track_me;	 /* track an ongoing calculation --OVHPA*/
+struct model_pak *t_next;/* continous tracking through next model --OVHPA*/
+gint track_nb;		 /* track icon gadget --OVHPA*/
 gboolean snapshot_eps;   /* save an eps image to file eps_file */
 gchar *eps_file;         /* the said eps_file           --OVHPA*/
 gint fractional;
@@ -1291,6 +1291,7 @@ struct monty_pak monty;
 
 /* plots */
 gint plots;
+gpointer plot;
 
 /* What about a shared area for similar data
  * other that property_list / property_table 
@@ -1320,6 +1321,8 @@ gdouble *freq_intens;
 
 /* uspex */
 gpointer uspex;
+/* vasp */
+gpointer vasp;
 
 /* element data */
 /*

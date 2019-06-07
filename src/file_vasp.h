@@ -361,12 +361,35 @@ typedef struct {
 	gdouble job_nproc;
 /* RESULTS */
 } vasp_calc_struct;
-/*calculation structure*/
+typedef enum {
+	VASP_SINGLE=0,	/*single-point electronic calculation*/
+	VASP_RUN=1,	/*currently running calculation*/
+	VASP_OPT=2,	/*geometry optimization calculation*/
+	VASP_ELEC=4,	/*electronic structure calculation*/
+	VASP_FREQ=8,	/*vibrational modes calculation*/
+} vasp_calc_type;
+/* output structure */
 typedef struct {
-	int job_id;
-	gboolean have_result;
-	gboolean have_gui;
-	/*job related*/
+/*name*/
+	gchar *name;
+	gint version;
+//	vasp_calc_struct *calc;/*calculation structure*/
+	/*extra information*/
+	vasp_calc_type calc_type;
+	gint n_scf;
+	gdouble *E;
+	gdouble *V;
+	gdouble *F;
+	gdouble *P;
+	long int last_pos;
+/*NEW: attach frame-dependent graphs*/
+	gpointer graph_energy;
+	gpointer graph_volume;
+	gpointer graph_forces;
+	gpointer graph_stress;
+} vasp_output_struct;
+/*execution structure*/
+typedef struct {
 	gchar *job_vasp_exe;
 	gchar *job_mpirun;
 	gchar *job_path;
@@ -379,6 +402,7 @@ int vasp_xml_load_calc(FILE *vf,vasp_calc_struct *calc);
 void vasp_calc_to_incar(FILE *output,vasp_calc_struct calc);
 gint vasprun_update(gchar *filename,vasp_calc_struct *calc);
 void vasprun_free(vasp_calc_struct *calc);
+void vasp_out_free(vasp_output_struct * vo);
 
 gint vasp_load_poscar5(FILE *vf,struct model_pak *model);
-
+gint vasp_load_poscar4(FILE *vf,struct model_pak *model,char *label);

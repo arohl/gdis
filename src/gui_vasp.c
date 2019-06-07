@@ -50,6 +50,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "file_vasp.h"
 #include "gui_defs.h"
 #include "gui_vasp.h"
+#include "track.h"
 
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
@@ -3004,7 +3005,7 @@ void vasp_cleanup(){
 /*****************************************/
 /* Execute or enqueue a vasp calculation */
 /*****************************************/
-void run_vasp_exec(vasp_exec_struct *vasp_exec){
+void run_vasp_exec(vasp_exec_struct *vasp_exec,struct task_pak *task){
 	/* Execute a vasp task TODO distant job */
 	gchar *cmd;
 	gchar *cwd;/*for push/pull*/
@@ -3021,59 +3022,61 @@ void run_vasp_exec(vasp_exec_struct *vasp_exec){
 #endif
 	cwd=sysenv.cwd;/*push*/
 	sysenv.cwd=g_strdup_printf("%s",(*vasp_exec).job_path);
-	task_sync(cmd);
+	task->is_async = TRUE;
+	task->status_file = g_build_filename((*vasp_exec).job_path,"vasp.log", NULL);
+	task_async(cmd,&(task->pid));
 	g_free(sysenv.cwd);
 	sysenv.cwd=cwd;/*pull*/
 	g_free(cmd);
-	(*vasp_exec).have_result=TRUE;
 }
 /*****************************/
 /* cleanup task: load result */
 /*****************************/
 void cleanup_vasp_exec(vasp_exec_struct *vasp_exec){
 	/*VASP process has exit, try to load the result*/
-	struct model_pak *result_model;
-	gchar *filename;
+	gchar *line;
 	/*sync_ wait for result?*/
-	while(!(*vasp_exec).have_result) usleep(500*1000);/*sleep 500ms until job is done*/
-	/*init a model*/
-	result_model=model_new();
-	model_init(result_model);
-	/*put result into it*/
-	filename=g_strdup_printf("%s/vasprun.xml",(*vasp_exec).job_path);
-	/*TODO: detect if a calculation have failed*/
-	file_load(filename,result_model);/*TODO: load result without annoying tree_select_active*/
-	model_prep(result_model);
-	tree_model_add(result_model);
-	tree_model_refresh(result_model);
-	canvas_shuffle();
-	redraw_canvas(ALL);/*ALL: necessary?*/
-/*just wipe the structure*/
-	sysenv.vasp_calc_list=g_slist_remove(sysenv.vasp_calc_list,vasp_exec);/*does not free, does it?*/
-	g_free(vasp_exec);
+	line = g_strdup_printf("VASP job finished!\n");
+	gui_text_show(ITALIC,line);
+	g_free(line);
 }
 /******************************/
 /* Enqueue a vasp calculation */
 /******************************/
 void exec_calc(){
+	gchar *filename;
+	struct model_pak *result_model;
 	vasp_exec_struct *vasp_exec;
 	/*this will sync then enqueue a VASP calculation*/
 	if(save_vasp_calc()) return;/*sync and save all file*/
 /*copy structure to the list*/
 	vasp_exec=g_malloc(sizeof(vasp_exec_struct));
-	vasp_exec->job_id=g_slist_length(sysenv.vasp_calc_list);
-	vasp_exec->have_result=FALSE;
-	vasp_exec->have_gui=TRUE;
 	vasp_exec->job_vasp_exe=g_strdup_printf("%s",vasp_gui.calc.job_vasp_exe);
 	vasp_exec->job_mpirun=g_strdup_printf("%s",vasp_gui.calc.job_mpirun);
 	vasp_exec->job_path=g_strdup_printf("%s",vasp_gui.calc.job_path);
 	vasp_exec->job_nproc=vasp_gui.calc.job_nproc;
-	/*prepend to calc list*/
-	sysenv.vasp_calc_list = g_slist_prepend (sysenv.vasp_calc_list,vasp_exec);
 	/*launch vasp in a task*/
 	GUI_LOCK(vasp_gui.button_save);
 	GUI_LOCK(vasp_gui.button_exec);
 	task_new("VASP", &run_vasp_exec,vasp_exec,&cleanup_vasp_exec,vasp_exec,sysenv.active_model);
+/**/
+	filename=g_strdup_printf("%s/vasprun.xml",(*vasp_exec).job_path);
+	result_model=model_new();
+	model_init(result_model);
+	strcpy(result_model->filename,filename);
+	result_model->vasp=NULL;
+	result_model->track_me = TRUE;
+	g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,result_model,track_vasp_cleanup);
+/*prepare a dummy model*/
+	g_free(result_model->basename);
+	result_model->basename = g_strdup("new_VASP");
+	sysenv.active_model = result_model;
+	model_prep(result_model);
+	result_model->mode = FREE;
+	result_model->rmax = 5.0*RMAX_FUDGE;
+	tree_model_add(result_model);
+	tree_select_model(result_model);
+	redraw_canvas(SINGLE);
 	/*when task is launched, close dialog*/
 	vasp_cleanup();
 	GUI_CLOSE(vasp_gui.window);

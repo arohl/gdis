@@ -43,6 +43,10 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "polymer.xpm"
 #include "diamond2.xpm"
 #include "graph.xpm"
+#include "t1.xpm"
+#include "t2.xpm"
+#include "t3.xpm"
+
 
 /* top level data structure */
 extern struct sysenv_pak sysenv;
@@ -126,7 +130,8 @@ gtk_tree_model_get(GTK_TREE_MODEL(sysenv.tree_store), &iter,
 /* alter the selection iter and then remove old iter */
 next = iter;
 tree_select_next(&next);
-gtk_tree_store_remove(sysenv.tree_store, &iter);
+if(!gtk_tree_store_remove(sysenv.tree_store, &iter)) gtk_tree_selection_unselect_all (selection);/*FIX _BUG_*/
+
 
 /* data pointer cleanup */
 switch (depth)
@@ -235,6 +240,44 @@ selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sysenv.tree));
 /* update name */
 gtk_tree_store_set(sysenv.tree_store, &root, TREE_NAME, model->basename, -1);
 
+/* update pixmap <- if tracking ON -- OVHPA*/
+if (model->track_me){
+	switch((model->track_nb)%3){
+	case 2:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t3_xpm);
+		break;
+	case 1:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t2_xpm);
+		break;
+	case 0:
+	default:
+		pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) t1_xpm);
+	}
+	gtk_tree_store_set(sysenv.tree_store, &root, TREE_PIXMAP, pixbuf, -1);
+}else{
+  if (model->id == MORPH)
+    pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) diamond2_xpm);
+  else
+  {
+  switch(model->periodic)
+    {
+    case 3:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) box_xpm);
+      break;
+    case 2:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) surface_xpm);
+      break;
+    case 1:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) polymer_xpm);
+      break;
+    default:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) methane_xpm);
+      break;
+    }
+  }
+  gtk_tree_store_set(sysenv.tree_store, &root, TREE_PIXMAP, pixbuf, -1);
+}
+
 /* update any graphs */
 pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) graph_xpm);
 for (list=model->graph_list ; list ; list=g_slist_next(list))
@@ -310,6 +353,7 @@ else
       break;
     }
   }
+
 
 /* set the parent iterator data */
 gtk_tree_store_set(sysenv.tree_store, &root,

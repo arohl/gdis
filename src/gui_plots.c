@@ -45,13 +45,7 @@ The GNU GPL can also be found at http://www.gnu.org
 /* global pak structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
-struct plot_pak *plot;
 struct graph_ui *graph_ui;
-/* text widgets */
-GtkWidget *plot_xmin;
-GtkWidget *plot_xmax;
-GtkWidget *plot_ymin;
-GtkWidget *plot_ymax;
 /* radio buttons */
 /*1st page*/
 GtkWidget *b_1_e;
@@ -68,324 +62,140 @@ GtkWidget *b_3_r;
 
 #define GRAPH_UI (*graph_ui)
 
-/************************/
-/* plot toggle checkbox */
-/************************/
-void set_auto_x(void){
-	switch(plot->type){
-	case PLOT_ENERGY:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->energy.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->energy.xmax));
-		break;
-	case PLOT_FORCE:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->force.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->force.xmax));
-		break;
-	case PLOT_VOLUME:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->volume.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->volume.xmax));
-		break;
-	case PLOT_PRESSURE:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->pressure.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->pressure.xmax));
-		break;
-	case PLOT_DOS:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->dos.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->dos.xmax));
-		break;
-	case PLOT_FREQUENCY:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->frequency.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->frequency.xmax));
-		break;
-	case PLOT_BAND:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->band.xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->band.xmax));
-		break;
-	case PLOT_BANDOS:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",0.0));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",10.0));
-		break;
-	case PLOT_RAMAN:
-	case PLOT_NONE:
-	default:
-		gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%lf",plot->xmin));
-		gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%lf",plot->xmax));
-	}
-}
-void set_auto_y(void){
-        switch(plot->type){
-        case PLOT_ENERGY:
-                gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->energy.ymin));
-                gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->energy.ymax));
-                break;
-        case PLOT_FORCE:
-                gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->force.ymin));
-                gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->force.ymax));
-                break;
-        case PLOT_VOLUME:
-                gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->volume.ymin));
-                gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->volume.ymax));
-                break;
-        case PLOT_PRESSURE:
-                gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->pressure.ymin));
-                gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->pressure.ymax));
-                break;
-        case PLOT_DOS:
-		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->dos.ymin));
-		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->dos.ymax));
-		break;
-        case PLOT_FREQUENCY:
-		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->frequency.ymin));
-		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->frequency.ymax));
-		break;
-	case PLOT_BAND:
-		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->band.ymin));
-		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->band.ymax));
-		break;
-	case PLOT_BANDOS:
-		gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->band.ymin));
-		gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->band.ymax));
-		break;
-	case PLOT_RAMAN:
-        case PLOT_NONE:
-        default:
-                gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%lf",plot->ymin));
-                gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%lf",plot->ymax));
-        }
-}
-void auto_x_toggle(GtkWidget *w, GtkWidget *box){
-        if(plot->auto_x==TRUE){
-                /* disallow modification */
-                gtk_widget_set_sensitive(plot_xmin,FALSE);
-                gtk_widget_set_sensitive(plot_xmax,FALSE);
-		/* fill in extreme */
-		set_auto_x();
-        } else {
-                /* allow modification */
-                gtk_widget_set_sensitive(plot_xmin,TRUE);
-                gtk_widget_set_sensitive(plot_xmax,TRUE);
-        }
-}
-void auto_y_toggle(GtkWidget *w, GtkWidget *box){
-        if(plot->auto_y==TRUE){
-                /* disallow modification */
-                gtk_widget_set_sensitive(plot_ymin,FALSE);
-                gtk_widget_set_sensitive(plot_ymax,FALSE);
-		/* fill in extrema */
-		set_auto_y();
-        } else {
-                /* allow modification */
-                gtk_widget_set_sensitive(plot_ymin,TRUE);
-                gtk_widget_set_sensitive(plot_ymax,TRUE);
-        }
-}
 /*******************/
 /* plot type radio */
 /*******************/
-void plot_energy(){
+void plot_energy(struct plot_pak *plot){
 	/* switched to PLOT_ENERGY */
 	plot->type=PLOT_ENERGY;
 	plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
 	plot->plot_sel+=PLOT_ENERGY;/*selected*/
-	plot->xmin=plot->energy.xmin;
-	plot->xmax=plot->energy.xmax;
-	plot->ymin=plot->energy.ymin;
-	plot->ymax=plot->energy.ymax;
-	plot->auto_x=TRUE;
-	plot->auto_y=TRUE;
-	auto_x_toggle(NULL,NULL);
-	auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_force(){
+void plot_force(struct plot_pak *plot){
+	/* switched to PLOT_FORCE */
 	plot->type=PLOT_FORCE;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_FORCE;/*selected*/
-        plot->xmin=plot->force.xmin;
-        plot->xmax=plot->force.xmax;
-        plot->ymin=plot->force.ymin;
-        plot->ymax=plot->force.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_volume(){
+void plot_volume(struct plot_pak *plot){
+	/* switched to PLOT_VOLUME */
 	plot->type=PLOT_VOLUME;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_VOLUME;/*selected*/
-        plot->xmin=plot->volume.xmin;
-        plot->xmax=plot->volume.xmax;
-        plot->ymin=plot->volume.ymin;
-        plot->ymax=plot->volume.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_pressure(){
+void plot_pressure(struct plot_pak *plot){
+	/* switched to PLOT_PRESSURE */
 	plot->type=PLOT_PRESSURE;
         plot->plot_sel=plot->plot_sel&240;/*reset 1st page*/
         plot->plot_sel+=PLOT_PRESSURE;/*selected*/
-        plot->xmin=plot->pressure.xmin;
-        plot->xmax=plot->pressure.xmax;
-        plot->ymin=plot->pressure.ymin;
-        plot->ymax=plot->pressure.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_band(){
+void plot_band(struct plot_pak *plot){
+	/* switched to PLOT_BAND */
         plot->type=PLOT_BAND;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_BAND;/*selected*/
-        plot->xmin=plot->band.xmin;
-        plot->xmax=plot->band.xmax;
-        plot->ymin=plot->band.ymin;
-        plot->ymax=plot->band.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_dos(){
+void plot_dos(struct plot_pak *plot){
+	/* switched to PLOT_DOS */
         plot->type=PLOT_DOS;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_DOS;/*selected*/
-        plot->xmin=plot->dos.xmin;
-        plot->xmax=plot->dos.xmax;
-        plot->ymin=plot->dos.ymin;
-        plot->ymax=plot->dos.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_bandos(){
+void plot_bandos(struct plot_pak *plot){
+	/* switched to PLOT_BANDOS */
         plot->type=PLOT_BANDOS;
 	plot->plot_sel=plot->plot_sel&207;/*reset 2nd page*/
 	plot->plot_sel+=PLOT_BANDOS;/*selected*/
-        plot->xmin=0.;
-        plot->xmax=10.;
-        plot->ymin=plot->band.ymin;
-        plot->ymax=plot->band.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_frequency(){
+void plot_frequency(struct plot_pak *plot){
+	/* switched to PLOT_FREQUENCY */
         plot->type=PLOT_FREQUENCY;
 	plot->plot_sel=plot->plot_sel&63;/*reset 3rd page*/
 	plot->plot_sel+=PLOT_FREQUENCY;/*selected*/
-        plot->xmin=plot->frequency.xmin;
-        plot->xmax=plot->frequency.xmax;
-        plot->ymin=plot->frequency.ymin;
-        plot->ymax=plot->frequency.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_raman(){
+void plot_raman(struct plot_pak *plot){
+	/* switched to PLOT_RAMAN */
         plot->type=PLOT_RAMAN;
 	plot->plot_sel=plot->plot_sel&63;/*reset 3rd page*/
 	plot->plot_sel+=PLOT_FREQUENCY;/*selected*/
-        plot->xmin=plot->raman.xmin;
-        plot->xmax=plot->raman.xmax;
-        plot->ymin=plot->raman.ymin;
-        plot->ymax=plot->raman.ymax;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r),TRUE);
 	gui_relation_update(plot->model);
 }
-void plot_none(){
+void plot_none(struct plot_pak *plot){
 	plot->type=PLOT_NONE;
 	/* no plot type available */
-	plot->xmin=0.;
-        plot->xmax=1.;
-        plot->ymin=0.;
-        plot->ymax=1.;
-        plot->auto_x=TRUE;
-        plot->auto_y=TRUE;
-        auto_x_toggle(NULL,NULL);
-        auto_y_toggle(NULL,NULL);
 	gui_relation_update(plot->model);
 }
 
 void plot_page_switch(GtkNotebook *notebook,GtkWidget *page,guint page_num,gpointer user_data){
+	struct model_pak *model=sysenv.active_model;
+	struct plot_pak *plot;
+	if(!model) return;
+	if(!(model->plot)) return;
+	plot=(struct plot_pak *)model->plot;
 //	GtkWidget *child=gtk_notebook_get_nth_page(notebook,page_num);/*in case we need/want to resize the current page*/
 	switch(page_num){/*pb is we don't know who is selected in page*/
 		case 0:/*Dynamics*/
-			if(plot->plot_sel&PLOT_ENERGY) plot_energy();
-			else if(plot->plot_sel&PLOT_FORCE) plot_force();
-			else if(plot->plot_sel&PLOT_VOLUME) plot_volume();
-			else if(plot->plot_sel&PLOT_PRESSURE) plot_pressure();
+			if(plot->plot_sel&PLOT_ENERGY) plot_energy(plot);
+			else if(plot->plot_sel&PLOT_FORCE) plot_force(plot);
+			else if(plot->plot_sel&PLOT_VOLUME) plot_volume(plot);
+			else if(plot->plot_sel&PLOT_PRESSURE) plot_pressure(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-			        if(!(plot->plot_mask&(15))) plot_none();
-			        else if(plot->plot_mask&PLOT_ENERGY) plot_energy();
-			        else if(plot->plot_mask&PLOT_FORCE) plot_force();
-			        else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
-			        else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
+			        if(!(plot->plot_mask&(15))) plot_none(plot);
+			        else if(plot->plot_mask&PLOT_ENERGY) plot_energy(plot);
+			        else if(plot->plot_mask&PLOT_FORCE) plot_force(plot);
+			        else if(plot->plot_mask&PLOT_VOLUME) plot_volume(plot);
+			        else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure(plot);
 			}
 			break;
 		case 1:/*Electronic*/
-			if(plot->plot_sel&PLOT_BAND) plot_band();
-			else if(plot->plot_sel&PLOT_DOS) plot_dos();
-			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos();
+			if(plot->plot_sel&PLOT_BAND) plot_band(plot);
+			else if(plot->plot_sel&PLOT_DOS) plot_dos(plot);
+			else if((plot->plot_sel&PLOT_DOS)&&(plot->plot_sel&PLOT_BAND)) plot_bandos(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(48))) plot_none();
-				else if(plot->plot_mask&PLOT_DOS) plot_dos();
-				else if(plot->plot_mask&PLOT_BAND) plot_band();
+                                if(!(plot->plot_mask&(48))) plot_none(plot);
+				else if(plot->plot_mask&PLOT_DOS) plot_dos(plot);
+				else if(plot->plot_mask&PLOT_BAND) plot_band(plot);
 			}
 			break;
 		case 2:/*Frequency*/
-			if(plot->plot_sel&PLOT_FREQUENCY) plot_frequency();
-			else if(plot->plot_sel&PLOT_RAMAN) plot_raman();
+			if(plot->plot_sel&PLOT_FREQUENCY) plot_frequency(plot);
+			else if(plot->plot_sel&PLOT_RAMAN) plot_raman(plot);
 			else {/*no plot selected, but plot_selection possible?*/
-                                if(!(plot->plot_mask&(192))) plot_none();
-                                else if(plot->plot_mask&PLOT_FREQUENCY) plot_frequency();
-                                else if(plot->plot_mask&PLOT_RAMAN) plot_raman();
+                                if(!(plot->plot_mask&(192))) plot_none(plot);
+                                else if(plot->plot_mask&PLOT_FREQUENCY) plot_frequency(plot);
+                                else if(plot->plot_mask&PLOT_RAMAN) plot_raman(plot);
 			}
 			break;
 		default:
-			plot_none();
+			plot_none(plot);
 	}
 }
 /* prepare plot structure */
 void plot_initialize(struct model_pak *data){
+	struct plot_pak *plot;
 	int i,j;
 	gdouble y;
 	/* init the plot pak */
 	if (!data) return;
-	if(plot!=NULL) g_free(plot);/* FIXME: safe? */
 	plot=(struct plot_pak *)g_malloc(sizeof(struct plot_pak));
 	if(plot==NULL) return;
-	plot->auto_x=TRUE;
-	plot->auto_y=TRUE;
-	plot->xmin=0.0;
-	plot->xmax=1.0;
-	plot->ymin=0.0;
-	plot->ymax=1.0;
 	plot->xtics=1.0;
 	plot->ytics=1.0;
 	plot->graph=data->graph_active;
@@ -469,26 +279,14 @@ void plot_initialize(struct model_pak *data){
 		}
 		plot->frequency.xmax=((gint)(plot->frequency.xmax/1000)+1)*1000.0;
 	}
+	if(data->plot!=NULL) g_free(data->plot);
+	data->plot=(gpointer)plot;
 }
 /************************/
 /* plots dialog cleanup */
 /************************/
 void plot_cleanup(struct model_pak *model){
-	/* TODO: no cleanup to do? */
-	g_assert(model != NULL);
-	/*cleanup plot mess*/
-	if(plot!=NULL){
-		/* plot->graph is destroyed when closing graph */
-		g_free(plot->energy.data);
-		g_free(plot->force.data);
-		g_free(plot->volume.data);
-		g_free(plot->pressure.data);
-		g_free(plot->band.data);/*so what?*/
-		g_free(plot->dos.data);
-		g_free(plot->frequency.data);
-		g_free(plot);
-		plot=NULL;
-	}
+	/*no need to remove plot data <- we might still use them*/
 	model->plots=FALSE;
 }
 void plot_quit(GtkWidget *w, gpointer data){
@@ -504,25 +302,15 @@ void plot_quit(GtkWidget *w, gpointer data){
 void exec_plot(){
 	FILE *fp;
 	struct model_pak *data;
+	struct plot_pak *plot;
 	gpointer camera=NULL;
-	g_assert(plot != NULL);
 	data = sysenv.active_model;
 	g_assert(data != NULL);
+	plot=data->plot;
+	g_assert(plot != NULL);
 	/*get limit values if not auto*/
 	if(plot->type==PLOT_NONE) return;
 	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
-	if(plot->auto_x==FALSE){
-		plot->xmin=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmin)));
-		plot->xmax=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_xmax)));
-		/*ensure xmin<xmax*/
-		if(plot->xmin>=plot->xmax) plot->xmin=plot->xmax;
-	}
-	if(plot->auto_y==FALSE){
-		plot->ymin=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_ymin)));
-		plot->ymax=str_to_float(gtk_entry_get_text(GTK_ENTRY(plot_ymax)));
-		/*ensure ymin<ymax*/
-		if(plot->ymin>=plot->ymax) plot->ymin=plot->ymax;
-	}
         data->locked=TRUE;/*useful with task?*/
 	if(plot->data_changed){
 	        plot->model=data;
@@ -566,6 +354,7 @@ void gui_plots_dialog(void){
 	/* special */
 	GtkWidget *ionic_box, *electronic_box, *frequency_box;
 	struct model_pak *data;
+	struct plot_pak *plot;
 	gpointer camera=NULL;
 	gint cur_frame;
 /* checks */
@@ -578,8 +367,9 @@ void gui_plots_dialog(void){
 /* initialization */
 	camera = camera_dup(data->camera);/*save camera (from gui_animate.c)*/
 	gui_mode_switch(FREE);
-	plot=NULL;
 	plot_initialize(data);
+	plot=data->plot;
+	if(plot == NULL) return;
 /*1- lock and try to NOT update model*/
         data->redraw=0;
         data->locked=TRUE;
@@ -631,16 +421,16 @@ void gui_plots_dialog(void){
 /* radio buttons */
 	new_radio_group(0, ionic_box, FF);
 /*by default any data not available _now_ will not be available later*/
-	b_1_e = add_radio_button("Energy / step", (gpointer) plot_energy,NULL);
+	b_1_e = add_radio_button("Energy / step", (gpointer) plot_energy,plot);
 	if (plot->type == PLOT_ENERGY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_e), TRUE);
 	if (!(plot->plot_mask&PLOT_ENERGY)) gtk_widget_set_sensitive(b_1_e,FALSE);
-	b_1_f = add_radio_button("Forces / step", (gpointer) plot_force,NULL);
+	b_1_f = add_radio_button("Forces / step", (gpointer) plot_force,plot);
 	if (plot->type == PLOT_FORCE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_f), TRUE);
 	if (!(plot->plot_mask&PLOT_FORCE)) gtk_widget_set_sensitive(b_1_f,FALSE);
-	b_1_v = add_radio_button("Volume / step", (gpointer) plot_volume,NULL);
+	b_1_v = add_radio_button("Volume / step", (gpointer) plot_volume,plot);
 	if (plot->type == PLOT_VOLUME) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_v), TRUE);
 	if (!(plot->plot_mask&PLOT_VOLUME)) gtk_widget_set_sensitive(b_1_v,FALSE);
-	b_1_p = add_radio_button("Pressure / step", (gpointer) plot_pressure,NULL);
+	b_1_p = add_radio_button("Pressure / step", (gpointer) plot_pressure,plot);
 	if (plot->type == PLOT_PRESSURE) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_1_p), TRUE);
 	if (!(plot->plot_mask&PLOT_PRESSURE)) gtk_widget_set_sensitive(b_1_p,FALSE);
 /*Set availability of the whole selection TODO: base on plot->plot_mask?*/
@@ -682,13 +472,13 @@ void gui_plots_dialog(void){
 	gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
 	new_radio_group(0, electronic_box, FF);
-	b_2_d = add_radio_button("Density Of States", (gpointer) plot_dos,NULL);
+	b_2_d = add_radio_button("Density Of States", (gpointer) plot_dos,plot);
 	if (plot->type == PLOT_DOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_d), TRUE);
 	if (!(plot->plot_mask&PLOT_DOS)) gtk_widget_set_sensitive(b_2_d,FALSE);
-	b_2_b = add_radio_button("Band structure", (gpointer) plot_band,NULL);
+	b_2_b = add_radio_button("Band structure", (gpointer) plot_band,plot);
 	if (plot->type == PLOT_BAND) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_b), TRUE);
 	if (!(plot->plot_mask&PLOT_BAND)) gtk_widget_set_sensitive(b_2_b,FALSE);
-	b_2_bd = add_radio_button("Band / DOS", (gpointer) plot_bandos,NULL);
+	b_2_bd = add_radio_button("Band / DOS", (gpointer) plot_bandos,plot);
 	if (plot->type == PLOT_BANDOS) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_2_bd), TRUE);
 	if ((plot->plot_mask&PLOT_BANDOS)^PLOT_BANDOS) gtk_widget_set_sensitive(b_2_bd,FALSE);
 /* Set availability */
@@ -731,10 +521,10 @@ void gui_plots_dialog(void){
         gtk_container_set_border_width(GTK_CONTAINER(vbox), PANEL_SPACING);
 /* radio buttons */
         new_radio_group(0, frequency_box, FF);
-        b_3_f = add_radio_button("Vibrational", (gpointer) plot_frequency,NULL);
+        b_3_f = add_radio_button("Vibrational", (gpointer) plot_frequency,plot);
         if (plot->type == PLOT_FREQUENCY) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_f), TRUE);
 	if (!(plot->plot_mask&PLOT_FREQUENCY)) gtk_widget_set_sensitive(b_3_f,FALSE);
-        b_3_r = add_radio_button("Raman", (gpointer) plot_raman,NULL);
+        b_3_r = add_radio_button("Raman", (gpointer) plot_raman,plot);
         if (plot->type == PLOT_RAMAN) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_3_r), TRUE);
 	if (!(plot->plot_mask&PLOT_RAMAN)) gtk_widget_set_sensitive(b_3_r,FALSE);
 /* Set availability */
@@ -746,60 +536,6 @@ void gui_plots_dialog(void){
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(window)->vbox), frame, FALSE, FALSE, 0);
 	vbox = gtk_vbox_new(FALSE, PANEL_SPACING);
 	gtk_container_add(GTK_CONTAINER(frame), vbox);
-/* plot -> XMIN */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, PANEL_SPACING);
-	label = gtk_label_new(g_strdup_printf("X min"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	plot_xmin = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(plot_xmin),g_strdup_printf("%-9.6f",plot->xmin));
-	gtk_box_pack_end(GTK_BOX(hbox),plot_xmin, FALSE, FALSE, 0);
-/* plot -> XMAX */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, PANEL_SPACING);
-	label = gtk_label_new(g_strdup_printf("X max"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	plot_xmax = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(plot_xmax),g_strdup_printf("%-9.6f",plot->xmax));
-	gtk_box_pack_end(GTK_BOX(hbox),plot_xmax, FALSE, FALSE, 0);
-/* plot -> AUTOSCALE X */
-	gui_direct_check("Auto X range",&plot->auto_x,auto_x_toggle,NULL,vbox);
-/* initial state */
-	if(plot->auto_x){
-		gtk_widget_set_sensitive(plot_xmin,FALSE);
-	        gtk_widget_set_sensitive(plot_xmax,FALSE);
-		set_auto_x();
-	} else {
-	        gtk_widget_set_sensitive(plot_xmin,TRUE);
-	        gtk_widget_set_sensitive(plot_xmax,TRUE);
-	}
-/* plot -> YMIN */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, PANEL_SPACING);
-	label = gtk_label_new(g_strdup_printf("Y min"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	plot_ymin = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(plot_ymin),g_strdup_printf("%-9.6f",plot->ymin));
-	gtk_box_pack_end(GTK_BOX(hbox),plot_ymin, FALSE, FALSE, 0);
-/* plot -> YMAX */
-	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, PANEL_SPACING);
-	label = gtk_label_new(g_strdup_printf("Y max"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-	plot_ymax = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(plot_ymax),g_strdup_printf("%-9.6f",plot->ymax));
-	gtk_box_pack_end(GTK_BOX(hbox),plot_ymax, FALSE, FALSE, 0);
-/* plot -> AUTOSCALE Y */
-	gui_direct_check("Auto Y range",&plot->auto_y,auto_y_toggle,NULL,vbox);
-/* initial state */
-	if(plot->auto_y){
-	        gtk_widget_set_sensitive(plot_ymin,FALSE);
-	        gtk_widget_set_sensitive(plot_ymax,FALSE);
-		set_auto_y();
-	} else {
-	        gtk_widget_set_sensitive(plot_ymin,TRUE);
-	        gtk_widget_set_sensitive(plot_ymax,TRUE);
-	}
 /* plot -> tics */
 	gui_direct_spin("X tics",&plot->xtics,1.0,50.0,1.0,NULL,NULL,vbox);
 	gui_direct_spin("Y tics",&plot->ytics,1.0,50.0,1.0,NULL,NULL,vbox);
@@ -810,10 +546,10 @@ void gui_plots_dialog(void){
         g_signal_connect(GTK_NOTEBOOK(notebook),"switch-page",GTK_SIGNAL_FUNC(plot_page_switch),NULL);
 	/*select in page 1*/
 	if(plot->plot_mask==PLOT_NONE) plot->type=PLOT_NONE;
-	else if(plot->plot_mask&PLOT_ENERGY) plot_energy();
-	else if(plot->plot_mask&PLOT_FORCE) plot_force();
-	else if(plot->plot_mask&PLOT_VOLUME) plot_volume();
-	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure();
+	else if(plot->plot_mask&PLOT_ENERGY) plot_energy(plot);
+	else if(plot->plot_mask&PLOT_FORCE) plot_force(plot);
+	else if(plot->plot_mask&PLOT_VOLUME) plot_volume(plot);
+	else if(plot->plot_mask&PLOT_PRESSURE) plot_pressure(plot);
 /* That's all folks */
 //        sysenv.refresh_dialog=TRUE;
 if((plot->task)!=NULL) {
@@ -986,23 +722,6 @@ void sync_graph_controls(struct graph_pak *graph){
 			}
 			if(p_y->mixed_symbol) GUI_LOCK(GRAPH_UI.symbol);
 			break;
-		case GRAPH_FREQUENCY:
-		case GRAPH_BAND:
-		case GRAPH_DOS:
-		case GRAPH_BANDOS:
-			/*these types will be soon replace by above GRAPH_??_TYPE*/
-			GUI_SPIN_RANGE(GRAPH_UI.set,1.,1.);
-			GUI_UNLOCK(GRAPH_UI.type);
-			GUI_COMBOBOX_SET(GRAPH_UI.type,0);
-			GUI_LOCK(GRAPH_UI.type);
-			GUI_UNLOCK(GRAPH_UI.size);
-			text=g_strdup("1");
-			GUI_ENTRY_TEXT(GRAPH_UI.size,text);g_free(text);
-			GUI_LOCK(GRAPH_UI.size);
-			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
-			GUI_COMBOBOX_SET(GRAPH_UI.line,0);
-			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
-			break;
 		case GRAPH_REGULAR:
 		default:
 			/*assume 1 set x[] only*/
@@ -1081,70 +800,6 @@ void toggle_auto_x(){
 				GUI_ENTRY_TEXT(GRAPH_UI.xmin,text);g_free(text);
 				text=g_strdup_printf("%G",graph->xmax);
 				GUI_ENTRY_TEXT(GRAPH_UI.xmax,text);g_free(text);
-				break;
-			case GRAPH_FREQUENCY:
-				if(data->have_frequency==TRUE){
-					graph->xmin=0.;
-					graph->xmax=data->freq[0];
-					for(idx=0;idx<data->nfreq;idx++) {
-						if(data->freq[idx]>graph->xmax) graph->xmax=data->freq[idx];
-					}
-					idx=((gint)(graph->xmax/1000)+1)*1000.0;/*magic formula*/
-					graph->xmax=(gdouble)idx;
-					text=g_strdup_printf("%G",graph->xmin);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->xmax);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmax,text);g_free(text);
-				}/*else... there is a problem*/
-				break;
-			case GRAPH_BAND:
-				if(data->kpts_d){
-					graph->xmin=data->kpts_d[0];
-					graph->xmax=data->kpts_d[0];
-					for(idx=0;idx<(data->nkpoints);idx++){
-						if(data->kpts_d[idx]<graph->xmin) graph->xmin=data->kpts_d[idx];
-						if(data->kpts_d[idx]>graph->xmax) graph->xmax=data->kpts_d[idx];
-					}
-					text=g_strdup_printf("%G",graph->xmin);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->xmax);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmax,text);g_free(text);
-				}/*else... there is a problem*/
-				break;
-			case GRAPH_DOS:
-				if(data->dos_eval){
-					gdouble x;
-					/*everything is scaled to Fermi lavel*/
-					graph->xmin=data->dos_eval[0]-data->efermi;
-					graph->xmax=data->dos_eval[0]-data->efermi;
-					for(idx=0;idx<data->ndos;idx++){
-						x=data->dos_eval[idx]-data->efermi;
-						if(x<graph->xmin) graph->xmin=x;
-						if(x>graph->xmax) graph->xmax=x;
-					}
-					text=g_strdup_printf("%G",graph->xmin);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->xmax);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmax,text);g_free(text);
-				}/*else... there is a problem*/
-				break;
-			case GRAPH_BANDOS:
-				if(data->dos_spin_up){
-					gdouble x;
-					x=data->dos_spin_up[0];
-					graph->xmin=x;
-					graph->xmax=x;
-					for(idx=0;idx<data->ndos;idx++){
-						x=data->dos_spin_up[idx];
-						if(data->spin_polarized) x+=data->dos_spin_down[idx];
-						if(x<graph->xmin) graph->xmin=x;
-						if(x>graph->xmax) graph->xmax=x;
-					}
-					text=g_strdup_printf("%G",graph->xmin);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->xmax);
-					GUI_ENTRY_TEXT(GRAPH_UI.xmax,text);g_free(text);
-				}/*else... there is a problem*/
 				break;
 			case GRAPH_REGULAR:
 			default:
@@ -1245,59 +900,6 @@ void toggle_auto_y(){
 				text=g_strdup_printf("%G",graph->ymax);
 				GUI_ENTRY_TEXT(GRAPH_UI.ymax,text);g_free(text);
 				break;
-			case GRAPH_FREQUENCY:
-				/*easy*/
-				graph->ymin=0.;
-				graph->ymax=1.;
-				text=g_strdup_printf("%G",graph->ymin);
-				GUI_ENTRY_TEXT(GRAPH_UI.ymin,text);g_free(text);
-				text=g_strdup_printf("%G",graph->ymax);
-				GUI_ENTRY_TEXT(GRAPH_UI.ymax,text);g_free(text);
-				break;
-			case GRAPH_BANDOS:
-				/* PASS THROUGH */
-			case GRAPH_BAND:
-				if(data->band_up){
-					gdouble y;
-					y=data->band_up[0]-data->efermi;
-					graph->ymin=y;
-					graph->ymax=y;
-					for(idx=1;idx<(data->nbands*data->nkpoints);idx++){
-						y=data->band_up[idx]-data->efermi;
-						if(y<graph->ymin) graph->ymin=y;
-						if(y>graph->ymax) graph->ymax=y;
-					}
-					if(data->band_down){
-						for(idx=0;idx<(data->nbands*data->nkpoints);idx++){
-							y=data->band_down[idx]-data->efermi;
-							if(y<graph->ymin) graph->ymin=y;
-							if(y>graph->ymax) graph->ymax=y;
-						}
-					}
-					text=g_strdup_printf("%G",graph->ymin);
-					GUI_ENTRY_TEXT(GRAPH_UI.ymin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->ymax);
-					GUI_ENTRY_TEXT(GRAPH_UI.ymax,text);g_free(text);
-				}/*else... there is a problem*/
-				break;
-			case GRAPH_DOS:
-				if(data->dos_spin_up){
-					gdouble y;
-					y=data->dos_spin_up[0];
-					graph->ymin=y;
-					graph->ymax=y;
-					for(idx=0;idx<data->ndos;idx++){
-						y=data->dos_spin_up[idx];
-						if(data->spin_polarized) y+=data->dos_spin_down[idx];
-						if(y<graph->ymin) graph->ymin=y;
-						if(y>graph->ymax) graph->ymax=y;
-					}
-					text=g_strdup_printf("%G",graph->ymin);
-					GUI_ENTRY_TEXT(GRAPH_UI.ymin,text);g_free(text);
-					text=g_strdup_printf("%G",graph->ymax);
-					GUI_ENTRY_TEXT(GRAPH_UI.ymax,text);g_free(text);
-				}/*else... there is a problem*/
-				break;
 			case GRAPH_REGULAR:
 			default:
 				graph->ymin=0.;
@@ -1322,7 +924,8 @@ void spin_update_num(void){
 	g_data_y *p_y;
 	gdouble my_x=0.;
 	graph_symbol symb;
-	gint idx=(gint)GRAPH_UI.num_number;
+	graph_color color;
+	gint idx;
 /* --- detect if graph_active has change and react accordingly*/
 	g_assert(graph != NULL);
 	data = sysenv.active_model;
@@ -1351,18 +954,7 @@ void spin_update_num(void){
 			g_free(text);
 			return;
 		}
-		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_XX_TYPE)){
-			my_x=p_x->x[idx-1];
-		}else{
-			idx=(gint)GRAPH_UI.num_number;
-			if((idx>(p_x->x_size+1))||(idx<1)){
-				text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
-				gui_text_show(ERROR, text);
-				g_free(text);
-				return;
-			}
-			my_x=p_x->x[idx-1];
-		}
+		/*actually each set have a type now -> get p_y first*/
 		idx=0;
 		while((list)&&(idx<(gint)GRAPH_UI.set_number)){
 			list=g_slist_next(list);
@@ -1383,8 +975,21 @@ void spin_update_num(void){
 			g_free(text);
 			return;
 		}
+		/*now look for my_x*/
+		if((p_y->type==GRAPH_IX_TYPE)||(p_y->type==GRAPH_XX_TYPE)){
+			idx=(gint)GRAPH_UI.set_number;
+		}else{
+			idx=(gint)GRAPH_UI.num_number;
+		}
+		if((idx>(p_x->x_size+1))||(idx<1)){
+			text = g_strdup_printf("ERROR: invalid GRAPH data set!\n");
+			gui_text_show(ERROR, text);
+			g_free(text);
+			return;
+		}
+		my_x=p_x->x[idx-1];/*true for all cases*/
 		idx=(gint)GRAPH_UI.num_number;/*number is off by 1*/
-		/*only the symbol can be changed on each data*/
+		/*only the symbol and symbol color can be changed on each data*/
 		if(p_y->symbol!=NULL) symb=p_y->symbol[idx-1];
 		else symb=GRAPH_SYMB_NONE;
 		switch(symb){
@@ -1402,6 +1007,49 @@ void spin_update_num(void){
 		default:
 			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 		}
+		/*set color*/
+		if(p_y->sym_color!=NULL){
+			color=p_y->sym_color[idx-1];
+		}else{
+			color=p_y->color;
+		}
+		switch(color){
+		case GRAPH_COLOR_BLACK:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,0);break;
+		case GRAPH_COLOR_WHITE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,1);break;
+		case GRAPH_COLOR_BLUE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,2);break;
+		case GRAPH_COLOR_GREEN:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,3);break;
+		case GRAPH_COLOR_RED:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,4);break;
+		case GRAPH_COLOR_YELLOW:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,5);break;
+		case GRAPH_COLOR_GRAY:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,6);break;
+		case GRAPH_COLOR_NAVY:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,7);break;
+		case GRAPH_COLOR_LIME:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,8);break;
+		case GRAPH_COLOR_TEAL:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,9);break;
+		case GRAPH_COLOR_AQUA:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,10);break;
+		case GRAPH_COLOR_MAROON:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,11);break;
+		case GRAPH_COLOR_PURPLE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,12);break;
+		case GRAPH_COLOR_OLIVE:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,13);break;
+		case GRAPH_COLOR_SILVER:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,14);break;
+		case GRAPH_COLOR_FUSHIA:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,15);break;
+		case GRAPH_COLOR_DEFAULT:
+		default:
+			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
+		}
 		/*show idx structure (if any)*/
 		GUI_UNLOCK(GRAPH_UI.idx);
 		text=g_strdup_printf("%i",p_y->idx[idx-1]);
@@ -1417,11 +1065,6 @@ void spin_update_num(void){
 		text=g_strdup_printf("%G",p_y->y[idx-1]);
 		GUI_ENTRY_TEXT(GRAPH_UI.y_val,text);g_free(text);
 		GUI_LOCK(GRAPH_UI.y_val);
-		break;
-	case GRAPH_FREQUENCY:
-	case GRAPH_BAND:
-	case GRAPH_DOS:
-	case GRAPH_BANDOS:
 		break;
 	case GRAPH_REGULAR:
 	default:
@@ -1515,7 +1158,6 @@ void spin_update_set(void){
 				GUI_UNLOCK(GRAPH_UI.by_val);
 				GUI_UNLOCK(GRAPH_UI.num);
 				GUI_SPIN_RANGE(GRAPH_UI.num,1.,(gdouble)p_y->y_size);
-				GRAPH_UI.num_number=1.;
 				if(GRAPH_UI.by_value) GUI_UNLOCK(GRAPH_UI.num);
 				else GUI_LOCK(GRAPH_UI.num);
 			}else{
@@ -1600,31 +1242,7 @@ void spin_update_set(void){
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
 			if((p_y->mixed_symbol)&&(!GRAPH_UI.by_value)) GUI_LOCK(GRAPH_UI.symbol);
-			if(GRAPH_UI.by_value){
-				/*try to refresh idx, x_val, y_val*/
-				spin_update_num();
-			}
 			break;
-                case GRAPH_FREQUENCY:
-                case GRAPH_BAND:
-                case GRAPH_DOS:
-                case GRAPH_BANDOS:
-                        /*these types will be soon replace by above GRAPH_??_TYPE*/
-			GUI_UNLOCK(GRAPH_UI.type);
-			GUI_COMBOBOX_SET(GRAPH_UI.type,0);
-			GUI_LOCK(GRAPH_UI.type);
-			GUI_UNLOCK(GRAPH_UI.size);
-			text=g_strdup("1");
-			GUI_ENTRY_TEXT(GRAPH_UI.size,text);g_free(text);
-			GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
-			GUI_COMBOBOX_SET(GRAPH_UI.line,0);
-			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
-			GRAPH_UI.by_value=FALSE;
-			GUI_LOCK(GRAPH_UI.by_val);
-			GUI_SPIN_RANGE(GRAPH_UI.num,1.,1.);
-			GRAPH_UI.num_number=1.;
-			GUI_LOCK(GRAPH_UI.num);
-                        break;
                 case GRAPH_REGULAR:
                 default:
 			GUI_UNLOCK(GRAPH_UI.type);
@@ -1638,7 +1256,7 @@ void spin_update_set(void){
 			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
 			break;
 	}
-
+	spin_update_num();
 }
 /*****************/
 /* toggle by_val */
@@ -1647,8 +1265,8 @@ void toggle_by_value(void){
 	if(GRAPH_UI.by_value){
 		GUI_UNLOCK(GRAPH_UI.num);
 		GUI_UNLOCK(GRAPH_UI.symbol);/*side-effect*/
+		GUI_UNLOCK(GRAPH_UI.color);
 		GUI_LOCK(GRAPH_UI.line);
-		GUI_LOCK(GRAPH_UI.color);
 		spin_update_num();
 	}else{
 		GUI_LOCK(GRAPH_UI.num);
@@ -1718,30 +1336,74 @@ if(have_changed==FALSE){
 		if(!list) return;/*bad, silently return*/
 		p_y = (g_data_y *) list->data;
 		/*update symbol <- if possible*/
-		if(p_y->symbol!=NULL){
-			/*We don't need to care about mixed_symbol (I think)*/
-			/*TODO: if p_y->symbol==NULL why not create a new array?*/
-			GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
-			switch(idx){
-			case 1:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_CROSS;
-				break;
-			case 2:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_SQUARE;
-				break;
-			case 3:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_DN;
-				break;
-			case 4:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_UP;
-				break;
-			case 5:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_DIAM;
-				break;
-			case 0:
-			default:
-				p_y->symbol[jdx-1]=GRAPH_SYMB_NONE;
-			}
+		if(p_y->symbol==NULL){/*create an array of symbol, set to NONE*/
+			p_y->symbol=g_malloc(p_y->y_size*sizeof(graph_symbol));
+			for(idx=0;idx<p_y->y_size;idx++) p_y->symbol[idx]=GRAPH_SYMB_NONE;
+		}
+		if(p_y->sym_color==NULL){/*create an array of sym_color, set to line color*/
+			p_y->sym_color=g_malloc(p_y->y_size*sizeof(graph_color));
+			for(idx=0;idx<p_y->y_size;idx++) p_y->sym_color[idx]=p_y->color;
+		}
+		/*We don't need to care about mixed_symbol (I think)*/
+		GUI_COMBOBOX_GET(GRAPH_UI.symbol,idx);
+		switch(idx){
+		case 1: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_CROSS;
+			break;
+		case 2: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_SQUARE;
+			break;
+		case 3: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_DN;
+			break;
+		case 4: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_TRI_UP;
+			break;
+		case 5: 
+			p_y->symbol[jdx-1]=GRAPH_SYMB_DIAM;
+			break;
+		case 0:
+		default:
+			p_y->symbol[jdx-1]=GRAPH_SYMB_NONE;
+		}
+		/*reset symbol color*/
+		GUI_COMBOBOX_GET(GRAPH_UI.color,idx);
+		switch(idx){
+		case 0:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_BLACK;break;
+		case 1:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_WHITE;break;
+		case 2:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_BLUE;break;
+		case 3:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_GREEN;break;
+		case 4:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_RED;break;
+		case 5:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_YELLOW;break;
+		case 6:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_GRAY;break;
+		case 7:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_NAVY;break;
+		case 8:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_LIME;break;
+		case 9:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_TEAL;break;
+		case 10:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_AQUA;break;
+		case 11:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_MAROON;break;
+		case 12:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_PURPLE;break;
+		case 13:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_OLIVE;break;
+		case 14:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_SILVER;break;
+		case 15:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_FUSHIA;break;
+		case 16:
+		default:
+			p_y->sym_color[jdx-1]=GRAPH_COLOR_DEFAULT;
 		}
 	}else{
 		if((graph->type==GRAPH_IX_TYPE)||(graph->type==GRAPH_IY_TYPE)||(graph->type==GRAPH_XX_TYPE)||(graph->type==GRAPH_XY_TYPE)){
@@ -1964,7 +1626,7 @@ GUI_TOOLTIP(GRAPH_UI.idx,"structure index (when relevant).");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"TRIANGLE (UP)");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"TRIANGLE (DN)");
 	GUI_COMBOBOX_ADD(GRAPH_UI.symbol,"DIAMOND");
-GUI_TOOLTIP(GRAPH_UI.symbol,"Default symbol for the graph.");
+GUI_TOOLTIP(GRAPH_UI.symbol,"Default symbol for the graph, or for each graph point.");
 	/* line 13 */
 	GUI_ENTRY_TABLE(table,GRAPH_UI.x_val,0.,"%G","X_VAL:",0,1,13,14);
 GUI_TOOLTIP(GRAPH_UI.x_val,"X value (when relevant).");
@@ -1996,7 +1658,7 @@ GUI_TOOLTIP(GRAPH_UI.y_val,"Y value (when relevant).");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"SILVER");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"FUSHIA");
 	GUI_COMBOBOX_ADD(GRAPH_UI.color,"DEFAULT");
-GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph.");
+GUI_TOOLTIP(GRAPH_UI.color,"Default color for the graph, or for each symbol.");
 /* initialize everything */
 	sync_graph_controls(graph);
 	toggle_auto_x();

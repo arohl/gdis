@@ -55,6 +55,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zmatrix.h"
 #include "gui_image.h"
 #include "undo.h"
+#include "track.h"
 
 #include "logo_left.xpm"
 #include "logo_right.xpm"
@@ -131,11 +132,9 @@ if (data->graph_active)
   case GRAPH_REGULAR:
     diffract_select_peak(x, y, data);
     break;
-  case GRAPH_FREQUENCY:
-    graph_frequency_select(x, y, data);
-    break;
   case GRAPH_IY_TYPE:
   case GRAPH_XY_TYPE:
+  case GRAPH_YX_TYPE:
   case GRAPH_IX_TYPE:
   case GRAPH_XX_TYPE:
     dat_graph_select(x,y,data);
@@ -1623,7 +1622,49 @@ if (active_data)
     active_data->refresh(NULL);
   }
 }
+/*********************************************/
+/* toggle tracking mode (if possible) --OVHPA*/
+/*********************************************/
+void gui_track_output(void){
+struct model_pak *model;
+gchar *ptr;
+/**/
+model = sysenv.active_model;
+if (!model) return;
+/*invert current tracking**/
+model->track_me=(model->track_me==FALSE);
+switch(model->id){
+case USPEX:
+	if(model->track_me) {
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_uspex,model,track_uspex_cleanup);
+		if(model->track_me) {
+			ptr=g_strdup_printf("USPEX TRACKING: START.\n");
+			gui_text_show(ITALIC,ptr);
+			g_free(ptr);
+		}
+	}else{
+		track_uspex(model);/*will return FALSE**/
+		model->track_me=FALSE;/*just in case we need to be very clear*/
+	}
+	break;
+case VASP:
+	if(model->track_me) {
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,model,track_vasp_cleanup);
+		if(model->track_me) {
+			ptr=g_strdup_printf("VASP TRACKING: START.\n");
+			gui_text_show(ITALIC,ptr);
+			g_free(ptr);
+		}
+	}else{
+		track_vasp(model);/*will return FALSE**/
+		model->track_me=FALSE;/*just in case we need to be very clear*/
+	}
+	break;
+default:
+	return;/*nothing to do*/
+}
 
+}
 /***************************************/
 /* quick - export view into eps --OVHPA*/
 /***************************************/
@@ -2082,6 +2123,16 @@ if(sysenv.have_eps){
 			GTK_SIGNAL_FUNC(gui_eps_export),
 			NULL);
 }
+/* tracking system */
+pixbuf = image_table_lookup("image_track");
+gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
+gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
+			NULL,
+			"Track output",
+			"Private",
+			gdis_wid,
+			GTK_SIGNAL_FUNC(gui_track_output),
+			NULL);
 /* MAIN LEFT/RIGHT HBOX PANE */
 /* paned window */
 hpaned = gtk_hpaned_new();

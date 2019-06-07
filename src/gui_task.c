@@ -51,7 +51,7 @@ extern struct sysenv_pak sysenv;
 #endif
 
 /* task manager globals */
-gdouble max_threads=1;
+gdouble max_threads=-1;
 gint task_show_running = 1;
 gint task_show_queued = 0;
 gint task_show_completed = 1;
@@ -281,7 +281,7 @@ for (me = 0; me < psarray->len; me++)
     found = TRUE;
 
       #if DEBUG_CALC_TASK_INFO
-      printf("pid: %d time:%s\n", child_pid, ctime(&oldest_time));
+      printf("pid: %d time:%s\n", tdata->pid, ctime(&oldest_time));
       #endif
     break;
     }
@@ -430,7 +430,8 @@ if (task)
     }
   else
     update = FALSE;
-
+/*_BUG_ (fixed) access after free --OVHPA*/
+  if(task==NULL) return TRUE;
   switch (task->status)
     {
     case RUNNING:
@@ -643,7 +644,10 @@ while (list)
   task = list->data;
   list = g_slist_next(list);
   if (task->status == COMPLETED || task->status == KILLED)
-    {
+    {/*FIX _BUG_ use after free --OVHPA*/
+    GtkTreeSelection *selection=gtk_tree_view_get_selection(GTK_TREE_VIEW(task_list_tv));
+	/*UNSELECT ALL before removing*/
+    gtk_tree_selection_unselect_all (selection);
     sysenv.task_list = g_slist_remove(sysenv.task_list, task);
     task_free(task);
     }

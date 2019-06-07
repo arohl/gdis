@@ -39,12 +39,16 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "model.h"
 #include "interface.h"
 #include "file_vasp.h"
+#include "graph.h"
 
 enum {VASP_DEFAULT, VASP_XML, VASP_TRIKS, VASP_NLOOPS};
 
 /* main structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
+
+#define DEBUG_TRACK_VASP 0
+
 
 int vasp_xml_read_header(FILE *vf){
 /* read the vasp xml header */
@@ -143,19 +147,27 @@ int vasp_xml_read_kpoints(FILE *vf,struct model_pak *model){
 int vasp_xml_read_incar(FILE *vf,struct model_pak *model){
 /* This is the 'full length' INCAR (mostly ignored). */
 	gchar *line;
+	gchar *ptr;
 	int isok=0;
-	int ii=0;
 	int ispin=0;
 	line = file_read_line(vf);
 	while (line) {
 	        if (find_in_string("/parameters",line) != NULL) break;
 		if (find_in_string("SYSTEM",line) != NULL) {
 			g_free(model->basename);
-			model->basename=g_malloc((strlen(line)-35)*sizeof(gchar));
-			sscanf(line," <i type=\"string\" name=\"SYSTEM\"> %s",model->basename);
-			/*get rid of the </i> part*/
-			while((model->basename[ii] != '<')&&(model->basename[ii] != '\0')) ii++;
-			model->basename[ii]='\0';
+/*FIX a BUG in line/basename memory access*/
+			ptr=&(line[0]);
+			while((*ptr!='>')&&(*ptr!='\0')) ptr++;
+			if(*ptr=='\0'){
+				model->basename=g_strdup_printf("unknown");/*which should not happen*/
+			}else{
+				ptr++;
+				__SKIP_BLANK(ptr);
+				model->basename=g_strdup_printf("%s",ptr);
+				ptr=&(model->basename[0]);
+				while((*ptr!='<')&&(*ptr!='\0')) ptr++;
+				*ptr='\0';
+			}
 		}
 		/*fill needed properties*/
 		if (find_in_string("NBANDS",line) != NULL)
@@ -1371,6 +1383,361 @@ int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
 	g_free(line);
 	return 0;
 }
+int vasp_xml_plot_energy(struct model_pak *model){
+/* FIXME: should test line for NULL each time? */
+	int idx,jdx;
+	FILE *vf;
+	gchar *line;
+	g_data_x gx;
+	g_data_y gy;
+	gdouble min_E,max_E,E;
+	vasp_output_struct *vasp_out;
+	/*NEW: attach an energy plot*/
+	if(model==NULL) return 3;
+	if(model->vasp==NULL) return 3;
+	vasp_out=(vasp_output_struct *)model->vasp;
+	/*not an error but no energy graph on a singlepoint calculation*/
+	if(vasp_out->calc_type==VASP_SINGLE) return 0;
+	/*not an error but no energy graph on a frequency calculation*/
+	if(vasp_out->calc_type&VASP_FREQ) return 0;
+	if(model->num_frames<1) return 3;
+	/*populate Y first!*/
+	vf = fopen(model->filename, "rt");
+	if (!vf) return 1;
+	/*1- count n_scf*/
+	vasp_out->n_scf=0;
+	vasp_out->last_pos=ftell(vf);/*flag*/
+	/*skip first energy though*/
+	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
+	line = file_read_line(vf);
+	while(line){
+		if (find_in_string("<energy>",line) != NULL) {
+			g_free(line);
+			line = file_read_line(vf);
+			if (find_in_string("e_fr_energy",line) != NULL) vasp_out->n_scf++;
+		}
+		g_free(line);
+		line = file_read_line(vf);
+	}
+//fprintf(stdout,"FOUND N_SCF=%i\n",vasp_out->n_scf);
+	if(vasp_out->n_scf < 3) return 0;/*NOT enough energy data*/
+	gy.y_size=vasp_out->n_scf;
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc0(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
+	gy.mixed_symbol=TRUE;/*<- to differenciate between SCF and STEP*/
+	gy.sym_color=NULL;
+	gy.y[0]=NAN;/*frame 0 does not exist*/
+	/*2- rewind, process each energy*/
+	rewind(vf);
+	if(fetch_in_file(vf,"<energy>")==0) return 4;/*NO energy... but, n_scf>0 ??*/
+	line = file_read_line(vf);
+	if(line==NULL) return 4;/*this is not normal*/
+	if (find_in_string("alphaZ",line) == NULL) return 4;/*this is not normal*/
+	g_free(line);
+	/*first value is discarded, look for next one (hence repetition)*/
+	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
+	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
+	line = file_read_line(vf);
+	if (find_in_string("e_fr_energy",line) != NULL) {
+		g_free(line);line = file_read_line(vf);
+		if (find_in_string("e_wo_entrp",line) == NULL) return 4;/*NOT OK*/
+		sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
+		gy.y[1]=E;
+		gy.idx[1]=-1;/*not a STEP -> SCF*/
+		gy.symbol[1]=GRAPH_SYMB_CROSS;
+		vasp_out->last_pos=ftell(vf);/*flag*/
+//fprintf(stdout,"SCF: E[1]=%lf\n",E);
+	}else return 3;
+	g_free(line);
+	min_E=E;
+	max_E=E;
+	idx=1;jdx=1;
+	while(idx<(vasp_out->n_scf-1)){
+		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
+		line = file_read_line(vf);if(line==NULL) break;
+		if (find_in_string("e_fr_energy",line) != NULL) {
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
+			if (find_in_string("e_wo_entrp",line) == NULL) return 4;/*NOT OK*/
+			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
+			gy.y[idx+1]=E;
+			/*detect if SCF is a IONIC STEP*/
+			if(fetch_in_file(vf,"</energy>")==0) break;/*unfinished calculation?*/
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
+			if (find_in_string("scstep",line) != NULL) {
+				/*was a SCF*/
+				gy.idx[idx+1]=-1;
+				gy.symbol[idx+1]=GRAPH_SYMB_CROSS;
+//fprintf(stdout,"SCF: E[%i]=%lf\n",idx+1,E);
+			}else{
+				/*was a step*/
+//fprintf(stdout,"IONIC_STEP: E[%i]=%lf\n",jdx,E);
+				gy.idx[idx+1]=jdx;
+				gy.symbol[idx+1]=GRAPH_SYMB_DIAM;
+				jdx++;
+			}
+			idx++;
+			g_free(line);
+			vasp_out->last_pos=ftell(vf);/*flag*/
+		}
+		if(E<min_E) min_E=E;
+		if(E>max_E) max_E=E;
+	}
+	fclose(vf);/*no longer needed*/
+	if(vasp_out->graph_energy==NULL){
+		vasp_out->graph_energy=graph_new("ENERGY",model);
+		dat_graph_set_title("<big>Energy <i>vs.</i> SCF step</big>",vasp_out->graph_energy);
+		dat_graph_set_sub_title("<small>(From <b>vasprun.xml</b> file)</small>",vasp_out->graph_energy);
+		dat_graph_set_x_title("SCF steps",vasp_out->graph_energy);
+		dat_graph_set_y_title("Energy (eV)",vasp_out->graph_energy);
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,vasp_out->graph_energy);
+		gy.type=GRAPH_IY_TYPE;
+		gy.line=GRAPH_LINE_THICK;
+		gy.color=GRAPH_COLOR_DEFAULT;
+		graph_set_xticks(TRUE,2,vasp_out->graph_energy);
+		graph_set_yticks(TRUE,2,vasp_out->graph_energy);
+	}else{
+		gy.type=GRAPH_IY_TYPE;
+		gy.line=GRAPH_LINE_THICK;
+		gy.color=GRAPH_COLOR_DEFAULT;
+		graph_reset_data((struct graph_pak *)vasp_out->graph_energy);
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,vasp_out->graph_energy);
+		graph_set_xticks(TRUE,2,vasp_out->graph_energy);
+	}
+	/*X*/
+	gx.x_size=vasp_out->n_scf;/*frame 0 does not count*/
+	gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
+	for(idx=0;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+	dat_graph_set_x(gx,vasp_out->graph_energy);
+	dat_graph_set_type(GRAPH_IY_TYPE,vasp_out->graph_energy);
+	g_free(gx.x);
+	/*Y*/
+	dat_graph_add_y(gy,vasp_out->graph_energy);
+	/*EOF*/
+	g_free(gy.y);
+	g_free(gy.idx);
+	g_free(gy.symbol);
+	return 0;
+}
+
+int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
+/*we have a previous graph and just want to update latest values*/
+	long int vfpos;
+	int idx,jdx,old_size;
+	int n_add,last_step=0;
+	gchar *line=NULL;
+	g_data_x gx,*px;
+	g_data_y gy,*py;
+	gdouble min_E,max_E,E;
+	vasp_output_struct *vasp_out;
+	struct graph_pak *graph;
+	GSList *list;
+	/*CHECKS*/
+	if(model==NULL) return 3;
+	if(model->vasp==NULL) return 3;
+	vasp_out=(vasp_output_struct *)model->vasp;
+	if(vasp_out->calc_type==VASP_SINGLE) return 0;
+	if(vasp_out->calc_type&VASP_FREQ) return 0;
+	if(model->num_frames<1) return 3;
+	if(vasp_out->graph_energy==NULL) return 3;
+	graph=(struct graph_pak *)vasp_out->graph_energy;
+	if(graph==NULL) return 3;
+	if(graph->type==GRAPH_REGULAR) return 3;/*TO BE REMOVED*/
+	list=graph->set_list;
+	if(list==NULL) return 3;
+	/*SAVE px,py*/
+	px=(g_data_x *)list->data;
+	list=g_slist_next(list);
+	if(list==NULL) return 3;
+	py=(g_data_y *)list->data;
+	vfpos=ftell(vf);/*flag*/
+	fseek(vf,vasp_out->last_pos,SEEK_SET);/* goto last_pos */
+	old_size=px->x_size;
+	/*count additional energy data*/
+	if(fetch_in_file(vf,"<energy>")==0) {/*no new energy information*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return 3;/*no additional data*/
+	}
+	line = file_read_line(vf);
+	if(line==NULL) return 4;/*this is not normal*/
+	if (find_in_string("e_fr_energy",line) != NULL) n_add=1;
+	else n_add=0;
+	g_free(line);line = file_read_line(vf);
+	while(line){
+		if (find_in_string("<energy>",line) != NULL) {
+			g_free(line);line = file_read_line(vf);
+			if(line==NULL){
+				/*very rare _BUG_ ~once per 72h of continuous update*/
+				return 3;
+			}
+			if (find_in_string("e_fr_energy",line) != NULL) n_add++;
+		}
+		g_free(line);line = file_read_line(vf);
+	}
+	if(n_add==0) {
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		return 3;/*no additional data*/
+	}
+//fprintf(stdout,"PLOT: ADD %i SCF.\n",n_add);
+	/*init gx,gy*/
+	gy.y_size=old_size+n_add;
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+	gy.idx=g_malloc0(gy.y_size*sizeof(gint32));/*<- will set structure frame automagically*/
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
+	gy.mixed_symbol=TRUE;/*<- to differenciate between SCF and STEP*/
+	gy.sym_color=NULL;
+	gx.x_size=old_size+n_add;
+	gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
+	for(idx=vasp_out->n_scf;idx<gx.x_size;idx++) gx.x[idx]=(gdouble)(idx);
+	/*COPY old px,py data*/
+	for(idx=0;idx<old_size;idx++){
+		gx.x[idx]=px->x[idx];
+		gy.y[idx]=py->y[idx];
+		gy.idx[idx]=py->idx[idx];
+		if(gy.idx[idx]>0) last_step=gy.idx[idx];/*get the latest step*/
+		gy.symbol[idx]=py->symbol[idx];
+	}
+	/*RESET graph*/
+	gy.type=GRAPH_IY_TYPE;
+	gy.line=GRAPH_LINE_THICK;
+	gy.color=GRAPH_COLOR_DEFAULT;
+	min_E=graph->ymin;
+	max_E=graph->ymax;
+	graph_reset_data(graph);
+	graph_set_xticks(TRUE,2,vasp_out->graph_energy);
+	/*X is now complete*/
+	dat_graph_set_x(gx,vasp_out->graph_energy);
+	dat_graph_set_type(GRAPH_IY_TYPE,vasp_out->graph_energy);/*useful?*/
+	g_free(gx.x);
+	/*get Y new data*/
+	fseek(vf,vasp_out->last_pos,SEEK_SET);/* goto last_pos */
+	idx=vasp_out->n_scf;
+	jdx=last_step+1;
+	while(idx<gy.y_size){/*while reading there is a risk that additional energy pops-up, hence the idx check*/
+		if(fetch_in_file(vf,"<energy>")==0) break;/*no more <energy> -> EOF*/
+		line = file_read_line(vf);if(line==NULL) break;
+		if (find_in_string("e_fr_energy",line) != NULL) {
+			g_free(line);line = file_read_line(vf);if(line==NULL) break;
+			if (find_in_string("e_wo_entrp",line) == NULL) {
+				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				g_free(gy.y);
+				g_free(gy.idx);
+				g_free(gy.symbol);
+				return 4;/*NOT OK*/
+			}
+			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
+			gy.y[idx]=E;
+			if(fetch_in_file(vf,"</energy>")==0) break;/*unfinished calculation?*/
+			g_free(line);line = file_read_line(vf);
+			if(!line) {/*sometime, we'll reach EOF here*/
+				/*which means it's a STEP*/
+//fprintf(stdout,"EOF! ADD-STEP: E[%i]=%lf\n",jdx,E);
+				gy.idx[idx]=jdx;
+				gy.symbol[idx]=GRAPH_SYMB_DIAM;
+				vasp_out->last_pos=ftell(vf);/*flag <- this one will work?*/
+				if(E<min_E) min_E=E;
+				if(E>max_E) max_E=E;
+				break;
+			}
+			if (find_in_string("scstep",line) != NULL) {
+				/*was a SCF*/
+				gy.idx[idx]=-1;
+				gy.symbol[idx]=GRAPH_SYMB_CROSS;
+//fprintf(stdout,"ADD-SCF: E[%i]=%lf\n",idx,E);
+			}else{
+				/*was a STEP*/
+				gy.idx[idx]=jdx;
+				gy.symbol[idx]=GRAPH_SYMB_DIAM;
+//fprintf(stdout,"ADD-STEP: E[%i]=%lf\n",jdx,E);
+				jdx++;
+			}
+			idx++;
+			g_free(line);
+			vasp_out->last_pos=ftell(vf);/*flag*/
+			if(E<min_E) min_E=E;
+			if(E>max_E) max_E=E;
+		}
+	}
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	/*Y is now complete*/
+	dat_graph_add_y(gy,vasp_out->graph_energy);/*_BUG_ triggered #06/06/2019*/
+	g_free(gy.y);
+	g_free(gy.idx);
+	g_free(gy.symbol);
+	/*reset limits -- if necessary*/
+	vasp_out->n_scf+=n_add;/*keep up with SCF numbers*/
+	if((min_E<graph->ymin)||(max_E>graph->ymax)){
+//fprintf(stdout,"LIM: min_E=%lf max_E=%lf ymin=%lf ymax=%lf\n",min_E,max_E,graph->ymin,graph->ymax);
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E-(max_E-min_E)*0.05,max_E+(max_E-min_E)*0.05,vasp_out->graph_energy);
+	}else{
+		dat_graph_set_limits(0,vasp_out->n_scf,min_E,max_E,vasp_out->graph_energy);
+	}
+	return 0;
+}
+
+int vasp_xml_read_forces(FILE *vf, struct model_pak *model){
+	gchar *line;
+	gdouble force=0.;
+	gdouble f,fx,fy,fz;
+	long int vfpos=ftell(vf);
+	if(fetch_in_file(vf,"<varray name=\"forces\" >")==0){
+		/*finalpos exception*/
+		rewind(vf);
+		while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		if(fetch_in_file(vf,"<varray name=\"forces\" >")==0) return -1;/*still no forces?*/
+	}
+	/*we are on the force varray begining*/
+	line = file_read_line(vf);/*first line of forces*/
+	sscanf(line," <v> %lf %lf %lf </v>",&fx,&fy,&fz);
+	force=sqrt(fx*fx+fy*fy+fz*fz);
+	g_free(line);
+	line = file_read_line(vf);/*next line*/
+	while (find_in_string("/varray",line) == NULL){
+		sscanf(line," <v> %lf %lf %lf </v>",&fx,&fy,&fz);
+		f=sqrt(fx*fx+fy*fy+fz*fz);
+		if(f>force) force=f;
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	g_free(line);
+	line=g_strdup_printf("%lf eV/Ang",force);
+	property_add_ranked(4, "Force", line, model);
+	g_free(line);
+	return 0;
+}
+
+int vasp_xml_read_stress(FILE *vf, struct model_pak *model){
+	gchar *line;
+	gdouble stress=0.;
+	gdouble sx,sy,sz;
+	long int vfpos=ftell(vf);
+	if(fetch_in_file(vf,"<varray name=\"stress\" >")==0){
+		/*finalpos exception*/
+		rewind(vf);
+		while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
+		fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+		if(fetch_in_file(vf,"<varray name=\"stress\" >")==0) return -1;/*still no stress?*/
+	}
+	/*we are on the stress varray begining*/
+	line = file_read_line(vf);/*first line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	line = file_read_line(vf);/*second line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	line = file_read_line(vf);/*third line of stress*/
+	sscanf(line," <v> %lf %lf %lf </v>",&sx,&sy,&sz);
+	stress+=sqrt(sx*sx+sy*sy+sz*sz);
+	g_free(line);
+	stress/=3.;
+	line=g_strdup_printf("%lf kB",stress);
+	property_add_ranked(5, "Stress", line, model);
+	g_free(line);
+	return 0;
+}
 
 int vasp_xml_read_frequency(FILE *vf, struct model_pak *model){
 /*factor is actually:
@@ -1455,7 +1822,7 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	/* fill every atom position */
 	line = file_read_line(vf);
 	idx=0;core=g_slist_nth_data(model->cores,0);
-	while (line) {
+	while((core)&&(line)) {
 		if (find_in_string("/varray",line) != NULL) break;
 		sscanf(line," <v> %lf %lf %lf </v>",&core->x[0],&core->x[1],&core->x[2]);
 		idx++;
@@ -1465,10 +1832,16 @@ int vasp_xml_read_pos(FILE *vf,struct model_pak *model){
 	}
 	if (line == NULL) return -1;/*incomplete positions*/
 	g_free(line);
-	if (idx != model->num_atoms) /* This should not happen */
-		fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->num_atoms,idx);
+	if (idx != model->num_atoms){
+		if (model->track_me==FALSE)
+			fprintf(stderr,"WARNING: Expecting %i atoms but got %i!\n",model->num_atoms,idx);
+		else
+			model->num_atoms = idx;
+	}
 	/* look for energies */
 	vasp_xml_read_energy(vf,model);
+	vasp_xml_read_forces(vf,model);
+	vasp_xml_read_stress(vf,model);
 	return 0;
 }
 int vasp_xml_read_bands(FILE *vf,struct model_pak *model){
@@ -1565,8 +1938,6 @@ fprintf(stdout,"#DBG: spin=down kpt=%i band=%i eval=%lf\n",ik,ib,model->band_up[
 	return 0;
 }
 
-
-
 int vasp_xml_read_dos(FILE *vf, struct model_pak *model){
 	/* get the final density of states (total dos only) */
 	gchar *line;
@@ -1637,6 +2008,38 @@ fprintf(stdout,"#DBG: CATCH SPIN DOWN: %i %lf \t %lf\n",idx,model->dos_eval[idx]
 	}
 	return 0;
 }
+/******************************/
+/* free vasp_output_structure */
+/******************************/
+void vasp_out_reset(vasp_output_struct * vo){
+	if(vo==NULL) return;
+	if(vo->name!=NULL) g_free(vo->name);
+	vo->name=NULL;
+	if(vo->E!=NULL) g_free(vo->E);
+	vo->E=NULL;
+	if(vo->V!=NULL) g_free(vo->V);
+	vo->V=NULL;
+	if(vo->F!=NULL) g_free(vo->F);
+	vo->F=NULL;
+	if(vo->P!=NULL) g_free(vo->P);
+	vo->P=NULL;
+	/*use graph_free?*/
+	if(vo->graph_energy!=NULL) graph_reset(vo->graph_energy);
+	vo->graph_energy=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+	if(vo->graph_volume) graph_reset(vo->graph_volume);
+	vo->graph_volume=NULL;
+}
+/*******************************************/
+/* free vasp_output_structure from outside */
+/*******************************************/
+void free_vasp_out(gpointer data){
+	vasp_out_reset((vasp_output_struct *)data);
+
+}
 /* here will be some more features */
 /* general parser / writter */
 gint read_xml_vasp(gchar *filename, struct model_pak *model){
@@ -1652,7 +2055,10 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	int num_frames=1;
 	FILE *vf;
 	long int vfpos;
+	long int p1,p2;
 	gchar *line;
+	vasp_output_struct *vasp_out;
+	/*START*/
 	g_return_val_if_fail(model != NULL, 1);
 	g_return_val_if_fail(filename != NULL, 2);
 	vf = fopen(filename, "rt");
@@ -1660,19 +2066,49 @@ gint read_xml_vasp(gchar *filename, struct model_pak *model){
 	error_table_clear();
 	/* some defaults */
 	sysenv.render.show_energy = TRUE;
+	model->animation=FALSE;
+	model->num_frames=-1;
+	if(model->vasp!=NULL) {
+		vasp_out_reset((vasp_output_struct *)model->vasp);
+		g_free(model->vasp);
+		model->vasp=NULL;
+	}
+	vasp_out=g_malloc(sizeof(vasp_output_struct));
+	model->vasp=(gpointer)vasp_out;
+	vasp_out->name=NULL;
+	vasp_out->n_scf=0;vasp_out->calc_type=VASP_SINGLE;/*FIX valgrind _BUG_ 0x4B41D1 0x4B41F3*/
+	vasp_out->E=NULL;
+	vasp_out->V=NULL;
+	vasp_out->F=NULL;
+	vasp_out->P=NULL;
+	vasp_out->graph_energy=NULL;
+	vasp_out->graph_volume=NULL;
+	vasp_out->graph_forces=NULL;
+	vasp_out->graph_stress=NULL;
 	/* start reading */
 	line = file_read_line(vf);
 	/* the first xml tag ie <?xml version="x.x" encoding="ISO-xxxx-x"?> */
-	if (find_in_string("xml",line) == NULL) return 3;/* not even an xml file */
+	if (find_in_string("xml",line) == NULL) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;/* not even an xml file */
+	}
 	g_free(line);
 	/* <generator> tag */
-	if(fetch_in_file(vf,"<generator>")==0) return 3;
-	isok=vasp_xml_read_header(vf);
-	if (isok == 10) gui_text_show(STANDARD,g_strdup_printf("VASP detected\n"));
-	else {
-		if (isok == 1) gui_text_show(WARNING,g_strdup_printf("not generated by vasp, will try to read however.\n"));
-		if (isok == 0) return 3;/* not a valid vaspxml */
+	if(fetch_in_file(vf,"<generator>")==0) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;
 	}
+	isok=vasp_xml_read_header(vf);
+	if (isok == 10) {
+		if(!model->silent) gui_text_show(STANDARD,g_strdup_printf("VASP detected\n"));
+	} else {
+		if (isok == 1) if(!model->silent) gui_text_show(WARNING,g_strdup_printf("not generated by vasp, will try to read however.\n"));
+		if (isok == 0) {
+			g_free(vasp_out);model->vasp=NULL;
+			return 3;/* not a valid vaspxml */
+		}
+	}
+	model->id=VASP;/*from here we can say for sure this is a valid VASP model**/
 vfpos=ftell(vf);/*flag*/
 	/* <incar> tag - if none, rewind and ignore */
 	if(fetch_in_file(vf,"<incar>")==0) fseek(vf,vfpos,SEEK_SET);
@@ -1686,17 +2122,34 @@ vfpos=ftell(vf);/*flag*/
 	if(fetch_in_file(vf,"<parameters>")==0) fseek(vf,vfpos,SEEK_SET);
 	else vasp_xml_read_incar(vf,model);
 	/* <atominfo> tag - mandatory */
-	if(fetch_in_file(vf,"<atominfo>")==0) return 3;
-	if(vasp_xml_read_atominfo(vf,model)<0) return 3;
+	if(fetch_in_file(vf,"<atominfo>")==0) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;
+	}
+	if(vasp_xml_read_atominfo(vf,model)<0) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;
+	}
 	/* <structure name="initialpos" > tag */
 vfpos=ftell(vf);/*flag*/
 	/* Counting the # of frames */
-	if(fetch_in_file(vf,"initialpos")==0) return 3;
-	line = file_read_line(vf);
-	while (line){
-		if (find_in_string("/calculation",line) != NULL) {
-			add_frame_offset(vf, model);
-			num_frames++;
+	if(fetch_in_file(vf,"initialpos")==0) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;
+	}
+	line = file_read_line(vf);p1=0;
+	while (line){/*NEW: ensure that each frame is complete*/
+		if (find_in_string("</calculation>",line) != NULL) {
+			if(p1!=0){
+				p2=ftell(vf);/*flag*/
+				fseek(vf,p1,SEEK_SET);/* rewind to flag */
+				add_frame_offset(vf, model);
+				num_frames++;
+				fseek(vf,p2,SEEK_SET);/* forward to flag */
+			}
+		}
+		if (find_in_string("<calculation>",line) != NULL) {
+			p1=ftell(vf);/*flag*/
 		}
 		if (find_in_string("/modeling",line) != NULL) break;
 		g_free(line);
@@ -1711,58 +2164,410 @@ vfpos=ftell(vf);/*flag*/
 	}
 	vasp_xml_read_bands(vf,model);/* Read bands */
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-	if (num_frames == 1){
-		model->animation=FALSE;
-		if(vasp_xml_read_pos(vf,model)<0) return 3;
-	} else { /* we have num_frames-1 frames */
-		model->cur_frame=1;
-		if (num_frames <= 2){/* special cases, only initialpos and finalpos or single point calculation */
-			num_frames=1;
-			model->animation=FALSE;/* get rid of frame display */
+	if (num_frames == 1) {
+		/*we never catch "calculation" BUT we have "initialpos"*/
+if(!model->silent){
+		line = g_strdup_printf("WARNING: incomplete calculation!\n");
+		gui_text_show(ERROR, line);
+		g_free(line);
+}
+		/*we can display only that as an info ;)*/
+	} else {
+		/* we have num_frames-1 frames */
+		/*set the current frame to origin*/
+//		num_frames--;/*this is to cope with the above "initialpos only case"*/
+		if (num_frames <= 2){
 			if(fetch_in_file(vf,"finalpos")==0) {
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-				/*display at least the initial position, with a warning*/
-				if(fetch_in_file(vf,"initialpos")==0) return 3;
+				/*this is simply the first 2 steps of an incomplete calculation*/
+				vasp_out->calc_type=VASP_RUN+VASP_OPT;
+				model->animation=TRUE;
+if(!model->silent){
 				line = g_strdup_printf("WARNING: incomplete calculation!\n");
 				gui_text_show(ERROR, line);
 				g_free(line);
+}
+			}else{
+				/*this is a special single point calculation:
+				 * 1- 1st SCF <calculation>
+				 * 2- finalpos summary  */
+				num_frames--;
+				if(num_frames==0) {
+					g_free(vasp_out);model->vasp=NULL;
+					return 3;/*there should be no case where finalpos is the only frame*/
+				}
+				vasp_out->calc_type=VASP_SINGLE;
+				model->animation=FALSE;/* get rid of frame display */
+				/*TODO: add don't track information*/
+				/*removing finalpos -- NOT NEEDED
+				list=g_list_last(model->frame_list);
+				model->frame_list=g_list_remove(model->frame_list,list->data);
+				*/
 			}
-			if(vasp_xml_read_pos(vf,model)<0) return 3;
 		} else {
 			model->animation=TRUE;
-			num_frames=num_frames-2;/* because the finalpos is already part of the ionic steps */
 			if(fetch_in_file(vf,"finalpos")==0) {
-				/*imcomplete calculation, go the the last valid <structure>*/
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
-				while(fetch_in_file(vf,"<structure>")!=0) vfpos=ftell(vf);/*flag*/
-				fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+				/*this is simply n first steps of an incomplete calculation*/
+				num_frames--;
+				vasp_out->calc_type=VASP_RUN+VASP_OPT;
+if(!model->silent){
 				line = g_strdup_printf("WARNING: incomplete calculation!\n");
 				gui_text_show(ERROR, line);
 				g_free(line);
+}
+			}else{
+				/*this is simply n+1 steps of a complete calculation*/
+				num_frames--;
+				vasp_out->calc_type=VASP_RUN+VASP_OPT;
+				/*removing finalpos -- NOT NEEDED
+				list=g_list_last(model->frame_list);
+				model->frame_list=g_list_remove(model->frame_list,list->data);
+				*/
 			}
-			if(vasp_xml_read_pos(vf,model)<0) return 3;
-			model->cur_frame = num_frames - 1;
 		}
+	}
+	/*read/display the last position!*/
+	model->cur_frame = num_frames-1;
+	rewind(vf);
+	while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);/*flag*/
+	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
+	if(vasp_xml_read_pos(vf,model)<0) {
+		g_free(vasp_out);model->vasp=NULL;
+		return 3;
 	}
 	/* at the end of file, or </modeling> tag */
 	model->num_frames = num_frames;
 	model->redraw = TRUE;
 	/* always show this information */
+if(!model->silent){
 	gui_text_show(ITALIC,g_strdup_printf("-> %i frames detected.\n",num_frames));
+}
 	strcpy(model->filename, filename);/* strcpy is ok? */
 	fflush(stdout);
 	model_prep(model);
 	error_table_print_all();
 	fclose(vf);
+/*now plot graphs*/
+	vasp_xml_plot_energy(model);
 	return(0);
 }
 /* simplified frame reading */
 gint read_xml_vasp_frame(FILE *vf, struct model_pak *model){
 	g_assert(vf != NULL);
-	if(fetch_in_file(vf,"scstep")==0) return 3;
+	if(fetch_in_file(vf,"structure")==0) return 3;
 	if(vasp_xml_read_pos(vf,model)<0) return 3;
 	return 0;
 }
+/******************************/
+/* NEW: track running vasp xml*/
+/******************************/
+gboolean track_vasp(void *data){
+	gpointer camera;
+	fpos_t *vffpos=NULL;
+	long int p1,p2;
+	FILE *vf;
+	GList *list;
+	gchar *line;
+	gint add_frames;
+	struct model_pak *model=(struct model_pak *)data;
+	struct model_pak *new_model;
+	vasp_output_struct *vasp_out;
+	/*is being called every TRACKING_TIMEOUT; every "return FALSE" will stop the timer!*/
+	if(model==NULL) return FALSE;
+	if(model->track_me==FALSE) return FALSE;/*FIX valgrind _BUG_ 0x4B75FF*/
+	model->track_nb=(model->track_nb+1)%3;
+	vasp_out=(vasp_output_struct *)model->vasp;
+	if((model->num_frames<0)||(vasp_out==NULL)){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-VALID-MODEL\n");
+#endif
+		/*this means that we need to try to reload model*/
+		line=g_strdup(model->filename);
+		new_model=model_new();
+		model_init(new_model);
+		new_model->silent=TRUE;
+		if(read_xml_vasp(line,new_model)==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ SUCCESS\n");
+#endif
+			strcpy(new_model->filename,line);/* strcpy is ok? <- necessary?*/
+			/*refresh*/
+			model->t_next=new_model;
+			g_free(line);
+			return FALSE;/*we don't need to continue tracking on old model*/
+		}else{
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ FAIL\n");
+#endif
+		/*Can't open, but don't GIVE UP*/
+		model_delete(new_model);
+		g_free(line);
+		return TRUE;
+		}
+	}
+	if(model->frame_list==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME-LIST\n");
+#endif
+		/*if there is no frame list and model->num_frames>0 -> num_frames=1*/
+		if(model->num_frames!=1){
+			/*problem with data! -> reset (next time)*/
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME INVALID-NUM %i\n",model->num_frames);
+#endif
+			model->num_frames=-1;
+			return TRUE;
+		}
+		vf=fopen(model->filename, "r");
+		if(vf==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME NO-FILE?\n");
+#endif
+			/*no file, but num_frame=1 -> reset*/
+			return FALSE;/*GIVE UP*/
+		}
+		if(fetch_in_file(vf,"initialpos")==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME INVALID-INITIALPOS?\n");
+#endif
+			/*no initial data but num_frame=1 -> reset*/
+			fclose(vf);
+			return FALSE;/*GIVE UP*/
+		}
+		add_frames=0;
+		line = file_read_line(vf);
+		p1=0;
+		while (line){
+			if (find_in_string("</calculation>",line) != NULL) {
+				if(p1!=0){
+					p2=ftell(vf);/*flag*/
+					fseek(vf,p1,SEEK_SET);/* rewind to flag */
+					add_frame_offset(vf, model);
+					add_frames++;
+					fseek(vf,p2,SEEK_SET);/* forward to flag */
+				}
+			}
+			if (find_in_string("<calculation>",line) != NULL) {
+				p1=ftell(vf);/*flag*/
+			}
+			g_free(line);
+			line = file_read_line(vf);
+		}
+		if(add_frames==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME NO-FRAME\n");
+#endif
+			/*first step is not finished? be patient*/
+			fclose(vf);
+			return TRUE;
+		}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME %i-FRAME\n",add_frames);
+#endif
+		model->num_frames=add_frames;/*initialpos no longer counts*/
+		fclose(vf);
+		if(add_frames>=1) {
+			vasp_out->calc_type=VASP_RUN+VASP_OPT;
+			vasp_xml_plot_energy(model);
+			model->animation=TRUE;
+		}
+		return TRUE;/*do tracking later*/
+	}
+	vf=fopen(model->filename, "r");
+	if(vf==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FILE\n");
+#endif
+		/*vasprun.xml was deleted!*/
+		line=g_strdup_printf("vasprun.xml was deleted, stop tracking...\n");
+		gui_text_show(ITALIC,line);
+		g_free(line);
+		return FALSE;/*GIVE UP*/
+	}
+	list=g_list_last(model->frame_list);
+	vffpos=(fpos_t *)list->data;
+	if(fsetpos(vf,vffpos)!=0){/*go to last pos*/
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-POS -- vasprun.xml reset!\n");
+#endif
+		/*vasprun.xml was deleted!*/
+		line=g_strdup_printf("vasprun.xml was deleted, stop tracking...\n");
+		gui_text_show(ITALIC,line);
+		g_free(line);
+		fclose(vf);
+		return FALSE;/*GIVE UP*/
+	}
+	line = file_read_line(vf);
+	if(line==NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-LINE\n");
+#endif
+		/*vasprun.xml was overwritten.*/
+		line=g_strdup_printf("vasprun.xml was overwritten, restart tracking...\n");
+		gui_text_show(ITALIC,line);
+		g_free(line);
+		fclose(vf);
+		line=g_strdup(model->filename);
+		new_model=model_new();
+		model_init(new_model);
+		if(read_xml_vasp(line,new_model)==0){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NEW-READ SUCCESS\n");
+#endif
+			strcpy(new_model->filename,line);/* strcpy is ok? <- necessary?*/
+			/*refresh*/
+			model->t_next=new_model;
+			g_free(line);
+			return FALSE;/*we don't need to continue tracking on old model*/
+		}else{
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NEW-READ FAIL\n");
+#endif
+			/*Can't open, keep trying*/
+			model_delete(new_model);
+			g_free(line);
+			return TRUE;
+		}
+	}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: LINE-%s\n",line);
+#endif
+	if(find_in_string("finalpos",line)!=NULL) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: FINALPOS\n");
+#endif
+		g_free(line);
+		fclose(vf);
+		return FALSE;/*GIVE UP <- can stop multiple tracking*/
+	}
+	add_frames=0;
+	if(fetch_in_file(vf,"<calculation>")==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-FRAME\n");
+#endif
+		/*we don't need to update model display here*/
+		fclose(vf);
+		return TRUE;//we didn't get anything this time
+	}
+	p1=ftell(vf);/*flag*/
+        while (line){
+		/*there can be more that ONE frame*/
+		if (find_in_string("</calculation>",line) != NULL) {
+			p2=ftell(vf);/*flag*/
+			fseek(vf,p1,SEEK_SET);/* rewind to flag */
+			add_frame_offset(vf, model);
+			add_frames++;
+			fseek(vf,p2,SEEK_SET);/* forward to flag */
+		}
+                if (find_in_string("<calculation>",line) != NULL) {
+			p1=ftell(vf);/*flag*/
+                }
+                g_free(line);
+                line = file_read_line(vf);
+        }
+	if(add_frames==0) {
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: NO-ADD-FRAME\n");
+#endif
+		vasp_xml_update_plot_energy(vf,model);/*update now*/
+		fclose(vf);
+		if(model->animation){
+			sysenv.refresh_dialog=TRUE;
+			tree_model_refresh(model);
+			redraw_canvas(ALL);
+		}
+		return TRUE;//we didn't get anything this time
+	}
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: ADD-%i-FRAME(S)\n",add_frames);
+#endif
+	if((!model->animation)&&((model->num_frames+add_frames)>1)){
+		/*we need to set animation*/
+		model->animation=TRUE;
+		model->num_frames+=add_frames;
+		vasp_out->calc_type=VASP_RUN+VASP_OPT;/*_BUG_*/
+		fclose(vf);
+		/*we need to plot the new graph*/
+		vasp_xml_plot_energy(model);
+		return TRUE;/*That's enough for now!*/
+	}
+/*_BUG_ triggered 06/03/2019*/
+	vasp_xml_update_plot_energy(vf,model);/*update now*/
+	/*if there is no plot update will fail*/
+	model->num_frames+=add_frames;
+	if(model->num_frames>1) {
+		model->cur_frame = model->num_frames-1;
+		list=g_list_last(model->frame_list);
+		vffpos=(fpos_t *)list->data;
+//		vffpos=(fpos_t *)g_list_nth_data (model->frame_list,model->cur_frame);
+		fsetpos(vf,vffpos);
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: READ FRAME %i -- %p\n",model->cur_frame,vffpos);
+#endif
+		read_xml_vasp_frame(vf,model);
+
+		camera = camera_dup(model->camera);
+		model_prep(model);
+		model->camera = camera;
+		g_free(model->camera_default);
+		model->camera_default = camera;
+		
+/*
+		model->cur_frame = model->num_frames-1;
+		rewind(vf);vfpos=ftell(vf);//flag
+		while(fetch_in_file(vf,"<structure")!=0) vfpos=ftell(vf);//flag
+		fseek(vf,vfpos,SEEK_SET);// rewind to flag 
+
+		vasp_xml_read_pos(vf,model);
+		fseek(vf,vfpos,SEEK_SET);
+		read_frame(vf,model->cur_frame,model);//will almost always fail on cur_frame!
+*/
+	}
+	model->redraw = TRUE;
+	tree_model_refresh(model);
+	canvas_shuffle();
+	redraw_canvas(ALL);
+	/*if we didn't detect "/modeling" means this is not over*/
+	fclose(vf);
+	return TRUE;
+}
+void track_vasp_cleanup(void *data){
+	gchar *ptr;
+	struct model_pak *model=(struct model_pak *)data;
+	struct model_pak *other_model;
+	if(model==NULL) return;/*why should this happen?*/
+	ptr=g_strdup_printf("VASP TRACKING: STOP.\n");gui_text_show(ITALIC,ptr);g_free(ptr);
+	model->track_me=FALSE;
+	tree_model_refresh(model);/*reset model pixmap*/
+	/*check if another active model need tracking?*/
+	if(model->t_next!=NULL){
+#if DEBUG_TRACK_VASP
+fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
+#endif
+		other_model=model->t_next;
+		tree_model_add(other_model);
+		tree_select_model(model);
+		if(model->vasp!=NULL) {
+			vasp_out_reset((vasp_output_struct *)model->vasp);
+			/*optional (tree_select_delete should do that)*/
+			g_free(model->vasp);
+			model->vasp=NULL;
+		}
+		tree_select_delete();
+		tree_select_model(other_model);
+		model=NULL;/*_BUG_ spotted*/
+		other_model->track_me=TRUE;
+		g_timeout_add_full(G_PRIORITY_DEFAULT,TRACKING_TIMEOUT,track_vasp,other_model,track_vasp_cleanup);
+		ptr=g_strdup_printf("VASP TRACKING: (RE-)START.\n");
+		gui_text_show(ITALIC,ptr);
+		g_free(ptr);
+		canvas_shuffle();
+		sysenv.refresh_dialog=TRUE;
+		tree_model_refresh(other_model);
+		redraw_canvas(ALL);
+	}
+}
+
+
 /*********************/
 /* helpers functions */
 /*********************/
@@ -1887,5 +2692,130 @@ property_add_ranked(7, "Formula", name, model);
 	/*should be all done*/
 	return 0;
 }
+
+/***********************************************************/
+/* There is still some function using the old VASP4 format */
+/* reading is identical to VASP5 except that lable must be */
+/* explicitely provided.                           --OVHPA */
+/***********************************************************/
+gint vasp_load_poscar4(FILE *vf,struct model_pak *model,char *label){
+	gint idx,ix;
+	gchar *line;
+	gchar *spec;
+	gchar *name;
+	gdouble  a0;
+	/*atom determination*/
+	gchar *ptr;
+	gchar *ptr2;
+	gchar *ptr3;
+	gchar sym[3];
+	struct core_pak *core;
+	gboolean is_direct;
+	/*read a vasp4 formated POSCAR*/
+	if(vf==NULL) return 1;
+	if(model==NULL) return 1;
+	if(feof(vf)) return 1;
+	/*we are good to go*/
+	line = file_read_line(vf);/*title*/
+	if(line==NULL) return 1;
+	/*add local structure title to properties?*/
+	line = file_read_line(vf);/*lattice parameter*/
+	if(line==NULL) return 1;
+	sscanf(line,"%lf%*s",&(a0));
+	idx=0;
+	line = file_read_line(vf);/*basis*/
+	while (idx<3) {
+		sscanf(line," %lf %lf %lf%*s",&model->latmat[idx],&model->latmat[idx+3],&model->latmat[idx+6]);
+		/*multiply everything by lattice parameter so a0 -> 1*/
+		model->latmat[idx]*=a0;
+		model->latmat[idx+3]*=a0;
+		model->latmat[idx+6]*=a0;
+		idx+=1;
+		g_free(line);
+		line = file_read_line(vf);
+		if(line == NULL) return -1;/*incomplete basis*/
+	}
+	ptr3=label;
+	ptr2=&(line[0]);
+	sym[2]='\0';/*always*/
+	model->num_atoms=0;
+	/*FIX _BUG_ core list grow!*/
+	core_delete_all(model);
+	spec=NULL;
+	name=g_strdup_printf("%c",'\0');
+	do{
+		ptr=ptr2;
+		ix=(gint)g_ascii_strtod(ptr,&ptr2);
+		if(ptr2==ptr) break;
+		while(*ptr3==' ') ptr3++;
+		sym[0]=*ptr3;
+		ptr3++;
+		if((*ptr3==' ')||(*ptr3=='\0')||(*ptr3=='\n')) sym[1]='\0';
+		else sym[1]=*ptr3;
+		ptr3++;
+		for(idx=0;idx<ix;idx++){
+			core=new_core(sym,model);
+			core->charge=0.;/*no such information on POSCAR*/
+			model->cores=g_slist_append(model->cores,core);
+		}
+		g_free(spec);
+		spec=g_strdup_printf("%s%s(%i)",name,sym,ix);
+		g_free(name);
+		name=g_strdup(spec);
+		model->num_atoms+=ix;
+	}while(1);
+	g_free(spec);/*FIX _VALGRIND_BUG_*/
+	g_free(label);/*FIX _VALGRIND_BUG_*/
+	property_add_ranked(7, "Formula", name, model);
+	g_free(name);/*FIX _VALGRIND_BUG_*/
+	g_free(line);
+	/*Always true in VASP*/
+	model->fractional=TRUE;
+	model->coord_units=ANGSTROM;
+	model->construct_pbc = TRUE;
+	model->periodic = 3;
+	line = file_read_line(vf);/*direct/cartesian switch*/
+	if((line[0]=='d')||(line[0]=='D')) is_direct=TRUE;
+	else if((line[0]=='c')||(line[0]=='C')||(line[0]=='k')||(line[0]=='K')) is_direct=FALSE;
+	else {/*no info: bailout*/
+		core_delete_all(model);
+		return -2;
+	}
+	line = file_read_line(vf);
+	if((line[0]=='s')||(line[0]=='S')) {
+		/*Selective switch: skip*/
+		g_free(line);
+		line = file_read_line(vf);
+	}
+	/*now start registering atoms*/
+	for(idx=0;idx<(model->num_atoms-1);idx++){
+		core=g_slist_nth_data(model->cores,idx);
+		sscanf(line," %lf %lf %lf%*s",&core->x[0],&core->x[1],&core->x[2]);
+		if(!is_direct){
+			core->x[0]/=(model->latmat[0]+model->latmat[1]+model->latmat[2]);
+			core->x[1]/=(model->latmat[3]+model->latmat[4]+model->latmat[5]);
+			core->x[2]/=(model->latmat[6]+model->latmat[7]+model->latmat[8]);
+		}
+		g_free(line);
+		line = file_read_line(vf);
+		if(line==NULL){
+			/*problem reading atoms: bailout*/
+			core_delete_all(model);
+			return -2;
+		}
+	}
+	/*do the last one outside of loop to avoid file_read_linegoing too far */
+	core=g_slist_nth_data(model->cores,model->num_atoms-1);
+	sscanf(line," %lf %lf %lf%*s",&core->x[0],&core->x[1],&core->x[2]);
+	if(!is_direct){
+		core->x[0]/=(model->latmat[0]+model->latmat[1]+model->latmat[2]);
+		core->x[1]/=(model->latmat[3]+model->latmat[4]+model->latmat[5]);
+		core->x[2]/=(model->latmat[6]+model->latmat[7]+model->latmat[8]);
+	}
+	g_free(line);
+	/*should be all done*/
+	return 0;
+}
+
 
 
