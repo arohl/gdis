@@ -664,7 +664,7 @@ surface_data=g_malloc0(4*width*height*sizeof(unsigned char));
 surface=cairo_image_surface_create_for_data(surface_data,CAIRO_FORMAT_ARGB32,width,height,4*width);
 render=cairo_create(surface);
 cairo_translate(render,-prect.x,-prect.y);/*important?*/
-cairo_set_source_rgba (render,sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2], 1);
+cairo_set_source_rgba (render,sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2], 1.0);
 cairo_move_to(render, 0, 0);
 pango_cairo_show_layout(render,pl);
 cairo_destroy(render);
@@ -2003,10 +2003,10 @@ if (data->show_waypoints && !data->animating)
 /* TODO - incorporate scaling etc. in camera waypoint drawing */
 /* the following text is likely to have partial */
 /* overlapping, so XOR text fragments for clearer display */
-glEnable(GL_COLOR_LOGIC_OP);
-glLogicOp(GL_XOR);
-glColor4f(1.0, 1.0, 1.0, 1.0);
-
+/* due to new text diplay, GL_XOR is no longer recommended --OVHPA */
+//glEnable(GL_COLOR_LOGIC_OP);
+//glLogicOp(GL_XOR);
+//glColor4f(1.0, 1.0, 1.0, 1.0);
 /* TODO - all atom related printing -> construct a string */
 label = g_string_new(NULL);
 
@@ -2130,7 +2130,7 @@ for (list=data->measure_list ; list ; list=g_slist_next(list))
   }
 
 /* spatial object labels */
-glDisable(GL_COLOR_LOGIC_OP);
+//glDisable(GL_COLOR_LOGIC_OP);
 /* FIXME - need to change the variable name */
 if (data->morph_label)
 for (list=data->spatial ; list ; list=g_slist_next(list))
