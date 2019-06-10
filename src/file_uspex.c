@@ -1425,7 +1425,6 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 //		__GET_CHARS(enthalpyTemperatureFile);/*VER 10.1*/
 		if (find_in_string("enthalpyTemp",line) != NULL) {
 		/*FIX a typo in USPEX v10.3 EX26 where enthalpyTemperatureFile is written enthalpyTemptureFile! ^^'*/
-		        ptr=&(line[0]);
 		        for(i=0;i<strlen(line);i++) if((line[i]==' ')||(line[i]=='\n')) line[i]='\0';
 		        _UC.enthalpyTemperatureFile=g_strdup_printf("%s",line);
 		        g_free(line);line = file_read_line(vf);
@@ -2666,7 +2665,6 @@ void uspex_graph_path_update(struct model_pak *model){
 		gy.y[idx]=_UO.ind[idx].E;
 		gy.idx[idx]=idx;
 		gy.symbol[idx]=GRAPH_SYMB_DIAM;
-		gy.type=GRAPH_IY_TYPE;
 		if(gy.y[idx]<_UO.min_E) _UO.min_E=gy.y[idx];
 		if(gy.y[idx]>_UO.max_E) _UO.max_E=gy.y[idx];
 	}
@@ -2675,6 +2673,8 @@ void uspex_graph_path_update(struct model_pak *model){
 	dat_graph_set_limits(0,_UO.num_struct+1,min_E,max_E,_UO.graph_best);
 	gy.line=GRAPH_LINE_DASH;
 	gy.color=GRAPH_COLOR_DEFAULT;
+	gy.type=GRAPH_IY_TYPE;
+	gy.mixed_symbol=FALSE;/*same symbol for all*/
 	dat_graph_add_y(gy,_UO.graph_best);
 	g_free(gy.y);
 	g_free(gy.idx);
@@ -3174,7 +3174,6 @@ void uspex_graph_best_update(uspex_output_struct *uspex_output){
 	g_data_y *py;
 	gdouble min_E,max_E,d;
 	struct graph_pak *graph;
-	uspex_calc_struct *uspex_calc;
 	/**/
 	if(uspex_output==NULL) return;
 	if(_UO.graph_best==NULL) return;/*TODO: prepare a new graph*/
@@ -3183,7 +3182,6 @@ void uspex_graph_best_update(uspex_output_struct *uspex_output){
 	list=graph->set_list;
 	if(list==NULL) return;/*malformed graph <- should we fix it here?*/
 	if(_UO.calc==NULL) return;/*not properly loaded model*/
-	uspex_calc=_UO.calc;
 #if DEBUG_TRACK_USPEX
 fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 #endif
@@ -3426,7 +3424,6 @@ void uspex_graph_best_redo(uspex_output_struct *uspex_output){
 	g_data_y  gy;
 	gdouble min_E,max_E,d;
 	struct graph_pak *graph;
-	uspex_calc_struct *uspex_calc;
 /**/
 	if(uspex_output==NULL) return;
 	if(_UO.graph_best==NULL) return;/*TODO: prepare a new graph*/
@@ -3435,7 +3432,6 @@ void uspex_graph_best_redo(uspex_output_struct *uspex_output){
 	list=graph->set_list;
 	if(list==NULL) return;/*malformed graph <- should we fix it here?*/
 	if(_UO.calc==NULL) return;/*not properly loaded model*/
-	uspex_calc=_UO.calc;
 /*WIPE graph data*/
 	graph_reset_data(graph);
 	/*determine limits*/
@@ -3556,6 +3552,7 @@ fprintf(stdout,"-SENT\n");
 		gy.symbol[gen]=GRAPH_SYMB_NONE;
 		gen++;
 	}
+	gy.mixed_symbol=FALSE;/*no symbols for the whole set*/
 	dat_graph_add_y(gy,_UO.graph_best);
 	g_free(gy.y);
 	g_free(gy.symbol);
@@ -3575,7 +3572,7 @@ fprintf(stdout,"-SENT\n");
 gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gchar *line;
 	FILE *vf;
-	long int vfpos;
+	long int vfpos=0L;
 	gchar *ptr;
 	gchar *ptr2;
 	gchar *aux_file;
@@ -4640,6 +4637,8 @@ else if(_UC.calculationMethod==US_CM_VCNEB){
 	}
 	g_free(aux_file);
 	line = file_read_line(vf);
+	_UO.num_struct=0;
+	_UO.num_gen=0;
 	while(line){
 		ptr=&(line[0]);
 		while((!g_ascii_isdigit(*ptr))&&(*ptr!='\0')) ptr++;
@@ -4687,6 +4686,8 @@ fprintf(stdout,"USPEX-VCNEB: detected %i STEPS and %i STRUCTURE in last STEP.\n"
 	}
 	/*create ind and populate energies*/
 	_UO.ind=g_malloc0((_UO.num_struct+1)*sizeof(uspex_individual));
+	_UO.min_E=1.0/0.0;/*+inf*/
+	_UO.max_E=-1.0/0.0;/*-inf*/
 	fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 	_UO.last_ind_pos=vfpos;/*set it even if we don't need it*/
 	line = file_read_line(vf);
@@ -4731,7 +4732,6 @@ fprintf(stdout,"#DBG: VCNEB Image %i: energy=%lf\n",idx,_UO.ind[idx].energy);
 		g_free(line);
 	}
 	line = file_read_line(vf);
-	natoms=0;
 	ptr=&(line[0]);
 	while((!g_ascii_isdigit(*ptr))&&(*ptr!='\0')) ptr++;
 	if(*ptr=='\0'){
@@ -4911,14 +4911,14 @@ if(_UO.ind[idx].have_data){
 gboolean track_uspex(void *data){
 	/**/
 	FILE *vf=NULL;
-	long int vfpos;
+	long int vfpos=0L;
 	gchar *line;
 	gchar *aux_file;
 	gint check;
 	gdouble min_E,max_E;
 	gint idx,jdx;
-	gint old_gen,new_gen;/*previous number of generation*/
-	gint old_ind,new_ind;/*previous number of individuals*/
+	gint old_gen,new_gen=0;/*previous number of generation*/
+	gint old_ind,new_ind=0;/*previous number of individuals*/
 #if DEBUG_TRACK_USPEX
 	gint old_frm,new_frm;/*previous number of frames*/
 #endif

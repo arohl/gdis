@@ -78,7 +78,6 @@ gdouble halo_fade[16];
 gint halo_segments=16;
 gpointer gl_font;
 gint gl_fontsize=10;
-gint font_offset=-1;
 
 /***********************************/
 /* world to canvas size conversion */
@@ -557,29 +556,21 @@ gint gl_text_width(gchar *str)
 {
 return(strlen(str) * gl_fontsize);
 }
-
-/******************************/
-/* print at a window position */
-/******************************/
-void gl_print_window(gchar *str, gint x, gint y, struct canvas_pak *canvas)
-{
-gdouble w[3];
-
-if (!str)
-  return;
-
-/* the use of 3 coords allows us to put text above everything else */
-gl_project(w, x, y, canvas);
-glRasterPos3f(w[0], w[1], w[2]); 
-
-glListBase(font_offset);
-glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
+/**********************/
+/* update gl_fontsize */
+/**********************/
+void gl_get_fontsize(void){
+PangoFontDescription *pfd;
+pfd = pango_font_description_from_string(sysenv.gl_fontname);
+gl_fontsize = pango_font_description_get_size(pfd) / PANGO_SCALE;
+pango_font_description_free(pfd);
 }
-/**********************************/
-/* pango print:  new routine as a */
-/* replacement for gl_print_world */
-/* 2D print.             --OVHPA  */
-/**********************************/
+
+/***********************************/
+/* pango print:  new routine as a  */
+/* replacement for gl_print_window */
+/* 2D print.              --OVHPA  */
+/***********************************/
 #define __COLOR_F_2_I(f) floor(f >= 1.0 ? 65535 : f * 65536.0)
 void pango_print(const gchar *str, gint x, gint y, struct canvas_pak *canvas, guint font_size, gint rotate){
 /*GDK*/
@@ -609,6 +600,7 @@ pango_layout_set_width(pl,-1);
 pfd = pango_font_description_from_string(sysenv.gl_fontname);
 pango_font_description_set_absolute_size(pfd, font_size * PANGO_SCALE);
 pango_layout_set_font_description(pl,pfd);
+pango_font_description_free(pfd);
 /*MATRIX*/
 pango_matrix_rotate(&pm,rotate);
 pango_context_set_matrix(pc,&pm);
@@ -635,18 +627,68 @@ g_object_unref(pl);
 g_object_unref(pc);
 g_object_unref(gc);
 }
-/*****************************/
-/* print at a world position */
-/*****************************/
-void gl_print_world(gchar *str, gdouble x, gdouble y, gdouble z)
-{
-/* set the raster position & draw the text */
-glRasterPos3f(x,y,z); 
-
-glListBase(font_offset);
-glCallLists(strlen(str), GL_UNSIGNED_BYTE, str);
+/**************************************/
+/* pango print_world:  new routine as */
+/* a replacement for gl_print_world   */
+/* 3D print.                 --OVHPA  */
+/**************************************/
+#define DEBUG_PANGO_TEXT 0
+void pango_print_world(gchar *str, gdouble x, gdouble y, gdouble z,struct canvas_pak *canvas){
+gint width=0;
+gint height=0;
+/*cairo*/
+cairo_t *render;
+cairo_surface_t *surface;
+unsigned char* surface_data = NULL;
+/*pango*/
+PangoRectangle prect;
+PangoFontDescription *pfd;
+PangoLayout *pl;
+PangoContext *pc;
+/**/
+pc=gtk_widget_create_pango_context(sysenv.glarea);
+pl=pango_layout_new(pc);
+pfd = pango_font_description_from_string(sysenv.gl_fontname);
+pango_font_description_set_absolute_size(pfd, gl_fontsize * PANGO_SCALE);
+pango_layout_set_font_description(pl,pfd);
+pango_font_description_free(pfd);
+pango_layout_set_markup(pl,str,strlen(str));
+pango_layout_set_single_paragraph_mode(pl,TRUE);
+pango_layout_set_width(pl,-1);
+/*new*/
+pango_layout_get_pixel_extents (pl, NULL, &prect);
+pango_layout_get_size(pl,&width,&height);
+width/=PANGO_SCALE;
+height/=PANGO_SCALE;
+surface_data=g_malloc0(4*width*height*sizeof(unsigned char));
+surface=cairo_image_surface_create_for_data(surface_data,CAIRO_FORMAT_ARGB32,width,height,4*width);
+render=cairo_create(surface);
+cairo_translate(render,-prect.x,-prect.y);/*important?*/
+cairo_set_source_rgba (render,sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2], 1);
+cairo_move_to(render, 0, 0);
+pango_cairo_show_layout(render,pl);
+cairo_destroy(render);
+g_object_unref(pl);
+//#if DEBUG_PANGO_TEXT
+//cairo_surface_write_to_png(surface,"./test.png");/*PROVE OK*/
+//#endif
+/*copy to framebuffer*/
+glRasterPos3f(x,y,z);
+glPixelZoom( 1, -1 );
+glDrawPixels(width,height,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
+/*for DEBUG we draw a box around the text, via unproject*/
+#if DEBUG_PANGO_TEXT
+gint rx[2];
+gdouble w[3];
+w[0]=x;
+w[1]=y;
+w[2]=z;
+gl_unproject(rx,w,canvas);
+gl_draw_box(rx[0],rx[1],rx[0]+width,rx[1]+height,canvas);
+#endif
+/*destroy*/
+g_free(surface_data);
 }
-
 /********************************/
 /* vertex at 2D screen position */
 /********************************/
@@ -1546,7 +1588,7 @@ else
     ARR3SET(x2, data->axes[i].rx);
     VEC3MUL(x2, f);
     ARR3ADD(x2, x1);
-    gl_print_world(label, x2[0], x2[1], x2[2]);
+    pango_print_world(label, x2[0], x2[1], x2[2], canvas);
     label[1]++;
     }
   }
@@ -1775,7 +1817,7 @@ while (plist != NULL)
                                       plane->index[1],
                                       plane->index[2]);
     ARR3SET(vec, plane->rx);
-    gl_print_world(label, vec[0], vec[1], vec[2]);
+    pango_print_world(label, vec[0], vec[1], vec[2], canvas_find(data));
     g_free(label);
 
 /* TODO - vector font (display list) with number + overbar number */
@@ -1862,7 +1904,7 @@ glColor3f(1.0, 1.0, 1.0);
 for (i=0 ; i<n ; i++)
   {
   g_string_sprintf(text, "%6.2f", z1);
-  gl_print_window(text->str, x+30, y+i*20+18, canvas);
+  pango_print(text->str,x+30,y+i*20+18,canvas,gl_fontsize,0);
   z1 -= dz;
   }
 g_string_free(text, TRUE);
@@ -1890,8 +1932,8 @@ if (!data)
 
 /* print mode */
 text = get_mode_label(data);
-gl_print_window(text, canvas->x+canvas->width-gl_text_width(text),
-                      sysenv.height-canvas->y-20, canvas);
+pango_print(text, canvas->x+canvas->width-gl_text_width(text),
+	     sysenv.height-canvas->y-20,canvas,gl_fontsize,0);
 g_free(text);
 
 /* print some useful info */
@@ -1899,7 +1941,7 @@ if (sysenv.render.show_energy)
   {
   text = property_lookup("Energy", data);
   if (text)
-    gl_print_window(text, canvas->x+20, sysenv.height-canvas->y-20, canvas);
+    pango_print(text, canvas->x+20, sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
   }
 
 /* print current frame */
@@ -1908,8 +1950,8 @@ if (data->show_frame_number)
   if (data->animation)
     {
     text = g_strdup_printf("[%d:%d]", data->cur_frame, data->num_frames-1);
-    gl_print_window(text, canvas->x+canvas->width-gl_text_width(text),
-                          sysenv.height-canvas->y-canvas->height+40, canvas);
+    pango_print(text, canvas->x+canvas->width-gl_text_width(text),
+	sysenv.height-canvas->y-canvas->height+40, canvas, gl_fontsize, 0);
     g_free(text);
     }
   }
@@ -1931,7 +1973,7 @@ if (data->show_cell_lengths)
     ARR3SET(v1, data->cell[0].rx);
     ARR3ADD(v1, data->cell[j].rx);
     VEC3MUL(v1, 0.5);
-    gl_print_world(text, v1[0], v1[1], v1[2]);
+    pango_print_world(text, v1[0], v1[1], v1[2], canvas);
     g_free(text);
     }
   }
@@ -1953,7 +1995,7 @@ if (data->show_waypoints && !data->animating)
       continue;
 
     text = g_strdup_printf("%d", i);
-    gl_print_world(text, camera->x[0], camera->x[1], camera->x[2]);
+    pango_print_world(text, camera->x[0], camera->x[1], camera->x[2], canvas);
     g_free(text);
     }
   }
@@ -2046,7 +2088,7 @@ while (list)
   if (label->str)
     {
     ARR3SET(v1, core[0]->rx);
-    gl_print_world(label->str, v1[0], v1[1], v1[2]);
+    pango_print_world(label->str, v1[0], v1[1], v1[2], canvas);
     }
 
   list = g_slist_next(list); 
@@ -2068,7 +2110,7 @@ for (list=data->measure_list ; list ; list=g_slist_next(list))
       measure_coord_get(v2, 1, list->data, data);
       ARR3ADD(v1, v2);
       VEC3MUL(v1, 0.5);
-      gl_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2]);
+      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
       break;
 
     case MEASURE_ANGLE:
@@ -2082,7 +2124,7 @@ for (list=data->measure_list ; list ; list=g_slist_next(list))
       ARR3ADD(v1, v2);
       ARR3ADD(v1, v3);
       VEC3MUL(v1, 0.3333);
-      gl_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2]);
+      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
       break;
     }
   }
@@ -2099,7 +2141,8 @@ for (list=data->spatial ; list ; list=g_slist_next(list))
     glColor4f(spatial->c[0], spatial->c[1], spatial->c[2], 1.0);
     v = g_slist_nth_data(spatial->list, 0);
     if (gl_visible(v->rn, data))
-      gl_print_world(spatial->label, spatial->x[0], spatial->x[1], spatial->x[2]);
+      pango_print_world(spatial->label, spatial->x[0], spatial->x[1], spatial->x[2], canvas);
+
     }
   }
 }
@@ -2495,6 +2538,9 @@ if (data->mode == RECORD)
 /* setup the lighting */
 gl_init_lights(data);
 
+/* setup the fontsize --OVHPA */
+gl_get_fontsize();
+
 /* scaling affects placement to avoid near/far clipping */
 r = sysenv.rsize;
 
@@ -2854,35 +2900,6 @@ printf("decreasing delay between redraw: %d : %dus)\n", n, model->redraw_current
 return(FALSE);
 }
 
-/*********************************/
-/* font initialization primitive */
-/*********************************/
-void gl_font_init(void)
-{
-PangoFontDescription *pfd;
-
-font_offset = glGenLists(128);
-if (font_offset)
-  { 
-  pfd = pango_font_description_from_string(sysenv.gl_fontname);
-  if (!gdk_gl_font_use_pango_font(pfd, 0, 128, font_offset))
-    gui_text_show(ERROR, "Failed to set up Pango font for OpenGL.\n");
-  gl_fontsize = pango_font_description_get_size(pfd) / PANGO_SCALE;
-  pango_font_description_free(pfd); 
-  }
-else
-  gui_text_show(ERROR, "Failed to allocate display lists for OpenGL fonts.\n");
-}
-
-/***********************/
-/* font free primitive */
-/***********************/
-void gl_font_free(void)
-{
-glDeleteLists(font_offset, 128);
-font_offset = -1;
-}
-
 /************************************************************/
 /* perform a snapshot of sysenv.glarea onto eps_file --OVHPA*/
 /************************************************************/
@@ -2966,9 +2983,7 @@ glDrawBuffer(GL_BACK);
 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 make_fg_visible();
 
-/* pango fonts for OpenGL */
-if (font_offset < 0)
-  gl_font_init();
+/* pango fonts for OpenGL are now taken 'on the fly' --OVHPA */
 
 nc = g_slist_length(sysenv.canvas_list);
 

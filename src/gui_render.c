@@ -107,7 +107,6 @@ gchar *fn;
 
 fn = gtk_font_selection_dialog_get_font_name ((GtkFontSelectionDialog *) fsd);
 strcpy(sysenv.gl_fontname, fn);
-gl_font_free();
 redraw_canvas(ALL);
 }
 
