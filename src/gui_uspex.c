@@ -4067,7 +4067,7 @@ void uspex_gui_refresh(){
 			else num=uspex_gui.calc._nspecies;
 			for(i=0;i<uspex_gui.calc._var_nspecies;i++){
 				line=g_strdup(" ");
-				for(j=0;j<uspex_gui.calc._nmolecules;j++){
+				for(j=0;j<num;j++){
 					ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.numSpecies[j+i*uspex_gui.calc._nmolecules]);
 					g_free(line);
 					line=ptr;
