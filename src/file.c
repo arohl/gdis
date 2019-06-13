@@ -28,6 +28,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -1789,4 +1790,73 @@ g_string_free(path, TRUE);
 
 return(status);
 }
+/************************************/
+/* copy a text file f_src to f_dest */
+/************************************/
+#define DEBUG_DUMB_COPY 0
+gboolean dumb_file_copy(gchar *f_src,gchar *f_dest){
+/*This is a very dumb version which reads each line of a file src, and copy in into destination */
+/*A better and portable way to do that would be to use the g_file_copy from GIO library --OVHPA */
+gchar *buffer;
+GError *error;
+gsize length;
+#ifdef DEBUG_DUMB_COPY
+fprintf(stdout,"copy %s into %s ... ",f_src,f_dest);
+#endif
+if(g_file_get_contents (f_src,&buffer,&length,&error)){
+	if(g_file_set_contents (f_dest,buffer,(gssize) length,&error)){
+#ifdef DEBUG_DUMB_COPY
+fprintf(stdout,"SUCCESS!\n");
+#endif
+		return TRUE;
+	}
+}
+#ifdef DEBUG_DUMB_COPY
+fprintf(stdout,"FAILED!\n");
+#endif
+fprintf(stderr,"Error during copy of %s into %s\nError code %i: %s",f_src,f_dest,error->code, error->message);
+return FALSE;
+}
+/*************************************************************/
+/* copy all files from a src directory to a target directory */
+/* src and target must i) exists and ii) be readable, target */
+/* should be iii) writable too. Uses dumb_file_copy. --OVHPA */
+/*************************************************************/
+gboolean dumb_dir_copy(gchar *src, gchar *dest){
+gboolean is_ok=FALSE;
+GDir *d_src;
+const gchar *current=NULL;
+gchar *f_src;
+gchar *f_dest;
+d_src=g_dir_open(src,0,NULL);
+current=g_dir_read_name(d_src);
+while(current){
+	f_src=g_build_filename(src,current,NULL);
+	f_dest=g_build_filename(dest,current,NULL);
+	if(g_file_test(f_src,G_FILE_TEST_IS_DIR)){
+		if(!g_mkdir(f_dest,0775)) {
+			fprintf(stderr,"COPY aborted: Can't create directory %s\n",f_dest);
+			g_free(f_src);
+			g_free(f_dest);
+			return FALSE;
+		}
+		is_ok=dumb_dir_copy(f_src,f_dest);/*recursive*/
+	}else{
+		is_ok=dumb_file_copy(f_src,f_dest);
+	}
+	if(is_ok==FALSE) {
+		fprintf(stdout,"Interrupted copy!\n");
+		g_free(f_src);
+		g_free(f_dest);
+		return FALSE;
+	}
+	g_free(f_src);
+	g_free(f_dest);
+	current=g_dir_read_name(d_src);
+}
+return TRUE;
+}
+
+
+
 

@@ -83,6 +83,9 @@ gchar *file_extension_get(const gchar *);
 gint file_byte_size(const gchar *);
 gchar *file_find_program(const gchar *);
 
+gboolean dumb_file_copy(gchar *f_src,gchar *f_dest);
+gboolean dumb_dir_copy(gchar *src, gchar *dest);
+
 /* dialog control */
 void file_dialog(gchar *, gchar *, gint, 
                  gpointer (gchar *,  struct model_pak *), gint);
