@@ -2832,18 +2832,20 @@ fprintf(stdout,"}\n");
 /*END new*/
 				cur=_UO.ind[idx].gen;
 				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
+				if(cur==gen) c_col[num-1]=GRAPH_COLOR_GREEN;
+				else c_col[num-1]=GRAPH_COLOR_DEFAULT;
 				if(_UO.ind[idx].struct_number>0) {
 					c_idx[num-1]=_UO.ind[idx].struct_number;
 					c_sym[num-1]=GRAPH_SYMB_SQUARE;
+if((_UO.pictave)&&(_UO.ind[idx].atoms[_UO.calc->_nspecies-1]!=0)){
+		c_sym[num-1]=GRAPH_SYMB_DIAM;
+		c_col[num-1]=GRAPH_COLOR_BLUE;
+		gy.mixed_symbol=TRUE;/*special meaning of diam symbol should be preserved*/
+}
 				}else{
 					c_idx[num-1]=-1*idx;
 					c_sym[num-1]=GRAPH_SYMB_CROSS;
 					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
-				}
-				if(cur==gen){
-					c_col[num-1]=GRAPH_COLOR_GREEN;
-				}else{
-					c_col[num-1]=GRAPH_COLOR_DEFAULT;
 				}
 				gy.y=c;
 				gy.idx=c_idx;
@@ -3602,6 +3604,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gdouble *c_min;
 	gint32 *c_idx;
 	graph_symbol *c_sym;
+	graph_color *c_col;
 	gint species_index;
 	/* results */
 	gint natoms=0;
@@ -4472,6 +4475,7 @@ fprintf(stdout,"}\n");
 					c=g_malloc(1*sizeof(gdouble));
 					c_idx=g_malloc(1*sizeof(gint32));
 					c_sym=g_malloc(1*sizeof(graph_symbol));
+					c_col=g_malloc(1*sizeof(graph_color));
 				}else{
 					c=g_malloc(num*sizeof(gdouble));
 					memcpy(c,gy.y,(num-1)*sizeof(gdouble));
@@ -4479,9 +4483,12 @@ fprintf(stdout,"}\n");
 					memcpy(c_idx,gy.idx,(num-1)*sizeof(gint32));
 					c_sym=g_malloc(num*sizeof(graph_symbol));
 					memcpy(c_sym,gy.symbol,(num-1)*sizeof(graph_symbol));
+					c_col=g_malloc(num*sizeof(graph_color));
+					memcpy(c_col,gy.sym_color,(num-1)*sizeof(graph_color));
 					g_free(gy.y);
 					g_free(gy.idx);
 					g_free(gy.symbol);
+					g_free(gy.sym_color);
 				}
 /*NEW: modify with the reference*/
 if(_UO.have_ref){
@@ -4506,6 +4513,7 @@ if(_UO.have_ref){
 }
 /*END new*/
 				if(c[num-1]<c_min[jdx]) c_min[jdx]=c[num-1];
+				c_col[num-1]=GRAPH_COLOR_DEFAULT;
 				if(_UO.ind[idx].struct_number>0) {
 					c_idx[num-1]=_UO.ind[idx].struct_number;
 					c_sym[num-1]=GRAPH_SYMB_SQUARE;
@@ -4514,15 +4522,21 @@ if(_UO.have_ref){
 					c_sym[num-1]=GRAPH_SYMB_CROSS;
 					gy.mixed_symbol=TRUE;/*special meaning of cross symbol should be preserved*/
 				}
+if((_UO.pictave)&&(_UO.ind[idx].atoms[_UO.calc->_nspecies-1]!=0)){
+                c_sym[num-1]=GRAPH_SYMB_DIAM;
+                c_col[num-1]=GRAPH_COLOR_BLUE;
+                gy.mixed_symbol=TRUE;/*special meaning of diam symbol should be preserved*/
+}
 				gy.y=c;
 				gy.idx=c_idx;
 				gy.symbol=c_sym;
+				gy.sym_color=c_col;
 				gy.type=GRAPH_XX_TYPE;
 			}
 			gy.y_size=num;
 			gy.color=GRAPH_COLOR_DEFAULT;
-			gy.sym_color=g_malloc0(num*sizeof(graph_color));
-			for(idx=0;idx<num;idx++) gy.sym_color[idx]=GRAPH_COLOR_DEFAULT;
+//			gy.sym_color=g_malloc0(num*sizeof(graph_color));
+//			for(idx=0;idx<num;idx++) gy.sym_color[idx]=GRAPH_COLOR_DEFAULT;
 			gy.line=GRAPH_LINE_NONE;/*FROM: 11a1ed*/
 			dat_graph_set_limits(0.,1.,min_E-0.05*(max_E-min_E),max_E+0.05*(max_E-min_E),_UO.graph_comp[species_index]);
 			dat_graph_add_y(gy,_UO.graph_comp[species_index]);

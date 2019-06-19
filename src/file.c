@@ -1800,18 +1800,25 @@ gboolean dumb_file_copy(gchar *f_src,gchar *f_dest){
 gchar *buffer;
 GError *error;
 gsize length;
-#ifdef DEBUG_DUMB_COPY
+#if DEBUG_DUMB_COPY
 fprintf(stdout,"copy %s into %s ... ",f_src,f_dest);
 #endif
 if(g_file_get_contents (f_src,&buffer,&length,&error)){
+if(error!=NULL) {/*who would set error on a success?*/
+#if DEBUG_DUMB_COPY
+	fprintf(stdout,"error#1=%s\n",error->message);
+#endif
+	g_error_free (error);
+	g_free(error);
+}
 	if(g_file_set_contents (f_dest,buffer,(gssize) length,&error)){
-#ifdef DEBUG_DUMB_COPY
+#if DEBUG_DUMB_COPY
 fprintf(stdout,"SUCCESS!\n");
 #endif
 		return TRUE;
 	}
 }
-#ifdef DEBUG_DUMB_COPY
+#if DEBUG_DUMB_COPY
 fprintf(stdout,"FAILED!\n");
 #endif
 fprintf(stderr,"Error during copy of %s into %s\nError code %i: %s",f_src,f_dest,error->code, error->message);
