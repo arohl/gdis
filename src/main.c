@@ -25,6 +25,7 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #include <signal.h>
 #include <stdio.h>
+#include <locale.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -772,6 +773,8 @@ if (sysenv.canvas)
 
 /* main interface */
   gui_init(argc, argv);
+/* internationalization: set locale to C to avoid _BUG_*/
+setlocale(LC_ALL, "C");
 
 /* task update timer */
 /* TODO - put this in gui_widget_handler? */
