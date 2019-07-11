@@ -27,6 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -89,7 +90,13 @@ void gui_uspex_init(struct model_pak *model){
 		/*first get the _nspecies*/
 		list=find_unique(ELEMENT,model);
 		uspex_gui.calc._nspecies=(gint)g_slist_length(list);
+if(uspex_gui.calc._nspecies<1) {
+	/*_nspecies is 0 which can happen in case of new_model*/
+	uspex_gui.calc._nspecies=1;
+	uspex_gui.calc.atomType = g_malloc0(uspex_gui.calc._nspecies*sizeof(gint));
+}else{
 		uspex_gui.calc.atomType = g_malloc(uspex_gui.calc._nspecies*sizeof(gint));
+}
 		for (idx=0 ; list ; list=g_slist_next(list)){
 			uspex_gui.calc.atomType[idx]=GPOINTER_TO_INT(list->data);
 			idx++;
@@ -299,6 +306,7 @@ void gui_uspex_init(struct model_pak *model){
 	uspex_gui._potentials=g_malloc(uspex_gui.calc._nspecies*sizeof(gchar *));
 	for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui._potentials[idx]=NULL;
 	/**/
+	uspex_gui.copySpecific=TRUE;
 	uspex_gui.have_v1010=TRUE;
 	uspex_gui.have_octave=TRUE;
 	if(sysenv.uspex_path!=NULL) uspex_gui.calc.job_uspex_exe=g_strdup(sysenv.uspex_path);
@@ -3759,6 +3767,33 @@ gint save_uspex_calc(){
 void uspex_cleanup(){
 	/*we don't have to free anything.. everything will be hopefully gone after the dialog is closed*/
 }
+/***************************************/
+/* copy Specific directory (if exists) */
+/***************************************/
+void uspex_copy_specific(uspex_exec_struct *uspex_exec){
+GDir *src;
+gchar *source;
+gchar *target;
+/**/
+if(uspex_exec==NULL) return;
+if(uspex_gui.calc.path==NULL) return;
+source=g_build_filename(uspex_gui.calc.path,"../Specific/", NULL);
+src=g_dir_open(source,0,NULL);
+if(src==NULL) {
+	fprintf(stdout,"Can't open Specific directory.\n");
+	return;
+}
+target = g_build_filename((*uspex_exec).job_path,"Specific", NULL);
+if(g_mkdir(target,0775)){
+	fprintf(stdout,"Can't create %s directory.\n",target);
+	g_dir_close(src);
+	return;
+}
+g_dir_close(src);
+dumb_dir_copy(source,target);
+g_free(source);
+g_free(target);
+}
 /*****************************************/
 /* Execute or enqueue a uspex calculation */
 /*****************************************/
@@ -3793,7 +3828,7 @@ void cleanup_uspex_exec(uspex_exec_struct *uspex_exec){
 	gchar *line;
 	/*USPEX process ENDED*/
 //	while(!(*uspex_exec).have_result) usleep(500*1000);/*wait for end of process*/
-	line = g_strdup_printf("USPEX job finished!\n");
+	line = g_strdup_printf("Completed USPEX job in directory %s\n",(*uspex_exec).job_path);
 	gui_text_show(ITALIC,line);
 	g_free(line);
 }
@@ -3812,6 +3847,8 @@ void uspex_exec_calc(){
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
+/*NEW: copy the Specific directory (if needed)*/
+if(uspex_gui.copySpecific) uspex_copy_specific(uspex_exec);
 /*Get the future valid index*/
 	idx=1;
 	do{
@@ -4923,8 +4960,11 @@ GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the gener
 GUI_TOOLTIP(uspex_gui.pickUpFolder,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
 	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,11,12);/*not calling anything*/
 GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, etc.");
+/* line 12 */
+	GUI_CHECK_TABLE(table,button,uspex_gui.copySpecific,NULL,"COPY the Specific directory into calculation's one. <- WARNING, this may override above settings!",0,4,12,13);/*not calling anything*/
+GUI_TOOLTIP(button,"This copy the actual Specific directory into calculation directory.\nIf no Specific directory exists, no copy operation is performed.\nThis may override some settings in the current tab, silently!");
 /* reserved for future use */
-	for(idx=12;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
+	for(idx=13;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
 /* --- end page */
 
 /*--------------------*/

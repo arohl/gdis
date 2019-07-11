@@ -1385,7 +1385,7 @@ if(graph->x_title){
   }
 }
 if(graph->y_title){
-  pango_print(graph->y_title,0,oy-0.33*dy,canvas,gl_fontsize,90);
+  pango_print(graph->y_title,0+gl_fontsize,oy-0.33*dy,canvas,gl_fontsize,90);
 }
 /*axis?*/
 }

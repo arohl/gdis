@@ -321,6 +321,7 @@ struct uspex_calc_gui{
 	gboolean have_result;
 	gboolean have_v1010;
 	gboolean have_octave;
+	gboolean copySpecific;/*NEW: copy the Specific directory*/
 	gint index;
 /*buttons*/
 	GUI_OBJ *button_save;

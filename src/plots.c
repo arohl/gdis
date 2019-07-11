@@ -662,7 +662,7 @@ dat_graph_set_type(GRAPH_YX_TYPE,plot->graph);/*<-note the inversion!!*/
 gx.x_size=model->nkpoints+1;/*ADD DOS origin for the first set*/
 gx.x=g_malloc(gx.x_size*sizeof(gdouble));
 gx.x[0]=-1.0*scale*plot->dos.ymax;
-for(idx=0;idx<gx.x_size;idx++) gx.x[idx+1]=model->kpts_d[idx];
+for(idx=0;idx<gx.x_size-1;idx++) gx.x[idx+1]=model->kpts_d[idx];/*FIX*/
 dat_graph_set_x(gx,plot->graph);
 g_free(gx.x);
 /*first set is DOS*/

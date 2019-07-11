@@ -290,11 +290,12 @@ void plot_cleanup(struct model_pak *model){
 	model->plots=FALSE;
 }
 void plot_quit(GtkWidget *w, gpointer data){
-	struct model_pak *model=data;
-	g_assert(model != NULL);
+	struct model_pak *model=sysenv.active_model;
+	if(data==NULL) return;/*no dialog*/
+	if(model==NULL) return;/*no model*/
 	/*cleanup plot mess*/
 	plot_cleanup(model);
-	dialog_destroy(w,model);
+	dialog_destroy(w,data);/*_BUG_ model is *NOT* a dialog!*/
 }
 /******************/
 /* start plotting */
