@@ -2550,7 +2550,7 @@ void uspex_update_eref(uspex_output_struct *uspex_output){
 				if((spe_index==jdx)&&(_UO.ind[idx].atoms[jdx]==0)) isref=FALSE;
 			}
 			if(isref){
-				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) <= ef_ref){
+				if((_UO.ind[idx].energy/_UO.ind[idx].natoms) < ef_ref){
 					ef_ref=_UO.ind[idx].energy/(gdouble)_UO.ind[idx].natoms;
 					_UO.ef_refs[spe_index]=_UO.ind[idx].energy;
 					_UO.natom_refs[spe_index]=_UO.ind[idx].natoms;
@@ -2813,7 +2813,8 @@ fprintf(stdout,"}\n");
 					if(_UO.ind[idx].energy<10000.000){
 						ef=_UO.ind[idx].energy;
 						for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
-						ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+							ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+						ef/=_UO.ind[idx].natoms;/*FIX --OVHPA*/
 						c[num-1]=ef;
 						if(ef<min_E) min_E=ef;
 						if(ef>max_E) max_E=ef;
@@ -4496,6 +4497,7 @@ if(_UO.have_ref){
 					ef=_UO.ind[idx].energy;
 					for(spe_index=0;spe_index<tmp_nspecies;spe_index++)
 						ef-=_UO.ef_refs[spe_index]*(_UO.ind[idx].atoms[spe_index]/(gdouble)_UO.natom_refs[spe_index]);
+					ef/=_UO.ind[idx].natoms;/*FIX --OVHPA*/
 					c[num-1]=ef;
 					if(ef<min_E) min_E=ef;
 					if(ef>max_E) max_E=ef;
