@@ -1810,6 +1810,7 @@ GtkItemFactory *item;
 GdkColor colour;
 
 gtk_init(&argc, &argv);
+gdk_gl_init(&argc, &argv);
 gtk_gl_init(&argc, &argv);
 
 /* enforce true colour (fixes SG problems) */
@@ -2235,6 +2236,7 @@ gtk_paned_pack1(GTK_PANED(vpaned), sysenv.display_box, TRUE, TRUE);
 /* create the main drawing area */
 if (gl_init_visual())
   exit(1);
+
 canvas_init(sysenv.display_box);
 canvas_new(0, 0, sysenv.width, sysenv.height);
 
