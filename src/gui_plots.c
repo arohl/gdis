@@ -706,6 +706,7 @@ void sync_graph_controls(struct graph_pak *graph){
 			}
 			/*TODO: act on selection?*/
 			GUI_UNLOCK(GRAPH_UI.symbol);
+if(p_y->symbol!=NULL) {
 			switch(p_y->symbol[0]){
 				case GRAPH_SYMB_CROSS:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,1);break;
@@ -721,6 +722,9 @@ void sync_graph_controls(struct graph_pak *graph){
 				default:
 					GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
 			}
+}else{
+	GUI_COMBOBOX_SET(GRAPH_UI.symbol,0);
+}
 			if(p_y->mixed_symbol) GUI_LOCK(GRAPH_UI.symbol);
 			break;
 		case GRAPH_REGULAR:
@@ -893,8 +897,8 @@ void toggle_auto_y(){
 						}
 					}
 				}
-				/*add 5%*/
-				graph->ymin=graph->ymin-(graph->ymax-graph->ymin)*0.05;
+				/*add 5% only if not 0.0*/
+				if(graph->ymin!=0.) graph->ymin=graph->ymin-(graph->ymax-graph->ymin)*0.05;
 				graph->ymax=graph->ymax+(graph->ymax-graph->ymin)*0.05;
 				text=g_strdup_printf("%G",graph->ymin);
 				GUI_ENTRY_TEXT(GRAPH_UI.ymin,text);g_free(text);
@@ -1052,10 +1056,12 @@ void spin_update_num(void){
 			GUI_COMBOBOX_SET(GRAPH_UI.color,16);
 		}
 		/*show idx structure (if any)*/
+if(p_y->idx!=NULL){
 		GUI_UNLOCK(GRAPH_UI.idx);
 		text=g_strdup_printf("%i",p_y->idx[idx-1]);
 		GUI_ENTRY_TEXT(GRAPH_UI.idx,text);g_free(text);
 		GUI_LOCK(GRAPH_UI.idx);
+}
 		/* show x_val */
 		GUI_UNLOCK(GRAPH_UI.x_val);
 		text=g_strdup_printf("%G",my_x);

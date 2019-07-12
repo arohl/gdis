@@ -255,6 +255,12 @@ gpointer graph;
 GSList *item;
 struct plane_pak *plane;
 FILE *fp;
+/*NEW graph system*/
+g_data_x gx;
+g_data_y gy;
+gint    idx;
+gdouble max;
+gchar *line;
 
 /* constant initialization */
 c1 = 4.0*log(2.0);
@@ -263,9 +269,7 @@ sqrt_pi = sqrt(PI);
 
 /* initialize the output spectrum */
 n = 1 + (model->diffract.theta[1] - model->diffract.theta[0])/model->diffract.theta[2];
-spectrum = g_malloc(n * sizeof(gdouble));
-for (i=0 ; i<n ; i++)
-  spectrum[i] = 0.0;
+spectrum = g_malloc0(n * sizeof(gdouble));
 
 #if DEBUG_CALC_SPECTRUM
 printf("----------------------------------------------------------------------\n");
@@ -393,20 +397,64 @@ else
     {
     case DIFF_ELECTRON:
       graph = graph_new("Electron", model);
+	dat_graph_set_title("<big>Electron diffraction</big>",graph);
       break;
 
     case DIFF_NEUTRON:
       graph = graph_new("Neutron", model);
+	dat_graph_set_title("<big>Neutron diffraction</big>",graph);
       break;
 
     default:
       graph = graph_new("X-Ray", model);
+	dat_graph_set_title("<big>X-Ray diffraction</big>",graph);
     }
-
+/*prepare titles*/
+line=g_strdup_printf("<small> &#955; = %lf </small>",model->diffract.wavelength);
+dat_graph_set_sub_title(line,graph);
+g_free(line);
+dat_graph_set_x_title("2 &#952; (degree)",graph);
+dat_graph_set_y_title("intensities (a.u.)",graph);
+/*prepare data*/
+gx.x_size=n;
+gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
+for(idx=0;idx<n;idx++) gx.x[idx]=(gdouble)idx / i;
+gy.y_size=n;
+gy.y=g_malloc0(n*sizeof(gdouble));
+gy.idx=g_malloc0(n*sizeof(gint32));
+gy.symbol=g_malloc0(n*sizeof(graph_symbol));
+gy.sym_color=NULL;
+max=-1.0/0.0;/*-inf*/
+for(idx=0;idx<n;idx++) {
+	gy.y[idx]=spectrum[idx];
+	if(gy.y[idx]>max) max=gy.y[idx];
+	gy.idx[idx]=-1;
+	gy.symbol[idx]=GRAPH_SYMB_SQUARE;
+}
+max=max*1.05;/*adjust nicely*/
+gy.type=GRAPH_XY_TYPE;
+gy.mixed_symbol=FALSE;
+gy.line=GRAPH_LINE_SINGLE;
+gy.color=GRAPH_COLOR_DEFAULT;
+/*prepare graph*/
+dat_graph_set_x(gx,graph);
+dat_graph_add_y(gy,graph);
+dat_graph_set_type(GRAPH_XY_TYPE,graph);
+dat_graph_set_limits(0.,n/i,0.,max,graph);
+graph_set_yticks(FALSE, 2, graph);
+graph_set_xticks(TRUE, i, graph);
+graph_set_wavelength(model->diffract.wavelength, graph);
+g_free(gx.x);
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
+/*
+void graph_add_data(gint size, gdouble *x, gdouble xmin, gdouble xmax, gpointer data)
   graph_add_data(n, spectrum, model->diffract.theta[0], model->diffract.theta[1], graph);
   graph_set_yticks(FALSE, 2, graph);
   graph_set_xticks(TRUE, i, graph);
   graph_set_wavelength(model->diffract.wavelength, graph);
+*/
 
 /* NEW - clear any other special objects displayed */
   model->picture_active = NULL;
@@ -596,105 +644,6 @@ for (;;)
   }
 return(0);
 }
-
-/******************************/
-/* diffraction peak selection */
-/******************************/
-#define DEBUG_PEAK_SELECT 0
-void diffract_select_peak(gint x, gint y, struct model_pak *model)
-{
-gdouble ox, dx, xmin, xmax, xval;
-gdouble dhkl, d, dmin, lambda;
-gpointer graph;
-GSList *item, *list;
-struct canvas_pak *canvas;
-struct plane_pak *plane, *plane_min;
-
-g_assert(model != NULL);
-g_assert(model->graph_active != NULL);
-
-graph = model->graph_active;
-xmin = graph_xmin(graph);
-xmax = graph_xmax(graph);
-lambda = graph_wavelength(graph);
-
-/* return if not a diffraction pattern */
-if (lambda < 0.1)
-  return; 
-
-/* FIXME - this will break when we implement multi-canvas drawing */
-canvas = g_slist_nth_data(sysenv.canvas_list, 0);
-g_assert(canvas != NULL);
-
-/* graph x offset */
-ox = canvas->x + 4*gl_fontsize;
-if (graph_ylabel(graph))
-  ox += 4*gl_fontsize;
-
-/* graph pixel width */
-dx = (canvas->width-2.0*ox);
-
-/* get graph x value */
-xval = (x - ox)/dx;
-xval *= (xmax - xmin);
-xval += xmin;
-
-if (xval >= xmin && xval <= xmax)
-  {
-  dhkl = 0.5 * lambda / sin(0.5*xval*D2R);
-
-#if DEBUG_PEAK_SELECT
-printf("Peak seach (%d, %d) : %f (%f) : ", x, y, xval, dhkl);
-#endif
-
-  list = diff_get_ranked_faces(model->diffract.dhkl_min, model);
-
-dmin = 1.0;
-plane_min = NULL;
-
-/* Dhkl difference based search */
-  for (item=list ; item ; item=g_slist_next(item))
-    {
-    plane = item->data;
-
-    d = fabs(plane->dhkl - dhkl);
-    if (d < dmin)
-      {
-      plane_min = plane;
-      dmin = d;
-      }
-    }
-
-if (plane_min && dmin < 0.1)
-  {
-  gint gcd, h, k, l;
-  gchar *text;
-
-  h = plane_min->index[0];
-  k = plane_min->index[1];
-  l = plane_min->index[2];
-/*
-  gcd = GCD(GCD(h, k), GCD(k, l));
-*/
-  gcd = 1;
-
-  text = g_strdup_printf("(%d %d %d)", h/gcd, k/gcd, l/gcd);
-  graph_set_select(xval, text, graph);
-  g_free(text);
-
-#if DEBUG_PEAK_SELECT
-  printf("Dhkl = %f (%f)\n", plane_min->dhkl, dmin);
-#endif
-  }
-#if DEBUG_PEAK_SELECT
-else
-  printf("(none)\n");
-#endif
-
-  free_slist(list);
-  }
-}
-
 /****************************/
 /* diffraction setup dialog */
 /****************************/

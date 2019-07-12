@@ -126,12 +126,9 @@ if (event->button != 1)
 
 /* NEW - diffraction peak search */
 if (data->graph_active)
-  {/*FIXME: why only diffract?*/
+  {
   struct graph_pak *graph=(struct graph_pak *)data->graph_active;
   switch(graph->type){
-  case GRAPH_REGULAR:
-    diffract_select_peak(x, y, data);
-    break;
   case GRAPH_IY_TYPE:
   case GRAPH_XY_TYPE:
   case GRAPH_YX_TYPE:
@@ -139,6 +136,7 @@ if (data->graph_active)
   case GRAPH_XX_TYPE:
     dat_graph_select(x,y,data);
     break;
+  case GRAPH_REGULAR:
   default:
     break;
   }
