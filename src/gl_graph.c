@@ -548,6 +548,9 @@ graph->type=type;
 /***********************************/
 /* NEW - dat_graph: select a value */
 /***********************************/
+/*NEW: selection sensivity*/
+#define SEL_SENS 5
+#define DEBUG_PEAK_SELECT 0
 void dat_graph_select(gint x, gint y, struct model_pak *model){
         struct graph_pak *graph;
         struct canvas_pak *canvas;
@@ -587,7 +590,7 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 		xf -= graph->xmin;
 		xf /= (graph->xmax - graph->xmin);
 		xx = ox + xf*dx;
-		if((x>xx-3)&&(x<xx+3)) {
+		if((x>(xx-SEL_SENS))&&(x<(xx+SEL_SENS))) {
 			/*got it*/
 			x_index=i;
 			break;
@@ -611,11 +614,52 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 		yy = (gint) yf;
 		yy *= -1;
 		yy += oy;
-		if((y>yy-3)&&(y<yy+3)){
+		if((y>(yy-SEL_SENS))&&(y<(yy+SEL_SENS))){
 			/*got it*/
 			y_index=1;
 			graph->select=x_index;
 			graph->select_2=p_y->y[x_index];
+/*NEW: add the diffract case*/
+if(graph->wavelength>=0.1){
+	gdouble xval=p_x->x[x_index];
+	gdouble dhkl, d, dmin;
+	GSList *item, *dlist;
+	struct plane_pak *plane, *plane_min;
+	/*we have a hkl ... maybe?*/
+	dhkl = 0.5 * graph->wavelength / sin(0.5*xval*D2R);
+#if DEBUG_PEAK_SELECT
+printf("Peak seach (%d, %d) : %f (%f) : ", x, y, xval, dhkl);
+#endif
+	dlist = diff_get_ranked_faces(model->diffract.dhkl_min, model);
+	dmin = 1.0;
+	plane_min = NULL;
+	/* Dhkl difference based search */
+	for (item=dlist ; item ; item=g_slist_next(item)){
+		plane = item->data;
+		d = fabs(plane->dhkl - dhkl);
+		if (d < dmin){
+			plane_min = plane;
+			dmin = d;
+		}
+	}
+	if (plane_min && dmin < 0.1){
+		gint h, k, l;
+		h = plane_min->index[0];
+		k = plane_min->index[1];
+		l = plane_min->index[2];
+		if(graph->select_label) g_free(graph->select_label);
+		graph->select_label = g_strdup_printf("(%d %d %d)", h, k, l);
+#if DEBUG_PEAK_SELECT
+printf("Dhkl = %f (%f)\n", plane_min->dhkl, dmin);
+#endif
+	}else{
+		graph->select_label = g_strdup_printf("[%G,%G]",p_x->x[x_index],p_y->y[x_index]);
+#if DEBUG_PEAK_SELECT
+printf("(none)\n");
+#endif
+	}
+	break;
+}
 			if(graph->select_label) g_free(graph->select_label);
 			if(graph->type==GRAPH_IY_TYPE) graph->select_label=g_strdup_printf("[%i,%f]",(gint)p_x->x[x_index],p_y->y[x_index]);
 			else graph->select_label=g_strdup_printf("[%G,%G]",p_x->x[x_index],p_y->y[x_index]);
@@ -656,7 +700,7 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 		yy = (gint) yf;
 		yy *= -1;
 		yy += oy;
-		if((y>yy-3)&&(y<yy+3)){
+		if((y>yy-SEL_SENS)&&(y<yy+SEL_SENS)){
 			/*got it*/
 			y_index=j;
 			graph->select=x_index;

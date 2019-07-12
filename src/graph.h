@@ -181,7 +181,9 @@ gdouble graph_xmin(gpointer);
 gdouble graph_xmax(gpointer);
 gdouble graph_ymin(gpointer);
 gdouble graph_ymax(gpointer);
+/*for diffraction*/
 gdouble graph_wavelength(gpointer);
+GSList *diff_get_ranked_faces(gdouble min, struct model_pak *model);
 /* dat_graph interface */
 void dat_graph_toggle_xaxis(gpointer pgraph);
 void dat_graph_toggle_yaxis(gpointer pgraph);
