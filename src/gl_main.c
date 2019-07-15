@@ -2936,8 +2936,6 @@ struct canvas_pak *canvas;
 gboolean do_snap=FALSE;
 struct canvas_pak *snap_canvas;
 /*CAIRO write --OHPA*/
-gdouble org[3];
-cairo_surface_t *surface;
 unsigned char* surface_data = NULL;
 gint w,h;
 
@@ -3020,16 +3018,26 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
 		do_snap=TRUE;/*<- do actual snapshot AFTER drawing*/
       }
 
+/*draw the text buffer*/
+	cairo_surface_flush(sysenv.cairo_surface);
+	/* This would normally be unnecessary, but setting the
+	 * raster position to the screen edge will FAIL due to
+	 * projection rounding making the raster off-screen...
+	 *                                             --OVHPA */
+	glRasterPos2i(canvas->x,canvas->y);
+	/* And, because position of glBitmap is never invalid! */
+	glBitmap(0, 0, 0, 0, -0.5*canvas->width,0.5*canvas->height, NULL);
+	/*usual bliting*/
+	glPixelZoom( 1.0, -1.0 );
+	glDrawPixels(w,h,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
+/* --OVHPA*/
       if (canvas_timing_adjust(model))
         {
-	cairo_surface_flush(sysenv.cairo_surface);
-	gl_project(org,0,0,canvas);
-	glRasterPos3d(org[0],org[1],org[2]);
-	glDrawPixels(w,h,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
 	gdk_gl_drawable_swap_buffers(gldrawable);
 //	gdk_gl_drawable_wait_gl(gldrawable);
 //	gdk_gl_drawable_wait_gdk(gldrawable);
         gdk_gl_drawable_gl_end(gldrawable);
+	/*cleanup text buffer*/
 	cairo_surface_destroy(sysenv.cairo_surface);
 	g_free(surface_data);
 	sysenv.cairo_surface=NULL;
@@ -3052,14 +3060,11 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
                 canvas->x+canvas->width-1, sysenv.height-canvas->y-canvas->height, canvas);
     }
   }
-cairo_surface_flush(sysenv.cairo_surface);
-gl_project(org,0,0,canvas);
-glRasterPos3d(org[0],org[1],org[2]);
-glDrawPixels(w,h,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
 gdk_gl_drawable_swap_buffers(gldrawable);
 //gdk_gl_drawable_wait_gl(gldrawable);
 //gdk_gl_drawable_wait_gdk(gldrawable);
 gdk_gl_drawable_gl_end(gldrawable);
+/*cleanup text buffer*/
 cairo_surface_destroy(sysenv.cairo_surface);
 g_free(surface_data);
 sysenv.cairo_surface=NULL;

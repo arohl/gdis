@@ -420,9 +420,9 @@ gx.x_size=n;
 gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
 for(idx=0;idx<n;idx++) gx.x[idx]=(gdouble)idx / i;
 gy.y_size=n;
-gy.y=g_malloc0(n*sizeof(gdouble));
-gy.idx=g_malloc0(n*sizeof(gint32));
-gy.symbol=g_malloc0(n*sizeof(graph_symbol));
+gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc0(gy.y_size*sizeof(gint32));
+gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
 gy.sym_color=NULL;
 max=-1.0/0.0;/*-inf*/
 for(idx=0;idx<n;idx++) {
