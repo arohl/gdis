@@ -65,9 +65,6 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
-/* temporary global */
-cairo_surface_t *cairo_surface;
-
 #define DRAW_PICTURE 0
 
 /* transformation/projection matrices */
@@ -131,20 +128,6 @@ sysenv.glconfig = gdk_gl_config_new_by_mode(GDK_GL_MODE_RGB |
                                             GDK_GL_MODE_DEPTH |
                                             GDK_GL_MODE_DOUBLE);
 */
-
-/*
- * FIX: glconfig let the GDK_GL_MODE_ACCUM either TRUE or FALSE
- * depending on the openGL configuration or software rendering.
- * However, with GDK_GL_MODE_ACCUM a gdk_gl_drawable_wait_gl is
- * needed prior to gdk drawing.
- * Unfortunately, it is ignored when GDK_GL_MODE_ACCUM is unset
- * and cause a race condition between the gdk and gl drawings!!
- *
- * Solution was to design a mixed gdk/gl function with a silent
- * gdk_gl_drawable_wait_gl in case GDK_GL_MODE_ACCUM is unset..
- *                                                      --OVHPA
-*/
-
 
 sysenv.glconfig = gdk_gl_config_new_by_mode(GDK_GL_MODE_RGB |
                                             GDK_GL_MODE_DEPTH |
@@ -596,8 +579,8 @@ PangoFontDescription *pfd;
 /*CAIRO*/
 cairo_t *cr;
 /**/
-cairo_surface_flush(cairo_surface);
-cr=cairo_create(cairo_surface);
+cairo_surface_flush(sysenv.cairo_surface);
+cr=cairo_create(sysenv.cairo_surface);
 
 cairo_translate(cr,x,y);
 pl=pango_cairo_create_layout(cr);
@@ -616,7 +599,7 @@ if(rotate!=0){
 pango_cairo_show_layout(cr,pl);
 g_object_unref(pl);
 cairo_destroy (cr);
-cairo_surface_mark_dirty(cairo_surface);
+cairo_surface_mark_dirty(sysenv.cairo_surface);
 }
 /**************************************/
 /* pango print_world:  new routine as */
@@ -2952,9 +2935,8 @@ struct model_pak *model;
 struct canvas_pak *canvas;
 gboolean do_snap=FALSE;
 struct canvas_pak *snap_canvas;
-GdkDrawable *drawable;
-cairo_t *cr;
-cairo_surface_t *surface;
+/*CAIRO write --OHPA*/
+unsigned char* surface_data = NULL;
 gint w,h;
 
 /* divert to stereo update? */
@@ -2973,9 +2955,6 @@ gldrawable = gtk_widget_get_gl_drawable(sysenv.glarea);
 if (!gdk_gl_drawable_gl_begin(gldrawable, glcontext))
   return(FALSE);
 
-//GdkRectangle rect = { 0, 0, sysenv.width, sysenv.height };
-//gdk_window_begin_paint_rect((sysenv.glarea)->window,&rect);
-
 glClearColor(sysenv.render.bg_colour[0], sysenv.render.bg_colour[1], sysenv.render.bg_colour[2], 0.0);
 glClearStencil(0x0);
 glDrawBuffer(GL_BACK);
@@ -2983,12 +2962,16 @@ glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 make_fg_visible();
 
 /* pango fonts for OpenGL are now taken 'on the fly' --OVHPA */
-drawable=(sysenv.glarea)->window;
-cr=gdk_cairo_create(drawable);
-surface=cairo_get_target(cr);
-/*we have to create a similar surface if GDK_GL_MODE_ACCUM is not set!*/
+/*cairo_surface init - we now use an explicit buffer! --OVHPA*/
+if(sysenv.cairo_surface!=NULL) {
+	/*we have another refresh before the first one ends?*/
+	cairo_surface_destroy(sysenv.cairo_surface);
+	sysenv.cairo_surface=NULL;
+	/*we are going to overwrite it anyway.*/
+}
 gdk_gl_drawable_get_size(gldrawable,&w,&h);
-cairo_surface=cairo_surface_create_similar(surface,CAIRO_CONTENT_COLOR_ALPHA,w,h);
+surface_data=g_malloc0(4*w*h*sizeof(unsigned char));
+sysenv.cairo_surface=cairo_image_surface_create_for_data(surface_data,CAIRO_FORMAT_ARGB32,w,h,4*w);
 
 nc = g_slist_length(sysenv.canvas_list);
 
@@ -3035,18 +3018,29 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
 		do_snap=TRUE;/*<- do actual snapshot AFTER drawing*/
       }
 
+/*draw the text buffer*/
+	cairo_surface_flush(sysenv.cairo_surface);
+	/* This would normally be unnecessary, but setting the
+	 * raster position to the screen edge will FAIL due to
+	 * projection rounding making the raster off-screen...
+	 *                                             --OVHPA */
+	glRasterPos2i(canvas->x,canvas->y);
+	/* And, because position of glBitmap is never invalid! */
+	glBitmap(0, 0, 0, 0, -0.5*canvas->width,0.5*canvas->height, NULL);
+	/*usual bliting*/
+	glPixelZoom( 1.0, -1.0 );
+	glDrawPixels(w,h,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
+/* --OVHPA*/
       if (canvas_timing_adjust(model))
         {
-        gdk_gl_drawable_swap_buffers(gldrawable);
-	gdk_gl_drawable_wait_gl(gldrawable);
-	gdk_gl_drawable_wait_gdk(gldrawable);
+	gdk_gl_drawable_swap_buffers(gldrawable);
+//	gdk_gl_drawable_wait_gl(gldrawable);
+//	gdk_gl_drawable_wait_gdk(gldrawable);
         gdk_gl_drawable_gl_end(gldrawable);
-
-	cairo_surface_flush(cairo_surface);
-	cairo_set_source_surface(cr,cairo_surface,0,0);
-	cairo_paint(cr);
-	cairo_destroy(cr);
-	cairo_surface_destroy(cairo_surface);
+	/*cleanup text buffer*/
+	cairo_surface_destroy(sysenv.cairo_surface);
+	g_free(surface_data);
+	sysenv.cairo_surface=NULL;
         return(FALSE);
         }
       }
@@ -3067,15 +3061,13 @@ printf("gl_draw(): %d,%d - %d x %d\n", canvas->x, canvas->y, canvas->width, canv
     }
   }
 gdk_gl_drawable_swap_buffers(gldrawable);
-gdk_gl_drawable_wait_gl(gldrawable);
-gdk_gl_drawable_wait_gdk(gldrawable);
+//gdk_gl_drawable_wait_gl(gldrawable);
+//gdk_gl_drawable_wait_gdk(gldrawable);
 gdk_gl_drawable_gl_end(gldrawable);
-
-cairo_surface_flush(cairo_surface);
-cairo_set_source_surface(cr,cairo_surface,0,0);
-cairo_paint(cr);
-cairo_destroy(cr);
-cairo_surface_destroy(cairo_surface);
+/*cleanup text buffer*/
+cairo_surface_destroy(sysenv.cairo_surface);
+g_free(surface_data);
+sysenv.cairo_surface=NULL;
 
 if(do_snap) do_eps_snapshot(snap_canvas->model,snap_canvas->width,snap_canvas->height);/*snapshot here*/
 

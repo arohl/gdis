@@ -228,6 +228,9 @@ gpointer glconfig;
 gint snapshot;
 gchar *snapshot_filename;
 
+/* cairo --OVHPA*/
+cairo_surface_t *cairo_surface;
+
 /* LEFT pane hideable boxes */
 gint mtb_on;
 gint mpb_on;

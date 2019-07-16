@@ -452,6 +452,9 @@ sysenv.canvas = TRUE;
 sysenv.select_mode = CORE;
 sysenv.calc_pbonds = TRUE;
 
+/* cairo --OVHPA*/
+sysenv.cairo_surface=NULL;
+
 /* default masks */
 sysenv.file_type = DATA;
 sysenv.babel_type = AUTO;
