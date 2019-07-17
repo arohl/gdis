@@ -418,7 +418,9 @@ dat_graph_set_y_title("intensities (a.u.)",graph);
 /*prepare data*/
 gx.x_size=n;
 gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
-for(idx=0;idx<n;idx++) gx.x[idx]=(gdouble)idx / i;
+gx.x[0]=0.;
+for(idx=1;idx<n;idx++) gx.x[idx]=gx.x[idx-1]+model->diffract.theta[2];
+
 gy.y_size=n;
 gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
 gy.idx=g_malloc0(gy.y_size*sizeof(gint32));
@@ -440,7 +442,7 @@ gy.color=GRAPH_COLOR_DEFAULT;
 dat_graph_set_x(gx,graph);
 dat_graph_add_y(gy,graph);
 dat_graph_set_type(GRAPH_XY_TYPE,graph);
-dat_graph_set_limits(0.,n/i,0.,max,graph);
+dat_graph_set_limits(model->diffract.theta[0],model->diffract.theta[1],0.,max,graph);
 graph_set_yticks(FALSE, 2, graph);
 graph_set_xticks(TRUE, i, graph);
 graph_set_wavelength(model->diffract.wavelength, graph);
