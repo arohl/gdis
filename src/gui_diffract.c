@@ -271,6 +271,15 @@ sqrt_pi = sqrt(PI);
 n = 1 + (model->diffract.theta[1] - model->diffract.theta[0])/model->diffract.theta[2];
 spectrum = g_malloc0(n * sizeof(gdouble));
 
+/* initialize main peaks graph data */
+gy.y_size=n;
+gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
+gy.idx=g_malloc0(gy.y_size*sizeof(gint32));
+gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
+gy.sym_color=NULL;
+max=-1.0/0.0;/*-inf*/
+
+
 #if DEBUG_CALC_SPECTRUM
 printf("----------------------------------------------------------------------\n");
 printf("    hkl    :  m :  Dhkl  : 2theta :  lpf   :     |F|     :      I\n");
@@ -366,6 +375,19 @@ for (item=list ; item ; item=g_slist_next(item))
 /* compute intensity for the current bin */
     intensity = plane->multiplicity*lpf*f*bf;
     spectrum[i] += intensity;
+/* add peak-only data */
+	if((cur_peak==i)&&(intensity>0.1)){
+		/*this is a peak*/
+		gy.y[i] += intensity;
+		if(gy.y[i]>max) max=gy.y[i];
+		/*compose a "name" for the peak 0xFF ensure the 8-bit*/
+		gy.idx[i] = ((gint8) plane->index[0]) & 0xFF;
+		gy.idx[i] += (((gint8) plane->index[1]) & 0xFF)<<8;
+		gy.idx[i] += (((gint8) plane->index[2]) & 0xFF)<<16;
+		gy.idx[i] += (((gint8) 0x55) & 0xFF)<<24;/*this serve as a marker*/
+		/*square symbol (selectable)*/
+		gy.symbol[i]=GRAPH_SYMB_SQUARE;
+	}
     }
 
 #if DEBUG_CALC_SPECTRUM
@@ -420,19 +442,6 @@ gx.x_size=n;
 gx.x=g_malloc0(gx.x_size*sizeof(gdouble));
 gx.x[0]=0.;
 for(idx=1;idx<n;idx++) gx.x[idx]=gx.x[idx-1]+model->diffract.theta[2];
-
-gy.y_size=n;
-gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
-gy.idx=g_malloc0(gy.y_size*sizeof(gint32));
-gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
-gy.sym_color=NULL;
-max=-1.0/0.0;/*-inf*/
-for(idx=0;idx<n;idx++) {
-	gy.y[idx]=spectrum[idx];
-	if(gy.y[idx]>max) max=gy.y[idx];
-	gy.idx[idx]=-1;
-	gy.symbol[idx]=GRAPH_SYMB_SQUARE;
-}
 max=max*1.05;/*adjust nicely*/
 gy.type=GRAPH_XY_TYPE;
 gy.mixed_symbol=FALSE;
@@ -440,6 +449,14 @@ gy.line=GRAPH_LINE_SINGLE;
 gy.color=GRAPH_COLOR_DEFAULT;
 /*prepare graph*/
 dat_graph_set_x(gx,graph);
+dat_graph_add_y(gy,graph);
+/*next set is the spectra without selectable peaks*/
+for(idx=0;idx<n;idx++) {
+	gy.y[idx]=spectrum[idx];
+	gy.idx[idx]=0;
+	gy.symbol[idx]=GRAPH_SYMB_NONE;
+}
+/*finish graph*/
 dat_graph_add_y(gy,graph);
 dat_graph_set_type(GRAPH_XY_TYPE,graph);
 dat_graph_set_limits(model->diffract.theta[0],model->diffract.theta[1],0.,max,graph);
@@ -450,13 +467,6 @@ g_free(gx.x);
 g_free(gy.y);
 g_free(gy.idx);
 g_free(gy.symbol);
-/*
-void graph_add_data(gint size, gdouble *x, gdouble xmin, gdouble xmax, gpointer data)
-  graph_add_data(n, spectrum, model->diffract.theta[0], model->diffract.theta[1], graph);
-  graph_set_yticks(FALSE, 2, graph);
-  graph_set_xticks(TRUE, i, graph);
-  graph_set_wavelength(model->diffract.wavelength, graph);
-*/
 
 /* NEW - clear any other special objects displayed */
   model->picture_active = NULL;
