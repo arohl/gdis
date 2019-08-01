@@ -586,21 +586,30 @@ if (graph->x_title) oy = canvas->y + canvas->height - 5*gl_fontsize;
 
 /*NEW: process the diffraction case first*/
 if((graph->type==GRAPH_XY_TYPE)&&(graph->wavelength>=0.1)){
+	gint8 det,h,k,l;
 	/*get the y_value first*/
+	x_index=-1;
 	y_index=-1;
 	list=g_slist_next(list);
-	for ( ; list ; list=g_slist_next(list)){
-		p_y = (g_data_y *) list->data;
-		for(i=0;i<p_y->y_size;i++){
-			yf = p_y->y[i];
-			yf -= graph->ymin;
-			yf /= (graph->ymax - graph->ymin);
-			yf *= dy;
-			yy = (gint) yf;
-			yy *= -1;
-			yy += oy;
-			if((y>(yy-SEL_SENS))&&(y<(yy+SEL_SENS))){
+	p_y = (g_data_y *) list->data;/*there is only one set*/
+	for(i=0;i<p_y->y_size;i++){
+		yf = p_y->y[i];
+		yf -= graph->ymin;
+		yf /= (graph->ymax - graph->ymin);
+		yf *= dy;
+		yy = (gint) yf;
+		yy *= -1;
+		yy += oy;
+		if((y>(yy-SEL_SENS))&&(y<(yy+SEL_SENS))){
+			/*there can be several similar intensity*/
+			/*check if we are in the good region*/
+			xf = p_x->x[i];
+			xf -= graph->xmin;
+			xf /= (graph->xmax - graph->xmin);
+			xx = ox + xf*dx;
+			if((x>(xx-SEL_SENS))&&(x<(xx+SEL_SENS))) {
 				/*got it*/
+				x_index=i;
 				y_index=i;
 				graph->select_2=p_y->y[y_index];
 				break;
@@ -613,89 +622,53 @@ if((graph->type==GRAPH_XY_TYPE)&&(graph->wavelength>=0.1)){
 		graph->select_label=NULL;
 		return;
 	}
-if(p_y->y[y_index]<=0.1){
-	/*disable selection of zero background BUT allow the 0-selection of peak*/
-	x_index=-1;
-	y_index=-1;
-	list=graph->set_list;
-	list=g_slist_next(list);
-	p_y = (g_data_y *) list->data;/*there is only one set*/
-	for(i=0;i<p_x->x_size;i++){
-		xf = p_x->x[i];
-		xf -= graph->xmin;
-		xf /= (graph->xmax - graph->xmin);
-		xx = ox + xf*dx;
-		if((x>(xx-SEL_SENS))&&(x<(xx+SEL_SENS))) {
-			x_index=i;
-			if(p_y->y[x_index]<=0.1){
-				/*we are still in the background*/
-				x_index=-1;
-			}else{
-				/*got it*/
-				graph->select=x_index;
-				graph->select_2=0.0;
-				break;
+	if(p_y->y[y_index]==0.0){
+		/*we are in the background, try x first*/
+		x_index=-1;
+		y_index=-1;
+		for(i=0;i<p_x->x_size;i++){
+			xf = p_x->x[i];
+			xf -= graph->xmin;
+			xf /= (graph->xmax - graph->xmin);
+			xx = ox + xf*dx;
+			if((x>(xx-SEL_SENS))&&(x<(xx+SEL_SENS))) {
+				/*in background, there can be multiple y*/
+				/*... -> get the one which is not 0*/
+				if(p_y->y[i]!=0.0){
+					/*got it*/
+					x_index=i;
+					y_index=i;
+					graph->select_2=p_y->y[y_index];
+					break;
+				}
 			}
 		}
 	}
-}else{
-	/*check the x, corresponding to that y*/
-	x_index=-1;
-	xf = p_x->x[y_index];
-	xf -= graph->xmin;
-	xf /= (graph->xmax - graph->xmin);
-	xx = ox + xf*dx;
-	if((x>(xx-SEL_SENS))&&(x<(xx+SEL_SENS))) {
-		/*got it*/
-		x_index=y_index;
-		graph->select=x_index;
-	}
-}
-	if(x_index<0) {
+	if(y_index<0){
 		/*not found*/
 		if(graph->select_label!=NULL) g_free(graph->select_label);
 		graph->select_label=NULL;
 		return;
 	}
-/*get the proper (h,k,l) peak label*/
-        gdouble xval=p_x->x[x_index];
-        gdouble dhkl, d, dmin;
-        GSList *item, *dlist;
-        struct plane_pak *plane, *plane_min;
-        /*we have a hkl ... maybe?*/
-        dhkl = 0.5 * graph->wavelength / sin(0.5*xval*D2R);
-#if DEBUG_PEAK_SELECT
-printf("Peak seach (%d, %d) : %f (%f) : ", x, y, xval, dhkl);
-#endif
-        dlist = diff_get_ranked_faces(model->diffract.dhkl_min, model);
-        dmin = 1.0;
-        plane_min = NULL;
-        /* Dhkl difference based search */
-        for (item=dlist ; item ; item=g_slist_next(item)){
-                plane = item->data;
-                d = fabs(plane->dhkl - dhkl);
-                if (d < dmin){
-                        plane_min = plane;
-                        dmin = d;
-                }
-        }
-        if (plane_min && dmin < 0.1){
-                gint h, k, l;
-                h = plane_min->index[0];
-                k = plane_min->index[1];
-                l = plane_min->index[2];
-                if(graph->select_label) g_free(graph->select_label);
-                graph->select_label = g_strdup_printf("(%d %d %d)", h, k, l);
-#if DEBUG_PEAK_SELECT
-printf("Dhkl = %f (%f)\n", plane_min->dhkl, dmin);
-#endif
-        }else{
-/*this could happen if within a 2-peaks region but not 0 background*/
-                graph->select_label = g_strdup_printf("[%G,%G]",p_x->x[x_index],p_y->y[x_index]);
-#if DEBUG_PEAK_SELECT
-printf("(none)\n");
-#endif
-        }
+	if(p_y->y[y_index]==0.0){
+		/*found background! Should NEVER happen, but just in case...*/
+		if(graph->select_label!=NULL) g_free(graph->select_label);
+		graph->select_label=NULL;
+		return;
+	}
+	graph->select=x_index;
+	if(graph->select_label) g_free(graph->select_label);
+	if(p_y->idx[y_index]==0){
+		/*problem with label??*/
+		graph->select_label = g_strdup_printf("#%X",p_y->idx[y_index]);
+	}else{
+		det=((p_y->idx[y_index]>>24)&0xFF);
+		h=p_y->idx[y_index] & 0xFF;
+		k=(p_y->idx[y_index]>>8) & 0xFF;
+		l=(p_y->idx[y_index]>>16) & 0xFF;
+		if(det==0x55) graph->select_label = g_strdup_printf("(%d %d %d)",h,k,l);
+		else graph->select_label = g_strdup_printf("[%d %d %d]",h,k,l);/*something wrong*/
+	}
 	return;
 }/*end of diffraction*/
 	/*get the corresponding x index*/
