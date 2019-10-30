@@ -3241,12 +3241,13 @@ printf("2 prim\n");
     }
 
 /* NEW - vibrational info search */
-  if (g_ascii_strncasecmp(" Frequencies (cm-1) and Eigenvectors",line,36) == 0)
+/* NEWER - gulp changed output file to have extra space so explicitly compare both */
+  if ((g_ascii_strncasecmp(" Frequencies (cm-1) and Eigenvectors",line,36) == 0) || (g_ascii_strncasecmp("  Frequencies (cm-1) and Eigenvectors",line,37) == 0))
     fflag++;
   if (g_ascii_strncasecmp("  Zero point energy",line,19) == 0)
     fflag=0;
 
-  if (fflag && g_ascii_strncasecmp(" Frequency",line,10) == 0)
+  if (fflag && (g_ascii_strncasecmp(" Frequency",line,10) == 0) || (g_ascii_strncasecmp("  Frequency",line,11) == 0))
     {
 /* space group processing here, since we want to attach */
 /* the vibration lists to ALL atoms in the full cell, */
@@ -3267,7 +3268,7 @@ printf("2 prim\n");
       buff = tokenize(line, &n);
 
 /* NEW - store IR intensities */
-      if (g_ascii_strncasecmp(" IR Intensity", line, 13) == 0)
+      if ((g_ascii_strncasecmp(" IR Intensity", line, 13) == 0) || (g_ascii_strncasecmp("  IR Intensity", line, 14) == 0))
         {
 //      i = 2;/*FIX 2b7a7b*/
         for (i=2 ; i<n ; i++)
@@ -3275,7 +3276,7 @@ printf("2 prim\n");
         }
 
 /* NEW - store Raman intensities */
-      if (g_ascii_strncasecmp(" Raman", line, 6) == 0)
+      if ((g_ascii_strncasecmp(" Raman", line, 6) == 0) || (g_ascii_strncasecmp("  Raman", line, 7) == 0))
         {
 //      i = 2;/*FIX b35039*/
         for (i=2 ; i<n ; i++)
