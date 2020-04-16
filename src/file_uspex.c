@@ -3746,7 +3746,7 @@ if(!model->silent){
 	}else if(_UO.version==944){
 		line=g_strdup_printf("USPEX version %i detected!\n",_UO.version);
 		gui_text_show(STANDARD, line);
-	}else if(_UO.version==1010){
+	}else if(_UO.version==1030){
 		line=g_strdup_printf("USPEX new version %i detected!\n",_UO.version);
 		gui_text_show(STANDARD, line);
 	}else{
