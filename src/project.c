@@ -318,7 +318,7 @@ while (!scan_complete(scan))
 /* keyword checks */
   if (buff)
     {
-    if (g_ascii_strncasecmp(*buff, "\%set", 4) == 0)
+    if (g_ascii_strncasecmp(*buff, "%set", 4) == 0)
       {
       switch (type)
         {
@@ -359,7 +359,7 @@ g_assert_not_reached();
       continue;
       }
 
-    if (g_ascii_strncasecmp(*buff, "\%title", 6) == 0)
+    if (g_ascii_strncasecmp(*buff, "%title", 6) == 0)
       {
 /* FIXME - properly defined project types */
       if (num_tokens > 1)

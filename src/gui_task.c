@@ -717,7 +717,7 @@ task_list_tv = NULL;
 void task_dialog(void)
 {
 gint i;
-gchar *titles[6] = {"  PID  ", "       Job       ", "   Status   ", "  \% CPU  ", "  \% Mem  ", "  Time  "};
+gchar *titles[6] = {"  PID  ", "       Job       ", "   Status   ", "  % CPU  ", "  % Mem  ", "  Time  "};
 gpointer dialog;
 GtkWidget *window, *swin, *frame, *vbox;
 GtkCellRenderer *renderer;

@@ -99,8 +99,8 @@ struct keyword_pak keywords[] =
 {"coord", MARVIN_COORD},
 
 /* gdis data files */
-{"\%gdis_elem", GDIS_ELEM_START},
-{"\%gdis_end", GDIS_END},
+{"%gdis_elem", GDIS_ELEM_START},
+{"%gdis_end", GDIS_END},
 
 {"last", -1}
 };
