@@ -3247,7 +3247,7 @@ printf("2 prim\n");
   if (g_ascii_strncasecmp("  Zero point energy",line,19) == 0)
     fflag=0;
 
-  if (fflag && (g_ascii_strncasecmp(" Frequency",line,10) == 0) || (g_ascii_strncasecmp("  Frequency",line,11) == 0))
+  if ((fflag && (g_ascii_strncasecmp(" Frequency",line,10) == 0)) || (g_ascii_strncasecmp("  Frequency",line,11) == 0))
     {
 /* space group processing here, since we want to attach */
 /* the vibration lists to ALL atoms in the full cell, */
