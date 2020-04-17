@@ -730,11 +730,11 @@ switch (precision)
   {
   case 1:
     READ_RECORD;
-    fread(cell_double, sizeof(double), 9, fp);
+    IGNORE_RETURN(fread(cell_double, sizeof(double), 9, fp));
     READ_RECORD;
 
     READ_RECORD;
-    fread(&grid_int, sizeof(int), 4, fp);
+    IGNORE_RETURN(fread(&grid_int, sizeof(int), 4, fp));
     READ_RECORD;
 
 /* byte ordering check */
@@ -922,7 +922,7 @@ printf("density grid in au, scale = %f\n", icell[0]);
   for (i=0 ; i<n ; i++)
     {
     READ_RECORD;
-    fread(f, sizeof(float), grid[0], fp);
+    IGNORE_RETURN(fread(f, sizeof(float), grid[0], fp));
     READ_RECORD;
 
     if (ptr)

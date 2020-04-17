@@ -622,7 +622,7 @@ void type_dreiding_gasteiger(struct model_pak *model, gint mode)
   cmd = g_strdup_printf("%s -ipdb %s -obgf %s", sysenv.babel_path, temp_in_file, temp_out_file);
 
   
-  system(cmd);
+  IGNORE_RETURN(system(cmd));
   g_free(cmd);
   
   /* create a new temporary model */

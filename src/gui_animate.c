@@ -333,7 +333,7 @@ if (sysenv.render.animate && !sysenv.render.no_povray_exec)
 
   if (text)
     {
-    system(text);
+    IGNORE_RETURN(system(text));
     g_free(text);
     gui_text_show(DEFAULT, "Completed movie creation.\n");
     }
@@ -344,10 +344,10 @@ if (sysenv.render.no_keep_tempfiles)
   {
 #ifndef __WIN32
   text = g_strdup_printf("rm -rf %s_*.pov", sysenv.render.animate_file);
-  system(text);
+  IGNORE_RETURN(system(text));
   g_free(text);
   text = g_strdup_printf("rm -rf %s_*.tga", sysenv.render.animate_file);
-  system(text);
+  IGNORE_RETURN(system(text));
   g_free(text);
 #endif
 /* TODO - windows equivalents */

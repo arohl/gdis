@@ -599,7 +599,7 @@ while (EXIST(child))
   task_kill_tree(process->child);
 /* terminate process */
   cmd = g_strdup_printf("kill TERM %d >& /dev/null", process->pid);
-  system(cmd);
+  IGNORE_RETURN(system(cmd));
   g_free(cmd);
 /* get next process at this level */
   child = process->sister;

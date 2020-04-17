@@ -406,7 +406,7 @@ switch (fork())
     close(fdfrom[1]);
 
 /* send a command */
-    write(fdto[1], "echo \"ssh:connect\"\n", 19);
+    IGNORE_RETURN(write(fdto[1], "echo \"ssh:connect\"\n", 19));
 
 /* read/write to child (ssh) via file desc. */
 /* read -> fdfrom[0] */
@@ -456,7 +456,7 @@ struct host_pak *host = data;
 printf("Closing connection to: %s\n", host->name);
 
 host->connected = FALSE;
-write(host->input, "exit\n", 5);
+IGNORE_RETURN(write(host->input, "exit\n", 5));
 }
 
 /************************************************************/
@@ -475,8 +475,8 @@ g_assert(host != NULL);
 if (!host->connected)
   return(NULL); 
 
-write(host->input, message, strlen(message));
-write(host->input, "echo \"host:done\"\n", 17);
+IGNORE_RETURN(write(host->input, message, strlen(message)));
+IGNORE_RETURN(write(host->input, "echo \"host:done\"\n", 17));
 
 response = g_string_new(NULL);
 
@@ -600,7 +600,7 @@ if (!scan)
   return(1);
 
 text = g_strdup_printf("ascii-xfr -v -r %s\n", remote);
-write(host->input, text, strlen(text));
+IGNORE_RETURN(write(host->input, text, strlen(text)));
 g_free(text);
 
 for (;;)
@@ -609,11 +609,11 @@ for (;;)
   if (scan_complete(scan))
     {
 /* FIXME - does not seem to be terminating the transfer ...  */
-    write(host->input, "", 1);
-    write(host->input, "", 1);
+    IGNORE_RETURN(write(host->input, "", 1));
+    IGNORE_RETURN(write(host->input, "", 1));
     break;
     }
-  write(host->input, text, strlen(text));
+  IGNORE_RETURN(write(host->input, text, strlen(text)));
   }
 
 scan_free(scan);
@@ -635,13 +635,13 @@ if (!host->connected)
 
 text = g_strdup_printf("ascii-xfr -v -s -e %s\n", remote);
 
-write(host->input, text, strlen(text));
+IGNORE_RETURN(write(host->input, text, strlen(text)));
 
 fp = fopen(local, "w");
 
 for (;;)
   {
-  read(host->output, cmd, 1);
+  IGNORE_RETURN(read(host->output, cmd, 1));
 
 fprintf(fp, "%c", cmd[0]);
 

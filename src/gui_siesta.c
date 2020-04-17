@@ -306,7 +306,7 @@ if (model->phonon_movie)
                            sysenv.convert_path, model->phonon_movie_name,
                            model->phonon_movie_name, model->phonon_movie_type);
 
-    system(text);
+    IGNORE_RETURN(system(text));
     g_free(text);
 
     return(FALSE);

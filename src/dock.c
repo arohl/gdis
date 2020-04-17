@@ -160,7 +160,7 @@ if (exec_gulp(input, output))
 
 /* run the GULP jobs (NOT in bg as we're already a task) */
       cmd = g_strdup_printf("%s < %s > %s", sysenv.gulp_path, input, output);
-      system(cmd);
+      IGNORE_RETURN(system(cmd));
 
       g_free(cmd);
       g_free(base);

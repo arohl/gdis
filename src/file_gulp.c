@@ -3985,7 +3985,7 @@ double version;
 
 /* record 1 - version */
 READ_RECORD;
-fread(&version, sizeof(version), 1, fp);
+IGNORE_RETURN(fread(&version, sizeof(version), 1, fp));
 if (fabs(version) > 100.0)
   {
   swap_bytes(&version, sizeof(version));
@@ -4000,11 +4000,11 @@ READ_RECORD;
 /* record 2 */
 READ_RECORD;
 /* # of atoms + shells */
-fread(&num_atoms, sizeof(num_atoms), 1, fp);
+IGNORE_RETURN(fread(&num_atoms, sizeof(num_atoms), 1, fp));
 if (model->trj_swap)
   swap_bytes(&num_atoms, sizeof(num_atoms));
 /* dimension */
-fread(&periodic, sizeof(periodic), 1, fp);
+IGNORE_RETURN(fread(&periodic, sizeof(periodic), 1, fp));
 if (model->trj_swap)
   swap_bytes(&periodic, sizeof(periodic));
 READ_RECORD;
@@ -4170,7 +4170,7 @@ if (model->gulp.ensemble == NPT)
   {
 /* get cell vectors */
   READ_RECORD;
-  fread(cell, sizeof(double), 9, fp);
+  IGNORE_RETURN(fread(cell, sizeof(double), 9, fp));
   READ_RECORD;
 
 /* get cell velocities */
@@ -4190,7 +4190,7 @@ if (model->gulp.ensemble == NPT)
     default:
       j=0;
     }
-  fread(velc, sizeof(double), j, fp);
+  IGNORE_RETURN(fread(velc, sizeof(double), j, fp));
   READ_RECORD;
 
 /* compute latmat/ilatmat */
@@ -4387,7 +4387,7 @@ if (!sysenv.gulp_path)
   return(-1);
 
 /* delete the old file to be sure output is only data from current run */
-chdir(sysenv.cwd);
+IGNORE_RETURN(chdir(sysenv.cwd));
 unlink(output);
 
 /* put the GULP path in quotes to avoid problems with spaces in pathnames etc */
@@ -4425,7 +4425,7 @@ if (!sysenv.gulp_path)
   return(-1);
 
 /* delete the old file to be sure output is only data from current run */
-chdir(sysenv.cwd);
+IGNORE_RETURN(chdir(sysenv.cwd));
 unlink(output);
 
 /* put the GULP path in quotes to avoid problems with spaces in pathnames etc */

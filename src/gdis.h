@@ -146,6 +146,15 @@ x+sysenv.subcenx[sub], y+sysenv.subceny[sub], w, h, a1, a2))
 #define FOR_SLIST(item, list) for (item=list ; (item=g_slist_next(item)) ; )
 #define FOR_LIST(item, list) for (item=list ; (item=g_list_next(item)) ; )
 
+/* honestly ignoring a return value --OVHPA*/
+/*-> this is the recipe from the gnulib BTW*/
+#if 3 < __GNUC__ + (4 <= __GNUC_MINOR__)
+# define IGNORE_RETURN(x) \
+    (__extension__ ({ __typeof__ (x) __x = (x); (void) __x; }))
+#else
+# define IGNORE_RETURN(x) ((void) (x))
+#endif
+
 
 /* file parsing keyword/option stuff */
 enum 
