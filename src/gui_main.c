@@ -261,8 +261,7 @@ switch (event->button)
   case 1:
 
 /* HACK */
-if (sysenv.stereo)
-  return(FALSE);
+  if (sysenv.stereo) return(FALSE);
 
 /* clean up after move operations */
   switch(data->mode)

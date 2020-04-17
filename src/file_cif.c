@@ -173,9 +173,9 @@ data->id = -1;
 for(;;)
   {
 /* end if EOF */
-line = file_read_line(fp);
-if (!line)
-  break;
+  line = file_read_line(fp);
+  if (!line)
+    break;
 
 /*
   if (fgetline(fp, line))
