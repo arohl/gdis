@@ -109,7 +109,7 @@ g_assert(model->animation == TRUE);
     matrix_lattice_init(model);
 
     frame = g_malloc(sizeof(struct frame_pak *));
-    memcpy(frame->latmat, model->latmat, 9*sizeof(gdouble));
+    for(gint idx=0;idx<9;idx++) frame->latmat[idx]=model->latmat[idx];
     frame->core_list = dup_core_list(model->cores);
     frame->shell_list = dup_shell_list(model->shels);
 
