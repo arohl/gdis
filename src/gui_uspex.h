@@ -175,12 +175,13 @@ struct uspex_calc_gui{
 	GUI_OBJ *ai_opt;
 	GUI_OBJ *ai_opt_button;
 	GUI_OBJ *ai_generate;
-	gchar *_tmp_ai_spe;
-	GUI_OBJ *ai_spe;
-	gchar **_potentials;
-	gchar *_tmp_ai_pot;
-	GUI_OBJ *ai_pot;
-	GUI_OBJ *ai_pot_button;
+	GUI_OBJ *ai_lib;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_button;/*NEW: Specific auto-update*/
+	gchar **_tmp_ai_lib_folder;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_flavor;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_flavor_button;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_sel;/*NEW: Specific auto-update*/
+	gchar **_tmp_ai_lib_sel;/*NEW: Specific auto-update*/
 	GUI_OBJ *numProcessors;
 	GUI_OBJ *numParallelCalcs;
 	gchar **_tmp_commandExecutable;

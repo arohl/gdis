@@ -255,6 +255,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         gtk_box_pack_start(GTK_BOX(_hbox),combobox,TRUE,TRUE,0);\
 	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
+/* Make combobox editable */
+#define GUI_COMBOBOX_EDITABLE(combobox) do{\
+	gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combobox))),TRUE);\
+}while(0)
 /*Add a new element with text ("text") in the combobox (combobox).
  * This have to be called AFTER GUI_COMBOBOX.*/
 #define GUI_COMBOBOX_ADD(combobox,text) do{\

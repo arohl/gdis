@@ -276,24 +276,21 @@ if(uspex_gui.calc._nspecies<1) {
 //	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_commandExecutable[idx]=NULL;
 	if(uspex_gui.calc.commandExecutable!=NULL) {
 		/*cut*/
+		gint size;
 		idx=0;/*for safety*/
 		line=&(uspex_gui.calc.commandExecutable[0]);
 		ptr=line;
 		while(*line!='\0'){
-			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
-			if(*ptr=='\0') {
-				/*last one*/
-				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
-				/*FIX: f50eec*/
-				break;
-			}else{
-				*ptr='\0';/*cut here*/
-				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
-				line=ptr+1;
-				*ptr='\n';/*restore*/
-				idx++;
-				if(idx>uspex_gui.calc._num_opt_steps) break;
+			while(!g_ascii_isprint(*ptr)) ptr++;
+			line=ptr;
+			size=0;
+			while(g_ascii_isprint(*ptr)) {
+				size++;
+				ptr++;
 			}
+			uspex_gui._tmp_commandExecutable[idx]=g_strndup(line,size);
+			line=ptr;
+			idx++;
 		}
 	}
 	uspex_gui._tmp_ai_input=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
@@ -301,10 +298,14 @@ if(uspex_gui.calc._nspecies<1) {
 	uspex_gui._tmp_ai_opt=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_ai_opt[idx]=NULL;/*no default*/
 	uspex_gui.auto_step=TRUE;/*auto step is ON by default*/
-	uspex_gui._tmp_ai_spe=NULL;
-	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);/*<- needed?*/
-	uspex_gui._potentials=g_malloc(uspex_gui.calc._nspecies*sizeof(gchar *));
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui._potentials[idx]=NULL;
+	uspex_gui._tmp_ai_lib_folder=NULL;
+	uspex_gui._tmp_ai_lib_sel=NULL;
+	uspex_gui._tmp_ai_lib_folder=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	uspex_gui._tmp_ai_lib_sel=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
+		uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+		uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+	}
 	/**/
 	uspex_gui.copySpecific=TRUE;
 	uspex_gui.have_v1010=TRUE;
@@ -2110,6 +2111,151 @@ void register_commandExecutable(void){
 		}
 	}
 }
+/*****************************************/
+/* sync the flavor of (pseudo-)potential */
+/*****************************************/
+void sync_ai_lib_flavor(void){
+	gchar *path;
+	GSList *folders,*folder;
+	gchar *item;
+	gchar sym[3];
+	gint idx;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	if(uspex_gui._tmp_ai_lib_folder[step]==NULL) {
+		GUI_COMBOBOX_WIPE(uspex_gui.ai_lib_flavor);
+		/*library folder is blank but there could be a flavor entered manually*/
+		if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+			GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,uspex_gui._tmp_ai_lib_sel[step]);
+		}else{
+			GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");
+		}
+		GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
+		return;/*no folder selected*/
+	}
+	path=g_strdup(uspex_gui._tmp_ai_lib_folder[step]);
+	folders=file_dir_list(path,FALSE);
+	g_free(path);
+	GUI_COMBOBOX_WIPE(uspex_gui.ai_lib_flavor);
+	sym[2]='\0';
+	for (folder=folders ; folder ; folder=g_slist_next(folder)){
+		item=g_strdup_printf("%s",(char *)folder->data);
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1://VASP
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+			/*per XX species: 
+			 * 1- XX{*}/ folder for VASP PP,
+			 * 2- XX.* files for the others. */
+			for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+#if DEBUG_POTCAR_FOLDER
+	fprintf(stdout,"#DBG: looking for %s\n",sym);
+#endif  
+				sym[0]=elements[uspex_gui.calc.atomType[idx]].symbol[0];
+				sym[1]=elements[uspex_gui.calc.atomType[idx]].symbol[1];
+				if(sym[0]==item[0]){
+					if(sym[1]==item[1]) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+					else{
+						/*special case of single atoms*/
+						if((!g_ascii_islower (sym[1]))
+						 &&(!g_ascii_islower (item[1]))){
+							GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+						}
+					}
+				}
+			}
+			break;
+		case 3://GULP
+			/* check *.lib */
+			if (find_in_string(".lib",item) != NULL) 
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 12://Tinker
+			/* check *.prm */
+			if (find_in_string(".prm",item) != NULL)
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 7://CP2K
+			/* check * */
+			/*add everything that is a file*/
+			if(item[0] != '.')
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 15://DFTB
+			/* Special: all A, B species skf have:
+			 * A-A.skf, A-B.skf, B-A.skf, B-B.skf.
+			 * Files will be copied automatically.*/
+			if(folder==folders) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"AUTO");
+			break;
+		case 4://LAMMPS
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+			/* No library is needed... (I think)
+			 * So this setting imports all files
+			 * from library directory.*/
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+			/* Some library could be needed, but
+			 * I can't figure out format/case...
+			 * so we also imports all files from
+			 * library directory. (just in case)*/
+			if(folder==folders) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"ALL");
+			break;
+		default:
+			/*unsupported code?*/
+			break;
+		}
+		g_free(item);
+	}
+	g_slist_free(folders);
+	GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
+}
+/*************************************/
+/* sync the library flavor selection */
+/*************************************/
+void sync_ai_lib_sel(void){
+	gchar *text;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	/**/
+	if(uspex_gui._tmp_ai_lib_sel[step]==NULL)
+		text=g_strdup_printf("N/A");
+	else
+		text=g_strdup_printf("%s",uspex_gui._tmp_ai_lib_sel[step]);
+	GUI_UNLOCK(uspex_gui.ai_lib_sel);
+	GUI_ENTRY_TEXT(uspex_gui.ai_lib_sel,text);
+	GUI_LOCK(uspex_gui.ai_lib_sel);
+	g_free(text);
+}
+/********************************/
+/* set ai_library for last step */
+/********************************/
+void register_ai_library(void){
+	gint idx;
+	gint code;
+	gint clone;
+	gint step=(gint)uspex_gui._tmp_num_opt_steps;
+	step--;
+	code=uspex_gui.calc.abinitioCode[step];
+	/*search if we already have a setup for this ai_code*/
+	clone=step;
+	for(idx=0;idx<step-1;idx++)
+		if(code==uspex_gui.calc.abinitioCode[step]) clone=idx;
+	if(clone!=step){
+		/*just clone previous similar step*/
+		if(uspex_gui._tmp_ai_lib_folder[clone]!=NULL){
+			uspex_gui._tmp_ai_lib_folder[step]=g_strdup(uspex_gui._tmp_ai_lib_folder[clone]);
+			/*by default, selected flavor also propagate*/
+			if(uspex_gui._tmp_ai_lib_sel[clone]!=NULL)
+				uspex_gui._tmp_ai_lib_sel[step]=g_strdup(uspex_gui._tmp_ai_lib_sel[clone]);
+		} else uspex_gui._tmp_ai_lib_folder[step]=NULL;/*already set*/
+	}
+	/*wipe & update uspex_gui.ai_lib_flavor*/
+	sync_ai_lib_flavor();
+	sync_ai_lib_sel();
+}
 /*************************************************/
 /* change the total number of optimisation steps */
 /*************************************************/
@@ -2121,6 +2267,8 @@ void spin_update_num_opt_steps(void){
 	gchar   **tmp_c;
 	gchar **tmp_inp;
 	gchar **tmp_opt;
+	gchar **tmp_lib;
+	gchar **tmp_sel;
 	gint i=(gint)uspex_gui._tmp_num_opt_steps;
 	gint idx;
 	/**/
@@ -2131,6 +2279,8 @@ void spin_update_num_opt_steps(void){
 	tmp_c=g_malloc(i*sizeof(gchar *));
 	tmp_inp=g_malloc(i*sizeof(gchar *));
 	tmp_opt=g_malloc(i*sizeof(gchar *));
+	tmp_lib=g_malloc(i*sizeof(gchar *));
+	tmp_sel=g_malloc(i*sizeof(gchar *));
 	if(i>uspex_gui.calc._num_opt_steps){
 		/*increase*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
@@ -2153,6 +2303,16 @@ void spin_update_num_opt_steps(void){
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
 			}else tmp_opt[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_folder!=NULL){
+				tmp_lib[idx]=g_strdup(uspex_gui._tmp_ai_lib_folder[idx]);
+				g_free(uspex_gui._tmp_ai_lib_folder[idx]);
+				uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+			}else tmp_lib[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_sel!=NULL){
+				tmp_sel[idx]=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+				g_free(uspex_gui._tmp_ai_lib_sel[idx]);
+				uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+			}else tmp_sel[idx]=NULL;
 		}
 		/*last step*/
 		tmp_i[i-1]=1;
@@ -2162,6 +2322,8 @@ void spin_update_num_opt_steps(void){
 		tmp_c[i-1]=NULL;/*find a better default?*/
 		tmp_inp[i-1]=g_strdup("N/A");
 		tmp_opt[i-1]=g_strdup("N/A");
+		tmp_lib[i-1]=NULL;/*updated later*/
+		tmp_sel[i-1]=NULL;/*updated later*/
 	}else{
 		/*decrease*/
 		for(idx=0;idx<i;idx++){
@@ -2184,6 +2346,16 @@ void spin_update_num_opt_steps(void){
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
 			}else tmp_opt[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_folder!=NULL){
+				tmp_lib[idx]=g_strdup(uspex_gui._tmp_ai_lib_folder[idx]);
+				g_free(uspex_gui._tmp_ai_lib_folder[idx]);
+				uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+			}else tmp_lib[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_sel!=NULL){
+				tmp_sel[idx]=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+				g_free(uspex_gui._tmp_ai_lib_sel[idx]);
+				uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+			}else tmp_sel[idx]=NULL;
 		}
 	}
 	g_free(uspex_gui.calc.abinitioCode);uspex_gui.calc.abinitioCode=tmp_i;
@@ -2193,9 +2365,12 @@ void spin_update_num_opt_steps(void){
 	g_free(uspex_gui._tmp_commandExecutable);uspex_gui._tmp_commandExecutable=tmp_c;
 	g_free(uspex_gui._tmp_ai_input);uspex_gui._tmp_ai_input=tmp_inp;/*FIX d09393*/
 	g_free(uspex_gui._tmp_ai_opt);uspex_gui._tmp_ai_opt=tmp_opt;/*FIX 4f5cad*/
+	g_free(uspex_gui._tmp_ai_lib_folder);uspex_gui._tmp_ai_lib_folder=tmp_lib;
+	g_free(uspex_gui._tmp_ai_lib_sel);uspex_gui._tmp_ai_lib_sel=tmp_sel;
 	/*update _num_opt_steps*/
 	uspex_gui.calc._num_opt_steps=i;
 	register_commandExecutable();
+	register_ai_library();
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
 	if(uspex_gui._tmp_curr_step>i) uspex_gui._tmp_curr_step=(gdouble)i;
 	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
@@ -2239,7 +2414,15 @@ void spin_update_curr_step(void){
 	else text=g_strdup(uspex_gui._tmp_ai_opt[i-1]);
 	GUI_ENTRY_TEXT(uspex_gui.ai_opt,text);
 	g_free(text);
-
+	/*uspex_gui._tmp_ai_lib_folder*/
+	if(uspex_gui._tmp_ai_lib_folder[i-1]==NULL) text=g_strdup("N/A");
+	else text=g_strdup(uspex_gui._tmp_ai_lib_folder[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.ai_lib,text);
+	g_free(text);
+	/*uspex_gui.ai_lib_flavor*/
+	sync_ai_lib_flavor();
+	/*uspex_gui._tmp_ai_lib_sel*/
+	sync_ai_lib_sel();
 }
 /********************/
 /* toggle auto_step */
@@ -2250,17 +2433,11 @@ void toggle_auto_step(void){
 		GUI_LOCK(uspex_gui.ai_input_button);
 		GUI_LOCK(uspex_gui.ai_opt);
 		GUI_LOCK(uspex_gui.ai_opt_button);
-		GUI_LOCK(uspex_gui.ai_spe);
-		GUI_LOCK(uspex_gui.ai_pot);
-		GUI_LOCK(uspex_gui.ai_pot_button);
 	}else{
 		GUI_UNLOCK(uspex_gui.ai_input);
 		GUI_UNLOCK(uspex_gui.ai_input_button);
 		GUI_UNLOCK(uspex_gui.ai_opt);
 		GUI_UNLOCK(uspex_gui.ai_opt_button);
-		GUI_UNLOCK(uspex_gui.ai_spe);
-		GUI_UNLOCK(uspex_gui.ai_pot);
-		GUI_UNLOCK(uspex_gui.ai_pot_button);
 	}
 }
 /********************************/
@@ -2283,7 +2460,6 @@ void uspex_ai_selected(GUI_OBJ *w){
 	}
 	uspex_gui.have_ZT=FALSE;
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.have_ZT|=(uspex_gui.calc.abinitioCode[idx]==14);
-	/*TODO: find the many things restricted to VASP in USPEX*/
 }
 /****************************/
 /* load input for this step */
@@ -2363,12 +2539,6 @@ void load_abinitio_exe_dialog(void){
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
-/**********************************************/
-/* generate input/optional file for this step */
-/**********************************************/
-void generate_step(void){
-	/*THIS IS A TODO*/
-}
 /**************************/
 /* Apply step information */
 /**************************/
@@ -2381,145 +2551,154 @@ void apply_step(void){
 	GUI_REG_VAL(uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[i-1],"%lf");
 	GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[i-1]);
 	register_commandExecutable();/*REG command*/
+	register_ai_library();
 }
-/***************************************************************/
-/* populate the species array for (pseudo-)potential definition */
-/***************************************************************/
-void populate_spe(void){
-	gint idx;
-	gchar *line;
-	/*this only contain atom information*/
-	GUI_COMBOBOX_WIPE(uspex_gui.ai_spe);
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		if(uspex_gui.calc.atomType!=NULL) line=g_strdup_printf("%s",elements[uspex_gui.calc.atomType[idx]].symbol);
-		else line=g_strdup_printf("XX");
-		GUI_COMBOBOX_ADD(uspex_gui.ai_spe,line);
-		g_free(line);
-	}
-}
-/************************************************************/
-/* Selection of a species for (pseudo-)potential definition */
-/************************************************************/
-void ai_spe_selected(GUI_OBJ *w){
-	gchar *text;
-	gint index;
-	GUI_COMBOBOX_GET(w,index);
-	if(index<0) return;/*can happen when re-populating*/
-	/**/
-	if(uspex_gui._tmp_ai_spe!=NULL) g_free(uspex_gui._tmp_ai_spe);
-	GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_spe,uspex_gui._tmp_ai_spe);
-	/*show corresponding information*/
-	if(uspex_gui._potentials[index]!=NULL){
-		text=g_strdup_printf("%s",uspex_gui._potentials[index]);
-		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-		g_free(text);
-	}else{/*print nothing*/
-		text=g_strdup("N/A");
-		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-		g_free(text);
-	}
-}
-/*********************************/
-/* change the potential manually */
-/*********************************/
-void change_ai_pot(void){
-	gchar *text;
-	gint index;
-	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
-	if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
-	GUI_ENTRY_GET_TEXT(uspex_gui.ai_pot,text);
-	uspex_gui._potentials[index]=g_strdup(text);
-	g_free(text);
-}
-/*************************************************/
-/* load (pseudo-)potential file for this species */
-/*************************************************/
-void load_ai_pot_dialog(){
+/**********************************************************/
+/* Open a (pseudo-)potential directory for this step/code */
+/**********************************************************/
+void load_ai_lib_dialog(void){
         GUI_OBJ *file_chooser;
         gint have_answer;
         gchar *filename;
         gchar *text;
-	gchar *type;
-	gchar *filter;
-	gint index;
-	gint i=(gint)uspex_gui._tmp_curr_step;
-        /**/
-	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
-	if(index<0) index=0;
-	switch (uspex_gui.calc.abinitioCode[i-1]){
-	case 2:/*SIESTA*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.psf",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.psf");
-		filter=g_strdup("*.psf");
-		break;
-	case 3:/*GULP*/
-		/*no specific format*/
-	case 4:/*LAMMPS*/
-		/*many formats*/
-	case 5:/*ORCA*/
-		/*no specific format*/
-	case 6:/*DMACRYS <- should require a user-made Specific folder!*/
-		/*no specific format*/
-	case 7:/*CP2K*/
-		/*no specific format*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 8:/*Q.E.*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.UPF",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.UPF");
-		filter=g_strdup("*.UPF");
-		break;
-	case 9:/*FHI-aims*/
-		/*no idea*/
-	case 10:/*ATK*/
-		/*many formats (vps, pao)*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 11:/*CASTEP*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.usp",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.usp");
-		filter=g_strdup("*.usp");
-		break;
-	case 12:/*Tinker*/
-		/*no specific format*/
-	case 13:/*MOPAC*/
-		/*no specific format*/
-	case 14:/*BoltzTraP*/
-		/*no specific format*/
-	case 15:/*DFTB*/
-		/*no idea*/
-	case 16:/*Gaussian*/
-		/*no specific format*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 1:/*VASP*/
-		/* fall through */
-	default:
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("POTCAR_%s",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("POTCAR_X");
-		filter=g_strdup("POTCAR*");
-	}
-	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select potential information",filter,type);
-	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
-	if(have_answer){
-		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
-		if(filename) {
-			text=g_strdup_printf("%s",filename);
-			GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-			if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
-			uspex_gui._potentials[index]=g_strdup(text);
-			g_free(text);
-			g_free (filename);
+	gint index=(gint)uspex_gui._tmp_curr_step;
+	/* open folder */
+        GUI_PREPARE_OPEN_FOLDER(uspex_gui.window,file_chooser,"Select the POTCAR folder");
+        GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+        if(have_answer){
+                /*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+                if(filename) {
+                        text=g_strdup_printf("%s",filename);
+                        GUI_ENTRY_TEXT(uspex_gui.ai_lib,text);
+                        g_free(text);
+                        if(uspex_gui._tmp_ai_lib_folder[index-1]!=NULL) 
+				g_free(uspex_gui._tmp_ai_lib_folder[index-1]);
+                        uspex_gui._tmp_ai_lib_folder[index-1]=g_strdup_printf("%s",filename);
+                        g_free (filename);
+                        /*sync library flavor & sel*/
+			sync_ai_lib_flavor();
+			sync_ai_lib_sel();
+                }
+        }     
+        GUI_KILL_OPEN_DIALOG(file_chooser);
+}
+/*************************************/
+/* Apply (register) a library flavor */
+/*************************************/
+void apply_ai_lib_flavor(void){
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	gint code,idx;
+	gboolean is_ok;
+	gchar *text;
+	gchar *sel,*tmp,*tmp2;
+	/**/
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_lib_flavor,text);
+	if(text==NULL) return;/*no entry*/
+	code=uspex_gui.calc.abinitioCode[step];
+	if(uspex_gui._tmp_ai_lib_sel[step]==NULL){
+		/*depending on case, prepare a dummy selection of the flavors*/
+		switch(code){
+		case 1://VASP
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+			/*prepare a default species string*/
+			sel=g_strdup(elements[uspex_gui.calc.atomType[0]].symbol);
+			for(idx=1;idx<uspex_gui.calc._nspecies;idx++){
+				tmp=g_strdup_printf("%s %s",sel,elements[uspex_gui.calc.atomType[idx]].symbol);
+				g_free(sel);sel=tmp;
+			}
+			uspex_gui._tmp_ai_lib_sel[step]=sel;
+			break;
+		case 3://GULP
+		case 12://Tinker
+		case 7://CP2K
+		case 15://DFTB
+		case 4://LAMMPS
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+		default:
+			/*all other don't need such preparation*/
+			break;
 		}
 	}
-	GUI_KILL_OPEN_DIALOG(file_chooser);
-	g_free(type);g_free(filter);
+	/*now update uspex_gui._tmp_ai_lib_sel[step]*/
+	switch(code){
+	case 1://VASP
+	case 2://SIESTA
+	case 8://Q.E.
+	case 10://ATK
+	case 11://CASTEP
+		/*change symbol chain with flavor*/
+		sel=uspex_gui._tmp_ai_lib_sel[step];
+		idx=0;
+		is_ok=TRUE;
+		do{
+			while((sel[idx]!=text[0])&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]=='\0'){
+				fprintf(stderr,"USPEX: species flavor not found!\n");
+				return;/*this *is* bad, species was never found!*/
+			}
+			if(sel[idx+1]==text[1]) is_ok=FALSE;
+			else{
+				if((!g_ascii_islower (sel[idx+1]))
+				 &&(!g_ascii_islower (text[1])))
+					is_ok=FALSE;
+				else idx++;
+			}
+		}while(is_ok);
+		/*idx points to the first letter of species match*/
+		if(idx==0){
+			/*species chain is at start*/
+			while((!g_ascii_isspace(sel[idx]))&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]=='\0'){
+				/*only one species?*/
+				g_free(uspex_gui._tmp_ai_lib_sel[step]);
+				uspex_gui._tmp_ai_lib_sel[step]=g_strdup(text);
+			}else{
+				tmp=g_strdup_printf("%s %s",text,&(sel[idx+1]));
+				g_free(uspex_gui._tmp_ai_lib_sel[step]);
+				uspex_gui._tmp_ai_lib_sel[step]=tmp;
+			}
+		}else{
+			/*species chain in the middle (or end)*/
+			tmp=g_strndup(sel,idx-1);
+			tmp2=g_strdup_printf("%s %s",tmp,text);
+			g_free(tmp);tmp=tmp2;
+			while((!g_ascii_isspace(sel[idx]))&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]!='\0'){
+				/*add the remaining chain*/
+				tmp2=g_strdup_printf("%s %s",tmp,&(sel[idx+1]));
+				g_free(tmp);tmp=tmp2;
+			}
+			g_free(uspex_gui._tmp_ai_lib_sel[step]);
+			uspex_gui._tmp_ai_lib_sel[step]=tmp;
+		}
+		break;
+	case 3://GULP
+	case 12://Tinker
+	case 7://CP2K
+	case 15://DFTB
+	case 4://LAMMPS
+	case 13://MOPAC
+	case 14://BoltzTraP
+	case 16://Gaussian
+	case 5://ORCA
+	case 6://DMACRYS
+	case 9://FHI-aims
+	default:
+		/*something was selected, so put it here*/
+		g_free(uspex_gui._tmp_ai_lib_sel[step]);
+		uspex_gui._tmp_ai_lib_sel[step]=g_strdup(text);
+		break;
+	}
+	g_free(text);
+	sync_ai_lib_sel();
 }
 /******************************************************************/
 /* sets a remote folder (in case it can be set by a local folder) */
@@ -3294,7 +3473,7 @@ void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 		}
 	} else if (page_num==USPEX_PAGE_CALCULATION){
 		/**/
-		populate_spe();
+//		populate_spe();
 	} else if (page_num==USPEX_PAGE_ADVANCED){
 		/**/
 	} else if (page_num==USPEX_PAGE_SPECIFIC){
@@ -3780,12 +3959,12 @@ if(uspex_gui.calc.path==NULL) return;
 source=g_build_filename(uspex_gui.calc.path,"../Specific/", NULL);
 src=g_dir_open(source,0,NULL);
 if(src==NULL) {
-	fprintf(stdout,"Can't open Specific directory.\n");
+	fprintf(stderr,"Can't open Specific directory.\n");
 	return;
 }
 target = g_build_filename((*uspex_exec).job_path,"Specific", NULL);
 if(g_mkdir(target,0775)){
-	fprintf(stdout,"Can't create %s directory.\n",target);
+	fprintf(stderr,"Can't create %s directory.\n",target);
 	g_dir_close(src);
 	return;
 }
@@ -3793,6 +3972,260 @@ g_dir_close(src);
 dumb_dir_copy(source,target);
 g_free(source);
 g_free(target);
+}
+/*******************************************/
+/* Specific auto-settings for GULP: ginput */
+/*******************************************/
+void gulp_specific_step_ginput(FILE *there,gint step_n){
+gint max_cyc, idx;
+gchar *library=NULL;
+if(step_n<1) return;
+if(step_n>6) max_cyc=500;
+else max_cyc=1000-100*step_n;
+fprintf(there,"space\n");
+fprintf(there,"1\n");
+fprintf(there,"maxcyc %i\n",max_cyc);
+/*we either take a library if one was defined or set default reaxff.lib*/
+if(uspex_gui._tmp_ai_lib_sel[step_n-1]!=NULL){
+	/*take the selected or defined library*/
+	if(uspex_gui._tmp_ai_lib_folder[step_n-1]!=NULL)
+		library=g_build_filename(uspex_gui._tmp_ai_lib_folder[step_n-1],uspex_gui._tmp_ai_lib_sel[step_n-1], NULL);
+	else
+		library=g_strdup(uspex_gui._tmp_ai_lib_sel[step_n-1]);
+}else{
+	/*see in other steps if a library was defined (take the last defined one)*/
+	for(idx=uspex_gui.calc._num_opt_steps-1;(idx>=0)&&(library==NULL);idx--){
+		if(uspex_gui.calc.abinitioCode[idx]!=3) continue;/*not GULP*/
+		if(uspex_gui._tmp_ai_lib_folder[idx]==NULL) continue;
+		else {
+			/*we found the match*/
+			if(uspex_gui._tmp_ai_lib_folder[idx]!=NULL)
+				library=g_build_filename(uspex_gui._tmp_ai_lib_folder[idx],uspex_gui._tmp_ai_lib_sel[idx], NULL);
+			else
+				library=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+			continue;/*will exit for*/
+		}
+	}
+}
+if(library!=NULL){
+	fprintf(there,"library %s\n",library);
+	g_free(library);
+} else fprintf(there,"library reaxff.lib\n");/*the default choice*/
+fprintf(there,"switch rfo 0.010\n");
+}
+/*********************************************/
+/* Specific auto-settings for GULP: goptions */
+/*********************************************/
+void gulp_specific_step_goptions(FILE *there,gint step_n){
+if(step_n<1) return;
+if(step_n==1) fprintf(there,"opti spatial conj nosymmetry conv\n");
+else fprintf(there,"opti spatial conj nosymmetry conp\n");
+}
+/***************************************************/
+/* create Specific directory or copy files into it */
+/***************************************************/
+void uspex_create_specific(uspex_exec_struct *uspex_exec){
+GDir *src;
+gchar *source;
+gchar *target;
+gchar *tmp;
+gboolean hasend;
+gchar *ptr,*sel;
+gchar *filename;
+FILE *tg;
+gint step;
+gint idx;
+/* check if Specific directory exists*/
+if(uspex_gui.calc.job_path==NULL) return;
+source=g_build_filename(uspex_gui.calc.job_path,"/Specific/", NULL);
+src=g_dir_open(source,0,NULL);
+if(src==NULL) {
+	/*if doesn't exists, create it*/
+	if(g_mkdir(source,0775)){
+		fprintf(stdout,"Can't create %s directory.\n",source);
+		return;
+	}
+	src=g_dir_open(source,0,NULL);
+	if(src==NULL) {
+		fprintf(stdout,"Can't open newly created %s directory.\n",source);
+		return;
+	}
+}
+g_dir_close(src);
+/*Specific is open, check what needs to be done*/
+for(step=0;step<uspex_gui.calc._num_opt_steps;step++){
+	if(uspex_gui.auto_step){
+		/*use auto-generation (work in progress)*/
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1:/*VASP*/
+			break;
+		case 3:/*GULP*/
+			/*1- create {Specific}/ginput_X */
+			tmp=g_strdup_printf("ginput_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			gulp_specific_step_ginput(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			/*2- create {Specific}/goptions_X */
+			tmp=g_strdup_printf("goptions_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			gulp_specific_step_goptions(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			break;
+		case 2://SIESTA
+		case 4://LAMMPS
+		case 5://ORCA
+		case 6://DMACRYS
+		case 7://CP2K
+		case 8://Q.E.
+		case 9://FHI-aims
+		case 10://ATK
+		case 11://CASTEP
+		case 12://Tinker
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 15://DFTB
+		case 16://Gaussian
+		default:
+			/*all of above are not ready (yet)*/
+			break;
+		}
+	}else{
+		/*we assume that everything has already been set by user*/
+		/*1- copy input (if any)*/
+		if(uspex_gui._tmp_ai_input[step]!=NULL){
+			tg=fopen(uspex_gui._tmp_ai_input[step],"r");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",uspex_gui._tmp_ai_input[step]);
+				continue;/*and hope for the best*/
+			}
+			fclose(tg);
+			tmp=g_path_get_basename(uspex_gui._tmp_ai_input[step]);
+			target=g_build_filename(source,tmp,NULL);
+			if(!dumb_file_copy(uspex_gui._tmp_ai_input[step],target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",uspex_gui._tmp_ai_input[step],target);
+				g_free(tmp);g_free(target);
+				continue;/*and hope for the best*/
+			}
+			g_free(tmp);g_free(target);
+		}
+		/*2- copy option (is any)*/
+		if(uspex_gui._tmp_ai_opt[step]!=NULL){
+			tg=fopen(uspex_gui._tmp_ai_opt[step],"r");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",uspex_gui._tmp_ai_opt[step]);
+				continue;/*and hope for the best*/
+			}
+			fclose(tg);
+			tmp=g_path_get_basename(uspex_gui._tmp_ai_opt[step]);
+			target=g_build_filename(source,tmp,NULL);
+			if(!dumb_file_copy(uspex_gui._tmp_ai_opt[step],target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",uspex_gui._tmp_ai_opt[step],target);
+				g_free(tmp);g_free(target);
+				continue;/*and hope for the best*/
+			}
+			g_free(tmp);g_free(target);
+		}
+	}
+	/*regardless of auto-generation setting, copy the libraries (when needed)*/
+	if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1:/*VASP*/
+			/*special per-species*/
+			if(uspex_gui._tmp_ai_lib_folder==NULL) continue;/*required*/
+			sel=g_strdup(uspex_gui._tmp_ai_lib_sel[step]);
+			hasend=FALSE;
+			idx=0;
+			while((sel[idx]==' ')||(sel[idx]=='\t')) {/*skip trailing space*/
+				if(sel[idx]=='\0') {
+					fprintf(stderr,"USPEX: ERROR while reading POTCAR flavors!\n");
+					g_free(sel);
+					sel=NULL;
+					break;
+				}
+				idx++;
+			}
+			if(sel==NULL) continue;/*and hope for the best*/
+			ptr=&(sel[idx]);
+			while(!hasend){
+				while((sel[idx]!=' ')){
+					if(sel[idx]=='\0') {
+						hasend=TRUE;
+						break;  
+					}
+					idx++;
+				}
+				sel[idx]='\0';
+				idx++;
+				filename=g_strdup_printf("%s/%s/POTCAR",uspex_gui._tmp_ai_lib_folder[step],ptr);
+				if(g_ascii_islower(ptr[1])) tmp=g_strdup_printf("POTCAR_%c%c",ptr[0],ptr[1]);
+				else tmp=g_strdup_printf("POTCAR_%c",ptr[0]);
+				target=g_build_filename(source,tmp,NULL);
+				if(!dumb_file_copy(filename,target)){
+					fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",filename,target);
+					g_free(target);g_free(tmp);g_free(filename);
+					continue;/*and hope for the best*/
+				}
+				g_free(target);g_free(tmp);g_free(filename);
+				ptr=&(sel[idx]);
+			}
+			g_free(sel);
+			break;
+		case 3:/*GULP*/
+			/*Since gulp can use the absolute path,*/
+			/*there is no need to copy the library.*/
+			break;
+		case 7://CP2K
+		case 12://Tinker
+			//copy one library
+		case 4://LAMMPS
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+			//above LAMMPS~Gaussian either don't need
+			//any library or use is unknown...
+			target=g_build_filename(source,uspex_gui._tmp_ai_lib_sel[step],NULL);
+			if(uspex_gui._tmp_ai_lib_folder[step]!=NULL)
+				tmp=g_build_filename(uspex_gui._tmp_ai_lib_folder[step],uspex_gui._tmp_ai_lib_sel[step],NULL);
+			else
+				tmp=g_strdup(uspex_gui._tmp_ai_lib_sel[step]);
+			if(!dumb_file_copy(tmp,target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",tmp,target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			g_free(target);g_free(tmp);
+			break;
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+			//per-species potential
+			break;
+		case 15://DFTB
+			//another special per-species
+			break;
+		default:
+			//do nothing
+			break;
+		}
+	}
+}
+g_free(source);
 }
 /*****************************************/
 /* Execute or enqueue a uspex calculation */
@@ -3847,8 +4280,9 @@ void uspex_exec_calc(){
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
-/*NEW: copy the Specific directory (if needed)*/
-if(uspex_gui.copySpecific) uspex_copy_specific(uspex_exec);
+/*NEW: copy the Specific directory or create it*/
+	if(uspex_gui.copySpecific) uspex_copy_specific(uspex_exec);
+	else uspex_create_specific(uspex_exec);
 /*Get the future valid index*/
 	idx=1;
 	do{
@@ -4218,48 +4652,30 @@ num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
 		uspex_gui._tmp_ai_opt=NULL;
 	}
 	uspex_gui._tmp_ai_opt=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
-	/*(re-)create _potentials (_nspecies values!)*/
-	if(uspex_gui._potentials!=NULL){
-		for(i=0;i<uspex_gui._tmp_nspecies;i++) {
-			if(uspex_gui._potentials[i]!=NULL) g_free(uspex_gui._potentials[i]);
-			uspex_gui._potentials[i]=NULL;
-		}
-		g_free(uspex_gui._potentials);
-		uspex_gui._potentials=NULL;
-	}
-	uspex_gui._potentials=g_malloc0(uspex_gui.calc._nspecies*sizeof(gchar *));
 	/*redefine commandExecutable*/
+	i=0;
 	if(uspex_gui.calc.commandExecutable!=NULL) {
-		i=0;
+		gint size;
 		line=&(uspex_gui.calc.commandExecutable[0]);
 		ptr=line;
 		while(*line!='\0'){
-			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
-			if(*ptr=='\0') {
-				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
-				break;
-			}else{
-				*ptr='\0';/*cut here*/
-				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
-				line=ptr+1;
-				*ptr='\n';/*restore*/
-				i++;
-				if(i>uspex_gui.calc._num_opt_steps) break;
+			while(!g_ascii_isprint(*ptr)) ptr++;
+			line=ptr;
+			size=0;
+			while(g_ascii_isprint(*ptr)) {
+				size++;
+				ptr++;
 			}
+			uspex_gui._tmp_commandExecutable[i]=g_strndup(line,size);
+			line=ptr;
+			i++;
 		}
-		uspex_gui.calc._isCmdList=!(i==0);
-	}else{
-		uspex_gui.calc._isCmdList=FALSE;
 	}
+	uspex_gui.calc._isCmdList=(i>0);
 	uspex_gui._tmp_num_opt_steps=(gdouble)uspex_gui.calc._num_opt_steps;
 	GUI_SPIN_SET(uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps);
 	uspex_gui._tmp_curr_step=1.;
 	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
-	GUI_LOCK(uspex_gui.ai_spe);
-	populate_spe();
-	GUI_COMBOBOX_SET(uspex_gui.ai_spe,0);
-	GUI_UNLOCK(uspex_gui.ai_spe);
-	change_ai_pot();
 	spin_update_curr_step();
 	uspex_gui.auto_step=TRUE;
 	toggle_auto_step();
@@ -4909,19 +5325,30 @@ GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile na
 GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_opt_button,load_ai_opt_dialog,3,4,3,4);
 /* line 4 */
-	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[0],"EXE:",0,1,4,5);
-GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_abinitio_exe_dialog,1,2,4,5);
-	GUI_BUTTON_TABLE(table,uspex_gui.ai_generate,"Generate",generate_step,2,3,4,5);
-GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nUnavailable (for now) m(_ _)m");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,4,5);
-GUI_TOOLTIP(button,"Apply changes to this step (only).");
+	GUI_TEXT_TABLE(table,uspex_gui.ai_lib,uspex_gui._tmp_ai_lib_folder[0],"LIB:",0,1,4,5);
+GUI_TOOLTIP(uspex_gui.ai_lib,"Set the library directory.\nCalculations often require pseudo-potentials for each species\nor a potential library file wich describe each species.\nEach different calculation step code require a library directory.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_lib_button,load_ai_lib_dialog,1,2,4,5);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_lib_flavor,"FLAVOR:",2,3,4,5);
+GUI_TOOLTIP(uspex_gui.ai_lib_flavor,"Select flavor(s) that apply to current potential.\nIt is either a per-species (VASP)\nor per-potential (GULP) switch.");
+	GUI_COMBOBOX_EDITABLE(uspex_gui.ai_lib_flavor);/*NEW: accept user-made library*/
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_ai_lib_flavor,3,4,4,5);
 /* line 5 */
+	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[0],"EXE:",0,1,5,6);
+GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_abinitio_exe_dialog,1,2,5,6);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_lib_sel,uspex_gui._tmp_ai_lib_sel[0],"lib:",2,3,5,6);
+GUI_TOOLTIP(uspex_gui.ai_lib_sel,"The flavor of selected libraries.\nIt can be changed in the box above.");
+	GUI_LOCK(uspex_gui.ai_lib_sel);
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,5,6);
+GUI_TOOLTIP(button,"Apply changes to this step (only).");
+/* line 5 (deleted) */
+/*
 	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_spe,"Species:",0,1,5,6);
 GUI_TOOLTIP(uspex_gui.ai_spe,"Select species for (pseudo-)potential information.");
 	GUI_TEXT_TABLE(table,uspex_gui.ai_pot,uspex_gui._potentials[0],"POT:",1,3,5,6);
 GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.\nFor pair- and molecules-potential, do not mind the \"per-species\".");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_pot_button,load_ai_pot_dialog,3,4,5,6);
+*/
 /* --- USPEX launch */
 	GUI_LABEL_TABLE(table,"USPEX launch",0,4,6,7);
 /* line 7 */
@@ -4933,8 +5360,8 @@ GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of jo
 	GUI_CHECK_TABLE(table,uspex_gui.PhaseDiagram,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui.PhaseDiagram,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
 /* line 8 */
-	GUI_CHECK_TABLE(table,button,uspex_gui.have_v1010,NULL,"Ver 10.1",0,1,8,9);/*not calling anything*/
-GUI_TOOLTIP(button,"Use USPEX v. 10.1 instead of 9.4.4.");
+	GUI_CHECK_TABLE(table,button,uspex_gui.have_v1010,NULL,"Ver 10.3",0,1,8,9);/*not calling anything*/
+GUI_TOOLTIP(button,"Use USPEX v. 10.3 instead of 9.4.4.");
 	GUI_ENTRY_TABLE(table,uspex_gui.numProcessors,uspex_gui.calc.numProcessors,"%i","CPU:",1,2,8,9);
 GUI_TOOLTIP(uspex_gui.numProcessors,"numProcessors: Ch. ? DEFAULT: 1\nNumber of processors used in a step (undocumented).");
 	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",2,3,8,9);
@@ -5315,14 +5742,13 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	GUI_COMBOBOX_SETUP(uspex_gui.abinitioCode,0,uspex_ai_selected);/*ai means ab initio, not...*/
 	spin_update_curr_step();
 	uspex_ai_selected(uspex_gui.abinitioCode);
-	GUI_LOCK(uspex_gui.ai_generate);/*Use of GDIS to prepare specific calculation parameters is Unavailable for now (TODO)*/
-	GUI_LOCK(uspex_gui.ai_spe);
-	populate_spe();
-	GUI_UNLOCK(uspex_gui.ai_spe);
-	GUI_COMBOBOX_SETUP(uspex_gui.ai_spe,0,ai_spe_selected);
-	ai_spe_selected(uspex_gui.ai_spe);
+//	GUI_LOCK(uspex_gui.ai_spe);
+//	populate_spe();
+//	GUI_UNLOCK(uspex_gui.ai_spe);
+//	GUI_COMBOBOX_SETUP(uspex_gui.ai_spe,0,ai_spe_selected);
+//	ai_spe_selected(uspex_gui.ai_spe);
 	toggle_auto_step();
-	GUI_ENTRY_ACTIVATE(uspex_gui.ai_pot,change_ai_pot,NULL);
+//	GUI_ENTRY_ACTIVATE(uspex_gui.ai_pot,change_ai_pot,NULL);
 	mag_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);
