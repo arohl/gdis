@@ -1798,20 +1798,24 @@ gboolean dumb_file_copy(gchar *f_src,gchar *f_dest){
 /*This is a very dumb version which reads each line of a file src, and copy in into destination */
 /*A better and portable way to do that would be to use the g_file_copy from GIO library --OVHPA */
 gchar *buffer;
-GError *error;
+//GError *error=NULL;
 gsize length;
 #if DEBUG_DUMB_COPY
 fprintf(stdout,"copy %s into %s ... ",f_src,f_dest);
 #endif
+/* error can be set even though g_file_get_contents succeed!
 if(g_file_get_contents (f_src,&buffer,&length,&error)){
-if(error!=NULL) {/*who would set error on a success?*/
+if(error!=NULL) {//who would set error on a success?
 #if DEBUG_DUMB_COPY
 	fprintf(stdout,"error#1=%s\n",error->message);
 #endif
 	g_error_free (error);
 	g_free(error);
 }
-	if(g_file_set_contents (f_dest,buffer,(gssize) length,&error)){
+*/
+if(g_file_get_contents (f_src,&buffer,&length,NULL)){
+//	if(g_file_set_contents (f_dest,buffer,(gssize) length,&error)){
+	if(g_file_set_contents (f_dest,buffer,(gssize) length,NULL)){
 #if DEBUG_DUMB_COPY
 fprintf(stdout,"SUCCESS!\n");
 #endif
@@ -1821,7 +1825,8 @@ fprintf(stdout,"SUCCESS!\n");
 #if DEBUG_DUMB_COPY
 fprintf(stdout,"FAILED!\n");
 #endif
-fprintf(stderr,"Error during copy of %s into %s\nError code %i: %s",f_src,f_dest,error->code, error->message);
+//fprintf(stderr,"Error during copy of %s into %s\nError code %i: %s",f_src,f_dest,error->code, error->message);
+fprintf(stderr,"Error during copy of %s into %s\n",f_src,f_dest);
 return FALSE;
 }
 /*************************************************************/
