@@ -2271,7 +2271,7 @@ void potcar_folder_register(gchar *item){
 void potcar_folder_get_info(){
 	/*using POTCAR files, given they are not stored in a ZCOMPRESS format*/
 	gchar *path;
-	GSList *folders;
+	GSList *folders,*folder;
 	gchar *item;
 	gchar sym[3];
 	gchar *text;
@@ -2287,8 +2287,8 @@ void potcar_folder_get_info(){
 	/*wipe all entry in vasp_gui.species_flavor*/
 	GUI_COMBOBOX_WIPE(vasp_gui.species_flavor);
 	sym[2]='\0';
-	for ( ; folders ; folders=g_slist_next(folders)){
-		item=g_strdup_printf("%s",(char *)folders->data);
+	for (folder=folders ; folder ; folder=g_slist_next(folder)){
+		item=g_strdup_printf("%s",(char *)folder->data);
 		/*check if this item is of interest*/
 		if(g_ascii_islower (item[1])){
 			sym[0]=item[0];
@@ -2323,6 +2323,7 @@ void potcar_folder_get_info(){
 	GUI_ENTRY_TEXT(vasp_gui.potcar_species_flavor,text);
 	g_free(text);
 	GUI_COMBOBOX_SET(vasp_gui.species_flavor,0);
+	g_slist_free(folders);
 }
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */
