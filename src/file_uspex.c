@@ -2019,25 +2019,25 @@ zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=_UC._isfixed[i];
 if(!zero_check) 
 	for(i=0;i<_UC._num_opt_steps;i++)
 	       	_UC._isfixed[i]=TRUE;
-	        fprintf(vf,"%% abinitioCode\n");
-		if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
-		else fprintf(vf,"%i",_UC.abinitioCode[0]);
-	        for(i=1;i<(_UC._num_opt_steps);i++) {
-			if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
-				if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
-				else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
-			}else{
-				fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
-			}
-		}
-	        if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
-		else fprintf(vf,")\n");/*terminate on non fixed*/
-		fprintf(vf,"%% ENDabinit\n");
+fprintf(vf,"%% abinitioCode\n");
+if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
+else fprintf(vf,"%i",_UC.abinitioCode[0]);
+for(i=1;i<(_UC._num_opt_steps);i++) {
+	if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
+		if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
+		else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
+	}else{
+		fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
+	}
+}
+if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
+else fprintf(vf,")\n");/*terminate on non fixed*/
+fprintf(vf,"%% ENDabinit\n");
 /*restore previous values*/
 if(!zero_check)
 	for(i=0;i<_UC._num_opt_steps;i++)
 		_UC._isfixed[i]=FALSE;
-	        is_w++;
+is_w++;
 //__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 }
 /*do not print KresolStart if linearly = {0.2~0.08}*/
@@ -4926,6 +4926,7 @@ if(_UO.ind[idx].have_data){
 /********************************/
 gboolean track_uspex(void *data){
 	/**/
+	gboolean still_running=TRUE;
 	FILE *vf=NULL;
 	long int vfpos=0L;
 	gchar *line;
@@ -4996,7 +4997,20 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 		g_free(line);
 		return FALSE;
 	}
-
+/*NEW: detect termination of calculation*/
+if(_UC.calculationMethod!=US_CM_TPS){
+	/*because, as of v. 10.3, TPS does not have a OUTPUT.txt*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"OUTPUT.txt");
+	vf = fopen(aux_file,"rt");
+	g_free(aux_file);
+	if(vf!=NULL){
+		__GET_LAST_LINE(vf,line);
+		if(line!=NULL){
+			if(find_in_string("Finished",line) != NULL) still_running=FALSE;
+		}
+		fclose(vf);
+	}
+}
 /*+++ Everything BUT VCNEB and TPS*/
 if((_UC.calculationMethod==US_CM_USPEX)
         ||(_UC.calculationMethod==US_CM_META)
@@ -5038,7 +5052,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		sysenv.refresh_dialog=TRUE;
 		tree_model_refresh(model);
 		redraw_canvas(ALL);
-		return TRUE;
+		return still_running;
 	}
 	/*we have several new structures*/
 #if DEBUG_TRACK_USPEX
@@ -5055,8 +5069,6 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 	}
 	/*2- prepare & replace*/
 	for(jdx=new_ind;jdx>old_ind;jdx--){/*_BUG_*/
-//	for(idx=0;idx<(new_ind-old_ind);idx++){
-//		jdx=old_ind+1+idx;/*because old_ind=num_struct-1*/
 		ind[jdx].have_data=FALSE;
 		ind[jdx].struct_number=-1;
 		ind[jdx].gen=0;
@@ -5247,7 +5259,6 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 		fclose(vf);
 		/*6- update BEST graph*/
 		uspex_graph_best_redo(uspex_output);
-//		uspex_graph_best_update(uspex_output); FIXME
 		if(_UO.num_gen>15) idx=5;
 		else idx=_UO.num_gen+1;
 if(idx<2) idx=2;/*fix _BUG_ with META*/
@@ -5326,7 +5337,7 @@ fprintf(stdout,"TRACK: NO-NEW-IMAGE gen=%i num=%i\n",new_gen,new_ind);
 		sysenv.refresh_dialog=TRUE;
 		tree_model_refresh(model);
 		redraw_canvas(ALL);
-		return TRUE;
+		return still_running;
 	}
 	/*there is NEW data, update ind*/
 	_UO.last_ind_pos=vfpos;
@@ -5466,7 +5477,7 @@ else{
 	canvas_shuffle();
 	redraw_canvas(ALL);
 
-	return TRUE;/*keep tracking (default)*/
+	return still_running;/*keep tracking unless job finished (default)*/
 }
 void track_uspex_cleanup(void *data){
         gchar *ptr;
@@ -5484,14 +5495,6 @@ fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
                 other_model=model->t_next;
                 tree_model_add(other_model);
                 tree_select_model(model);
-#ifdef NO_NO_NO
-                if(model->uspex!=NULL) {
-                        /*optional (tree_select_delete should do that)*/
-			free_uspex_out(model->uspex);
-                        g_free(model->uspex);
-                        model->uspex=NULL;
-                }
-#endif
                 tree_select_delete();
                 tree_select_model(other_model);
                 model=NULL;/*_BUG_ spotted*/

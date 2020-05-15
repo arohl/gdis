@@ -75,6 +75,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *optType;
 	gboolean have_new_opt;			/*VER 10.1*/
 	GUI_OBJ *new_optType;			/*VER 10.1*/
+	GUI_OBJ *sel_new_opt;
 	gchar *_tmp_new_optType;		/*VER 10.1*/
 	/*atoms definition: apply/remove*/
 	gint _tmp_nspecies;/*for BACKUP*/
@@ -158,6 +159,12 @@ struct uspex_calc_gui{
 	GUI_OBJ *pickUpFolder;
 	gboolean restart_cleanup;
 /*4.8 Ab initio*/
+	gboolean have_specific;/*NEW: specific toggles*/
+	GUI_OBJ *use_specific;/*NEW: specific toggles*/
+	GUI_OBJ *set_specific;/*NEW: specific toggles*/
+	gchar *_tmp_spe_folder;/*NEW: specific toggles*/
+	GUI_OBJ *spe_folder;/*NEW: specific toggles*/
+	GUI_OBJ *spe_folder_button;/**/
 	gdouble _tmp_num_opt_steps;/*because gtk_spin type is double*/
 	GUI_OBJ *_num_opt_steps;/*usually determined indirectly*/
 	gdouble _tmp_curr_step;/*because gtk_spin type is double*/
@@ -320,9 +327,11 @@ struct uspex_calc_gui{
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;
 	gboolean have_result;
-	gboolean have_v1010;
+	gboolean have_v1030;
+	GUI_OBJ *sel_v1030_1;
+	GUI_OBJ *sel_v1030_3;
+	GUI_OBJ *sel_octave;
 	gboolean have_octave;
-	gboolean copySpecific;/*NEW: copy the Specific directory*/
 	gint index;
 /*buttons*/
 	GUI_OBJ *button_save;
