@@ -2132,20 +2132,19 @@ void register_commandExecutable(void){
 /* sync the flavor of (pseudo-)potential */
 /*****************************************/
 void sync_ai_lib_flavor(void){
-	gchar *path;
+	gchar *path, *text;
 	GSList *folders,*folder;
-	gchar *item;
+	gchar  *item;
 	gchar sym[3];
-	gint idx;
+	gint idx,sel;
 	gint step=(gint)uspex_gui._tmp_curr_step-1;
 	if(uspex_gui._tmp_ai_lib_folder[step]==NULL) {
 		GUI_COMBOBOX_WIPE(uspex_gui.ai_lib_flavor);
 		/*library folder is blank but there could be a flavor entered manually*/
 		if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
 			GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,uspex_gui._tmp_ai_lib_sel[step]);
-		}else{
-			GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");
 		}
+		GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");/*terminator*/
 		GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
 		return;/*no folder selected*/
 	}
@@ -2227,8 +2226,25 @@ void sync_ai_lib_flavor(void){
 		}
 		g_free(item);
 	}
+	GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");/*terminator*/
 	g_slist_free(folders);
+	/*determine if there was an element selected*/
 	GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
+	if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+		/*there is a selection, is it in the list?*/
+		idx=0;sel=0;text=NULL;
+		do{
+			GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,idx);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_lib_flavor,text);
+			if(text==NULL) break;/*if nothing?*/
+			if(find_in_string(text,"N/A")!=NULL) break;/*end here*/
+			if(find_in_string(uspex_gui._tmp_ai_lib_sel[step],text) != NULL) sel=idx;
+			g_free(text);
+			idx++;
+		}while(TRUE);/*endless loop*/
+		GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,sel);
+	}
+
 }
 /*************************************/
 /* sync the library flavor selection */
@@ -2253,13 +2269,15 @@ void register_ai_library(void){
 	gint idx;
 	gint code;
 	gint clone;
-	gint step=(gint)uspex_gui._tmp_num_opt_steps;
-	step--;
-	code=uspex_gui.calc.abinitioCode[step];
+	gint tot=(gint)uspex_gui._tmp_num_opt_steps;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	/*determine if _tmp_ai_lib_folder needs an update*/
+	if(uspex_gui._tmp_ai_lib_folder[step]!=NULL) return;
 	/*search if we already have a setup for this ai_code*/
+	code=uspex_gui.calc.abinitioCode[step];
 	clone=step;
-	for(idx=0;idx<step-1;idx++)
-		if(code==uspex_gui.calc.abinitioCode[step]) clone=idx;
+	for(idx=0;idx<tot;idx++)
+		if((code==uspex_gui.calc.abinitioCode[idx])&&(idx!=step)) clone=idx;
 	if(clone!=step){
 		/*just clone previous similar step*/
 		if(uspex_gui._tmp_ai_lib_folder[clone]!=NULL){
@@ -2268,6 +2286,8 @@ void register_ai_library(void){
 			if(uspex_gui._tmp_ai_lib_sel[clone]!=NULL)
 				uspex_gui._tmp_ai_lib_sel[step]=g_strdup(uspex_gui._tmp_ai_lib_sel[clone]);
 		} else uspex_gui._tmp_ai_lib_folder[step]=NULL;/*already set*/
+	}else{
+		/*ensure NULL?*/
 	}
 	/*wipe & update uspex_gui.ai_lib_flavor*/
 	sync_ai_lib_flavor();
@@ -2624,7 +2644,7 @@ void load_ai_lib_dialog(void){
         gint have_answer;
         gchar *filename;
         gchar *text;
-	gint index=(gint)uspex_gui._tmp_curr_step;
+	gint index=(gint)uspex_gui._tmp_curr_step-1;
 	/* open folder */
         GUI_PREPARE_OPEN_FOLDER(uspex_gui.window,file_chooser,"Select the POTCAR folder");
         GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
@@ -2634,9 +2654,9 @@ void load_ai_lib_dialog(void){
                         text=g_strdup_printf("%s",filename);
                         GUI_ENTRY_TEXT(uspex_gui.ai_lib,text);
                         g_free(text);
-                        if(uspex_gui._tmp_ai_lib_folder[index-1]!=NULL) 
-				g_free(uspex_gui._tmp_ai_lib_folder[index-1]);
-                        uspex_gui._tmp_ai_lib_folder[index-1]=g_strdup_printf("%s",filename);
+                        if(uspex_gui._tmp_ai_lib_folder[index]!=NULL) 
+				g_free(uspex_gui._tmp_ai_lib_folder[index]);
+                        uspex_gui._tmp_ai_lib_folder[index]=g_strdup_printf("%s",filename);
                         g_free (filename);
                         /*sync library flavor & sel*/
 			sync_ai_lib_flavor();
@@ -4457,11 +4477,11 @@ if(tot>3){
 		fprintf(there,"PREC = HIGH\n");/*see note [2]*/
 		fprintf(there,"NELMIN = 6\n");
 		fprintf(there,"EDIFF = 1E-05\n");
-		fprintf(there,"EDIFFG = 1E-05\n"
+		fprintf(there,"EDIFFG = 1E-05\n");
 		fprintf(there,"NSW = 200\n");
 		fprintf(there,"ISIF = 2\n");
-		fprintf("IBRION = 2\n");/*we do not relax cell/cell shape!*/
-		fprintf("POTIM = 0.15\n");
+		fprintf(there,"IBRION = 2\n");/*we do not relax cell/cell shape!*/
+		fprintf(there,"POTIM = 0.15\n");
 		/*we need an extra warning*/
 		title=g_strdup_printf("USPEX: DOING a ONE-VASP-STEP USPEX JOB IS A TERRIBLE IDEA!\nUSPEX: results will be inconsistent and with NO significance!\n");
 		gui_text_show(ERROR,title);
@@ -4606,6 +4626,18 @@ for(step=0;step<uspex_gui.calc._num_opt_steps;step++){
 		/*use auto-generation (work in progress)*/
 		switch (uspex_gui.calc.abinitioCode[step]){
 		case 1:/*VASP*/
+			/*1- create {Specific}/INCAR_X */
+			tmp=g_strdup_printf("INCAR_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			vasp_specific_step_incar(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			/*no option for VASP*/
 			break;
 		case 3:/*GULP*/
 			/*1- create {Specific}/ginput_X */
