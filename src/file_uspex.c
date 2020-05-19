@@ -2499,6 +2499,7 @@ fprintf(stdout,"\n");
 	/*FIX a _BUG_ with EX13 where all energy are = 100000.000*/
 	if(_UO.min_E>10000.000) _UO.min_E=_UO.ind[1].E;
 	if(_UO.max_E<-10000.000) _UO.max_E=_UO.ind[1].E;
+	fclose(vf);/*FIX a _BUG_ leaving Individual file opened!*/
 	return 0;
 }
 /*****************/
