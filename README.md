@@ -19,6 +19,8 @@ and follow the prompts. The script will check for the existence of gtk+2 and  gt
  
 ### Notes
 
+If you are compiling on a Mac, it is recommended that you use [MacPorts](https://www.macports.org) to install gtk and gtkglext. We have been unable to get it working with [Homebrew](https://brew.sh). If you know how to make it work with Homebrew, please get in touch!
+
 Some cool features of GDIS are entirely due to the hard work that has gone into creating the following packages:
 
 1. [CDD](http://www.inf.ethz.ch/personal/fukudak/cdd_home/) for the computation of halfspace intersections (morphology display).
