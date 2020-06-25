@@ -1416,19 +1416,54 @@ void vasp_lorbit_selected(GUI_OBJ *w){
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
 	case 1://1:lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=1;break;
 	case 2://2:phase+lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=2;break;
 	case 3://5:PROOUT
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=5;break;
 	case 4://10:PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=10;break;
 	case 5://11:lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=11;break;
 	case 6://12:phase+lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=12;break;
 	case 0://0:PROCAR
 	default:
+		GUI_LOCK(vasp_gui.nedos);
+		GUI_LOCK(vasp_gui.emin);
+		GUI_LOCK(vasp_gui.emax);
+		GUI_LOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=0;
 	}
 }
@@ -3619,8 +3654,21 @@ GUI_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
 	GUI_TEXT_TABLE(table,vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
 GUI_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
 /* initialize */
-if(vasp_gui.calc.have_paw) GUI_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
-else GUI_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+if(vasp_gui.calc.have_paw) {
+	GUI_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
+	GUI_UNLOCK(vasp_gui.nedos);
+	GUI_UNLOCK(vasp_gui.emin);
+	GUI_UNLOCK(vasp_gui.emax);
+	GUI_UNLOCK(vasp_gui.efermi);
+	GUI_UNLOCK(vasp_gui.rwigs);
+} else {
+	GUI_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+	GUI_LOCK(vasp_gui.nedos);
+	GUI_LOCK(vasp_gui.emin);
+	GUI_LOCK(vasp_gui.emax);
+	GUI_LOCK(vasp_gui.efermi);
+	GUI_LOCK(vasp_gui.rwigs);
+}
 /* --- end frame */
 /* --- Linear Response */
 	GUI_FRAME_NOTE(page,frame,"Linear Response");
