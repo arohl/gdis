@@ -593,6 +593,10 @@ void vasp_gui_refresh(){
 		GUI_ENTRY_TEXT(vasp_gui.apaco,text);
 		g_free(text);
 	}
+	if(vasp_gui.calc.ibrion==3){
+		g_free(text);text=g_strdup_printf("%.1lf",vasp_gui.calc.smass);
+		GUI_ENTRY_TEXT(vasp_gui.smass,text);
+	}
 	/*POSCAR*/
 	text=g_strdup_printf("%s",vasp_gui.calc.species_symbols);
 	GUI_ENTRY_TEXT(vasp_gui.poscar_species,text);
@@ -1497,6 +1501,7 @@ void vasp_ibrion_selected(GUI_OBJ *w){
 	case 3://2:Conjugate Gradients
 		vasp_gui.calc.ibrion=2;break;
 	case 4://3:Damped
+		GUI_UNLOCK(vasp_gui.smass);
 		vasp_gui.calc.ibrion=3;break;
 	case 5://5:Finite Differences
 		vasp_gui.calc.ibrion=5;break;
@@ -3776,7 +3781,8 @@ GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for 
 	}else{
 		GUI_LOCK(vasp_gui.tebeg);
 		GUI_LOCK(vasp_gui.teend);
-		GUI_LOCK(vasp_gui.smass);
+		if(vasp_gui.calc.ibrion==3) GUI_UNLOCK(vasp_gui.smass);
+		else GUI_LOCK(vasp_gui.smass);
 		GUI_LOCK(vasp_gui.nblock);
 		GUI_LOCK(vasp_gui.kblock);
 		GUI_LOCK(vasp_gui.npaco);
