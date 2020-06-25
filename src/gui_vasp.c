@@ -680,7 +680,7 @@ void vasp_apply_simple(void){
 		vasp_gui.calc.kpoints_kz=1.;
 	}else{
 		vasp_gui.calc.kpoints_mode=VKP_AUTO;
-		vasp_gui.calc.kpoints_kx = (gdouble)(dim+dim*(1+2*(2*kgrid+1)));/*not a serious formula*/
+		vasp_gui.calc.kpoints_kx = (gdouble)(4.0*dim*(kgrid+1.0));/*not a serious formula*/
 		text=g_strdup_printf("SET AUTO gamma-centered grid w/ AUTO = %i\n",(gint)vasp_gui.calc.kpoints_kx);
 		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,text);
 		g_free(text);
