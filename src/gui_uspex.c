@@ -4818,9 +4818,9 @@ GUI_TOOLTIP(uspex_gui.sigmaFing,"sigmaFing: Ch. 4.9 DEFAULT: 0.03\nGaussian broa
 	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsActivation,uspex_gui.calc.antiSeedsActivation,"%4i","Activation:",1,2,13,14);
 GUI_TOOLTIP(uspex_gui.antiSeedsActivation,"antiSeedsActivation: Ch. 4.10 DEFAULT: 5000\nGeneration at which antiseed is active.");
 	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsMax,uspex_gui.calc.antiSeedsMax,"%.4f","Max:",2,3,13,14);
-GUI_TOOLTIP(uspex_gui.antiSeedsMax,"antiSeedsMax: Ch. 4.10 DEFAULT: 0.000\nGaussian height in mean square deviation of the generation enthalpy\nAmong bestFrac structures, recommended value is 0.01.");
+GUI_TOOLTIP(uspex_gui.antiSeedsMax,"antiSeedsMax: Ch. 4.10 DEFAULT: 0.000\nGaussian height in mean square deviation of the generation enthalpy\namong bestFrac structures, recommended value is 0.01.");
 	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsSigma,uspex_gui.calc.antiSeedsSigma,"%.4f","sigma:",3,4,13,14);
-GUI_TOOLTIP(uspex_gui.antiSeedsSigma,"antiSeedsSigma: Ch. 4.10 DEFAULT: 0.001\nGaussian width in average distances between generated structure\nAmong bestFrac structures, recommended calue is 0.005.");
+GUI_TOOLTIP(uspex_gui.antiSeedsSigma,"antiSeedsSigma: Ch. 4.10 DEFAULT: 0.001\nGaussian width in average distances between generated structure\namong bestFrac structures, recommended value is 0.005.");
 /* line 14 */
 	GUI_LABEL_TABLE(table,"Space group",0,1,14,15);
 	/*col 2: empty*/
