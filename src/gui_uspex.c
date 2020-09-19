@@ -5017,7 +5017,7 @@ GUI_TOOLTIP(uspex_gui.dynamicalBestHM,"dynamicalBestHM: Ch. ?.? DEFAULT: 2\nSpec
 /* line 5 */
 	/*col 1: empty*/
 	GUI_ENTRY_TABLE(table,uspex_gui.maxSlice,uspex_gui.calc.maxSlice,"%.4f","maxSlice:",1,2,5,6);
-GUI_TOOLTIP(uspex_gui.minSlice,"maxSlice: Ch. 4.13 DEFAULT: N/A\nMaximum Slice thickness (Ang.).\nRecommended value is ~6 Ang.");
+GUI_TOOLTIP(uspex_gui.maxSlice,"maxSlice: Ch. 4.13 DEFAULT: N/A\nMaximum Slice thickness (Ang.).\nRecommended value is ~6 Ang.");
 	GUI_TEXT_TABLE(table,uspex_gui.softMutOnly,uspex_gui.calc.softMutOnly,"SoftMut:",2,4,5,6);
 GUI_TOOLTIP(uspex_gui.softMutOnly,"softMutOnly: Ch. ?.? DEFAULT: 0\nWhich/how many generations are produced from soft mutation only.\nThis keyword has disapear in the 10.1 version of USPEX.");
 /* line 6 */
