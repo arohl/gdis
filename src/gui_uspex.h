@@ -73,7 +73,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *_calctype_mag;			/*VER 10.1*/
 	GUI_OBJ *_calctype_mag_2;		/*VER 10.1*/
 	GUI_OBJ *optType;
-	gboolean have_new_opt;			/*VER 10.1*/
+	gboolean have_new_optType;		/*VER 10.1*/
 	GUI_OBJ *new_optType;			/*VER 10.1*/
 	GUI_OBJ *sel_new_opt;
 	gchar *_tmp_new_optType;		/*VER 10.1*/
@@ -100,8 +100,8 @@ struct uspex_calc_gui{
 	GUI_OBJ *_bond_d;
 	gchar *_tmp_bond_d;
 	gboolean auto_bonds;
-	//checkMolecules is auto-sync
-	//checkConnectivity is auto-sync
+	GUI_OBJ *checkMolecules;
+	GUI_OBJ *checkConnectivity;
 	GUI_OBJ *fitLimit;			/*VER 10.1*/
 	gchar *_tmp_ldaU;			/*VER 10.1*/
 	GUI_OBJ *ldaU;				/*VER 10.1*/
@@ -200,6 +200,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *RmaxFing;
 	GUI_OBJ *deltaFing;
 	GUI_OBJ *sigmaFing;
+	GUI_OBJ *toleranceFing;
 /*4.10 Antiseed*/
 	GUI_OBJ *antiSeedsActivation;
 	GUI_OBJ *antiSeedsMax;
@@ -253,6 +254,9 @@ struct uspex_calc_gui{
 	GUI_OBJ *thicknessB;
 	GUI_OBJ *reconstruct;
 	GUI_OBJ *StoichiometryStart;/*almost undocumented*/
+	GUI_OBJ *E_AB;/*almost undocumented*/
+	GUI_OBJ *Mu_A;/*almost undocumented*/
+	GUI_OBJ *Mu_B;/*almost undocumented*/
 	GUI_OBJ *substrate_model;/*additional*/
 	GUI_OBJ *substrate_model_button;/*additional*/
 /*5.4 Clusters*/
