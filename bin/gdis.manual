@@ -225,22 +225,35 @@ Each loaded file can contain one or more chemical structures, or models. These c
 ============================================================================
 \f Recognized file type	 Read Extension         Write Extension
 ============================================================================
+\f Abinit                  (.about, .abot)         -
+\f Biograph                (.bgf, .xtl)           (.bgf, .xtl)
 \f Biosym/MSI/Accelrys     (.arc, .car, .cor)     (.car)
 \f CASTEP output           (.castep)               -
 \f CIF                     (.cif)                 (.cif)
+\f CSSR                    (.cssr)                (.cssr)
+\f DIFFaX                  (.dfx)                 (.dfx)
+\f DMOL                    (.dmol)                (.dmol)
+\f DL_POLY                 (.dlpoly)              (.dlpoly)
 \f GAMESS input            (.inp)                 (.inp)
 \f GAMESS output           (.gmot, .gmout)         -
-\f GDIS morphology         (.gmf)                 (.gmf)
+\f GDIS morphology         (.gmf, .pcf)           (.gmf, .pcf)
 \f GDIS structure          (.xml)                 (.xml)
+\f GEOMVIEW                (.off)                  -
+\f GROMACS                 (.gro)                 (.gro)
 \f GULP input/restart      (.gin, .res)           (.gin, .res)
 \f GULP output             (.got, .gout)           -
 \f MARVIN input/restart    (.mar, .mvn, .mvn-r)   (.mar, .mvn, .mvn-r)
 \f MARVIN output           (.mot, .mvout .mvnout)  -
+\f MONTY                   (.cgf)                 (.cgf)
 \f MOPAC output            (.out)                  -
+\f NWCHEM                  (.nwin, nw)            (.nwout, nwot, .nwo)
 \f Protein DataBase (PDB)  (.pdb)                 (.pdb)
+\f PowderCell              (.cell)                 -
+\f QuantumEspresso         (.qein, .qeout)        (.qein)
 \f Rietica                 (.inp)                  -
 \f SIESTA input            (.fdf)                 (.fdf)
 \f SIESTA output           (.out)                  -
+\f TRIPOS                  (.mol2)                 -
 \f USPEX output            (OUTPUT.txt)            -
 \f VASP xml output         (.xml)                  -
 \f XTL                     (.xtl)                 (.xtl)
