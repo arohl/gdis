@@ -621,7 +621,7 @@ if (model->phonon_movie)
     text = g_strdup_printf("%s -delay 20 %s_*.tga %s.gif", sysenv.convert_path,
                            model->phonon_movie_name, model->phonon_movie_name);
 
-    system(text);
+    IGNORE_RETURN(system(text));
     g_free(text);
 
     return(FALSE);

@@ -1259,7 +1259,7 @@ return(model);
 #define DEBUG_READ_GULP 0
 gint read_gulp(gchar *filename, struct model_pak *model)
 {
-gint i, j, nc, ns;
+gint i, j, nc=0, ns=0;//nc, ns used uninitialized
 gint keywords_found, keywords_expected, num_tokens, remaining;
 gint code, context, run, method, optimiser, optimiser2, unit, fix, switch_type;
 gint region, breathe, coulomb, maxcyc, qeq, free, zsisa, compare, nosym, phonon, eigen;
@@ -2459,8 +2459,10 @@ P2MAT("new lattice matrix: ", svec);
                 }
 
 /* prevent core dump on comment */
-              if (**buff == '#')
-                break;
+              if(buff!=NULL) //FIX a possible NULL-pointer ref
+                if(*buff!=NULL)
+                  if (**buff == '#')
+                    break;
 
 /* add new species data if the 1st item an element, otherwise end */
               if (elem_test(*buff))
@@ -3247,7 +3249,7 @@ printf("2 prim\n");
   if (g_ascii_strncasecmp("  Zero point energy",line,19) == 0)
     fflag=0;
 
-  if (fflag && (g_ascii_strncasecmp(" Frequency",line,10) == 0) || (g_ascii_strncasecmp("  Frequency",line,11) == 0))
+  if ((fflag && (g_ascii_strncasecmp(" Frequency",line,10) == 0)) || (g_ascii_strncasecmp("  Frequency",line,11) == 0))
     {
 /* space group processing here, since we want to attach */
 /* the vibration lists to ALL atoms in the full cell, */
@@ -3985,7 +3987,7 @@ double version;
 
 /* record 1 - version */
 READ_RECORD;
-fread(&version, sizeof(version), 1, fp);
+IGNORE_RETURN(fread(&version, sizeof(version), 1, fp));
 if (fabs(version) > 100.0)
   {
   swap_bytes(&version, sizeof(version));
@@ -4000,11 +4002,11 @@ READ_RECORD;
 /* record 2 */
 READ_RECORD;
 /* # of atoms + shells */
-fread(&num_atoms, sizeof(num_atoms), 1, fp);
+IGNORE_RETURN(fread(&num_atoms, sizeof(num_atoms), 1, fp));
 if (model->trj_swap)
   swap_bytes(&num_atoms, sizeof(num_atoms));
 /* dimension */
-fread(&periodic, sizeof(periodic), 1, fp);
+IGNORE_RETURN(fread(&periodic, sizeof(periodic), 1, fp));
 if (model->trj_swap)
   swap_bytes(&periodic, sizeof(periodic));
 READ_RECORD;
@@ -4170,7 +4172,7 @@ if (model->gulp.ensemble == NPT)
   {
 /* get cell vectors */
   READ_RECORD;
-  fread(cell, sizeof(double), 9, fp);
+  IGNORE_RETURN(fread(cell, sizeof(double), 9, fp));
   READ_RECORD;
 
 /* get cell velocities */
@@ -4190,7 +4192,7 @@ if (model->gulp.ensemble == NPT)
     default:
       j=0;
     }
-  fread(velc, sizeof(double), j, fp);
+  IGNORE_RETURN(fread(velc, sizeof(double), j, fp));
   READ_RECORD;
 
 /* compute latmat/ilatmat */
@@ -4387,7 +4389,7 @@ if (!sysenv.gulp_path)
   return(-1);
 
 /* delete the old file to be sure output is only data from current run */
-chdir(sysenv.cwd);
+IGNORE_RETURN(chdir(sysenv.cwd));
 unlink(output);
 
 /* put the GULP path in quotes to avoid problems with spaces in pathnames etc */
@@ -4425,7 +4427,7 @@ if (!sysenv.gulp_path)
   return(-1);
 
 /* delete the old file to be sure output is only data from current run */
-chdir(sysenv.cwd);
+IGNORE_RETURN(chdir(sysenv.cwd));
 unlink(output);
 
 /* put the GULP path in quotes to avoid problems with spaces in pathnames etc */

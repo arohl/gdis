@@ -442,7 +442,7 @@ g_string_sprintfa(cmd, " -D");
 printf("system: %s\n", cmd->str);
 
 
-system(cmd->str);
+IGNORE_RETURN(system(cmd->str));
 printf("\n");
 
 /* cleanup */

@@ -102,12 +102,22 @@ gtk_entry_set_text(GTK_ENTRY(mcd_molecules), molecules);
 gtk_entry_set_text(GTK_ENTRY(mcd_selected), selected);
 gtk_entry_set_text(GTK_ENTRY(mcd_hidden), hidden);
 
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(mcd_total), FALSE);
 gtk_entry_set_editable(GTK_ENTRY(mcd_charge), FALSE);
 gtk_entry_set_editable(GTK_ENTRY(mcd_ions), FALSE);
 gtk_entry_set_editable(GTK_ENTRY(mcd_molecules), FALSE);
 gtk_entry_set_editable(GTK_ENTRY(mcd_selected), FALSE);
 gtk_entry_set_editable(GTK_ENTRY(mcd_hidden), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(mcd_total), FALSE);
+gtk_editable_set_editable(GTK_EDITABLE(mcd_charge), FALSE);
+gtk_editable_set_editable(GTK_EDITABLE(mcd_ions), FALSE);
+gtk_editable_set_editable(GTK_EDITABLE(mcd_molecules), FALSE);
+gtk_editable_set_editable(GTK_EDITABLE(mcd_selected), FALSE);
+gtk_editable_set_editable(GTK_EDITABLE(mcd_hidden), FALSE);
+#endif //USE_DEPRECATED_GTK
+
 
 /* cleanup */
 g_free(total);
@@ -142,32 +152,56 @@ gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Total atoms");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Net charge");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Ions");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Molecules");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Selected");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Hidden");
+#ifdef   USE_DEPRECATED_GTK
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+#else  //USE_DEPRECATED_GTK
+gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+#endif //USE_DEPRECATED_GTK
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 /* right vbox - data */

@@ -76,12 +76,19 @@ g_free(count);
 /***************************/
 void count_stats(gpointer data)
 {
-gint i, value, sum, nonzero;
+gint i, value, sum;
+#ifdef UNUSED_BUT_SET
+gint nonzero;
+#endif
 struct count_pak *count = data;
 
 g_assert(count != NULL);
 
+#ifdef   UNUSED_BUT_SET
 sum = nonzero = 0;
+#else  //UNUSED_BUT_SET
+sum = 0;
+#endif //UNUSED_BUT_SET
 for (i=count->size ; i-- ; )
   {
   value = *(count->bins+i);

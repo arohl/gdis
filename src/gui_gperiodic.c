@@ -27,6 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gtk/gtk.h>
 
 #include "gdis.h"

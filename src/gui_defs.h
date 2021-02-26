@@ -255,6 +255,10 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
         gtk_box_pack_start(GTK_BOX(_hbox),combobox,TRUE,TRUE,0);\
 	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
+/* Make combobox editable */
+#define GUI_COMBOBOX_EDITABLE(combobox) do{\
+	gtk_entry_set_editable(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combobox))),TRUE);\
+}while(0)
 /*Add a new element with text ("text") in the combobox (combobox).
  * This have to be called AFTER GUI_COMBOBOX.*/
 #define GUI_COMBOBOX_ADD(combobox,text) do{\
@@ -374,6 +378,14 @@ _Pragma ("GCC warning \"use of GTK COMBO interface is deprecated!\"");\
 	radio_1 = add_radio_button(caption_1,(gpointer)pointer_1,NULL);\
 	radio_2 = add_radio_button(caption_2,(gpointer)pointer_2,NULL);\
 	_ATTACH_TABLE(table,_vbox,l,r,t,b);\
+}while(0)
+/*same with an horizontal box*/
+#define GUI_RADIO2_TABLE(table,radio_1,caption_1,pointer_1,radio_2,caption_2,pointer_2,l,r,t,b) do{\
+	GtkWidget *_hbox = gtk_hbox_new(FALSE,0);\
+	new_radio_group(0,_hbox,FF);\
+	radio_1 = add_radio_button(caption_1,(gpointer)pointer_1,NULL);\
+	radio_2 = add_radio_button(caption_2,(gpointer)pointer_2,NULL);\
+	_ATTACH_TABLE(table,_hbox,l,r,t,b);\
 }while(0)
 /********************/
 /* GENERAL COMMANDS */

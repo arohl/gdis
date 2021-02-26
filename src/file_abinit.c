@@ -162,7 +162,7 @@ gint read_about_frame(FILE *fp, struct model_pak *model)
 gint read_about(gchar *filename, struct model_pak *model)
 {
 gint i, flag, frame, num_tokens, tot_tokens;
-gint natom=0, ntype=0, *types;
+gint natom=0, ntype=0, *types=NULL;
 GString *title;
 gchar **buff, **curr_token, *ptr, line[LINELEN];
 struct core_pak *core;
@@ -191,6 +191,7 @@ while (!fgetline(fp, line))
         if (fgetline(fp, line))
           {
           gui_text_show(ERROR, "unexpected end of file reading cell dimensions\n");
+          if(types != NULL) g_free(types);//FIX _BUG_ (memory leak)
           return(2);
           }
         buff = tokenize(line, &num_tokens);
@@ -254,6 +255,7 @@ while (!fgetline(fp, line))
       if (clist == NULL)
         {
         gui_text_show(ERROR, "no atoms found\n");
+        if(types!=NULL) g_free(types);
         return(2);
         }
       buff = tokenize(line+10, &num_tokens);
@@ -270,6 +272,7 @@ while (!fgetline(fp, line))
       }
     if (g_ascii_strncasecmp("     znucl", line, 10) == 0)
       {
+      if(types!=NULL) g_free(types);
       types = g_malloc0(ntype * sizeof(gint));/*FIX: 3aa3e8*/
       i = 0;
       tot_tokens = 0;
@@ -341,6 +344,7 @@ while (!fgetline(fp, line))
   }
 
 /* done */
+  if(types != NULL) g_free(types);//FIX _BUG_ (memory leak)
 if (flag)
   {
   strcpy(model->filename, filename);

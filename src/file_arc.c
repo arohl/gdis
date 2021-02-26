@@ -107,10 +107,10 @@ for (mlist=model->moles ; mlist ; mlist=g_slist_next(mlist))
                   elements[core->atom_code].symbol);
       }
 
-  if (core->charge < 0.0)
-    fprintf(fp, "%5.3f\n", core->charge);
-  else
-    fprintf(fp, " %4.3f\n", core->charge);
+    if (core->charge < 0.0)
+      fprintf(fp, "%5.3f\n", core->charge);
+    else
+      fprintf(fp, " %4.3f\n", core->charge);
 
 /* indicate we've written at least one atom */
     flag++;

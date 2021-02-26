@@ -27,6 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -75,7 +76,7 @@ void gui_uspex_init(struct model_pak *model){
 	uspex_gui._tmp_num_opt_steps=(gdouble)uspex_gui.calc._num_opt_steps;
 	uspex_gui._tmp_curr_step=1.;
 	if(uspex_gui.calc._isfixed==NULL) {
-		uspex_gui.calc._isfixed=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gboolean));
+		uspex_gui.calc._isfixed=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gboolean));/*malloc0 FIX*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc._isfixed[idx]=FALSE;
 	}
 	uspex_gui._tmp_isfixed=uspex_gui.calc._isfixed[0];
@@ -244,17 +245,11 @@ if(uspex_gui.calc._nspecies<1) {
 			}
 		}
 	}
-	if(uspex_gui.calc.IonDistances==NULL){
-		uspex_gui.calc.IonDistances = g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
-		for(idx=0;idx<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;idx++) uspex_gui.calc.IonDistances[idx]=0.;/*no default*/
-		uspex_gui.auto_C_ion=TRUE;
-	}
+	if(uspex_gui.calc.IonDistances==NULL) uspex_gui.auto_C_ion=TRUE;
+	else uspex_gui.auto_C_ion=FALSE;
 	if(uspex_gui.calc.Latticevalues==NULL){
-		if(uspex_gui.calc._nlattice_line==0) {
-			uspex_gui.calc._nlattice_line=1;
-			uspex_gui.calc._nlattice_vals=1;
-		}
-		uspex_gui.calc.Latticevalues=g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+		uspex_gui.calc._nlattice_line=0;
+		uspex_gui.calc._nlattice_vals=0;
 		uspex_gui.auto_C_lat=TRUE;
 	}else{
 		uspex_gui.auto_C_lat=FALSE;
@@ -262,6 +257,12 @@ if(uspex_gui.calc._nspecies<1) {
 	if(uspex_gui.calc._calctype_dim==3) uspex_gui.calc.doSpaceGroup=TRUE;
 	else uspex_gui.calc.doSpaceGroup=FALSE;
 	/*calculation steps specific*/
+	if(uspex_gui.have_specific){
+		/*use job_path / Specific as a default.*/
+		if(uspex_gui._tmp_spe_folder==NULL){
+			uspex_gui._tmp_spe_folder=g_build_filename(uspex_gui.calc.path,"../Specific",NULL);
+		}
+	}
 	if(uspex_gui.calc.KresolStart==NULL) {
 		uspex_gui.calc.KresolStart=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gdouble));
 		uspex_gui.calc.KresolStart[0]=0.2;
@@ -276,24 +277,21 @@ if(uspex_gui.calc._nspecies<1) {
 //	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_commandExecutable[idx]=NULL;
 	if(uspex_gui.calc.commandExecutable!=NULL) {
 		/*cut*/
+		gint size;
 		idx=0;/*for safety*/
 		line=&(uspex_gui.calc.commandExecutable[0]);
 		ptr=line;
 		while(*line!='\0'){
-			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
-			if(*ptr=='\0') {
-				/*last one*/
-				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
-				/*FIX: f50eec*/
-				break;
-			}else{
-				*ptr='\0';/*cut here*/
-				uspex_gui._tmp_commandExecutable[idx]=g_strdup(line);
-				line=ptr+1;
-				*ptr='\n';/*restore*/
-				idx++;
-				if(idx>uspex_gui.calc._num_opt_steps) break;
+			while(!g_ascii_isprint(*ptr)) ptr++;
+			line=ptr;
+			size=0;
+			while(g_ascii_isprint(*ptr)) {
+				size++;
+				ptr++;
 			}
+			uspex_gui._tmp_commandExecutable[idx]=g_strndup(line,size);
+			line=ptr;
+			idx++;
 		}
 	}
 	uspex_gui._tmp_ai_input=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
@@ -301,13 +299,16 @@ if(uspex_gui.calc._nspecies<1) {
 	uspex_gui._tmp_ai_opt=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui._tmp_ai_opt[idx]=NULL;/*no default*/
 	uspex_gui.auto_step=TRUE;/*auto step is ON by default*/
-	uspex_gui._tmp_ai_spe=NULL;
-	if(uspex_gui._potentials!=NULL) g_free(uspex_gui._potentials);/*<- needed?*/
-	uspex_gui._potentials=g_malloc(uspex_gui.calc._nspecies*sizeof(gchar *));
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++) uspex_gui._potentials[idx]=NULL;
+	uspex_gui._tmp_ai_lib_folder=NULL;
+	uspex_gui._tmp_ai_lib_sel=NULL;
+	uspex_gui._tmp_ai_lib_folder=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	uspex_gui._tmp_ai_lib_sel=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
+	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
+		uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+		uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+	}
 	/**/
-	uspex_gui.copySpecific=TRUE;
-	uspex_gui.have_v1010=TRUE;
+	uspex_gui.have_v1030=TRUE;
 	uspex_gui.have_octave=TRUE;
 	if(sysenv.uspex_path!=NULL) uspex_gui.calc.job_uspex_exe=g_strdup(sysenv.uspex_path);
 	/*set everything for an update*/
@@ -494,7 +495,6 @@ void update_specific(void){
 	GUI_LOCK(uspex_gui.fracTopRand);
 	GUI_LOCK(uspex_gui.fracPerm);
 	GUI_LOCK(uspex_gui.fracAtomsMut);
-	GUI_LOCK(uspex_gui.fracRotMut);
 	GUI_LOCK(uspex_gui.fracLatMut);
 	GUI_LOCK(uspex_gui.fracSpinMut);
 	GUI_LOCK(uspex_gui.howManySwaps);
@@ -509,6 +509,9 @@ void update_specific(void){
 	GUI_LOCK(uspex_gui._latticevalue);
 	GUI_LOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
+	GUI_LOCK(uspex_gui.checkConnectivity);
+	GUI_LOCK(uspex_gui.checkMolecules);
+	GUI_LOCK(uspex_gui.fracRotMut);
 	GUI_LOCK(uspex_gui.MolCenters);
 	GUI_LOCK(uspex_gui._centers);
 	GUI_LOCK(uspex_gui._centers_button);
@@ -528,13 +531,20 @@ void update_specific(void){
 	GUI_LOCK(uspex_gui.TE_goal);
 	GUI_LOCK(uspex_gui.cmd_BoltzTraP);
 	GUI_LOCK(uspex_gui.cmd_BoltzTraP_button);
+/*CRYSTAL*/
+	GUI_LOCK(uspex_gui.PhaseDiagram);
 /*SURFACES*/
 	GUI_LOCK(uspex_gui.thicknessS);
 	GUI_LOCK(uspex_gui.thicknessB);
 	GUI_LOCK(uspex_gui.reconstruct);
 	GUI_LOCK(uspex_gui.StoichiometryStart);
+	GUI_LOCK(uspex_gui.E_AB);
+	GUI_LOCK(uspex_gui.Mu_A);
+	GUI_LOCK(uspex_gui.Mu_B);
 	GUI_LOCK(uspex_gui.substrate_model);
 	GUI_LOCK(uspex_gui.substrate_model_button);
+/*CLUSTERS*/
+	GUI_LOCK(uspex_gui.numberparents);
 /*VARCOMP*/
 	GUI_LOCK(uspex_gui.numSpecies);
 	GUI_LOCK(uspex_gui.blockSpecies);
@@ -633,7 +643,6 @@ if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.fracTopRand);
 		GUI_UNLOCK(uspex_gui.fracPerm);
 		GUI_UNLOCK(uspex_gui.fracAtomsMut);
-		GUI_UNLOCK(uspex_gui.fracRotMut);
 		GUI_UNLOCK(uspex_gui.fracLatMut);
 if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.fracSpinMut);
@@ -653,6 +662,9 @@ if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
+		GUI_UNLOCK(uspex_gui.checkConnectivity);
+		GUI_UNLOCK(uspex_gui.checkMolecules);
+		GUI_UNLOCK(uspex_gui.fracRotMut);
 		GUI_UNLOCK(uspex_gui.MolCenters);
 		GUI_UNLOCK(uspex_gui._centers);
 		GUI_UNLOCK(uspex_gui._centers_button);
@@ -676,14 +688,25 @@ if(uspex_gui.have_ZT){
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP);
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP_button);
 }
+/*CRYSTAL*/
+if(uspex_gui.calc._calctype_dim==3){
+		GUI_UNLOCK(uspex_gui.PhaseDiagram);
+}
 /*SURFACES*/
 if(uspex_gui.calc._calctype_dim==2){
 		GUI_UNLOCK(uspex_gui.thicknessS);
 		GUI_UNLOCK(uspex_gui.thicknessB);
 		GUI_UNLOCK(uspex_gui.reconstruct);
 		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.E_AB);
+		GUI_UNLOCK(uspex_gui.Mu_A);
+		GUI_UNLOCK(uspex_gui.Mu_B);
 		GUI_UNLOCK(uspex_gui.substrate_model);
 		GUI_UNLOCK(uspex_gui.substrate_model_button);
+}
+/*CLUSTERS*/
+if(uspex_gui.calc._calctype_dim==0){
+		GUI_UNLOCK(uspex_gui.numberparents);
 }
 /*VARCOMP*/
 if(uspex_gui.calc._calctype_var){
@@ -725,7 +748,6 @@ if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.fracTopRand);
 		GUI_UNLOCK(uspex_gui.fracPerm);
 		GUI_UNLOCK(uspex_gui.fracAtomsMut);
-		GUI_UNLOCK(uspex_gui.fracRotMut);
 		GUI_UNLOCK(uspex_gui.fracLatMut);
 if(uspex_gui.calc._calctype_mag){
 		GUI_UNLOCK(uspex_gui.fracSpinMut);
@@ -745,6 +767,9 @@ if(!uspex_gui.auto_C_lat){
 		GUI_UNLOCK(uspex_gui.splitInto);
 /*MOLECULAR*/
 if(uspex_gui.calc._calctype_mol){
+		GUI_UNLOCK(uspex_gui.checkConnectivity);
+		GUI_UNLOCK(uspex_gui.checkMolecules);
+		GUI_UNLOCK(uspex_gui.fracRotMut);
 		GUI_UNLOCK(uspex_gui.MolCenters);
 		GUI_UNLOCK(uspex_gui._centers);
 		GUI_UNLOCK(uspex_gui._centers_button);
@@ -768,14 +793,25 @@ if(uspex_gui.have_ZT){
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP);
 		GUI_UNLOCK(uspex_gui.cmd_BoltzTraP_button);
 }
+/*CRYSTAL*/
+if(uspex_gui.calc._calctype_dim==3){
+                GUI_UNLOCK(uspex_gui.PhaseDiagram);
+}
 /*SURFACES*/
 if(uspex_gui.calc._calctype_dim==2){
 		GUI_UNLOCK(uspex_gui.thicknessS);
 		GUI_UNLOCK(uspex_gui.thicknessB);
 		GUI_UNLOCK(uspex_gui.reconstruct);
 		GUI_UNLOCK(uspex_gui.StoichiometryStart);
+		GUI_UNLOCK(uspex_gui.E_AB);
+		GUI_UNLOCK(uspex_gui.Mu_A);
+		GUI_UNLOCK(uspex_gui.Mu_B);
 		GUI_UNLOCK(uspex_gui.substrate_model);
 		GUI_UNLOCK(uspex_gui.substrate_model_button);
+}
+/*CLUSTERS*/
+if(uspex_gui.calc._calctype_dim==0){
+                GUI_UNLOCK(uspex_gui.numberparents);
 }
 /*VARCOMP*/
 if(uspex_gui.calc._calctype_var){
@@ -963,7 +999,7 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=TRUE;
 		break;
-	case 8://001
+	case 8://001 - only in v10.1?
 		uspex_gui.calc.calculationType=US_CT_001;
 		uspex_gui.calc._calctype_dim=0;
 		uspex_gui.calc._calctype_mol=FALSE;
@@ -1019,6 +1055,20 @@ void uspex_type_selected(GUI_OBJ *w){
 		uspex_gui.calc._calctype_var=FALSE;
 		uspex_gui.calc._calctype_mag=TRUE;
 		break;
+	case 16://-201 v10.4
+		uspex_gui.calc.calculationType=US_CT_m201;
+		uspex_gui.calc._calctype_dim=-2;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=TRUE;
+		uspex_gui.calc._calctype_mag=FALSE;
+		break;
+	case 17://-s201 v10.4
+		uspex_gui.calc.calculationType=US_CT_sm201;
+		uspex_gui.calc._calctype_dim=-2;
+		uspex_gui.calc._calctype_mol=FALSE;
+		uspex_gui.calc._calctype_var=TRUE;
+		uspex_gui.calc._calctype_mag=TRUE;
+		break;
 	case 0://300
 	default://bad value -> default 300
 		uspex_gui.calc.calculationType=US_CT_300;
@@ -1063,7 +1113,7 @@ void _update_calculationType(){
 	case -2://-200 - VER 10.1 -s200
 		i=200;
 		uspex_gui.calc._calctype_mol=FALSE;
-		uspex_gui.calc._calctype_var=FALSE;
+//		uspex_gui.calc._calctype_var=FALSE; v10.4 allows it
 		break;
 	default://should not happen
 		i=300;/*reset to default value*/
@@ -1115,6 +1165,10 @@ void _update_calculationType(){
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,14);break;
 	case US_CT_sm200:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,15);break;
+	case US_CT_m201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,16);break;
+	case US_CT_sm201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,17);break;
 	case US_CT_300:
 	default:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
@@ -1265,33 +1319,35 @@ void uspex_optimization_selected(GUI_OBJ *w){
 		uspex_gui.calc.optType=US_OT_QE;break;
 	case 10://11
 		uspex_gui.calc.optType=US_OT_2R;break;
-	case 11://14
+	case 11://12
+		uspex_gui.calc.optType=US_OT_HM;break;
+	case 12://14
 		uspex_gui.calc.optType=US_OT_ZT;
 		uspex_gui.have_ZT=TRUE;
 		break;
-	case 12://17
+	case 13://17
 		uspex_gui.calc.optType=US_OT_Fphon;break;
-	case 13://1101
+	case 14://1101
 		uspex_gui.calc.optType=US_OT_BULK_M;break;
-	case 14://1102
+	case 15://1102
 		uspex_gui.calc.optType=US_OT_SHEAR_M;break;
-	case 15://1103
+	case 16://1103
 		uspex_gui.calc.optType=US_OT_YOUNG_M;break;
-	case 16://1104
+	case 17://1104
 		uspex_gui.calc.optType=US_OT_POISSON;break;
-	case 17://1105
+	case 18://1105
 		uspex_gui.calc.optType=US_OT_PUGH_R;break;
-	case 18://1106
+	case 19://1106
 		uspex_gui.calc.optType=US_OT_VICKERS_H;break;
-	case 19://1107
+	case 20://1107
 		uspex_gui.calc.optType=US_OT_FRACTURE;break;
-	case 20://1108
+	case 21://1108
 		uspex_gui.calc.optType=US_OT_DEBYE_T;break;
-	case 21://1109
+	case 22://1109
 		uspex_gui.calc.optType=US_OT_SOUND_V;break;
-	case 22://1110
+	case 23://1110
 		uspex_gui.calc.optType=US_OT_SWAVE_V;break;
-	case 23://1111
+	case 24://1111
 		uspex_gui.calc.optType=US_OT_PWAVE_V;break;
 	default:
 		uspex_gui.calc.optType=US_OT_UNKNOWN;
@@ -1677,7 +1733,8 @@ void remove_bonds(){
 /* toggle new_optType */
 /**********************/
 void opt_toggle(){
-	if(uspex_gui.have_new_opt){
+	uspex_gui.calc.have_new_optType=uspex_gui.have_new_optType;/*sync*/
+	if(uspex_gui.have_new_optType){
 		GUI_UNLOCK(uspex_gui.new_optType);
 		GUI_LOCK(uspex_gui.optType);
 	}else{
@@ -1773,6 +1830,13 @@ void toggle_auto_C_ion(void){
 		GUI_UNLOCK(uspex_gui._distances);
 		/*wipe IonDistances, rewrite*/
 		GUI_COMBOBOX_WIPE(uspex_gui.IonDistances);
+		/*NEW: create calc.IonDistances if not here...*/
+		if(uspex_gui.calc.IonDistances==NULL){
+			/*malloc0 to avoid a possible use of uninitialized value*/
+			uspex_gui.calc.IonDistances = g_malloc0(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
+			for(i=0;i<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;i++) 
+				uspex_gui.calc.IonDistances[i]=0.;/*no default*/
+		}
 		for(i=0;i<uspex_gui.calc._nspecies;i++){
 			tamp=g_strdup_printf("%.4lf",uspex_gui.calc.IonDistances[i*uspex_gui.calc._nspecies]);
 			text=tamp;
@@ -1886,22 +1950,6 @@ void apply_latticevalue(void){
 			while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
 			nvals++;
 		}
-	}
-}
-/********************/
-/* toggle auto_C_lat */
-/********************/
-void toggle_auto_C_lat(void){
-	if(uspex_gui.auto_C_lat){
-		/*automatic*/
-		GUI_LOCK(uspex_gui.Latticevalues);
-		GUI_LOCK(uspex_gui._latticevalue);
-		GUI_LOCK(uspex_gui._latticeformat);
-	}else{
-		/*manual*/
-		GUI_UNLOCK(uspex_gui.Latticevalues);
-		GUI_UNLOCK(uspex_gui._latticevalue);
-		GUI_UNLOCK(uspex_gui._latticeformat);
 	}
 }
 /***************************/
@@ -2048,6 +2096,34 @@ void set_lattice_format(){
 		GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);/*Volume by default*/
 	}
 }
+/********************/
+/* toggle auto_C_lat */
+/********************/
+void toggle_auto_C_lat(void){
+	if(uspex_gui.auto_C_lat){
+		/*automatic*/
+		GUI_LOCK(uspex_gui.Latticevalues);
+		GUI_LOCK(uspex_gui._latticevalue);
+		GUI_LOCK(uspex_gui._latticeformat);
+	}else{
+		/*manual*/
+		/*NEW: create a base Latticevalues if none present*/
+		if(uspex_gui.calc.Latticevalues==NULL) {
+			if(uspex_gui.calc._nlattice_line==0) {
+				uspex_gui.calc._nlattice_line=1;
+				uspex_gui.calc._nlattice_vals=1;
+			}
+			uspex_gui.calc.Latticevalues=
+				g_malloc((uspex_gui.calc._nlattice_line*uspex_gui.calc._nlattice_vals)*sizeof(gdouble));
+			GUI_COMBOBOX_SET(uspex_gui._latticeformat,0);
+			set_lattice_format();
+			uspex_latticeformat_selected(uspex_gui._latticeformat);
+		}
+		GUI_UNLOCK(uspex_gui.Latticevalues);
+		GUI_UNLOCK(uspex_gui._latticevalue);
+		GUI_UNLOCK(uspex_gui._latticeformat);
+	}
+}
 /***********************************/
 /* Toggle spacegroup determination */
 /***********************************/
@@ -2110,6 +2186,234 @@ void register_commandExecutable(void){
 		}
 	}
 }
+/*****************************************/
+/* sync the flavor of (pseudo-)potential */
+/*****************************************/
+void sync_ai_lib_flavor(void){
+	gchar *path, *text;
+	GSList *folders,*folder;
+	gchar  *item;
+	gchar sym[3];
+	gint idx,sel;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	if(uspex_gui._tmp_ai_lib_folder[step]==NULL) {
+		GUI_COMBOBOX_WIPE(uspex_gui.ai_lib_flavor);
+		/*library folder is blank but there could be a flavor entered manually*/
+		if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+			GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,uspex_gui._tmp_ai_lib_sel[step]);
+		}
+		GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");/*terminator*/
+		GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
+		return;/*no folder selected*/
+	}
+	path=g_strdup(uspex_gui._tmp_ai_lib_folder[step]);
+	folders=file_dir_list(path,FALSE);
+	g_free(path);
+	GUI_COMBOBOX_WIPE(uspex_gui.ai_lib_flavor);
+	sym[2]='\0';
+	for (folder=folders ; folder ; folder=g_slist_next(folder)){
+		item=g_strdup_printf("%s",(char *)folder->data);
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1://VASP
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+		case 18://Abinit
+			/*per XX species: 
+			 * 1- XX{*}/ folder for VASP PP,
+			 * 2- XX.* files for the others. */
+			for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
+#if DEBUG_POTCAR_FOLDER
+	fprintf(stdout,"#DBG: looking for %s\n",sym);
+#endif  
+				sym[0]=elements[uspex_gui.calc.atomType[idx]].symbol[0];
+				sym[1]=elements[uspex_gui.calc.atomType[idx]].symbol[1];
+				if(sym[0]==item[0]){
+					if(sym[1]==item[1]) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+					else{
+						/*special case of single atoms*/
+						if((!g_ascii_islower (sym[1]))
+						 &&(!g_ascii_islower (item[1]))){
+							GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+						}
+					}
+				}
+			}
+			break;
+		case 3://GULP
+			/* check *.lib */
+			if (find_in_string(".lib",item) != NULL) 
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 12://Tinker
+			/* check *.prm */
+			if (find_in_string(".prm",item) != NULL)
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 7://CP2K
+			/* check * */
+			/*add everything that is a file*/
+			if(item[0] != '.')
+				GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,item);
+			break;
+		case 15://DFTB
+			/* Special: all A, B species skf have:
+			 * A-A.skf, A-B.skf, B-A.skf, B-B.skf.
+			 * Files will be copied automatically.*/
+			if(folder==folders) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"AUTO");
+			break;
+		case 4://LAMMPS
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+		case 17://N/A
+		case 19://CRYSTAL
+			/* No library is needed... (I think)
+			 * So this setting imports all files
+			 * from library directory.*/
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+			/* Some library could be needed, but
+			 * I can't figure out format/case...
+			 * so we also imports all files from
+			 * library directory. (just in case)*/
+			if(folder==folders) GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"ALL");
+			break;
+		default:
+			/*unsupported code?*/
+			break;
+		}
+		g_free(item);
+	}
+	GUI_COMBOBOX_ADD(uspex_gui.ai_lib_flavor,"N/A");/*terminator*/
+	g_slist_free(folders);
+	/*determine if there was an element selected*/
+	GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,0);
+	if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+		/*there is a selection, is it in the list?*/
+		idx=0;sel=0;text=NULL;
+		do{
+			GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,idx);
+			GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_lib_flavor,text);
+			if(text==NULL) break;/*if nothing?*/
+			if(find_in_string(text,"N/A")!=NULL) break;/*end here*/
+			if(find_in_string(uspex_gui._tmp_ai_lib_sel[step],text) != NULL) sel=idx;
+			g_free(text);
+			idx++;
+		}while(TRUE);/*endless loop*/
+		GUI_COMBOBOX_SET(uspex_gui.ai_lib_flavor,sel);
+	}
+
+}
+/*************************************/
+/* sync the library flavor selection */
+/*************************************/
+void sync_ai_lib_sel(void){
+	gchar *text;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	/**/
+	if(uspex_gui._tmp_ai_lib_sel[step]==NULL)
+		text=g_strdup_printf("N/A");
+	else
+		text=g_strdup_printf("%s",uspex_gui._tmp_ai_lib_sel[step]);
+	GUI_UNLOCK(uspex_gui.ai_lib_sel);
+	GUI_ENTRY_TEXT(uspex_gui.ai_lib_sel,text);
+	GUI_LOCK(uspex_gui.ai_lib_sel);
+	g_free(text);
+}
+/********************************/
+/* set ai_library for last step */
+/********************************/
+void register_ai_library(void){
+	gint idx;
+	gint code;
+	gint clone;
+	gint tot=(gint)uspex_gui._tmp_num_opt_steps;
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	/*determine if _tmp_ai_lib_folder needs an update*/
+	if(uspex_gui._tmp_ai_lib_folder[step]!=NULL) return;
+	/*search if we already have a setup for this ai_code*/
+	code=uspex_gui.calc.abinitioCode[step];
+	clone=step;
+	for(idx=0;idx<tot;idx++)
+		if((code==uspex_gui.calc.abinitioCode[idx])&&(idx!=step)) clone=idx;
+	if(clone!=step){
+		/*just clone previous similar step*/
+		if(uspex_gui._tmp_ai_lib_folder[clone]!=NULL){
+			uspex_gui._tmp_ai_lib_folder[step]=g_strdup(uspex_gui._tmp_ai_lib_folder[clone]);
+			/*by default, selected flavor also propagate*/
+			if(uspex_gui._tmp_ai_lib_sel[clone]!=NULL)
+				uspex_gui._tmp_ai_lib_sel[step]=g_strdup(uspex_gui._tmp_ai_lib_sel[clone]);
+		} else uspex_gui._tmp_ai_lib_folder[step]=NULL;/*already set*/
+	}else{
+		/*ensure NULL?*/
+	}
+	/*wipe & update uspex_gui.ai_lib_flavor*/
+	sync_ai_lib_flavor();
+	sync_ai_lib_sel();
+}
+/******************************/
+/* toggle USE Specific folder */
+/******************************/
+void toggle_use_specific(void){
+uspex_gui.have_specific=TRUE;
+GUI_TOGGLE_ON(uspex_gui.use_specific);
+GUI_TOGGLE_OFF(uspex_gui.set_specific);
+GUI_UNLOCK(uspex_gui.spe_folder);
+GUI_UNLOCK(uspex_gui.spe_folder_button);
+GUI_LOCK(uspex_gui.ai_input);
+GUI_LOCK(uspex_gui.ai_input_button);
+GUI_LOCK(uspex_gui.ai_opt);
+GUI_LOCK(uspex_gui.ai_opt_button);
+GUI_LOCK(uspex_gui.ai_lib);
+GUI_LOCK(uspex_gui.ai_lib_button);
+GUI_LOCK(uspex_gui.ai_lib_flavor);
+GUI_LOCK(uspex_gui.ai_lib_sel);
+}
+/**********************************/
+/* toggle SET specific parameters */
+/**********************************/
+void toggle_set_specific(void){
+uspex_gui.have_specific=FALSE;
+GUI_TOGGLE_OFF(uspex_gui.use_specific);
+GUI_TOGGLE_ON(uspex_gui.set_specific);
+GUI_LOCK(uspex_gui.spe_folder);
+GUI_LOCK(uspex_gui.spe_folder_button);
+GUI_UNLOCK(uspex_gui.ai_input);
+GUI_UNLOCK(uspex_gui.ai_input_button);
+GUI_UNLOCK(uspex_gui.ai_opt);
+GUI_UNLOCK(uspex_gui.ai_opt_button);
+GUI_UNLOCK(uspex_gui.ai_lib);
+GUI_UNLOCK(uspex_gui.ai_lib_button);
+GUI_UNLOCK(uspex_gui.ai_lib_flavor);
+GUI_UNLOCK(uspex_gui.ai_lib_sel);
+}
+/************************/
+/* load Specific folder */
+/************************/
+void load_spe_folder_dialog(void){
+        GUI_OBJ *file_chooser;
+        gint have_answer;
+        gchar *filename;
+        gchar *text;
+        /**/
+        GUI_PREPARE_OPEN_FOLDER(uspex_gui.window,file_chooser,"Select the Specific folder");
+        GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+        if(have_answer){
+                /*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+                if(filename) {
+                        text=g_strdup_printf("%s",filename);
+                        GUI_ENTRY_TEXT(uspex_gui.spe_folder,text);
+                        g_free(text);
+                        if(uspex_gui._tmp_spe_folder!=NULL) g_free(uspex_gui._tmp_spe_folder);
+                        uspex_gui._tmp_spe_folder=g_strdup_printf("%s",filename);
+                        g_free (filename);
+                }
+        }     
+        GUI_KILL_OPEN_DIALOG(file_chooser);
+}
 /*************************************************/
 /* change the total number of optimisation steps */
 /*************************************************/
@@ -2121,6 +2425,8 @@ void spin_update_num_opt_steps(void){
 	gchar   **tmp_c;
 	gchar **tmp_inp;
 	gchar **tmp_opt;
+	gchar **tmp_lib;
+	gchar **tmp_sel;
 	gint i=(gint)uspex_gui._tmp_num_opt_steps;
 	gint idx;
 	/**/
@@ -2131,6 +2437,8 @@ void spin_update_num_opt_steps(void){
 	tmp_c=g_malloc(i*sizeof(gchar *));
 	tmp_inp=g_malloc(i*sizeof(gchar *));
 	tmp_opt=g_malloc(i*sizeof(gchar *));
+	tmp_lib=g_malloc(i*sizeof(gchar *));
+	tmp_sel=g_malloc(i*sizeof(gchar *));
 	if(i>uspex_gui.calc._num_opt_steps){
 		/*increase*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++){
@@ -2153,6 +2461,16 @@ void spin_update_num_opt_steps(void){
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
 			}else tmp_opt[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_folder!=NULL){
+				tmp_lib[idx]=g_strdup(uspex_gui._tmp_ai_lib_folder[idx]);
+				g_free(uspex_gui._tmp_ai_lib_folder[idx]);
+				uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+			}else tmp_lib[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_sel!=NULL){
+				tmp_sel[idx]=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+				g_free(uspex_gui._tmp_ai_lib_sel[idx]);
+				uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+			}else tmp_sel[idx]=NULL;
 		}
 		/*last step*/
 		tmp_i[i-1]=1;
@@ -2162,6 +2480,8 @@ void spin_update_num_opt_steps(void){
 		tmp_c[i-1]=NULL;/*find a better default?*/
 		tmp_inp[i-1]=g_strdup("N/A");
 		tmp_opt[i-1]=g_strdup("N/A");
+		tmp_lib[i-1]=NULL;/*updated later*/
+		tmp_sel[i-1]=NULL;/*updated later*/
 	}else{
 		/*decrease*/
 		for(idx=0;idx<i;idx++){
@@ -2184,6 +2504,16 @@ void spin_update_num_opt_steps(void){
 				g_free(uspex_gui._tmp_ai_opt[idx]);
 				uspex_gui._tmp_ai_opt[idx]=NULL;
 			}else tmp_opt[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_folder!=NULL){
+				tmp_lib[idx]=g_strdup(uspex_gui._tmp_ai_lib_folder[idx]);
+				g_free(uspex_gui._tmp_ai_lib_folder[idx]);
+				uspex_gui._tmp_ai_lib_folder[idx]=NULL;
+			}else tmp_lib[idx]=NULL;
+			if(uspex_gui._tmp_ai_lib_sel!=NULL){
+				tmp_sel[idx]=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+				g_free(uspex_gui._tmp_ai_lib_sel[idx]);
+				uspex_gui._tmp_ai_lib_sel[idx]=NULL;
+			}else tmp_sel[idx]=NULL;
 		}
 	}
 	g_free(uspex_gui.calc.abinitioCode);uspex_gui.calc.abinitioCode=tmp_i;
@@ -2193,9 +2523,12 @@ void spin_update_num_opt_steps(void){
 	g_free(uspex_gui._tmp_commandExecutable);uspex_gui._tmp_commandExecutable=tmp_c;
 	g_free(uspex_gui._tmp_ai_input);uspex_gui._tmp_ai_input=tmp_inp;/*FIX d09393*/
 	g_free(uspex_gui._tmp_ai_opt);uspex_gui._tmp_ai_opt=tmp_opt;/*FIX 4f5cad*/
+	g_free(uspex_gui._tmp_ai_lib_folder);uspex_gui._tmp_ai_lib_folder=tmp_lib;
+	g_free(uspex_gui._tmp_ai_lib_sel);uspex_gui._tmp_ai_lib_sel=tmp_sel;
 	/*update _num_opt_steps*/
 	uspex_gui.calc._num_opt_steps=i;
 	register_commandExecutable();
+	register_ai_library();
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
 	if(uspex_gui._tmp_curr_step>i) uspex_gui._tmp_curr_step=(gdouble)i;
 	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
@@ -2239,7 +2572,15 @@ void spin_update_curr_step(void){
 	else text=g_strdup(uspex_gui._tmp_ai_opt[i-1]);
 	GUI_ENTRY_TEXT(uspex_gui.ai_opt,text);
 	g_free(text);
-
+	/*uspex_gui._tmp_ai_lib_folder*/
+	if(uspex_gui._tmp_ai_lib_folder[i-1]==NULL) text=g_strdup("N/A");
+	else text=g_strdup(uspex_gui._tmp_ai_lib_folder[i-1]);
+	GUI_ENTRY_TEXT(uspex_gui.ai_lib,text);
+	g_free(text);
+	/*uspex_gui.ai_lib_flavor*/
+	sync_ai_lib_flavor();
+	/*uspex_gui._tmp_ai_lib_sel*/
+	sync_ai_lib_sel();
 }
 /********************/
 /* toggle auto_step */
@@ -2250,17 +2591,11 @@ void toggle_auto_step(void){
 		GUI_LOCK(uspex_gui.ai_input_button);
 		GUI_LOCK(uspex_gui.ai_opt);
 		GUI_LOCK(uspex_gui.ai_opt_button);
-		GUI_LOCK(uspex_gui.ai_spe);
-		GUI_LOCK(uspex_gui.ai_pot);
-		GUI_LOCK(uspex_gui.ai_pot_button);
 	}else{
 		GUI_UNLOCK(uspex_gui.ai_input);
 		GUI_UNLOCK(uspex_gui.ai_input_button);
 		GUI_UNLOCK(uspex_gui.ai_opt);
 		GUI_UNLOCK(uspex_gui.ai_opt_button);
-		GUI_UNLOCK(uspex_gui.ai_spe);
-		GUI_UNLOCK(uspex_gui.ai_pot);
-		GUI_UNLOCK(uspex_gui.ai_pot_button);
 	}
 }
 /********************************/
@@ -2283,7 +2618,6 @@ void uspex_ai_selected(GUI_OBJ *w){
 	}
 	uspex_gui.have_ZT=FALSE;
 	for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.have_ZT|=(uspex_gui.calc.abinitioCode[idx]==14);
-	/*TODO: find the many things restricted to VASP in USPEX*/
 }
 /****************************/
 /* load input for this step */
@@ -2363,11 +2697,158 @@ void load_abinitio_exe_dialog(void){
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
 }
-/**********************************************/
-/* generate input/optional file for this step */
-/**********************************************/
-void generate_step(void){
-	/*THIS IS A TODO*/
+/**********************************************************/
+/* Open a (pseudo-)potential directory for this step/code */
+/**********************************************************/
+void load_ai_lib_dialog(void){
+        GUI_OBJ *file_chooser;
+        gint have_answer;
+        gchar *filename;
+        gchar *text;
+	gint index=(gint)uspex_gui._tmp_curr_step-1;
+	/* open folder */
+        GUI_PREPARE_OPEN_FOLDER(uspex_gui.window,file_chooser,"Select the POTCAR folder");
+        GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
+        if(have_answer){
+                /*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
+                if(filename) {
+                        text=g_strdup_printf("%s",filename);
+                        GUI_ENTRY_TEXT(uspex_gui.ai_lib,text);
+                        g_free(text);
+                        if(uspex_gui._tmp_ai_lib_folder[index]!=NULL) 
+				g_free(uspex_gui._tmp_ai_lib_folder[index]);
+                        uspex_gui._tmp_ai_lib_folder[index]=g_strdup_printf("%s",filename);
+                        g_free (filename);
+                        /*sync library flavor & sel*/
+			sync_ai_lib_flavor();
+			sync_ai_lib_sel();
+                }
+        }     
+        GUI_KILL_OPEN_DIALOG(file_chooser);
+}
+/*************************************/
+/* Apply (register) a library flavor */
+/*************************************/
+void apply_ai_lib_flavor(void){
+	gint step=(gint)uspex_gui._tmp_curr_step-1;
+	gint code,idx;
+	gboolean is_ok;
+	gchar *text;
+	gchar *sel,*tmp,*tmp2;
+	/**/
+	GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_lib_flavor,text);
+	if(text==NULL) return;/*no entry*/
+	code=uspex_gui.calc.abinitioCode[step];
+	if(uspex_gui._tmp_ai_lib_sel[step]==NULL){
+		/*depending on case, prepare a dummy selection of the flavors*/
+		switch(code){
+		case 1://VASP
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+		case 18://Abinit
+			/*prepare a default species string*/
+			sel=g_strdup(elements[uspex_gui.calc.atomType[0]].symbol);
+			for(idx=1;idx<uspex_gui.calc._nspecies;idx++){
+				tmp=g_strdup_printf("%s %s",sel,elements[uspex_gui.calc.atomType[idx]].symbol);
+				g_free(sel);sel=tmp;
+			}
+			uspex_gui._tmp_ai_lib_sel[step]=sel;
+			break;
+		case 3://GULP
+		case 12://Tinker
+		case 7://CP2K
+		case 15://DFTB
+		case 4://LAMMPS
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+		case 17://N/A
+		case 19://CRYSTAL
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+		default:
+			/*all other don't need such preparation*/
+			break;
+		}
+	}
+	/*now update uspex_gui._tmp_ai_lib_sel[step]*/
+	switch(code){
+	case 1://VASP
+	case 2://SIESTA
+	case 8://Q.E.
+	case 10://ATK
+	case 11://CASTEP
+	case 18://Abinit
+		/*change symbol chain with flavor*/
+		sel=uspex_gui._tmp_ai_lib_sel[step];
+		idx=0;
+		is_ok=TRUE;
+		do{
+			while((sel[idx]!=text[0])&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]=='\0'){
+				fprintf(stderr,"USPEX: species flavor not found!\n");
+				return;/*this *is* bad, species was never found!*/
+			}
+			if(sel[idx+1]==text[1]) is_ok=FALSE;
+			else{
+				if((!g_ascii_islower (sel[idx+1]))
+				 &&(!g_ascii_islower (text[1])))
+					is_ok=FALSE;
+				else idx++;
+			}
+		}while(is_ok);
+		/*idx points to the first letter of species match*/
+		if(idx==0){
+			/*species chain is at start*/
+			while((!g_ascii_isspace(sel[idx]))&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]=='\0'){
+				/*only one species?*/
+				g_free(uspex_gui._tmp_ai_lib_sel[step]);
+				uspex_gui._tmp_ai_lib_sel[step]=g_strdup(text);
+			}else{
+				tmp=g_strdup_printf("%s %s",text,&(sel[idx+1]));
+				g_free(uspex_gui._tmp_ai_lib_sel[step]);
+				uspex_gui._tmp_ai_lib_sel[step]=tmp;
+			}
+		}else{
+			/*species chain in the middle (or end)*/
+			tmp=g_strndup(sel,idx-1);
+			tmp2=g_strdup_printf("%s %s",tmp,text);
+			g_free(tmp);tmp=tmp2;
+			while((!g_ascii_isspace(sel[idx]))&&(sel[idx]!='\0')) idx++;
+			if(sel[idx]!='\0'){
+				/*add the remaining chain*/
+				tmp2=g_strdup_printf("%s %s",tmp,&(sel[idx+1]));
+				g_free(tmp);tmp=tmp2;
+			}
+			g_free(uspex_gui._tmp_ai_lib_sel[step]);
+			uspex_gui._tmp_ai_lib_sel[step]=tmp;
+		}
+		break;
+	case 3://GULP
+	case 12://Tinker
+	case 7://CP2K
+	case 15://DFTB
+	case 4://LAMMPS
+	case 13://MOPAC
+	case 14://BoltzTraP
+	case 16://Gaussian
+	case 17://N/A
+	case 19://CRYSTAL
+	case 5://ORCA
+	case 6://DMACRYS
+	case 9://FHI-aims
+	default:
+		/*something was selected, so put it here*/
+		g_free(uspex_gui._tmp_ai_lib_sel[step]);
+		uspex_gui._tmp_ai_lib_sel[step]=g_strdup(text);
+		break;
+	}
+	g_free(text);
+	sync_ai_lib_sel();
 }
 /**************************/
 /* Apply step information */
@@ -2381,145 +2862,8 @@ void apply_step(void){
 	GUI_REG_VAL(uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[i-1],"%lf");
 	GUI_ENTRY_GET_TEXT(uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[i-1]);
 	register_commandExecutable();/*REG command*/
-}
-/***************************************************************/
-/* populate the species array for (pseudo-)potential definition */
-/***************************************************************/
-void populate_spe(void){
-	gint idx;
-	gchar *line;
-	/*this only contain atom information*/
-	GUI_COMBOBOX_WIPE(uspex_gui.ai_spe);
-	for(idx=0;idx<uspex_gui.calc._nspecies;idx++){
-		if(uspex_gui.calc.atomType!=NULL) line=g_strdup_printf("%s",elements[uspex_gui.calc.atomType[idx]].symbol);
-		else line=g_strdup_printf("XX");
-		GUI_COMBOBOX_ADD(uspex_gui.ai_spe,line);
-		g_free(line);
-	}
-}
-/************************************************************/
-/* Selection of a species for (pseudo-)potential definition */
-/************************************************************/
-void ai_spe_selected(GUI_OBJ *w){
-	gchar *text;
-	gint index;
-	GUI_COMBOBOX_GET(w,index);
-	if(index<0) return;/*can happen when re-populating*/
-	/**/
-	if(uspex_gui._tmp_ai_spe!=NULL) g_free(uspex_gui._tmp_ai_spe);
-	GUI_COMBOBOX_GET_TEXT(uspex_gui.ai_spe,uspex_gui._tmp_ai_spe);
-	/*show corresponding information*/
-	if(uspex_gui._potentials[index]!=NULL){
-		text=g_strdup_printf("%s",uspex_gui._potentials[index]);
-		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-		g_free(text);
-	}else{/*print nothing*/
-		text=g_strdup("N/A");
-		GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-		g_free(text);
-	}
-}
-/*********************************/
-/* change the potential manually */
-/*********************************/
-void change_ai_pot(void){
-	gchar *text;
-	gint index;
-	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
-	if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
-	GUI_ENTRY_GET_TEXT(uspex_gui.ai_pot,text);
-	uspex_gui._potentials[index]=g_strdup(text);
-	g_free(text);
-}
-/*************************************************/
-/* load (pseudo-)potential file for this species */
-/*************************************************/
-void load_ai_pot_dialog(){
-        GUI_OBJ *file_chooser;
-        gint have_answer;
-        gchar *filename;
-        gchar *text;
-	gchar *type;
-	gchar *filter;
-	gint index;
-	gint i=(gint)uspex_gui._tmp_curr_step;
-        /**/
-	GUI_COMBOBOX_GET(uspex_gui.ai_spe,index);
-	if(index<0) index=0;
-	switch (uspex_gui.calc.abinitioCode[i-1]){
-	case 2:/*SIESTA*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.psf",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.psf");
-		filter=g_strdup("*.psf");
-		break;
-	case 3:/*GULP*/
-		/*no specific format*/
-	case 4:/*LAMMPS*/
-		/*many formats*/
-	case 5:/*ORCA*/
-		/*no specific format*/
-	case 6:/*DMACRYS <- should require a user-made Specific folder!*/
-		/*no specific format*/
-	case 7:/*CP2K*/
-		/*no specific format*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 8:/*Q.E.*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.UPF",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.UPF");
-		filter=g_strdup("*.UPF");
-		break;
-	case 9:/*FHI-aims*/
-		/*no idea*/
-	case 10:/*ATK*/
-		/*many formats (vps, pao)*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 11:/*CASTEP*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s.usp",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X.usp");
-		filter=g_strdup("*.usp");
-		break;
-	case 12:/*Tinker*/
-		/*no specific format*/
-	case 13:/*MOPAC*/
-		/*no specific format*/
-	case 14:/*BoltzTraP*/
-		/*no specific format*/
-	case 15:/*DFTB*/
-		/*no idea*/
-	case 16:/*Gaussian*/
-		/*no specific format*/
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("%s potential",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("X potential");
-		filter=g_strdup("*");
-		break;
-	case 1:/*VASP*/
-		/* fall through */
-	default:
-		if(uspex_gui._tmp_ai_spe!=NULL) type=g_strdup_printf("POTCAR_%s",uspex_gui._tmp_ai_spe);
-		else type=g_strdup("POTCAR_X");
-		filter=g_strdup("POTCAR*");
-	}
-	GUI_PREPARE_OPEN_DIALOG(uspex_gui.window,file_chooser,"Select potential information",filter,type);
-	GUI_OPEN_DIALOG_RUN(file_chooser,have_answer,filename);
-	if(have_answer){
-		/*there should be no case where have_answer==TRUE AND filename==NULL, but just in case.*/
-		if(filename) {
-			text=g_strdup_printf("%s",filename);
-			GUI_ENTRY_TEXT(uspex_gui.ai_pot,text);
-			if(uspex_gui._potentials[index]!=NULL) g_free(uspex_gui._potentials[index]);
-			uspex_gui._potentials[index]=g_strdup(text);
-			g_free(text);
-			g_free (filename);
-		}
-	}
-	GUI_KILL_OPEN_DIALOG(file_chooser);
-	g_free(type);g_free(filter);
+	apply_ai_lib_flavor();
+	register_ai_library();
 }
 /******************************************************************/
 /* sets a remote folder (in case it can be set by a local folder) */
@@ -2543,6 +2887,30 @@ void load_remote_folder(void){
 		}
 	}
 	GUI_KILL_OPEN_DIALOG(file_chooser);
+}
+/************************/
+/* toggle USPEX v. 10.3 */
+/************************/
+void toggle_v1030(void){
+	if(uspex_gui.have_v1030) {
+		GUI_LOCK(uspex_gui.sel_octave);
+		GUI_TOGGLE_ON(uspex_gui.sel_v1030_1);
+		GUI_TOGGLE_ON(uspex_gui.sel_v1030_3);
+		uspex_gui.have_new_optType=TRUE;
+		/*old opt style is lost anyway*/
+		GUI_TOGGLE_ON(uspex_gui.sel_new_opt);
+		GUI_LOCK(uspex_gui.sel_new_opt);
+	}else {
+		GUI_UNLOCK(uspex_gui.sel_octave);
+		GUI_TOGGLE_OFF(uspex_gui.sel_v1030_1);
+		GUI_TOGGLE_OFF(uspex_gui.sel_v1030_3);
+		uspex_gui.have_new_optType=FALSE;
+		/*some previous version can have both*/
+		GUI_UNLOCK(uspex_gui.sel_new_opt);
+		/*this is the default anyway*/
+		GUI_TOGGLE_OFF(uspex_gui.sel_new_opt);
+	}
+	opt_toggle();
 }
 /**************************/
 /* select dynamicalBestHM */
@@ -3285,6 +3653,9 @@ void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 		}else{
 			GUI_TOGGLE_OFF(uspex_gui._calctype_mag);
 		}
+		auto_bond_toggle();
+		toggle_auto_C_lat();
+		toggle_auto_C_ion();
 	} else if(page_num==USPEX_PAGE_STRUCTURES){
 		/*sync uspex_gui._calctype_mag_2*/
 		if(uspex_gui.calc._calctype_mag) {
@@ -3294,7 +3665,8 @@ void uspex_gui_page_switch(GUI_NOTE *notebook,GUI_OBJ *page,guint page_num){
 		}
 	} else if (page_num==USPEX_PAGE_CALCULATION){
 		/**/
-		populate_spe();
+		toggle_auto_step();
+		toggle_v1030();
 	} else if (page_num==USPEX_PAGE_ADVANCED){
 		/**/
 	} else if (page_num==USPEX_PAGE_SPECIFIC){
@@ -3328,7 +3700,8 @@ void uspex_gui_sync(){
 	//_calctype_var is already sync
 	//_calctype_mag is already sync
 	//optType is already sync
-	if(uspex_gui.have_new_opt) USPEX_REG_TEXT(new_optType);
+	//have_new_optType is already sync
+	if(uspex_gui.have_new_optType) USPEX_REG_TEXT(new_optType);
 	//anti_opt is already sync
 	//n_species is already sync
 	//atomType is already sync
@@ -3544,7 +3917,23 @@ if(uspex_gui.auto_C_lat){
 	//KresolStart is already sync
 	//vacuumSize is already sync
 	//_isfixed is already sync
-	USPEX_REG_VAL(numProcessors,"%i");
+        GUI_ENTRY_GET_TEXT(uspex_gui.numProcessors,text);
+        ptr=text;
+        while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+        if(uspex_gui.calc.numProcessors!=NULL) g_free(uspex_gui.calc.numProcessors);
+        uspex_gui.calc.numProcessors=NULL;
+        if(*ptr!='\0') {
+                /*There is _num_opt_steps numProcessors*/
+                uspex_gui.calc.numProcessors=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gint));
+                for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc.numProcessors[idx]=0;
+                idx=0;
+                while((idx<uspex_gui.calc._num_opt_steps)&&(*ptr!='\0')){
+                        uspex_gui.calc.numProcessors[idx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+                        ptr=ptr2+1;
+                        while((*ptr!='\0')&&(!g_ascii_isgraph(*ptr))) ptr++;
+                        idx++;
+                }
+        }
 	USPEX_REG_VAL(numParallelCalcs,"%i");
 	register_commandExecutable();
 	USPEX_REG_VAL(whichCluster,"%i");
@@ -3553,6 +3942,7 @@ if(uspex_gui.auto_C_lat){
 	USPEX_REG_VAL(RmaxFing,"%lf");
 	USPEX_REG_VAL(deltaFing,"%lf");
 	USPEX_REG_VAL(sigmaFing,"%lf");
+	USPEX_REG_VAL(toleranceFing,"%lf");
 	USPEX_REG_VAL(antiSeedsActivation,"%i");
 	USPEX_REG_VAL(antiSeedsMax,"%lf");
 	USPEX_REG_VAL(antiSeedsSigma,"%lf");
@@ -3618,6 +4008,9 @@ if(uspex_gui.auto_C_lat){
 			idx++;
 		}
 	}
+	USPEX_REG_VAL(E_AB,"%lf");
+	USPEX_REG_VAL(Mu_A,"%lf");
+	USPEX_REG_VAL(Mu_B,"%lf");
 	USPEX_REG_VAL(firstGeneMax,"%i");
 	USPEX_REG_VAL(minAt,"%i");
 	USPEX_REG_VAL(maxAt,"%i");
@@ -3780,12 +4173,12 @@ if(uspex_gui.calc.path==NULL) return;
 source=g_build_filename(uspex_gui.calc.path,"../Specific/", NULL);
 src=g_dir_open(source,0,NULL);
 if(src==NULL) {
-	fprintf(stdout,"Can't open Specific directory.\n");
+	fprintf(stderr,"Can't open Specific directory.\n");
 	return;
 }
 target = g_build_filename((*uspex_exec).job_path,"Specific", NULL);
 if(g_mkdir(target,0775)){
-	fprintf(stdout,"Can't create %s directory.\n",target);
+	fprintf(stderr,"Can't create %s directory.\n",target);
 	g_dir_close(src);
 	return;
 }
@@ -3793,6 +4186,720 @@ g_dir_close(src);
 dumb_dir_copy(source,target);
 g_free(source);
 g_free(target);
+}
+/******************************************/
+/* Specific auto-settings for VASP: INCAR */
+/******************************************/
+void vasp_specific_step_incar(FILE *there,gint step_n){
+/*PSO and USPEX method are supposed to take identical steps, COPEX method is undefined*/
+gint tot=uspex_gui.calc._num_opt_steps;
+gdouble sigma;
+gboolean is_meta;
+gchar *title;
+is_meta=((uspex_gui.calc.calculationMethod==US_CM_META)||(uspex_gui.calc.calculationMethod==US_CM_MINHOP));
+if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)||(uspex_gui.calc.calculationMethod == US_CM_TPS)){
+/*in that case, there should be only one step*/
+	if(step_n!=1) {
+		title = g_strdup_printf("USPEX: VC-NEB & TPS calculation only require 1 calculation step!\nUSPEX: STEP %i IGNORED!\n",step_n);
+		gui_text_show(ERROR,title);
+		g_free(title);
+		return;
+	}
+	fprintf(there,"SYSTEM = GDIS_GEN_%i\n",step_n);
+	fprintf(there,"! USPEX: VC-NEB / TPS STEP, AUTO-GENERATED!\n");
+	fprintf(there,"ISTART = 0\n");
+	fprintf(there,"ISMEAR = 1\n");
+	fprintf(there,"SIGMA = 0.05\n");
+	fprintf(there,"PREC = HIGH\n");/*see note [0]*/
+	fprintf(there,"EDIFF = 1E-5\n");
+	fprintf(there,"EDIFFG = 1E-4\n");/*useless*/
+	fprintf(there,"NSW = 0\n");
+	/*to get forces details*/
+	fprintf(there,"ISIF = 2\n");
+	fprintf(there,"IBRION = 2\n");
+	fprintf(there,"POTIM = 0.02\n");
+	return;
+}
+if(tot>3){
+	/*always*/
+	fprintf(there,"SYSTEM = GDIS_GEN_%i\n",step_n);
+	if(is_meta) fprintf(there,"! USPEX: META / MINHOP STEP, AUTO-GENERATED!\n");
+	else fprintf(there,"! USPEX: USPEX / PSO STEP, AUTO-GENERATED!\n");
+	fprintf(there,"ISTART = 0\n");
+	/*This is the 'recommended' smearing by USPEX for an insulator*/
+	/*however, it should perform as well (maybe better) for metals*/
+	/*(Maybe a gaussian smearing should be more universal) --OVHPA*/
+	fprintf(there,"ISMEAR = 1\n");
+	sigma = 0.1 - ((double) step_n - 1.0) * 0.05 / ((double) tot - 2.0);
+	if(step_n==1){
+		fprintf(there,"SIGMA = 0.1\n");
+		fprintf(there,"PREC = LOW\n");
+		fprintf(there,"EDIFF = 1E-2\n");
+		fprintf(there,"EDIFFG = 1E-2\n");
+		fprintf(there,"NSW = 40\n");/*see note [1]*/
+		if(is_meta) {
+			if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+			else fprintf(there,"ISIF = 4\n");/*cell shape only*/
+		}else fprintf(there,"ISIF = 4\n");/*cell shape only*/
+		fprintf(there,"IBRION = 2\n");
+		fprintf(there,"POTIM = 0.02\n");
+		return;
+	}
+	if(step_n==tot){
+		fprintf(there,"SIGMA = 0.05\n");
+		fprintf(there,"PREC = HIGH\n");
+		fprintf(there,"EDIFF = 1E-5\n");
+		fprintf(there,"NSW = 0\n");
+		return;
+	}
+	fprintf(there,"SIGMA = %f\n",sigma);
+	switch(tot){
+	case 6:/*6 steps calculation*/
+		switch (step_n){
+		case 2:
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"EDIFF = 1E-3\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 80\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 4\n");/*second cell shape only*/
+			} else fprintf(there,"ISIF = 4\n");/*second cell shape only*/
+			fprintf(there,"IBRION = 1\n");
+			fprintf(there,"POTIM = 0.3\n");
+			return;
+		case 3:
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"EDIFF = 1E-3\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 50\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 4:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-4\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 40\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 5:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-5\n");
+			fprintf(there,"EDIFFG = 1E-3\n");
+			fprintf(there,"NSW = 120\n");/*see note [1]*/
+			if(is_meta){
+				/*metadynamics is slightly different here*/
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 2\n");/*optimize ion position*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 1:/*already dealt with*/
+		case 6:/*idem*/
+		default:
+			/*nope*/
+			return;
+		}
+		break;
+	case 5:/*5 steps calculation*/
+		switch (step_n){
+		case 2:
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"EDIFF = 1E-3\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 85\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 3:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-4\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 55\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 4:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-5\n");
+			fprintf(there,"EDIFFG = 1E-3\n");
+			fprintf(there,"NSW = 120\n");/*see note [1]*/
+			if(is_meta){
+				/*metadynamics is slightly different here*/
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 2\n");/*optimize ion position*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 1:/*already dealt with*/
+		case 5:/*idem*/
+		default:
+			/*nope*/
+			return;
+		}
+		break;
+	case 4:
+		switch (step_n){
+		case 2:
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"EDIFF = 1E-3\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 90\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 3:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-4\n");
+			fprintf(there,"EDIFFG = 1E-3\n");
+			fprintf(there,"NSW = 140\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 1:/*already dealt with*/
+		case 4:/*idem*/
+		default:
+			/*nope*/
+			return;
+		}
+		break;
+	default:
+		/*in case tot > 6*/
+		title=g_strdup_printf("USPEX: Recommended number of steps for a USPEX JOB is 4~6\n");
+		gui_text_show(ERROR,title);
+		g_free(title);		
+		switch (step_n){
+		case 2:
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"EDIFF = 1E-3\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 85\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 3:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-4\n");
+			fprintf(there,"EDIFFG = 1E-2\n");
+			fprintf(there,"NSW = 55\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 4:
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-5\n");
+			fprintf(there,"EDIFFG = 1E-3\n");
+			fprintf(there,"NSW = 120\n");/*see note [1]*/
+			if(is_meta){
+				/*metadynamics is slightly different here*/
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 2\n");/*optimize ion position*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		case 1:/*already dealt with*/
+		default:
+			/*nope*/
+			break;
+		}
+		if(step_n<tot){
+			/*deal with the extra steps*/
+			fprintf(there,"! USPEX: EXTRA STEPS MIGHT NOT BE USEFUL!!\n");
+			fprintf(there,"! USPEX: 4~6 VASP STEPS ARE RECOMMENDED...\n");
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-5\n");
+			if(step_n>6) fprintf(there,"EDIFFG = 1E-3\n");
+			else fprintf(there,"EDIFFG = 1E-4\n");
+			fprintf(there,"NSW = 50\n");/*JUST CYCLE 50 steps cycles of ISIF 2/3*/
+			if(is_meta){
+				/*metadynamics is slightly different here*/
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else {
+				if(step_n%2) fprintf(there,"ISIF = 2\n");
+				else fprintf(there,"ISIF = 3\n");
+			}
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");
+			return;
+		}
+		break;
+	}
+}else{
+	title=g_strdup_printf("USPEX: Recommended number of steps for a USPEX JOB is 4~6\n");
+	gui_text_show(ERROR,title);
+	g_free(title);
+	switch (tot){
+	case 3:
+		fprintf(there,"SYSTEM = GDIS_GEN_%i\n",step_n);
+		if(is_meta) fprintf(there,"! USPEX: META / MINHOP STEP, AUTO-GENERATED!\n");
+		else fprintf(there,"! USPEX: USPEX / PSO STEP, AUTO-GENERATED!\n");
+		/*This is an unsafe setting, make it clear*/
+		fprintf(there,"! UNSAFE SETTING! PLEASE USE AT LEAST 4~6 VASP STEPS!\n");
+		fprintf(there,"ISTART = 0\n");
+		fprintf(there,"ISMEAR = 1\n");
+		switch (step_n){
+		case 1:
+			/*see note [3]*/
+			fprintf(there,"SIGMA = 0.1\n");
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"NELMIN = 5\n");
+			fprintf(there,"EDIFF = 1E-2\n");
+			fprintf(there,"EDIFFG = -0.01\n");
+			fprintf(there,"NSW = 40\n");
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");
+			fprintf(there,"IBRION = 3\n");
+			fprintf(there,"SMASS = 0.3\n");
+			fprintf(there,"POTIM = 0.03\n");
+			return;
+		case 2:
+			fprintf(there,"SIGMA = 0.075\n");
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-4\n");
+			fprintf(there,"EDIFFG = 1E-3\n");
+			fprintf(there,"NSW = 160\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");			
+			return;
+		case 3:
+		default:
+			fprintf(there,"SIGMA = 0.05\n");
+			fprintf(there,"PREC = HIGH\n");
+			fprintf(there,"EDIFF = 1E-5\n");
+			fprintf(there,"NSW = 0\n");
+			return;
+		}
+	case 2:/*2 steps should be for test/benchmark only*/
+		fprintf(there,"SYSTEM = GDIS_GEN_%i\n",step_n);
+		if(is_meta) fprintf(there,"! USPEX: META / MINHOP STEP, AUTO-GENERATED!\n");
+		else fprintf(there,"! USPEX: USPEX / PSO STEP, AUTO-GENERATED!\n");
+		/*This is an unsafe setting, make it clear*/
+		fprintf(there,"! UNSAFE SETTING! PLEASE USE AT LEAST 4~6 VASP STEPS!\n");
+		fprintf(there,"ISTART = 0\n");
+		fprintf(there,"ISMEAR = 1\n");
+		switch (step_n){
+		case 1:
+			/*see note [3]*/
+			fprintf(there,"SIGMA = 0.1\n");
+			fprintf(there,"PREC = NORMAL\n");
+			fprintf(there,"NELMIN = 5\n");
+			fprintf(there,"EDIFF = 1E-2\n");
+			fprintf(there,"EDIFFG = -0.01\n");/*should almost never be reached in 40 steps*/
+			fprintf(there,"NSW = 40\n");
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");
+			fprintf(there,"IBRION = 3\n");
+			fprintf(there,"SMASS = 0.3\n");
+			fprintf(there,"POTIM = 0.03\n");
+			return;
+		case 2:
+		default:
+			fprintf(there,"SIGMA = 0.05\n");
+			fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+			fprintf(there,"EDIFF = 1E-5\n");
+			fprintf(there,"EDIFFG = -0.01\n");
+			fprintf(there,"NSW = 260\n");/*see note [1]*/
+			if(is_meta){
+				if(uspex_gui.calc._isfixed[step_n-1]) fprintf(there,"ISIF = 2\n");/*FIXED CELL*/
+				else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			}else fprintf(there,"ISIF = 3\n");/*optimize everything*/
+			fprintf(there,"IBRION = 2\n");
+			fprintf(there,"POTIM = 0.02\n");			
+			return;
+		}
+	case 1:
+	default:
+		/*only one VASP step makes no sense!*/
+		fprintf(there,"! USPEX: ONE VASP STEP MAKES NO SENSE!!!!\n");
+		fprintf(there,"! USPEX: the possibility is left for both\n");
+		fprintf(there,"! USPEX: TESTING and BENCHMARK, all other\n");
+		fprintf(there,"! USPEX: cases should be considered WRONG\n");
+		fprintf(there,"! USPEX: and with NO significance.--OVHPA\n");
+		fprintf(there,"SIGMA = 0.75\n");
+		fprintf(there,"PREC = HIGH\n");/*see note [2]*/
+		fprintf(there,"NELMIN = 6\n");
+		fprintf(there,"EDIFF = 1E-05\n");
+		fprintf(there,"EDIFFG = 1E-05\n");
+		fprintf(there,"NSW = 200\n");
+		fprintf(there,"ISIF = 2\n");
+		fprintf(there,"IBRION = 2\n");/*we do not relax cell/cell shape!*/
+		fprintf(there,"POTIM = 0.15\n");
+		/*we need an extra warning*/
+		title=g_strdup_printf("USPEX: DOING a ONE-VASP-STEP USPEX JOB IS A TERRIBLE IDEA!\nUSPEX: results will be inconsistent and with NO significance!\n");
+		gui_text_show(ERROR,title);
+		g_free(title);
+		return;
+	}
+}
+/* NOTES:
+[0] PREC = ACCURATE  is necessary to obtain a good estimate of the forces
+and stress, however PREC = HIGH is a setting that will increase the ENCUT
+by 30% (25% ENMAX) and that prove to be a better choice for systems under
+a non-negligible external pressure.
+[1] The number of necessary ionic steps have been determined by extensive
+testing on _simple_ cases. They should provide a "good-enough" quality vs
+speed convergence. However, it doesn't mean that they will be good enough
+for all systems and setting: one need to check that, for most steps, good
+convergence is achieved before maximum steps is reached.
+  This is especially necessary for the penultimate step!
+[2] The switch to HIGH precisions grant a 25% (30% in VASP documentation)
+increase of ENMAX (ENCUT), amoung other acurqacy optimizations. While the
+official documentation recommend to set ENCUT manually at all time, using
+PREC=HIGH allow accurate forces description for all cases, including ones
+under external pressure. The last step with PREC=Accurate ensure that the
+energy is calculated properly. It can be replace with PREC=HIGH for cases
+where forces are also required.
+[3] When there is obviously not enough optimization steps (recommended is
+4~6 steps), we use a damped algorithm with a damping factor, SMASS, and a
+time step, POTIM, of 0.3 and 0.03, respectively. Both are chosen so small
+that it should allow the geometry to be good enough for the real geometry
+optimization, in the next step. However, these parameters are *not* given
+as a recommendation and should never be used in any serious work.
+  PLEASE USE AT LEAST 4~6 VASP STEPS!
+                                                                 -- OVHPA
+*/
+}
+/*******************************************/
+/* Specific auto-settings for GULP: ginput */
+/*******************************************/
+void gulp_specific_step_ginput(FILE *there,gint step_n){
+gint max_cyc, idx;
+gchar *library=NULL;
+if(step_n<1) return;
+if(step_n>6) max_cyc=500;
+else max_cyc=1000-100*step_n;
+fprintf(there,"space\n");
+fprintf(there,"1\n");
+fprintf(there,"maxcyc %i\n",max_cyc);
+/*we either take a library if one was defined or set default reaxff.lib*/
+if(uspex_gui._tmp_ai_lib_sel[step_n-1]!=NULL){
+	/*take the selected or defined library*/
+	if(uspex_gui._tmp_ai_lib_folder[step_n-1]!=NULL)
+		library=g_build_filename(uspex_gui._tmp_ai_lib_folder[step_n-1],uspex_gui._tmp_ai_lib_sel[step_n-1], NULL);
+	else
+		library=g_strdup(uspex_gui._tmp_ai_lib_sel[step_n-1]);
+}else{
+	/*see in other steps if a library was defined (take the last defined one)*/
+	for(idx=uspex_gui.calc._num_opt_steps-1;(idx>=0)&&(library==NULL);idx--){
+		if(uspex_gui.calc.abinitioCode[idx]!=3) continue;/*not GULP*/
+		if(uspex_gui._tmp_ai_lib_folder[idx]==NULL) continue;
+		else {
+			/*we found the match*/
+			if(uspex_gui._tmp_ai_lib_folder[idx]!=NULL)
+				library=g_build_filename(uspex_gui._tmp_ai_lib_folder[idx],uspex_gui._tmp_ai_lib_sel[idx], NULL);
+			else
+				library=g_strdup(uspex_gui._tmp_ai_lib_sel[idx]);
+			continue;/*will exit for*/
+		}
+	}
+}
+if(library!=NULL){
+	fprintf(there,"library %s\n",library);
+	g_free(library);
+} else fprintf(there,"library reaxff.lib\n");/*the default choice*/
+fprintf(there,"switch rfo 0.010\n");
+}
+/*********************************************/
+/* Specific auto-settings for GULP: goptions */
+/*********************************************/
+void gulp_specific_step_goptions(FILE *there,gint step_n){
+/*PSO and USPEX method are supposed to take identical steps, COPEX method is unknowned*/
+if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)||(uspex_gui.calc.calculationMethod == US_CM_TPS)){
+/*VC-NEB & TPS*/
+	if(step_n!=1) {
+		gchar *title;
+		title=g_strdup_printf("USPEX: VC-NEB & TPS calculation only require 1 calculation step!\nUSPEX: STEP %i IGNORED!\n",step_n);
+		gui_text_show(ERROR,title);
+		g_free(title);
+		return;
+	}
+	fprintf(there,"opti prop conp stress\n");
+	return;
+}
+if((uspex_gui.calc.calculationMethod==US_CM_META)||(uspex_gui.calc.calculationMethod==US_CM_MINHOP)){
+/*META & MINHOP*/
+	if(uspex_gui.calc._isfixed[step_n-1]){
+		fprintf(there,"opti conj nosymmetry conv\n");
+	}else{
+		fprintf(there,"opti conj nosymmetry conp\n");
+	}
+	return;
+}
+
+
+if(step_n<1) return;
+if(step_n==1) fprintf(there,"opti conj nosymmetry conv\n");
+else fprintf(there,"opti conj nosymmetry conp\n");
+}
+/***************************************************/
+/* create Specific directory or copy files into it */
+/***************************************************/
+void uspex_create_specific(uspex_exec_struct *uspex_exec){
+GDir *src;
+gchar *source;
+gchar *target;
+gchar *tmp;
+gboolean hasend;
+gchar *ptr,*sel;
+gchar *filename;
+FILE *tg;
+gint step;
+gint idx;
+/* check if Specific directory exists*/
+if(uspex_gui.calc.job_path==NULL) return;
+source=g_build_filename(uspex_gui.calc.job_path,"/Specific/", NULL);
+src=g_dir_open(source,0,NULL);
+if(src==NULL) {
+	/*if doesn't exists, create it*/
+	if(g_mkdir(source,0775)){
+		fprintf(stdout,"Can't create %s directory.\n",source);
+		return;
+	}
+	src=g_dir_open(source,0,NULL);
+	if(src==NULL) {
+		fprintf(stdout,"Can't open newly created %s directory.\n",source);
+		return;
+	}
+}
+g_dir_close(src);
+/*Specific is open, check what needs to be done*/
+for(step=0;step<uspex_gui.calc._num_opt_steps;step++){
+	if(uspex_gui.auto_step){
+		/*use auto-generation (work in progress)*/
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1:/*VASP*/
+			/*1- create {Specific}/INCAR_X */
+			tmp=g_strdup_printf("INCAR_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			vasp_specific_step_incar(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			/*no option for VASP*/
+			break;
+		case 3:/*GULP*/
+			/*1- create {Specific}/ginput_X */
+			tmp=g_strdup_printf("ginput_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			gulp_specific_step_ginput(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			/*2- create {Specific}/goptions_X */
+			tmp=g_strdup_printf("goptions_%i",step+1);
+			target=g_build_filename(source,tmp,NULL);
+			tg=fopen(target,"wt");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			gulp_specific_step_goptions(tg,step+1);
+			fclose(tg);g_free(target);g_free(tmp);
+			break;
+		case 2://SIESTA
+		case 4://LAMMPS
+		case 5://ORCA
+		case 6://DMACRYS
+		case 7://CP2K
+		case 8://Q.E.
+		case 9://FHI-aims
+		case 10://ATK
+		case 11://CASTEP
+		case 12://Tinker
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 15://DFTB
+		case 16://Gaussian
+		case 17://N/A
+		case 18://Abinit
+		case 19://CRYSTAL
+		default:
+			/*all of above are not ready (yet)*/
+			break;
+		}
+	}else{
+		/*we assume that everything has already been set by user*/
+		/*1- copy input (if any)*/
+		if(uspex_gui._tmp_ai_input[step]!=NULL){
+			tg=fopen(uspex_gui._tmp_ai_input[step],"r");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",uspex_gui._tmp_ai_input[step]);
+				continue;/*and hope for the best*/
+			}
+			fclose(tg);
+			tmp=g_path_get_basename(uspex_gui._tmp_ai_input[step]);
+			target=g_build_filename(source,tmp,NULL);
+			if(!dumb_file_copy(uspex_gui._tmp_ai_input[step],target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",uspex_gui._tmp_ai_input[step],target);
+				g_free(tmp);g_free(target);
+				continue;/*and hope for the best*/
+			}
+			g_free(tmp);g_free(target);
+		}
+		/*2- copy option (is any)*/
+		if(uspex_gui._tmp_ai_opt[step]!=NULL){
+			tg=fopen(uspex_gui._tmp_ai_opt[step],"r");
+			if(tg==NULL){
+				fprintf(stderr,"USPEX: I/O error, can't create file %s\n",uspex_gui._tmp_ai_opt[step]);
+				continue;/*and hope for the best*/
+			}
+			fclose(tg);
+			tmp=g_path_get_basename(uspex_gui._tmp_ai_opt[step]);
+			target=g_build_filename(source,tmp,NULL);
+			if(!dumb_file_copy(uspex_gui._tmp_ai_opt[step],target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",uspex_gui._tmp_ai_opt[step],target);
+				g_free(tmp);g_free(target);
+				continue;/*and hope for the best*/
+			}
+			g_free(tmp);g_free(target);
+		}
+	}
+	/*regardless of auto-generation setting, copy the libraries (when needed)*/
+	if(uspex_gui._tmp_ai_lib_sel[step]!=NULL){
+		switch (uspex_gui.calc.abinitioCode[step]){
+		case 1:/*VASP*/
+			/*special per-species*/
+			if(uspex_gui._tmp_ai_lib_folder==NULL) continue;/*required*/
+			sel=g_strdup(uspex_gui._tmp_ai_lib_sel[step]);
+			hasend=FALSE;
+			idx=0;
+			while((sel[idx]==' ')||(sel[idx]=='\t')) {/*skip trailing space*/
+				if(sel[idx]=='\0') {
+					fprintf(stderr,"USPEX: ERROR while reading POTCAR flavors!\n");
+					g_free(sel);
+					sel=NULL;
+					break;
+				}
+				idx++;
+			}
+			if(sel==NULL) continue;/*and hope for the best*/
+			ptr=&(sel[idx]);
+			while(!hasend){
+				while((sel[idx]!=' ')){
+					if(sel[idx]=='\0') {
+						hasend=TRUE;
+						break;  
+					}
+					idx++;
+				}
+				sel[idx]='\0';
+				idx++;
+				filename=g_strdup_printf("%s/%s/POTCAR",uspex_gui._tmp_ai_lib_folder[step],ptr);
+				if(g_ascii_islower(ptr[1])) tmp=g_strdup_printf("POTCAR_%c%c",ptr[0],ptr[1]);
+				else tmp=g_strdup_printf("POTCAR_%c",ptr[0]);
+				target=g_build_filename(source,tmp,NULL);
+				if(!dumb_file_copy(filename,target)){
+					fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",filename,target);
+					g_free(target);g_free(tmp);g_free(filename);
+					continue;/*and hope for the best*/
+				}
+				g_free(target);g_free(tmp);g_free(filename);
+				ptr=&(sel[idx]);
+			}
+			g_free(sel);
+			break;
+		case 3:/*GULP*/
+			/*Since gulp can use the absolute path,*/
+			/*there is no need to copy the library.*/
+			break;
+		case 7://CP2K
+		case 12://Tinker
+			//copy one library
+		case 4://LAMMPS
+		case 5://ORCA
+		case 6://DMACRYS
+		case 9://FHI-aims
+		case 13://MOPAC
+		case 14://BoltzTraP
+		case 16://Gaussian
+		case 17://N/A
+		case 19://CRYSTAL
+			//above LAMMPS~Gaussian either don't need
+			//any library or use is unknown...
+			target=g_build_filename(source,uspex_gui._tmp_ai_lib_sel[step],NULL);
+			if(uspex_gui._tmp_ai_lib_folder[step]!=NULL)
+				tmp=g_build_filename(uspex_gui._tmp_ai_lib_folder[step],uspex_gui._tmp_ai_lib_sel[step],NULL);
+			else
+				tmp=g_strdup(uspex_gui._tmp_ai_lib_sel[step]);
+			if(!dumb_file_copy(tmp,target)){
+				fprintf(stderr,"USPEX: I/O error, can't copy file %s to %s\n",tmp,target);
+				g_free(target);g_free(tmp);
+				continue;/*and hope for the best*/
+			}
+			g_free(target);g_free(tmp);
+			break;
+		case 2://SIESTA
+		case 8://Q.E.
+		case 10://ATK
+		case 11://CASTEP
+		case 18://Abinit
+			//per-species potential
+			break;
+		case 15://DFTB
+			//another special per-species
+			break;
+		default:
+			//do nothing
+			break;
+		}
+	}
+}
+g_free(source);
 }
 /*****************************************/
 /* Execute or enqueue a uspex calculation */
@@ -3847,8 +4954,9 @@ void uspex_exec_calc(){
 	uspex_exec=g_malloc(sizeof(uspex_exec_struct));
 	uspex_exec->job_uspex_exe=g_strdup_printf("%s",uspex_gui.calc.job_uspex_exe);
 	uspex_exec->job_path=g_strdup_printf("%s",uspex_gui.calc.job_path);
-/*NEW: copy the Specific directory (if needed)*/
-if(uspex_gui.copySpecific) uspex_copy_specific(uspex_exec);
+/*NEW: copy the Specific directory or create it*/
+	if(uspex_gui.have_specific) uspex_copy_specific(uspex_exec);
+	else uspex_create_specific(uspex_exec);
 /*Get the future valid index*/
 	idx=1;
 	do{
@@ -3977,6 +5085,12 @@ void uspex_gui_refresh(){
 		case US_CT_sm200:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,15);
 		break;
+		case US_CT_m201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,16);
+		break;
+		case US_CT_sm201:
+		GUI_COMBOBOX_SET(uspex_gui.calculationType,17);
+		break;
 		default:
 		GUI_COMBOBOX_SET(uspex_gui.calculationType,0);
 	}
@@ -4035,51 +5149,54 @@ void uspex_gui_refresh(){
 		case US_OT_2R:
 		GUI_COMBOBOX_SET(uspex_gui.optType,10);
 		break;
-		case US_OT_ZT:
+		case US_OT_HM:
 		GUI_COMBOBOX_SET(uspex_gui.optType,11);
 		break;
-		case US_OT_Fphon:
+		case US_OT_ZT:
 		GUI_COMBOBOX_SET(uspex_gui.optType,12);
 		break;
-		case US_OT_BULK_M:
+		case US_OT_Fphon:
 		GUI_COMBOBOX_SET(uspex_gui.optType,13);
 		break;
-		case US_OT_SHEAR_M:
+		case US_OT_BULK_M:
 		GUI_COMBOBOX_SET(uspex_gui.optType,14);
 		break;
-		case US_OT_YOUNG_M:
+		case US_OT_SHEAR_M:
 		GUI_COMBOBOX_SET(uspex_gui.optType,15);
 		break;
-		case US_OT_POISSON:
+		case US_OT_YOUNG_M:
 		GUI_COMBOBOX_SET(uspex_gui.optType,16);
 		break;
-		case US_OT_PUGH_R:
+		case US_OT_POISSON:
 		GUI_COMBOBOX_SET(uspex_gui.optType,17);
 		break;
-		case US_OT_VICKERS_H:
+		case US_OT_PUGH_R:
 		GUI_COMBOBOX_SET(uspex_gui.optType,18);
 		break;
-		case US_OT_FRACTURE:
+		case US_OT_VICKERS_H:
 		GUI_COMBOBOX_SET(uspex_gui.optType,19);
 		break;
-		case US_OT_DEBYE_T:
+		case US_OT_FRACTURE:
 		GUI_COMBOBOX_SET(uspex_gui.optType,20);
 		break;
-		case US_OT_SOUND_V:
+		case US_OT_DEBYE_T:
 		GUI_COMBOBOX_SET(uspex_gui.optType,21);
 		break;
-		case US_OT_SWAVE_V:
+		case US_OT_SOUND_V:
 		GUI_COMBOBOX_SET(uspex_gui.optType,22);
 		break;
-		case US_OT_PWAVE_V:
+		case US_OT_SWAVE_V:
 		GUI_COMBOBOX_SET(uspex_gui.optType,23);
+		break;
+		case US_OT_PWAVE_V:
+		GUI_COMBOBOX_SET(uspex_gui.optType,24);
 		break;
 		case US_OT_UNKNOWN:
 		default:
 		GUI_COMBOBOX_SET(uspex_gui.optType,0);
 	}
 	if(uspex_gui.new_optType!=NULL){/*_BUG_ memory*/
-		uspex_gui.have_new_opt=TRUE;
+		uspex_gui.have_new_optType=TRUE;
 		if(uspex_gui._tmp_new_optType!=NULL) {
 			g_free(uspex_gui._tmp_new_optType);
 			uspex_gui._tmp_new_optType=NULL;
@@ -4089,7 +5206,7 @@ void uspex_gui_refresh(){
 			GUI_ENTRY_TEXT(uspex_gui.new_optType,uspex_gui._tmp_new_optType);
 		}
 	}else{
-		uspex_gui.have_new_opt=FALSE;
+		uspex_gui.have_new_optType=FALSE;
 	}
 	opt_toggle();
 	populate_atomType();
@@ -4172,6 +5289,13 @@ set_numSpecies();/*fix _BUG_*/
 	USPEX_SET_CHECK(pickUpYN);
 	USPEX_SET_VAL(pickUpGen,"%i");
 	USPEX_SET_VAL(pickUpFolder,"%i");
+/*NEW: SET SPECIFIC*/
+	if(uspex_gui.have_specific){
+		toggle_use_specific();
+		GUI_ENTRY_TEXT(uspex_gui.spe_folder,uspex_gui._tmp_spe_folder);
+	}else{
+		toggle_set_specific();
+	}
 num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
 	/*if we don't have abinitCode, set a default*/
 	if(uspex_gui.calc.abinitioCode==NULL) {
@@ -4218,52 +5342,45 @@ num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
 		uspex_gui._tmp_ai_opt=NULL;
 	}
 	uspex_gui._tmp_ai_opt=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gchar *));
-	/*(re-)create _potentials (_nspecies values!)*/
-	if(uspex_gui._potentials!=NULL){
-		for(i=0;i<uspex_gui._tmp_nspecies;i++) {
-			if(uspex_gui._potentials[i]!=NULL) g_free(uspex_gui._potentials[i]);
-			uspex_gui._potentials[i]=NULL;
-		}
-		g_free(uspex_gui._potentials);
-		uspex_gui._potentials=NULL;
-	}
-	uspex_gui._potentials=g_malloc0(uspex_gui.calc._nspecies*sizeof(gchar *));
 	/*redefine commandExecutable*/
+	i=0;
 	if(uspex_gui.calc.commandExecutable!=NULL) {
-		i=0;
+		gint size;
 		line=&(uspex_gui.calc.commandExecutable[0]);
 		ptr=line;
 		while(*line!='\0'){
-			while((*ptr!='\n')&&(*ptr!='\0')) ptr++;
-			if(*ptr=='\0') {
-				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
-				break;
-			}else{
-				*ptr='\0';/*cut here*/
-				uspex_gui._tmp_commandExecutable[i]=g_strdup(line);
-				line=ptr+1;
-				*ptr='\n';/*restore*/
-				i++;
-				if(i>uspex_gui.calc._num_opt_steps) break;
+			while(!g_ascii_isprint(*ptr)) ptr++;
+			line=ptr;
+			size=0;
+			while(g_ascii_isprint(*ptr)) {
+				size++;
+				ptr++;
 			}
+			uspex_gui._tmp_commandExecutable[i]=g_strndup(line,size);
+			line=ptr;
+			i++;
 		}
-		uspex_gui.calc._isCmdList=!(i==0);
-	}else{
-		uspex_gui.calc._isCmdList=FALSE;
 	}
+	uspex_gui.calc._isCmdList=(i>0);
 	uspex_gui._tmp_num_opt_steps=(gdouble)uspex_gui.calc._num_opt_steps;
 	GUI_SPIN_SET(uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps);
 	uspex_gui._tmp_curr_step=1.;
 	GUI_SPIN_SET(uspex_gui._curr_step,uspex_gui._tmp_curr_step);
-	GUI_LOCK(uspex_gui.ai_spe);
-	populate_spe();
-	GUI_COMBOBOX_SET(uspex_gui.ai_spe,0);
-	GUI_UNLOCK(uspex_gui.ai_spe);
-	change_ai_pot();
 	spin_update_curr_step();
 	uspex_gui.auto_step=TRUE;
 	toggle_auto_step();
-	USPEX_SET_VAL(numProcessors,"%i");
+        if(uspex_gui.calc.numProcessors==NULL){
+                line=g_strdup("");
+        }else{
+                line=g_strdup_printf("%i",uspex_gui.calc.numProcessors[0]);
+                for(i=1;i<uspex_gui.calc._num_opt_steps;i++){
+                        ptr=g_strdup_printf("%s %i",line,uspex_gui.calc.numProcessors[i]);
+                        g_free(line);
+                        line=ptr;
+                }
+        }
+        GUI_ENTRY_TEXT(uspex_gui.numProcessors,line);
+        g_free(line);
 	USPEX_SET_VAL(numParallelCalcs,"%i");
 	USPEX_SET_VAL(whichCluster,"%i");
 	if(uspex_gui.calc.remoteFolder!=NULL) USPEX_SET_TEXT(remoteFolder);
@@ -4271,6 +5388,7 @@ num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
 	USPEX_SET_VAL(RmaxFing,"%lf");
 	USPEX_SET_VAL(deltaFing,"%lf");
 	USPEX_SET_VAL(sigmaFing,"%lf");
+	USPEX_SET_VAL(toleranceFing,"%lf");
 	USPEX_SET_VAL(antiSeedsActivation,"%i");
 	USPEX_SET_VAL(antiSeedsMax,"%lf");
 	USPEX_SET_VAL(antiSeedsSigma,"%lf");
@@ -4348,6 +5466,9 @@ num=(gint)uspex_gui._tmp_num_opt_steps;/*this is the PREVIOUS _num_opt_steps*/
 	}
 	GUI_ENTRY_TEXT(uspex_gui.StoichiometryStart,line);
 	g_free(line);
+	USPEX_SET_VAL(E_AB,"%lf");
+	USPEX_SET_VAL(Mu_A,"%lf");
+	USPEX_SET_VAL(Mu_B,"%lf");
 //	init_substrate_models();/*this is un-necessary*/
 	USPEX_SET_VAL(firstGeneMax,"%i");
 	USPEX_SET_VAL(minAt,"%i");
@@ -4491,15 +5612,18 @@ void gui_uspex_dialog(void){
 		init_uspex_parameters(&(uspex_gui.calc));
 		if(uspex_output->calc!=NULL){
 			uspex_gui.have_output=TRUE;
+			uspex_gui.have_specific=TRUE;
 			copy_uspex_parameters(uspex_output->calc,&(uspex_gui.calc));
 			gui_uspex_init(data);
 		}else{
 			uspex_gui.have_output=FALSE;
+			uspex_gui.have_specific=FALSE;
 			free_uspex_parameters(&(uspex_gui.calc));
 			gui_uspex_init(data);
 		}
 	} else {
 		uspex_gui.have_output=FALSE;
+		uspex_gui.have_specific=FALSE;
 		init_uspex_parameters(&(uspex_gui.calc));
 		gui_uspex_init(data);
 	}
@@ -4560,8 +5684,16 @@ GUI_TOOLTIP(uspex_gui.file_entry,"Use the previous result of a USPEX calculation
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"TPS");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"MINHOP");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationMethod,"COPEX");
+	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",1,2,1,2);
+	GUI_SPIN_RANGE(uspex_gui._calctype_dim,-2.,3.);
+GUI_TOOLTIP(uspex_gui._calctype_dim,"Set the dimension of the system.\n3, 2, 1, and 0 are equilvalent to 3D, 2D, 1D, and 0D.\n-2 correspond to 2D crystals.");
+	GUI_ENTRY_TABLE(table,uspex_gui.ExternalPressure,uspex_gui.calc.ExternalPressure,"%.4f","ExtP:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui.ExternalPressure,"ExternalPressure: Ch. 4.1, 5.7 DEFAULT: none\nExternal pressure (GPa) for calculation.");
+	GUI_CHECK_TABLE(table,uspex_gui.sel_v1030_1,uspex_gui.have_v1030,toggle_v1030,"Ver 10.4",3,4,1,2);
+GUI_TOOLTIP(uspex_gui.sel_v1030_1,"Use USPEX v. 10.4 instead of 9.4.4.");
+/* line 2 */
 GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USPEX\nSet the method of calculation.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"Type: ",1,3,1,2);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.calculationType,"Type: ",0,1,2,3);
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"300");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s300");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"301");
@@ -4570,7 +5702,7 @@ GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USP
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"311");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"000");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s000");
-	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"001");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"001"); /*available only in v10.1?*/
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"110");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"200");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s200");
@@ -4578,14 +5710,11 @@ GUI_TOOLTIP(uspex_gui.calculationMethod,"calculationMethod: Ch. 4.1 DEFAULT: USP
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"s201");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-200");
 	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-s200");
-GUI_TOOLTIP(uspex_gui.calculationType,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.\n(311) and (110) calculations may not be supported.");
-	GUI_CHECK_TABLE(table,uspex_gui._calctype_mag,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",3,4,1,2);
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-201");
+	GUI_COMBOBOX_ADD(uspex_gui.calculationType,"-s201");
+GUI_TOOLTIP(uspex_gui.calculationType,"calculationType: Ch. 4.1 DEFAULT: 300\nSets the dimensionality, molecularity, and variability\nof the calculation, can also be set individually.");
+	GUI_CHECK_TABLE(table,uspex_gui._calctype_mag,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",1,2,2,3);
 GUI_TOOLTIP(uspex_gui._calctype_mag,"Set a magnetic calculation.");
-/* line 2 */
-	/*col 1: empty*/
-	GUI_SPIN_TABLE(table,uspex_gui._calctype_dim,uspex_gui._dim,spin_update_dim,"DIM",1,2,2,3);
-	GUI_SPIN_RANGE(uspex_gui._calctype_dim,-2.,3.);
-GUI_TOOLTIP(uspex_gui._calctype_dim,"Set the dimension of the system.\n3, 2, 1, and 0 are equilvalent to 3D, 2D, 1D, and 0D.\n-2 correspond to 2D crystals.");
 	GUI_CHECK_TABLE(table,uspex_gui._calctype_mol,uspex_gui.calc._calctype_mol,mol_toggle,"MOL",2,3,2,3);
 GUI_TOOLTIP(uspex_gui._calctype_mol,"Set the molecularity of the system.");
 	GUI_CHECK_TABLE(table,uspex_gui._calctype_var,uspex_gui.calc._calctype_var,var_toggle,"VAR",3,4,2,3);
@@ -4624,9 +5753,7 @@ GUI_TOOLTIP(uspex_gui._bond_d,"Minimum bond distance between selected and others
 	GUI_APPLY_BUTTON_TABLE(table,button,apply_bonds,2,3,6,7);
 	GUI_DELETE_BUTTON_TABLE(table,button,remove_bonds,3,4,6,7);
 /* line 7 */
-	GUI_ENTRY_TABLE(table,uspex_gui.ExternalPressure,uspex_gui.calc.ExternalPressure,"%.4f","ExtP:",0,1,7,8);
-GUI_TOOLTIP(uspex_gui.ExternalPressure,"ExternalPressure: Ch. 4.1, 5.6 DEFAULT: none\nExternal pressure (GPa) for calculation.");
-	GUI_TEXT_TABLE(table,uspex_gui.ldaU,uspex_gui._tmp_ldaU,"lda+U:",1,3,7,8);
+	GUI_TEXT_TABLE(table,uspex_gui.ldaU,uspex_gui._tmp_ldaU,"lda+U:",0,3,7,8);
 GUI_TOOLTIP(uspex_gui.ldaU,"ldaU: Ch. 4.1 DEFAULT: all 0\nHubbard U value (per atom) in L(S)DA+U method.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.auto_bonds,auto_bond_toggle,"AUTO_BONDS",3,4,7,8);
 GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
@@ -4643,6 +5770,7 @@ GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"9: MAX Magnetization");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"10: MAX Structure quasientropy");
 	GUI_COMBOBOX_ADD(uspex_gui.optType,"11: MAX L/H eigenvalue difference of refractive index");
+	GUI_COMBOBOX_ADD(uspex_gui.optType,"12: MAX halfmetalicity parameter");
 	GUI_COMBOBOX_ADD(uspex_gui.optType,"14: MAX ZT thermoelectric figure of merit");
 	GUI_COMBOBOX_ADD(uspex_gui.optType,"17: MAX free energy at finite temperature");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1101: MAX Bulk modulus");
@@ -4658,18 +5786,18 @@ GUI_TOOLTIP(button,"Automatically determine bonds (recommended).");
         GUI_COMBOBOX_ADD(uspex_gui.optType,"1111: MAX P-wave velocity");
 GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: 1(Enthalpy)\nSelect the properties to optimize.");
 	GUI_TEXT_TABLE(table,uspex_gui.new_optType,uspex_gui._tmp_new_optType,"NEW optType: ",1,3,8,9);
-GUI_TOOLTIP(uspex_gui.optType,"optType: Ch. 4.1 DEFAULT: MIN_enthalpy\nSelect the properties to optimize in the new\nVER 10.1 USPEX format.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.have_new_opt,opt_toggle,"NEW",3,4,8,9);
-GUI_TOOLTIP(button,"Use the VER 10.1 optType format.\nMandatory for multiobjective optimization.");
+GUI_TOOLTIP(uspex_gui.new_optType,"optType: Ch. 4.1 DEFAULT: MIN_enthalpy\nSelect the properties to optimize in the new\nVER 10.1 USPEX format.");
+	GUI_CHECK_TABLE(table,uspex_gui.sel_new_opt,uspex_gui.have_new_optType,opt_toggle,"NEW",3,4,8,9);
+GUI_TOOLTIP(uspex_gui.sel_new_opt,"Use the NEW block optType format.\nMandatory for multiobjective optimization.");
 	/*TODO: check on "change" to detect ZT*/
 /* line 9 */
 	/*col 1: empty*/
 	GUI_CHECK_TABLE(table,button,uspex_gui.calc.anti_opt,NULL,"ANTI-OPT",1,2,9,10);/*not calling anything*/
 GUI_TOOLTIP(button,"anti-opt: - DEFAULT: FALSE\nIf set REVERSE the direction of optimization.\ni.e. MIN -> MAX & MAX -> MIN");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkMolecules,NULL,"ckMol",2,3,9,10);/*not calling anything*/
-GUI_TOOLTIP(button,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.calc.checkConnectivity,NULL,"ckCon",3,4,9,10);/*not calling anything*/
-GUI_TOOLTIP(button,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
+	GUI_CHECK_TABLE(table,uspex_gui.checkMolecules,uspex_gui.calc.checkMolecules,NULL,"ckMol",2,3,9,10);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.checkMolecules,"checkMolecules: Ch. 4.1 DEFAULT: TRUE\nCheck and discard broken/merged molecules.");
+	GUI_CHECK_TABLE(table,uspex_gui.checkConnectivity,uspex_gui.calc.checkConnectivity,NULL,"ckCon",3,4,9,10);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.checkConnectivity,"checkConnectivity: Ch. 4.1 DEFAULT: FALSE\nCalculate hardness and add connectivity in softmutation.");
 /* <- Ext Pressure, LDA+U, and magRation moved to p. III, II, and III, respectively.*/
 /* --- cell */
 	GUI_LABEL_TABLE(table,"Cell",0,4,10,11);
@@ -4694,7 +5822,7 @@ GUI_TOOLTIP(uspex_gui._latticeformat,"FORMAT: whether Lattice values correspond 
 	}
         GUI_TEXT_TABLE(table,uspex_gui.splitInto,title,"split:",1,3,12,13);
 	g_free(title);
-GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.5 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
+GUI_TOOLTIP(uspex_gui.splitInto,"splitInto: Ch. 4.4 DEFAULT: 1\nNumber of identical subcells or pseudosubcells in the unitcell.");
         GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_lat,toggle_auto_C_lat,"AUTO_LAT",3,4,12,13);
 GUI_TOOLTIP(button,"AUTO_LAT: use automatic value for Latticevalues.");
 /* Constraints */
@@ -4708,7 +5836,7 @@ GUI_TOOLTIP(uspex_gui._distances,"distances: minimum allowed distance from the c
 /* line 15 */
 	/*col 1: empty*/
 	GUI_ENTRY_TABLE(table,uspex_gui.minVectorLength,uspex_gui.calc.minVectorLength,"%.4f","MV:",1,2,15,16);
-GUI_TOOLTIP(uspex_gui.minVectorLength,"minVectorLength: Ch. 4.5 DEFAULT: auto\nMinimum length of a new lattice parameter.");
+GUI_TOOLTIP(uspex_gui.minVectorLength,"minVectorLength: Ch. 4.5, 5.7 DEFAULT: auto\nMinimum length of a new lattice parameter.");
 	GUI_ENTRY_TABLE(table,uspex_gui.constraint_enhancement,uspex_gui.calc.constraint_enhancement,"%i","CE:",2,3,15,16);
 GUI_TOOLTIP(uspex_gui.constraint_enhancement,"constraint_enhancement: Ch. 4.5 DEFAULT: 1\nApply CE times the IonDistance constraints.");
 	GUI_CHECK_TABLE(table,button,uspex_gui.auto_C_ion,toggle_auto_C_ion,"AUTO_ION",3,4,15,16);
@@ -4743,34 +5871,34 @@ GUI_TOOLTIP(uspex_gui.stopCrit,"stopCrit: Ch. 4.2 DEFAULT: auto\nMaximum number 
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_nm,uspex_gui.calc.magRatio[0],"%.4f","N.M.:",0,1,2,3);
 GUI_TOOLTIP(uspex_gui.mag_nm,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a non-magnetic order.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmls,uspex_gui.calc.magRatio[1],"%.4f","FM-LS:",1,2,2,3);
-GUI_TOOLTIP(uspex_gui.mag_fmls,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low-spin ferromagnetic order.");
+GUI_TOOLTIP(uspex_gui.mag_fmls,"magRatio: Ch. 4.1 DEFAULT: 0.225\n(magnetic calculation) Initial ratio of structures\nwith a low-spin ferromagnetic order.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_afml,uspex_gui.calc.magRatio[3],"%.4f","AFM-L:",2,3,2,3);
-GUI_TOOLTIP(uspex_gui.mag_afml,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low-spin antiferromagnetic order.");
+GUI_TOOLTIP(uspex_gui.mag_afml,"magRatio: Ch. 4.1 DEFAULT: 0.225\n(magnetic calculation) Initial ratio of structures\nwith a low-spin antiferromagnetic order.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmlh,uspex_gui.calc.magRatio[5],"%.4f","FM-LH:",3,4,2,3);
-GUI_TOOLTIP(uspex_gui.mag_fmlh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed ferromagnetic order.");
+GUI_TOOLTIP(uspex_gui.mag_fmlh,"magRatio: Ch. 4.1 DEFAULT: 0.0\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed ferromagnetic order.");
 /* line 3 */
 	GUI_CHECK_TABLE(table,uspex_gui._calctype_mag_2,uspex_gui.calc._calctype_mag,mag_toggle,"MAG",0,1,3,4);
 GUI_TOOLTIP(uspex_gui._calctype_mag_2,"Set a magnetic calculation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_fmhs,uspex_gui.calc.magRatio[2],"%.4f","FM-HS:",1,2,3,4);
-GUI_TOOLTIP(uspex_gui.mag_fmhs,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a high-spin ferromagnetic.");
+GUI_TOOLTIP(uspex_gui.mag_fmhs,"magRatio: Ch. 4.1 DEFAULT: 0.225\n(magnetic calculation) Initial ratio of structures\nwith a high-spin ferromagnetic.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_afmh,uspex_gui.calc.magRatio[4],"%.4f","AFM-H:",2,3,3,4);
-GUI_TOOLTIP(uspex_gui.mag_afmh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a high-spin antiferromagnetic.");
+GUI_TOOLTIP(uspex_gui.mag_afmh,"magRatio: Ch. 4.1 DEFAULT: 0.225\n(magnetic calculation) Initial ratio of structures\nwith a high-spin antiferromagnetic.");
 	GUI_ENTRY_TABLE(table,uspex_gui.mag_aflh,uspex_gui.calc.magRatio[6],"%.4f","AF-LH:",3,4,3,4);
-GUI_TOOLTIP(uspex_gui.mag_aflh,"magRatio: Ch. 4.1 DEFAULT: 0.1\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed antiferromagnetic.");
+GUI_TOOLTIP(uspex_gui.mag_aflh,"magRatio: Ch. 4.1 DEFAULT: 0.0\n(magnetic calculation) Initial ratio of structures\nwith a low/high spin mixed antiferromagnetic.");
 /* line 4 */
 	GUI_ENTRY_TABLE(table,uspex_gui.bestFrac,uspex_gui.calc.bestFrac,"%.4f","Best:",0,1,4,5);
 GUI_TOOLTIP(uspex_gui.bestFrac,"bestFrac: Ch. 4.3 DEFAULT: 0.7\nFraction of current generation used to generate the next.");
 	GUI_ENTRY_TABLE(table,uspex_gui.keepBestHM,uspex_gui.calc.keepBestHM,"%3i","BestHM:",1,2,4,5);
 GUI_TOOLTIP(uspex_gui.keepBestHM,"keepBestHM: Ch. 4.3 DEFAULT: auto\nNumber of best structures that will survive in next generation.");
 	GUI_CHECK_TABLE(table,uspex_gui.reoptOld,uspex_gui.calc.reoptOld,NULL,"reopt",2,3,4,5);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.reoptOld,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structure will be re-optimized.");
+GUI_TOOLTIP(uspex_gui.reoptOld,"reoptOld: Ch. 4.3 DEFAULT: FALSE\nIf set surviving structures will be re-optimized.");
 	GUI_ENTRY_TABLE(table,uspex_gui.fitLimit,uspex_gui.calc.fitLimit,"%.4f","fitLimit:",3,4,4,5);
 GUI_TOOLTIP(uspex_gui.fitLimit,"fitLimit: Ch. 4.3 DEFAULT: none\nStop calculation when fitLimit fitness is reached.");
 /* --- Structure & Variation */
 	GUI_LABEL_TABLE(table,"Structure & Variation",0,4,5,6);
 /* line 6 */
 	GUI_TEXT_TABLE(table,uspex_gui.symmetries,uspex_gui.calc.symmetries,"symmetries: ",0,4,6,7);
-GUI_TOOLTIP(uspex_gui.symmetries,"symmetries: Ch. 4.4 DEFAULT: auto\nPossible space group for crystals,\nplane group for 2D crystals/surface\nor point group for clusters.");
+GUI_TOOLTIP(uspex_gui.symmetries,"symmetries: Ch. 4.4 DEFAULT: auto\nPossible space groups for crystals,\nplane groups for 2D crystals/surfaces\nor point groups for clusters.");
 /* line 7 */
 	GUI_ENTRY_TABLE(table,uspex_gui.fracGene,uspex_gui.calc.fracGene,"%.4f","Heredity:",0,1,7,8);
 GUI_TOOLTIP(uspex_gui.fracGene,"fracGene: Ch. 4.4 DEFAULT: 0.5\nRatio of structures obtained by heredity.");
@@ -4806,13 +5934,15 @@ GUI_TOOLTIP(uspex_gui.AutoFrac,"AutoFrac: Ch. 4.4 DEFAULT: FALSE\nIf set variati
 /* --- Fingerprint & Antiseeds */
 	GUI_LABEL_TABLE(table,"Fingerprint, antiseed, & spacegroup",0,4,11,12);
 /* line 12 */
-	GUI_LABEL_TABLE(table,"Fingerprint",0,1,12,13);
-	GUI_ENTRY_TABLE(table,uspex_gui.RmaxFing,uspex_gui.calc.RmaxFing,"%.4f","RMax:",1,2,12,13);
-GUI_TOOLTIP(uspex_gui.RmaxFing,"RmaxFing: Ch. 4.9 DEFAULT: 10.0\ncutoff distance (Ang.).");
-	GUI_ENTRY_TABLE(table,uspex_gui.deltaFing,uspex_gui.calc.deltaFing,"%.4f","delta:",2,3,12,13);
+//	GUI_LABEL_TABLE(table,"Fingerprint",0,1,12,13);
+	GUI_ENTRY_TABLE(table,uspex_gui.RmaxFing,uspex_gui.calc.RmaxFing,"%.4f","RMax:",0,1,12,13);
+GUI_TOOLTIP(uspex_gui.RmaxFing,"RmaxFing: Ch. 4.9 DEFAULT: 10.0\nFingerprint cutoff distance (Ang.).");
+	GUI_ENTRY_TABLE(table,uspex_gui.deltaFing,uspex_gui.calc.deltaFing,"%.4f","delta:",1,2,12,13);
 GUI_TOOLTIP(uspex_gui.deltaFing,"deltaFing: Ch. 4.9 DEFAULT: 0.08\nDiscretization of the fingerprint function.");
-	GUI_ENTRY_TABLE(table,uspex_gui.sigmaFing,uspex_gui.calc.sigmaFing,"%.4f","sigma:",3,4,12,13);
+	GUI_ENTRY_TABLE(table,uspex_gui.sigmaFing,uspex_gui.calc.sigmaFing,"%.4f","sigma:",2,3,12,13);
 GUI_TOOLTIP(uspex_gui.sigmaFing,"sigmaFing: Ch. 4.9 DEFAULT: 0.03\nGaussian broadening of interatomic distance.");
+	GUI_ENTRY_TABLE(table,uspex_gui.toleranceFing,uspex_gui.calc.toleranceFing,"%.4f","TOL:",3,4,12,13);
+GUI_TOOLTIP(uspex_gui.toleranceFing,"toleranceFing: Ch. 4.9 DEFAULT: 0.008\nMinimal cosine distance for\n2 different structures.");
 /* line 13 */
 	GUI_LABEL_TABLE(table,"Antiseed",0,1,13,14);
 	GUI_ENTRY_TABLE(table,uspex_gui.antiSeedsActivation,uspex_gui.calc.antiSeedsActivation,"%4i","Activation:",1,2,13,14);
@@ -4832,17 +5962,17 @@ GUI_TOOLTIP(uspex_gui.SymTolerance,"SymTolerance: Ch. 4.11 DEFAULT: 0.10\nPrecis
 	GUI_LABEL_TABLE(table,"Variable-composition",0,4,15,16);
 /* line 16 */
 	GUI_ENTRY_TABLE(table,uspex_gui.firstGeneMax,uspex_gui.calc.firstGeneMax,"%4i","1st_Gen:",0,1,16,17);
-GUI_TOOLTIP(uspex_gui.firstGeneMax,"firstGeneMax: Ch. 5.5 DEFAULT: 11\nNumber of composition sampled in 1st generation.");
+GUI_TOOLTIP(uspex_gui.firstGeneMax,"firstGeneMax: Ch. 5.1 DEFAULT: 11\nNumber of composition sampled in 1st generation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.minAt,uspex_gui.calc.minAt,"%4i","min@:",1,2,16,17);
-GUI_TOOLTIP(uspex_gui.minAt,"minAt: Ch. 5.5 DEFAULT: none\nMinimum number of atoms (molecules) in unitcell\nfor the first generation.");
+GUI_TOOLTIP(uspex_gui.minAt,"minAt: Ch. 5.1 DEFAULT: none\nMinimum number of atoms (molecules) in unitcell\nfor the first generation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.maxAt,uspex_gui.calc.maxAt,"%4i","max@:",2,3,16,17);
-GUI_TOOLTIP(uspex_gui.maxAt,"maxAt: Ch. 5.5 DEFAULT: none\nMaximum number of atoms (molecules) in unitcell\nfor the first generation.");
+GUI_TOOLTIP(uspex_gui.maxAt,"maxAt: Ch. 5.1 DEFAULT: none\nMaximum number of atoms (molecules) in unitcell\nfor the first generation.");
 /*col 4: empty*/
 /* line 17 */
 	GUI_ENTRY_TABLE(table,uspex_gui.fracTrans,uspex_gui.calc.fracTrans,"%.4f","fTrans:",0,1,17,18);
-GUI_TOOLTIP(uspex_gui.fracTrans,"fracTrans: Ch. 5.5 DEFAULT: 0.1\nFraction of structures obtained by transmutation.");
+GUI_TOOLTIP(uspex_gui.fracTrans,"fracTrans: Ch. 5.1 DEFAULT: 0.1\nFraction of structures obtained by transmutation.");
 	GUI_ENTRY_TABLE(table,uspex_gui.howManyTrans,uspex_gui.calc.howManyTrans,"%.4f","rTrans:",1,2,17,18);
-GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.5 DEFAULT: 0.2\nMaximum ratio of transmutated atoms in a structure.");
+GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.1 DEFAULT: 0.2\nMaximum ratio of transmutated atoms in a structure.");
 	if(uspex_gui.calc._nspetrans<1){
 		title=g_strdup("");
 	}else{
@@ -4855,7 +5985,7 @@ GUI_TOOLTIP(uspex_gui.howManyTrans,"howManyTrans: Ch. 5.5 DEFAULT: 0.2\nMaximum 
 	}
 	GUI_TEXT_TABLE(table,uspex_gui.specificTrans,title,"Trans: ",2,4,17,18);
 	g_free(title);
-GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.5 DEFAULT: blank\nList of allowed transmutation.");
+GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.1 DEFAULT: blank\nList of allowed transmutation.");
 /* --- end page */
 
 /*-----------------------*/
@@ -4866,19 +5996,28 @@ GUI_TOOLTIP(uspex_gui.specificTrans,"specificTrans: Ch. 5.5 DEFAULT: blank\nList
         GUI_TABLE_NOTE(page,table,18,4);
 /* --- Ab initio */
         GUI_LABEL_TABLE(table,"Ab initio",0,4,0,1);
-/* line 1 */
-	GUI_SPIN_TABLE(table,uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps,spin_update_num_opt_steps,"N_STEPS",0,1,1,2);
+/* line 1 - NEW */
+	GUI_RADIO2_TABLE(table,
+		uspex_gui.use_specific,"USE Specific Folder",toggle_use_specific,
+		uspex_gui.set_specific,"SET Specific Folder",toggle_set_specific,0,2,1,2);
+GUI_TOOLTIP(uspex_gui.use_specific,"Use a previously defined Specific folder.");
+GUI_TOOLTIP(uspex_gui.set_specific,"Set parameter to create a Specific folder.");
+	GUI_TEXT_TABLE(table,uspex_gui.spe_folder,uspex_gui._tmp_spe_folder,"SPE:",2,3,1,2);
+GUI_TOOLTIP(uspex_gui.spe_folder,"Specific folder.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.spe_folder_button,load_spe_folder_dialog,3,4,1,2);
+/* line 2 */
+	GUI_SPIN_TABLE(table,uspex_gui._num_opt_steps,uspex_gui._tmp_num_opt_steps,spin_update_num_opt_steps,"N_STEPS",0,1,2,3);
 	GUI_SPIN_RANGE(uspex_gui._num_opt_steps,1.,(gdouble)USPEX_MAX_NUM_OPT_STEPS);
 GUI_TOOLTIP(uspex_gui._num_opt_steps,"Set the number of optimisation steps.\nIncluding fixed-cells and full relaxation steps.");
-	GUI_SPIN_TABLE(table,uspex_gui._curr_step,uspex_gui._tmp_curr_step,spin_update_curr_step,"STEPS #",1,2,1,2);
+	GUI_SPIN_TABLE(table,uspex_gui._curr_step,uspex_gui._tmp_curr_step,spin_update_curr_step,"STEPS #",1,2,2,3);
 	GUI_SPIN_RANGE(uspex_gui._curr_step,1.,uspex_gui._tmp_num_opt_steps);
 GUI_TOOLTIP(uspex_gui._curr_step,"Select current optimisation step number.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.auto_step,toggle_auto_step,"AUTO STEP",2,3,1,2);
-GUI_TOOLTIP(button,"This indicates that user have a \"Specific\" directory containing\nall necessary calculation files:\nginput_N, goptions_N for GULP (for each N step)\nINCAR_N, POTCAR_X for VASP (for each step N and species X)");
-	GUI_CHECK_TABLE(table,uspex_gui._isfixed,uspex_gui._tmp_isfixed,NULL,"Relax_fixed",3,4,1,2);
+	GUI_CHECK_TABLE(table,button,uspex_gui.auto_step,toggle_auto_step,"AUTO STEP",2,3,2,3);
+GUI_TOOLTIP(button,"Let GDIS generate some \"Simplified\"\nINPUTS for this step, given\nthe calculation code.\nWARNING: GDIS use some general settings that may fail.");
+	GUI_CHECK_TABLE(table,uspex_gui._isfixed,uspex_gui._tmp_isfixed,NULL,"Relax_fixed",3,4,2,3);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui._isfixed,"Set the current step as a fixed relaxation.\nUseful only with a mix between fixed and full relaxations.");
-/* line 2 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",0,2,2,3);
+/* line 3 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.abinitioCode,"CODE:",0,2,3,4);
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"0  - NONE");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"1  - VASP");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"2  - SIESTA");
@@ -4896,73 +6035,87 @@ GUI_TOOLTIP(uspex_gui._isfixed,"Set the current step as a fixed relaxation.\nUse
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"14 - BoltzTraP");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"15 - DFTB");
 	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"16 - Gaussian");
+	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"17 - N/A");
+	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"18 - Abinit");
+	GUI_COMBOBOX_ADD(uspex_gui.abinitioCode,"19 - CRYSTAL");
 GUI_TOOLTIP(uspex_gui.abinitioCode,"abinitioCode: Ch. 4.8 DEFAULT: 1\nCode used for the calculations in this step.");
-	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui.calc.KresolStart[0],"%.4f","Kresol:",2,3,2,3);
+	GUI_ENTRY_TABLE(table,uspex_gui.KresolStart,uspex_gui.calc.KresolStart[0],"%.4f","Kresol:",2,3,3,4);
 GUI_TOOLTIP(uspex_gui.KresolStart,"KresolStart: Ch. 4.8 DEFAULT: 0.2-0.08\nReciprocal-space resolution for this optimization step (2*pi/Ang).");
-	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[0],"%.4f","vacuum:",3,4,2,3);
+	GUI_ENTRY_TABLE(table,uspex_gui.vacuumSize,uspex_gui.calc.vacuumSize[0],"%.4f","vacuum:",3,4,3,4);
 GUI_TOOLTIP(uspex_gui.vacuumSize,"vacuumSize: Ch. 4.8 DEFAULT: 10.0\nVacuum size (Ang.) between neighbor atoms from adjacent unit cells.\nFor cluster, 2D-crystal, and surfaces only.");
-/* line 3 */
-	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input[0],"INP:",0,1,3,4);
-GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile name as to end with *_N where N is the step number.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_input_button,load_ai_input_dialog,1,2,3,4);
-	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt[0],"OPT:",2,3,3,4);
-GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_opt_button,load_ai_opt_dialog,3,4,3,4);
 /* line 4 */
-	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[0],"EXE:",0,1,4,5);
-GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_abinitio_exe_dialog,1,2,4,5);
-	GUI_BUTTON_TABLE(table,uspex_gui.ai_generate,"Generate",generate_step,2,3,4,5);
-GUI_TOOLTIP(uspex_gui.ai_generate,"Use GDIS integrated interface to create this step input file.\nUnavailable (for now) m(_ _)m");
-	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,4,5);
-GUI_TOOLTIP(button,"Apply changes to this step (only).");
+	GUI_TEXT_TABLE(table,uspex_gui.ai_input,uspex_gui._tmp_ai_input[0],"INP:",0,1,4,5);
+GUI_TOOLTIP(uspex_gui.ai_input,"Input for the current calculation step.\nFile name as to end with *_N where N is the step number.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_input_button,load_ai_input_dialog,1,2,4,5);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_opt,uspex_gui._tmp_ai_opt[0],"OPT:",2,3,4,5);
+GUI_TOOLTIP(uspex_gui.ai_opt,"Complementary (optional) file for the current calculation step.\nWhen present, file name as to end with *_N where N is the step number.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_opt_button,load_ai_opt_dialog,3,4,4,5);
 /* line 5 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_spe,"Species:",0,1,5,6);
-GUI_TOOLTIP(uspex_gui.ai_spe,"Select species for (pseudo-)potential information.");
-	GUI_TEXT_TABLE(table,uspex_gui.ai_pot,uspex_gui._potentials[0],"POT:",1,3,5,6);
-GUI_TOOLTIP(uspex_gui.ai_pot,"Per-species (pseudo-)potential files.\nFor pair- and molecules-potential, do not mind the \"per-species\".");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_pot_button,load_ai_pot_dialog,3,4,5,6);
+	GUI_TEXT_TABLE(table,uspex_gui.ai_lib,uspex_gui._tmp_ai_lib_folder[0],"LIB:",0,1,5,6);
+GUI_TOOLTIP(uspex_gui.ai_lib,"Set the library directory.\nCalculations often require pseudo-potentials for each species\nor a potential library file wich describe each species.\nEach different calculation step code require a library directory.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.ai_lib_button,load_ai_lib_dialog,1,2,5,6);
+	GUI_COMBOBOX_TABLE(table,uspex_gui.ai_lib_flavor,"FLAVOR:",2,3,5,6);
+GUI_TOOLTIP(uspex_gui.ai_lib_flavor,"Select flavor(s) that apply to current potential.\nIt is either a per-species (VASP)\nor per-potential (GULP) switch.");
+	GUI_COMBOBOX_EDITABLE(uspex_gui.ai_lib_flavor);/*NEW: accept user-made library*/
+	GUI_TEXT_TABLE(table,uspex_gui.ai_lib_sel,uspex_gui._tmp_ai_lib_sel[0],"lib:",3,4,5,6);
+GUI_TOOLTIP(uspex_gui.ai_lib_sel,"The flavor of selected libraries.");
+	GUI_LOCK(uspex_gui.ai_lib_sel);
+/* line 6 */
+	GUI_TEXT_TABLE(table,uspex_gui.commandExecutable,uspex_gui._tmp_commandExecutable[0],"EXE:",0,1,6,7);
+GUI_TOOLTIP(uspex_gui.commandExecutable,"commandExecutable: Ch. 4.8 DEFAULT: none\nCurrent optimisation step executable of submission script.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_abinitio_exe_dialog,1,2,6,7);
+	/*2,3 blank*/
+	GUI_APPLY_BUTTON_TABLE(table,button,apply_step,3,4,6,7);
+GUI_TOOLTIP(button,"Apply changes to this step (only).");
 /* --- USPEX launch */
-	GUI_LABEL_TABLE(table,"USPEX launch",0,4,6,7);
-/* line 7 */
-	GUI_TEXT_TABLE(table,uspex_gui.job_uspex_exe,uspex_gui.calc.job_uspex_exe,"USPEX:",0,1,7,8);
-GUI_TOOLTIP(uspex_gui.job_uspex_exe,"The USPEX script executable.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_uspex_exe,1,2,7,8);
-	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,7,8);
-GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.\n>2 - specific supercomputer.");
-	GUI_CHECK_TABLE(table,uspex_gui.PhaseDiagram,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,7,8);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.PhaseDiagram,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
+	GUI_LABEL_TABLE(table,"USPEX launch",0,4,7,8);
 /* line 8 */
-	GUI_CHECK_TABLE(table,button,uspex_gui.have_v1010,NULL,"Ver 10.1",0,1,8,9);/*not calling anything*/
-GUI_TOOLTIP(button,"Use USPEX v. 10.1 instead of 9.4.4.");
-	GUI_ENTRY_TABLE(table,uspex_gui.numProcessors,uspex_gui.calc.numProcessors,"%i","CPU:",1,2,8,9);
-GUI_TOOLTIP(uspex_gui.numProcessors,"numProcessors: Ch. ? DEFAULT: 1\nNumber of processors used in a step (undocumented).");
-	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",2,3,8,9);
-GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
-	GUI_CHECK_TABLE(table,button,uspex_gui.have_octave,NULL,"OCTAVE",3,4,8,9);/*not calling anything*/
-GUI_TOOLTIP(button,"Use octave instead of matlab.");
+	GUI_TEXT_TABLE(table,uspex_gui.job_uspex_exe,uspex_gui.calc.job_uspex_exe,"USPEX:",0,1,8,9);
+GUI_TOOLTIP(uspex_gui.job_uspex_exe,"The USPEX script executable.");
+	GUI_OPEN_BUTTON_TABLE(table,button,load_uspex_exe,1,2,8,9);
+	GUI_ENTRY_TABLE(table,uspex_gui.whichCluster,uspex_gui.calc.whichCluster,"%i","Cluster:",2,3,8,9);
+GUI_TOOLTIP(uspex_gui.whichCluster,"whichCluster: Ch. 4.8 DEFAULT: 0\nType of job submission, including:\n0 - no job-script;\n1 - local submission;\n2 - remote submission.\n>2 - specific supercomputer.");
+	GUI_CHECK_TABLE(table,uspex_gui.PhaseDiagram,uspex_gui.calc.PhaseDiagram,NULL,"PhaseDiag",3,4,8,9);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.PhaseDiagram,"PhaseDiagram: Ch. 4.8 DEFAULT: FALSE\nSet calculation of an estimated phase diagram\nfor calculationMethod 30X (300, 301, s300, and s301).");
 /* line 9 */
-	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,9,10);
+	GUI_CHECK_TABLE(table,uspex_gui.sel_v1030_3,uspex_gui.have_v1030,toggle_v1030,"Ver 10.4",0,1,9,10);
+GUI_TOOLTIP(uspex_gui.sel_v1030_3,"Use USPEX v. 10.4 instead of 9.4.4.");
+        if(uspex_gui.calc.numProcessors==NULL){
+                title=g_strdup("");
+        }else{
+                title=g_strdup_printf("%i",uspex_gui.calc.numProcessors[0]);
+                for(idx=1;idx<uspex_gui.calc._num_opt_steps;idx++){
+                        tmp=g_strdup_printf("%s %i",title,uspex_gui.calc.numProcessors[idx]);
+                        g_free(title);
+                        title=tmp;
+                }
+        }
+	GUI_TEXT_TABLE(table,uspex_gui.numProcessors,title,"CPU:",1,2,9,10);
+        g_free(title);
+GUI_TOOLTIP(uspex_gui.numProcessors,"numProcessors: Ch. ? DEFAULT: 1\nNumber of processors used in each steps.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numParallelCalcs,uspex_gui.calc.numParallelCalcs,"%i","PAR:",2,3,9,10);
+GUI_TOOLTIP(uspex_gui.numParallelCalcs,"numParallelCalcs: Ch. 4.8 DEFAULT: 1\nNumber of structure relaxations in parallel.");
+	GUI_CHECK_TABLE(table,uspex_gui.sel_octave,uspex_gui.have_octave,NULL,"OCTAVE",3,4,9,10);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.sel_octave,"Use octave instead of matlab.");
+/* line 10 */
+	GUI_TEXT_TABLE(table,uspex_gui.job_path,uspex_gui.calc.job_path,"Folder:",0,1,10,11);
 GUI_TOOLTIP(uspex_gui.job_path,"Select USPEX calculation folder.\nThis folder is where run_uspex will be launched\nand result will be read by GDIS.");
-	GUI_OPEN_BUTTON_TABLE(table,button,uspex_path_dialog,1,2,9,10);
-	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,9,10);
+	GUI_OPEN_BUTTON_TABLE(table,button,uspex_path_dialog,1,2,10,11);
+	GUI_TEXT_TABLE(table,uspex_gui.remoteFolder,uspex_gui.calc.remoteFolder,"Remote:",2,3,10,11);
 GUI_TOOLTIP(uspex_gui.remoteFolder,"remoteFolder: Ch. 4.8 DEFAULT: none\nWhen using remote submission, this hold the\nexecution folder on the distant computer.");
-	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,9,10);
+	GUI_OPEN_BUTTON_TABLE(table,button,load_remote_folder,3,4,10,11);
 	/*TODO: disable remote when whichCluster<2*/
 /* --- Restart */
-	GUI_LABEL_TABLE(table,"Restart",0,4,10,11);
-/* line 11 */
-	GUI_CHECK_TABLE(table,uspex_gui.pickUpYN,uspex_gui.calc.pickUpYN,NULL,"RESTART",0,1,11,12);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.pickUpYN,"pickUpYN: deprecated DEFAULT: 0\nSet to restart a calculation, deprecated on version <= 10.");
-	GUI_ENTRY_TABLE(table,uspex_gui.pickUpGen,uspex_gui.calc.pickUpGen,"%i","GEN:",1,2,11,12);
-GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the generation at which USPEX should restart.\nA new calculation is started for 0 (default).");
-	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,11,12);
-GUI_TOOLTIP(uspex_gui.pickUpFolder,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
-	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,11,12);/*not calling anything*/
-GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, etc.");
+	GUI_LABEL_TABLE(table,"Restart",0,4,11,12);
 /* line 12 */
-	GUI_CHECK_TABLE(table,button,uspex_gui.copySpecific,NULL,"COPY the Specific directory into calculation's one. <- WARNING, this may override above settings!",0,4,12,13);/*not calling anything*/
-GUI_TOOLTIP(button,"This copy the actual Specific directory into calculation directory.\nIf no Specific directory exists, no copy operation is performed.\nThis may override some settings in the current tab, silently!");
+	GUI_CHECK_TABLE(table,uspex_gui.pickUpYN,uspex_gui.calc.pickUpYN,NULL,"RESTART",0,1,12,13);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.pickUpYN,"pickUpYN: deprecated DEFAULT: 0\nSet to restart a calculation, deprecated on version <= 10.");
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpGen,uspex_gui.calc.pickUpGen,"%i","GEN:",1,2,12,13);
+GUI_TOOLTIP(uspex_gui.pickUpGen,"pickUpGen: Ch. 4.7 DEFAULT: 0\nSelect the generation at which USPEX should restart.\nA new calculation is started for 0 (default).");
+	GUI_ENTRY_TABLE(table,uspex_gui.pickUpFolder,uspex_gui.calc.pickUpFolder,"%i","Folder:",2,3,12,13);
+GUI_TOOLTIP(uspex_gui.pickUpFolder,"pickUpFolder: Ch. 4.7 DEFAULT: 0\nSelect the folder number from which to restart from.\nSetting N means restarting from a folder named \"resultN\".");
+	GUI_CHECK_TABLE(table,button,uspex_gui.restart_cleanup,NULL,"CLEANUP",3,4,12,13);/*not calling anything*/
+GUI_TOOLTIP(button,"Cleanup the calculation directory before restart,\nie. remove still_running, NOT_YET, etc.");
 /* reserved for future use */
 	for(idx=13;idx<18;idx++) GUI_LABEL_TABLE(table," ",0,4,idx,idx+1);
 /* --- end page */
@@ -5058,15 +6211,15 @@ GUI_TOOLTIP(uspex_gui.TE_threshold,"TE_threshold: Ch. 5.2 DEFAULT: 0.5\nStructur
 	GUI_LABEL_TABLE(table,"Transition Path Sampling",0,4,10,11);
 /* line 11 */
 	GUI_ENTRY_TABLE(table,uspex_gui.numIterations,uspex_gui.calc.numIterations,"%i","N_Iter:",0,1,11,12);
-GUI_TOOLTIP(uspex_gui.numIterations,"numIterations: Ch. 6.2 DEFAULT: 1000\nMaximum number of TPS iterations.");
+GUI_TOOLTIP(uspex_gui.numIterations,"numIterations: Ch. 6.3 DEFAULT: 1000\nMaximum number of TPS iterations.");
 	/*col 2: empty*/
 	GUI_ENTRY_TABLE(table,uspex_gui.shiftRatio,uspex_gui.calc.shiftRatio,"%.4f","rShift:",2,3,11,12);
-GUI_TOOLTIP(uspex_gui.shiftRatio,"shiftRatio: Ch. 6.2 DEFAULT: 0.1\nFraction of shooter-after-shifter operations.");
+GUI_TOOLTIP(uspex_gui.shiftRatio,"shiftRatio: Ch. 6.3 DEFAULT: 0.1\nFraction of shooter-after-shifter operations.");
 	GUI_CHECK_TABLE(table,uspex_gui.orderParaType,uspex_gui.calc.orderParaType,NULL,"OP_TYPE",3,4,11,12);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.orderParaType,"orderParaType: Ch. 6.2 DEFAULT: none\nSelect if the method of order parameter calculation is:\nthe fingerprint method (TRUE)\na user-defined method (FALSE).\nContrary to USPEX lack of default, TRUE is pre-selected.");
+GUI_TOOLTIP(uspex_gui.orderParaType,"orderParaType: Ch. 6.3 DEFAULT: none\nSelect if the method of order parameter calculation is:\nthe fingerprint method (TRUE)\na user-defined method (FALSE).\nContrary to USPEX lack of default, TRUE is pre-selected.");
 /* line 12 */
 	GUI_TEXT_TABLE(table,uspex_gui.speciesSymbol,uspex_gui.calc.speciesSymbol,"SpeciesSymbols:",0,2,12,13);
-GUI_TOOLTIP(uspex_gui.speciesSymbol,"speciesSymbol: Ch. 6.2 DEFAULT: none\nIdentity of all chemical species (atoms/molecules).");
+GUI_TOOLTIP(uspex_gui.speciesSymbol,"speciesSymbol: Ch. 6.3 DEFAULT: none\nIdentity of all chemical species (atoms/molecules).");
 	if(uspex_gui.calc.mass==NULL){
 		title=g_strdup("");
 	}else{
@@ -5079,41 +6232,41 @@ GUI_TOOLTIP(uspex_gui.speciesSymbol,"speciesSymbol: Ch. 6.2 DEFAULT: none\nIdent
 	}
 	GUI_TEXT_TABLE(table,uspex_gui.mass,title,"mass:",2,4,12,13);
 	g_free(title);
-GUI_TOOLTIP(uspex_gui.mass,"mass: Ch. 6.2 DEFAULT: Auto\nMass of each corresponding species.");
+GUI_TOOLTIP(uspex_gui.mass,"mass: Ch. 6.3 DEFAULT: Auto\nMass of each corresponding species.");
 /* line 13 */
 	GUI_ENTRY_TABLE(table,uspex_gui.amplitudeShoot_AB,uspex_gui.calc.amplitudeShoot[0],"%.4f","A(A->B):",0,1,13,14);
-GUI_TOOLTIP(uspex_gui.amplitudeShoot_AB,"amplitudeShoot: Ch. 6.2 DEFAULT: 0.1\nMomentum amplitude for A->B shooting.");
+GUI_TOOLTIP(uspex_gui.amplitudeShoot_AB,"amplitudeShoot: Ch. 6.3 DEFAULT: 0.1\nMomentum amplitude for A->B shooting.");
 	GUI_ENTRY_TABLE(table,uspex_gui.amplitudeShoot_BA,uspex_gui.calc.amplitudeShoot[1],"%.4f","A(B->A):",1,2,13,14);
-GUI_TOOLTIP(uspex_gui.amplitudeShoot_BA,"amplitudeShoot: Ch. 6.2 DEFAULT: 0.1\nMomentum amplitude for B->A shooting.");
+GUI_TOOLTIP(uspex_gui.amplitudeShoot_BA,"amplitudeShoot: Ch. 6.3 DEFAULT: 0.1\nMomentum amplitude for B->A shooting.");
 	GUI_ENTRY_TABLE(table,uspex_gui.magnitudeShoot_success,uspex_gui.calc.magnitudeShoot[0],"%.4f","M(success):",2,3,13,14);
-GUI_TOOLTIP(uspex_gui.magnitudeShoot_success,"magnitudeShoot: Ch. 6.2 DEFAULT: 1.05\nAmplitude increasing factor on MD trajectory success.");
+GUI_TOOLTIP(uspex_gui.magnitudeShoot_success,"magnitudeShoot: Ch. 6.3 DEFAULT: 1.05\nAmplitude increasing factor on MD trajectory success.");
 	GUI_ENTRY_TABLE(table,uspex_gui.magnitudeShoot_failure,uspex_gui.calc.magnitudeShoot[1],"%.4f","M(failure):",3,4,13,14);
-GUI_TOOLTIP(uspex_gui.magnitudeShoot_failure,"magnitudeShoot: Ch. 6.2 DEFAULT: 1.05\nAmplitude decreasing factor on MD trajectory failure.");
+GUI_TOOLTIP(uspex_gui.magnitudeShoot_failure,"magnitudeShoot: Ch. 6.3 DEFAULT: 1.05\nAmplitude decreasing factor on MD trajectory failure.");
 /* line 14 */
 	GUI_TEXT_TABLE(table,uspex_gui.cmdOrderParameter,uspex_gui.calc.cmdOrderParameter,"cmdOP:",0,2,14,15);
-GUI_TOOLTIP(uspex_gui.cmdOrderParameter,"cmdOrderParameter: Ch. 6.2 DEFAULT: none\nUser-defined command for order parameter calculation.");
+GUI_TOOLTIP(uspex_gui.cmdOrderParameter,"cmdOrderParameter: Ch. 6.3 DEFAULT: none\nUser-defined command for order parameter calculation.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.cmdOrderParameter_button,load_cmd_OP,2,3,14,15);
 	GUI_ENTRY_TABLE(table,uspex_gui.opCriteria_start,uspex_gui.calc.opCriteria[0],"%.4f","SIM(start):",3,4,14,15);
-GUI_TOOLTIP(uspex_gui.opCriteria_start,"opCriteria: Ch. 6.2 DEFAULT: none\nAllowable degree of similarity between starting states.");
+GUI_TOOLTIP(uspex_gui.opCriteria_start,"opCriteria: Ch. 6.3 DEFAULT: none\nAllowable degree of similarity between starting states.");
 /* line 15 */
 	GUI_TEXT_TABLE(table,uspex_gui.cmdEnthalpyTemperature,uspex_gui.calc.cmdEnthalpyTemperature,"cmdET:",0,2,15,16);
-GUI_TOOLTIP(uspex_gui.cmdEnthalpyTemperature,"cmdEnthalpyTemperature: Ch. 6.2 DEFAULT: none\nUser-defined command for enthalpy/temperature\nextraction from the MD results.");
+GUI_TOOLTIP(uspex_gui.cmdEnthalpyTemperature,"cmdEnthalpyTemperature: Ch. 6.3 DEFAULT: none\nUser-defined command for enthalpy/temperature\nextraction from the MD results.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.cmdEnthalpyTemperature_button,load_cmd_ET,2,3,15,16);
 	GUI_ENTRY_TABLE(table,uspex_gui.opCriteria_end,uspex_gui.calc.opCriteria[1],"%.4f","SIM(end):",3,4,15,16);
-GUI_TOOLTIP(uspex_gui.opCriteria_end,"opCriteria: Ch. 6.2 DEFAULT: none\nAllowable degree of similarity between ending states.");
+GUI_TOOLTIP(uspex_gui.opCriteria_end,"opCriteria: Ch. 6.3 DEFAULT: none\nAllowable degree of similarity between ending states.");
 /* line 16 */
 	GUI_TEXT_TABLE(table,uspex_gui.orderParameterFile,uspex_gui.calc.orderParameterFile,"OP_file:",0,1,16,17);
-GUI_TOOLTIP(uspex_gui.orderParameterFile,"orderParameterFile: Ch. 6.2 DEFAULT: fp.dat\nOrder parameter history file.");
+GUI_TOOLTIP(uspex_gui.orderParameterFile,"orderParameterFile: Ch. 6.3 DEFAULT: fp.dat\nOrder parameter history file.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.orderParameterFile_button,load_OP_file,1,2,16,17);
 	GUI_TEXT_TABLE(table,uspex_gui.enthalpyTemperatureFile,uspex_gui.calc.enthalpyTemperatureFile,"ET_file:",2,3,16,17);
-GUI_TOOLTIP(uspex_gui.enthalpyTemperatureFile,"enthalpyTemperatureFile: Ch. 6.2 DEFAULT: HT.dat\nEnthalpy and temperature history file.");
+GUI_TOOLTIP(uspex_gui.enthalpyTemperatureFile,"enthalpyTemperatureFile: Ch. 6.3 DEFAULT: HT.dat\nEnthalpy and temperature history file.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.enthalpyTemperatureFile_button,load_ET_file,3,4,16,17);
 /* line 17 */
 	GUI_TEXT_TABLE(table,uspex_gui.trajectoryFile,uspex_gui.calc.trajectoryFile,"traj_file:",0,1,17,18);
-GUI_TOOLTIP(uspex_gui.trajectoryFile,"trajectoryFile: Ch. 6.2 DEFAULT: traj.dat\nMD trajectory file.");
+GUI_TOOLTIP(uspex_gui.trajectoryFile,"trajectoryFile: Ch. 6.3 DEFAULT: traj.dat\nMD trajectory file.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.trajectoryFile_button,load_traj_file,1,2,17,18);
 	GUI_TEXT_TABLE(table,uspex_gui.MDrestartFile,uspex_gui.calc.MDrestartFile,"MD_file:",2,3,17,18);
-GUI_TOOLTIP(uspex_gui.MDrestartFile,"MDrestartFile: Ch. 6.2 DEFAULT: traj.restart\nMD restart file.");
+GUI_TOOLTIP(uspex_gui.MDrestartFile,"MDrestartFile: Ch. 6.3 DEFAULT: traj.restart\nMD restart file.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.MDrestartFile_button,load_MDrestart_file,3,4,17,18);
 /* --- end page */
 
@@ -5130,90 +6283,90 @@ GUI_TOOLTIP(uspex_gui.MDrestartFile,"MDrestartFile: Ch. 6.2 DEFAULT: traj.restar
 	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"0 - No full relaxation (fix cells)");
 	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"1 - Relax only the best structures");
 	GUI_COMBOBOX_ADD(uspex_gui.FullRelax,"2 - Relax all different structures");
-GUI_TOOLTIP(uspex_gui.FullRelax,"FullRelax: Ch. 5.6 DEFAULT: 2\nPerform full relaxation of which structures for analysis.\nRecommended value is 2.");
+GUI_TOOLTIP(uspex_gui.FullRelax,"FullRelax: Ch. 5.7 DEFAULT: 2\nPerform full relaxation of which structures for analysis.\nRecommended value is 2.");
 	GUI_ENTRY_TABLE(table,uspex_gui.maxVectorLength,uspex_gui.calc.maxVectorLength,"%.4f","MaxV:",1,2,1,2);
-GUI_TOOLTIP(uspex_gui.maxVectorLength,"maxVectorLength: Ch. 5.6 DEFAULT: none\nAdd a correction force to keep cell length below this setting.");
+GUI_TOOLTIP(uspex_gui.maxVectorLength,"maxVectorLength: Ch. 5.7 DEFAULT: none\nAdd a correction force to keep cell length below this setting.");
 	GUI_ENTRY_TABLE(table,uspex_gui.GaussianWidth,uspex_gui.calc.GaussianWidth,"%.4f","GaussW:",2,3,1,2);
-GUI_TOOLTIP(uspex_gui.GaussianWidth,"GaussianWidth: Ch. 5.6 DEFAULT: AUTO\nWidth of Gaussian added to PES to accelerate phase transition.\nRecommended values is 0.10~0.15L (L = minimum cell length).");
+GUI_TOOLTIP(uspex_gui.GaussianWidth,"GaussianWidth: Ch. 5.7 DEFAULT: AUTO\nWidth of Gaussian added to PES to accelerate phase transition.\nRecommended values is 0.10~0.15L (L = minimum cell length).");
 	GUI_ENTRY_TABLE(table,uspex_gui.GaussianHeight,uspex_gui.calc.GaussianHeight,"%.4f","GaussH:",3,4,1,2);
-GUI_TOOLTIP(uspex_gui.GaussianHeight,"GaussianHeight: Ch. 5.6 DEFAULT: AUTO\nHeight of Gaussian added to PES to accelerate phase transition.\nRecommended values is L.dh^2.G with L = average cell length,\ndh = GaussW, and G = shear modulus.");
+GUI_TOOLTIP(uspex_gui.GaussianHeight,"GaussianHeight: Ch. 5.7 DEFAULT: AUTO\nHeight of Gaussian added to PES to accelerate phase transition.\nRecommended values is L.dh^2.G with L = average cell length,\ndh = GaussW, and G = shear modulus.");
 /* line 2 */
 	/*col 1: empty*/
 //	GUI_ENTRY_TABLE(table,uspex_gui.ExternalPressure,uspex_gui.calc.ExternalPressure,"%.4f","ExtP:",0,1,2,3);
-//GUI_TOOLTIP(uspex_gui.ExternalPressure,"ExternalPressure: Ch. 4.1, 5.6 DEFAULT: none\nExternal pressure (GPa) for calculation.");
+//GUI_TOOLTIP(uspex_gui.ExternalPressure,"ExternalPressure: Ch. 4.1, 5.7 DEFAULT: none\nExternal pressure (GPa) for calculation.");
 	GUI_COMBOBOX_TABLE(table,uspex_gui.meta_model,"MODEL:",1,3,2,3);
 	GUI_COMBOBOX_ADD(uspex_gui.meta_model,"From POSCAR FILE");
 	GUI_COMBOBOX_ADD(uspex_gui.meta_model,"UNDER CONSTRUCTION");
 GUI_TOOLTIP(uspex_gui.meta_model,"Select the model from which metadynamics is started.\nA good structure, relaxed at ExtP is necessary.");
 	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.meta_model_button,load_meta_start_file,3,4,2,3);
 /* --- Particles Swarm optimization */
-	GUI_LABEL_TABLE(table,"Particles Swarm optimization",0,4,3,4);
-/* line 4 */
+/* line 3 */
 	/*col 1: empty*/
-	GUI_ENTRY_TABLE(table,uspex_gui.PSO_softMut,uspex_gui.calc.PSO_softMut,"%.4f","SoftMut:",1,2,4,5);
-GUI_TOOLTIP(uspex_gui.PSO_softMut,"PSO_softMut: Ch. 5.7 DEFAULT: 1\nSoft mutation weight.");
-	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestStruc,uspex_gui.calc.PSO_BestStruc,"%.4f","BestStruct:",2,3,4,5);
-GUI_TOOLTIP(uspex_gui.PSO_BestStruc,"PSO_BestStruc: Ch. 5.7 DEFAULT: 1\nWeight of heredity with best position of a given PSO particle.");
-	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestEver,uspex_gui.calc.PSO_BestEver,"%.4f","BestEver:",3,4,4,5);
-GUI_TOOLTIP(uspex_gui.PSO_BestEver,"PSO_BestEver: Ch. 5.7 DEFAULT: 1\nWeight of heredity with globally best PSO particle.");
+	GUI_LABEL_TABLE(table,"PSO:",0,1,3,4);
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_softMut,uspex_gui.calc.PSO_softMut,"%.4f","SoftMut:",1,2,3,4);
+GUI_TOOLTIP(uspex_gui.PSO_softMut,"PSO_softMut: Ch. 5.8 DEFAULT: 1\nSoft mutation weight.");
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestStruc,uspex_gui.calc.PSO_BestStruc,"%.4f","BestStruct:",2,3,3,4);
+GUI_TOOLTIP(uspex_gui.PSO_BestStruc,"PSO_BestStruc: Ch. 5.8 DEFAULT: 1\nWeight of heredity with best position of a given PSO particle.");
+	GUI_ENTRY_TABLE(table,uspex_gui.PSO_BestEver,uspex_gui.calc.PSO_BestEver,"%.4f","BestEver:",3,4,3,4);
+GUI_TOOLTIP(uspex_gui.PSO_BestEver,"PSO_BestEver: Ch. 5.8 DEFAULT: 1\nWeight of heredity with globally best PSO particle.");
 /* --- Variable-cell nudged elastic band */
-	GUI_LABEL_TABLE(table,"Variable-cell nudged elastic band",0,4,5,6);
-/* line 6 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui._vcnebtype_method,"Method:",0,1,6,7);
+	GUI_LABEL_TABLE(table,"Variable-cell nudged elastic band",0,4,4,5);
+/* line 5 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui._vcnebtype_method,"Method:",0,1,5,6);
 	GUI_COMBOBOX_ADD(uspex_gui._vcnebtype_method,"1 - VC-NEB method");
 	GUI_COMBOBOX_ADD(uspex_gui._vcnebtype_method,"2 - simple relaxation");
 GUI_TOOLTIP(uspex_gui._vcnebtype_method,"Choose between VC-NEB method and simple structure relaxation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.vcnebType,uspex_gui.calc.vcnebType,"%3i","VC-NEB:",1,2,6,7);
-GUI_TOOLTIP(uspex_gui.vcnebType,"vcnebType: Ch. 6.1 DEFAULT: 110\nType of VC-NEB calculation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.vcnebType,uspex_gui.calc.vcnebType,"%3i","VC-NEB:",1,2,5,6);
+GUI_TOOLTIP(uspex_gui.vcnebType,"vcnebType: Ch. 6.2 DEFAULT: 110\nType of VC-NEB calculation.");
 GUI_LOCK(uspex_gui.vcnebType);/*not directly modifiable*/
-	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_img_num,uspex_gui.calc._vcnebtype_img_num,update_vcnebType,"Var_Image",2,3,6,7);
+	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_img_num,uspex_gui.calc._vcnebtype_img_num,update_vcnebType,"Var_Image",2,3,5,6);
 GUI_TOOLTIP(uspex_gui._vcnebtype_img_num,"Set whether number of images should be kept fixed.");
-	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_spring,uspex_gui.calc._vcnebtype_spring,update_vcnebType,"Var_Spring",3,4,6,7);
+	GUI_CHECK_TABLE(table,uspex_gui._vcnebtype_spring,uspex_gui.calc._vcnebtype_spring,update_vcnebType,"Var_Spring",3,4,5,6);
 GUI_TOOLTIP(uspex_gui._vcnebtype_spring,"Set whether spring constants should be kept fixed.");
-/* line 7 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optReadImages,"Img:",0,1,7,8);
+/* line 6 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optReadImages,"Img:",0,1,6,7);
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"0 - All structures are needed");
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"1 - Only initial and final");
 	GUI_COMBOBOX_ADD(uspex_gui.optReadImages,"2 - Initial and final + intermediates");
-GUI_TOOLTIP(uspex_gui.optReadImages,"optReadImages: Ch. 6.1 DEFAULT: 2\nSet the method for reading Images file.");
-	GUI_ENTRY_TABLE(table,uspex_gui.numImages,uspex_gui.calc.numImages,"%i","N_Img:",1,2,7,8);
-GUI_TOOLTIP(uspex_gui.numImages,"numImages: Ch. 6.1 DEFAULT: 9\nInitial number of images.");
-	GUI_ENTRY_TABLE(table,uspex_gui.numSteps,uspex_gui.calc.numSteps,"%4i","N_Step:",2,3,7,8);
-GUI_TOOLTIP(uspex_gui.numSteps,"numSteps: Ch. 6.1 DEFAULT: 600\nMaximum VC-NEB step iterations.\nA value of at least 500 is recommended.");
-	GUI_CHECK_TABLE(table,uspex_gui.optFreezing,uspex_gui.calc.optFreezing,NULL,"Freeze_Img",3,4,7,8);/*not calling anything*/
-GUI_TOOLTIP(uspex_gui.optFreezing,"optFreezing: Ch. 6.1 DEFAULT: FALSE\nActivate freezing of Image structure when ConvThreshold is reached.");
-/* line 8 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optimizerType,"Opt:",0,1,8,9);
+GUI_TOOLTIP(uspex_gui.optReadImages,"optReadImages: Ch. 6.2 DEFAULT: 2\nSet the method for reading Images file.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numImages,uspex_gui.calc.numImages,"%i","N_Img:",1,2,6,7);
+GUI_TOOLTIP(uspex_gui.numImages,"numImages: Ch. 6.2 DEFAULT: 9\nInitial number of images.");
+	GUI_ENTRY_TABLE(table,uspex_gui.numSteps,uspex_gui.calc.numSteps,"%4i","N_Step:",2,3,6,7);
+GUI_TOOLTIP(uspex_gui.numSteps,"numSteps: Ch. 6.2 DEFAULT: 600\nMaximum VC-NEB step iterations.\nA value of at least 500 is recommended.");
+	GUI_CHECK_TABLE(table,uspex_gui.optFreezing,uspex_gui.calc.optFreezing,NULL,"Freeze_Img",3,4,6,7);/*not calling anything*/
+GUI_TOOLTIP(uspex_gui.optFreezing,"optFreezing: Ch. 6.2 DEFAULT: FALSE\nActivate freezing of Image structure when ConvThreshold is reached.");
+/* line 7 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optimizerType,"Opt:",0,1,7,8);
 	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"1 - Steepest Descent");
 	GUI_COMBOBOX_ADD(uspex_gui.optimizerType,"2 - Fast Inertial Relaxation Engine");
-GUI_TOOLTIP(uspex_gui.optimizerType,"optimizerType: Ch. 6.1 DEFAULT: 1\nSelect the optimization algorithm (SD or FIRE).");
-	GUI_ENTRY_TABLE(table,uspex_gui.dt,uspex_gui.calc.dt,"%.4f","dt:",1,2,8,9);
-GUI_TOOLTIP(uspex_gui.dt,"dt: Ch. 6.1 DEFAULT: 0.05\nTime step for structure relaxation.");
-	GUI_ENTRY_TABLE(table,uspex_gui.ConvThreshold,uspex_gui.calc.ConvThreshold,"%.4f","Conv:",2,3,8,9);
-GUI_TOOLTIP(uspex_gui.ConvThreshold,"ConvThreshold: Ch. 6.1 DEFAULT: 0.003\nHalting condition (ev/Ang.) for RMS forces on images.");
-	GUI_ENTRY_TABLE(table,uspex_gui.VarPathLength,uspex_gui.calc.VarPathLength,"%.4f","PathLength:",3,4,8,9);
-GUI_TOOLTIP(uspex_gui.VarPathLength,"VarPathLength: Ch. 6.1 DEFAULT: AUTO\nCriterion to determine image creation/deletion for variable image method.\nif L>1.5*criterion image is added\nif L<0.5*criterion image is deleted\nL=length between two neighbor images.");
-/* line 9 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optRelaxType,"Relax:",0,1,9,10);
+GUI_TOOLTIP(uspex_gui.optimizerType,"optimizerType: Ch. 6.2 DEFAULT: 1\nSelect the optimization algorithm (SD or FIRE).");
+	GUI_ENTRY_TABLE(table,uspex_gui.dt,uspex_gui.calc.dt,"%.4f","dt:",1,2,7,8);
+GUI_TOOLTIP(uspex_gui.dt,"dt: Ch. 6.2 DEFAULT: 0.05\nTime step for structure relaxation.");
+	GUI_ENTRY_TABLE(table,uspex_gui.ConvThreshold,uspex_gui.calc.ConvThreshold,"%.4f","Conv:",2,3,7,8);
+GUI_TOOLTIP(uspex_gui.ConvThreshold,"ConvThreshold: Ch. 6.2 DEFAULT: 0.003\nHalting condition (ev/Ang.) for RMS forces on images.");
+	GUI_ENTRY_TABLE(table,uspex_gui.VarPathLength,uspex_gui.calc.VarPathLength,"%.4f","PathLength:",3,4,7,8);
+GUI_TOOLTIP(uspex_gui.VarPathLength,"VarPathLength: Ch. 6.2 DEFAULT: AUTO\nCriterion to determine image creation/deletion for variable image method.\nif L>1.5*criterion image is added\nif L<0.5*criterion image is deleted\nL=length between two neighbor images.");
+/* line 8 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optRelaxType,"Relax:",0,1,8,9);
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"1 - fixed cell, positions relaxed (=NEB)");
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"2 - cell lattice only (only for testing)");
 	GUI_COMBOBOX_ADD(uspex_gui.optRelaxType,"3 - full, cell and positions relaxation.");
-GUI_TOOLTIP(uspex_gui.optRelaxType,"optRelaxType: Ch. 6.1 DEFAULT: 3>\nStructure relaxation mode.");
-	GUI_ENTRY_TABLE(table,uspex_gui.K_min,uspex_gui.calc.K_min,"%.4f","Kmin:",1,2,9,10);
-GUI_TOOLTIP(uspex_gui.K_min,"K_min: Ch. 6.1 DEFAULT: 5\nMinimum spring constant (eV/Ang.^2).");
-	GUI_ENTRY_TABLE(table,uspex_gui.K_max,uspex_gui.calc.K_max,"%.4f","Kmax:",2,3,9,10);
-GUI_TOOLTIP(uspex_gui.K_max,"K_max: Ch. 6.1 DEFAULT: 5\nMaximum spring constant (eV/Ang.^2).");
-	GUI_ENTRY_TABLE(table,uspex_gui.Kconstant,uspex_gui.calc.Kconstant,"%.4f","Kcte:",3,4,9,10);
-GUI_TOOLTIP(uspex_gui.Kconstant,"Kconstant: Ch. 6.1 DEFAULT: 5\nFixed spring constant (eV/Ang.^2).");
-/* line 10 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.optMethodCIDI,"CI/DI:",0,1,10,11);
+GUI_TOOLTIP(uspex_gui.optRelaxType,"optRelaxType: Ch. 6.2 DEFAULT: 3\nStructure relaxation mode.");
+	GUI_ENTRY_TABLE(table,uspex_gui.K_min,uspex_gui.calc.K_min,"%.4f","Kmin:",1,2,8,9);
+GUI_TOOLTIP(uspex_gui.K_min,"K_min: Ch. 6.2 DEFAULT: 5\nMinimum spring constant (eV/Ang.^2).");
+	GUI_ENTRY_TABLE(table,uspex_gui.K_max,uspex_gui.calc.K_max,"%.4f","Kmax:",2,3,8,9);
+GUI_TOOLTIP(uspex_gui.K_max,"K_max: Ch. 6.2 DEFAULT: 5\nMaximum spring constant (eV/Ang.^2).");
+	GUI_ENTRY_TABLE(table,uspex_gui.Kconstant,uspex_gui.calc.Kconstant,"%.4f","Kcte:",3,4,8,9);
+GUI_TOOLTIP(uspex_gui.Kconstant,"Kconstant: Ch. 6.2 DEFAULT: 5\nFixed spring constant (eV/Ang.^2).");
+/* line 9 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.optMethodCIDI,"CI/DI:",0,1,9,10);
 	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 0 - No CI/DI method will be used");
 	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 1 - single CI on highest energy TS");
 	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI,"-1 - Single DI on lowest  energy LM");
 	GUI_COMBOBOX_ADD(uspex_gui.optMethodCIDI," 2 - Multi-CI/DI on provided  TS/LM");
-GUI_TOOLTIP(uspex_gui.optMethodCIDI,"optMethodCIDI: Ch. 6.1 DEFAULT: 0\nOption for Climbing-Image (CI) and Descending-Image (DI).");
-	GUI_ENTRY_TABLE(table,uspex_gui.startCIDIStep,uspex_gui.calc.startCIDIStep,"%i","Start CI/DI:",1,2,10,11);
-GUI_TOOLTIP(uspex_gui.startCIDIStep,"startCIDIStep: Ch. 6.1 DEFAULT: 100\nStarting step for CI/DI method.");
+GUI_TOOLTIP(uspex_gui.optMethodCIDI,"optMethodCIDI: Ch. 6.2 DEFAULT: 0\nOption for Climbing-Image (CI) and Descending-Image (DI).");
+	GUI_ENTRY_TABLE(table,uspex_gui.startCIDIStep,uspex_gui.calc.startCIDIStep,"%i","Start CI/DI:",1,2,9,10);
+GUI_TOOLTIP(uspex_gui.startCIDIStep,"startCIDIStep: Ch. 6.2 DEFAULT: 100\nStarting step for CI/DI method.");
 	if(uspex_gui.calc._npickimg<1){
 		title=g_strdup("");
 	}else{
@@ -5224,49 +6377,54 @@ GUI_TOOLTIP(uspex_gui.startCIDIStep,"startCIDIStep: Ch. 6.1 DEFAULT: 100\nStarti
 			title=tmp;
 		}
 	}
-	GUI_TEXT_TABLE(table,uspex_gui.pickupImages,title,"Pickup:",2,3,10,11);
+	GUI_TEXT_TABLE(table,uspex_gui.pickupImages,title,"Pickup:",2,3,9,10);
 	g_free(title);
-GUI_TOOLTIP(uspex_gui.pickupImages,"pickupImages: Ch. 6.1 DEFAULT: AUTO\nNumber/which images to be picked up for CI/DI method.");
-	GUI_ENTRY_TABLE(table,uspex_gui.PrintStep,uspex_gui.calc.PrintStep,"%i","PrintStep:",3,4,10,11);
-GUI_TOOLTIP(uspex_gui.PrintStep,"PrintStep: Ch. 6.1 DEFAULT: 1\nSave restart file every PrintStep times.");
-/* line 11 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.FormatType,"Format:",0,1,11,12);
+GUI_TOOLTIP(uspex_gui.pickupImages,"pickupImages: Ch. 6.2 DEFAULT: AUTO\nNumber/which images to be picked up for CI/DI method.");
+	GUI_ENTRY_TABLE(table,uspex_gui.PrintStep,uspex_gui.calc.PrintStep,"%i","PrintStep:",3,4,9,10);
+GUI_TOOLTIP(uspex_gui.PrintStep,"PrintStep: Ch. 6.2 DEFAULT: 1\nSave restart file every PrintStep times.");
+/* line 10 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.FormatType,"Format:",0,1,10,11);
 	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"1 - XCRYSTDENS format (.xsf)");
 	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"2 - VASP v5 (POSCAR) format.");
 	GUI_COMBOBOX_ADD(uspex_gui.FormatType,"3 - XYZ format with lattice.");
-GUI_TOOLTIP(uspex_gui.FormatType,"FormatType: Ch. 6.1 DEFAULT: 2\nFormat of structures in PATH output directory.");
-	GUI_COMBOBOX_TABLE(table,uspex_gui.img_model,"Model:",1,3,11,12);
+GUI_TOOLTIP(uspex_gui.FormatType,"FormatType: Ch. 6.2 DEFAULT: 2\nFormat of structures in PATH output directory.");
+	GUI_COMBOBOX_TABLE(table,uspex_gui.img_model,"Model:",1,3,10,11);
 GUI_TOOLTIP(uspex_gui.img_model,"Select the original Images model.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.img_model_button,load_img_model_file,3,4,11,12);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.img_model_button,load_img_model_file,3,4,10,11);
 /* --- Molecules */
-	GUI_LABEL_TABLE(table,"Molecules",0,4,12,13);
-/* line 13 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_model,"MODEL:",0,1,13,14);
+	GUI_LABEL_TABLE(table,"Molecules",0,4,11,12);
+/* line 12 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_model,"MODEL:",0,1,12,13);
 	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"Already provided");
 	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From MOL_ folder");
 	GUI_COMBOBOX_ADD(uspex_gui.mol_model,"From GDIS models");
 GUI_TOOLTIP(uspex_gui.mol_model,"Select the model(s) for molecular calculation.");
-	GUI_SPIN_TABLE(table,uspex_gui.num_mol,uspex_gui._tmp_num_mol,spin_update_num_mol,"N_MOLS",1,2,13,14);
+	GUI_SPIN_TABLE(table,uspex_gui.num_mol,uspex_gui._tmp_num_mol,spin_update_num_mol,"N_MOLS",1,2,12,13);
 GUI_TOOLTIP(uspex_gui.num_mol,"Select the number of molecules.");
 	/*col 3: empty*/
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.mol_model_button,load_mol_model_folder,3,4,13,14);
-/* line 14 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_gdis,"GDIS_MOL:",0,1,14,15);
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.mol_model_button,load_mol_model_folder,3,4,12,13);
+/* line 13 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.mol_gdis,"GDIS_MOL:",0,1,13,14);
 GUI_TOOLTIP(uspex_gui.mol_gdis,"Select the molecule from GDIS model.");
-	GUI_SPIN_TABLE(table,uspex_gui.curr_mol,uspex_gui._tmp_curr_mol,spin_update_curr_mol,"MOL_#",1,2,14,15);
+	GUI_SPIN_TABLE(table,uspex_gui.curr_mol,uspex_gui._tmp_curr_mol,spin_update_curr_mol,"MOL_#",1,2,13,14);
 	GUI_SPIN_RANGE(uspex_gui.curr_mol,1.,(gdouble)uspex_gui.calc._nmolecules);
 GUI_TOOLTIP(uspex_gui.curr_mol,"Current molecule number.");
-	GUI_CHECK_TABLE(table,uspex_gui.mol_gulp,uspex_gui.mol_as_gulp,NULL,"GULP_FORM",2,3,14,15);/*not calling anything*/
+	GUI_CHECK_TABLE(table,uspex_gui.mol_gulp,uspex_gui.mol_as_gulp,NULL,"GULP_FORM",2,3,13,14);/*not calling anything*/
 GUI_TOOLTIP(uspex_gui.mol_gulp,"Use GULP chemical labels and charge Zmatrix form.");
-	GUI_APPLY_BUTTON_TABLE(table,uspex_gui.mol_apply_button,apply_gdis_mol,3,4,14,15);	
+	GUI_APPLY_BUTTON_TABLE(table,uspex_gui.mol_apply_button,apply_gdis_mol,3,4,13,14);
 /* --- Surfaces */
-	GUI_LABEL_TABLE(table,"Surfaces",0,4,15,16);
-/* line 16 */
-	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",0,2,16,17);
+	GUI_LABEL_TABLE(table,"Surfaces",0,4,14,15);
+/* line 15 */
+	GUI_COMBOBOX_TABLE(table,uspex_gui.substrate_model,"MODEL:",1,3,15,16);
 GUI_TOOLTIP(uspex_gui.substrate_model,"Select the model to use as a substrate\nie. without buffer, surface, and vacuum region.");
-	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,2,3,16,17);
-GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",3,4,16,17);
-GUI_TOOLTIP(uspex_gui.thicknessS,"thicknessS: Ch. 5.3 DEFAULT: 2.0\nThickness (Ang.) of the surface region.");
+	GUI_OPEN_BUTTON_TABLE(table,uspex_gui.substrate_model_button,load_substrate_model_file,3,4,15,16);
+/*line 16 */
+	GUI_ENTRY_TABLE(table,uspex_gui.reconstruct,uspex_gui.calc.reconstruct,"%i","N_Surf:",1,2,16,17);
+GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.4 DEFAULT: 1\nNumber of replication of the surface cell.");
+	GUI_ENTRY_TABLE(table,uspex_gui.thicknessS,uspex_gui.calc.thicknessS,"%.4f","S_thick:",2,3,16,17);
+GUI_TOOLTIP(uspex_gui.thicknessS,"thicknessS: Ch. 5.4 DEFAULT: 2.0\nThickness (Ang.) of the surface region.");
+        GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,16,17);
+GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.4 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
 /* line 17 */
 	if(uspex_gui.calc.StoichiometryStart==NULL){
 		title=g_strdup("");
@@ -5278,13 +6436,15 @@ GUI_TOOLTIP(uspex_gui.thicknessS,"thicknessS: Ch. 5.3 DEFAULT: 2.0\nThickness (A
 			title=tmp;
 		}
 	}
-	GUI_TEXT_TABLE(table,uspex_gui.StoichiometryStart,title,"Stoichio:",0,2,17,18);
+	GUI_TEXT_TABLE(table,uspex_gui.StoichiometryStart,title,"Stoichio:",0,1,17,18);
 	g_free(title);
-GUI_TOOLTIP(uspex_gui.StoichiometryStart,"StoichiometryStart: Ch. 5.3 DEFAULT: ?\nDefine the initial stoichiometry of the BULK.");
-	GUI_ENTRY_TABLE(table,uspex_gui.reconstruct,uspex_gui.calc.reconstruct,"%i","N_Surf:",2,3,17,18);
-GUI_TOOLTIP(uspex_gui.reconstruct,"reconstruct: Ch. 5.3 DEFAULT: 1\nNumber of replication of the surface cell.");
-	GUI_ENTRY_TABLE(table,uspex_gui.thicknessB,uspex_gui.calc.thicknessB,"%.4f","B_thick:",3,4,17,18);
-GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (Ang.) of the buffer region.");
+GUI_TOOLTIP(uspex_gui.StoichiometryStart,"StoichiometryStart: Ch. 5.4 DEFAULT: ?\nDefine the initial stoichiometry of the BULK.");
+	GUI_ENTRY_TABLE(table,uspex_gui.E_AB,uspex_gui.calc.E_AB,"%.4f","E_AB:",1,2,17,18);
+GUI_TOOLTIP(uspex_gui.E_AB,"E_AB: Ch. 5.4 DEFAULT: ?\nDFT energy (eV/formula) of AmBn.");
+	GUI_ENTRY_TABLE(table,uspex_gui.Mu_A,uspex_gui.calc.Mu_A,"%.4f","Mu_A:",2,3,17,18);
+GUI_TOOLTIP(uspex_gui.Mu_A,"Mu_A: Ch. 5.4 DEFAULT: ?\nDFT energy (eV/atom) of elemental A.");
+	GUI_ENTRY_TABLE(table,uspex_gui.Mu_B,uspex_gui.calc.Mu_B,"%.4f","Mu_B:",3,4,17,18);
+GUI_TOOLTIP(uspex_gui.Mu_B,"Mu_B: Ch. 5.4 DEFAULT: ?\nDFT energy (eV/atom) of elemental B.");
 /* --- end page */
 /* initialize everything */
 	GUI_COMBOBOX_SETUP(uspex_gui.calculationMethod,0,uspex_method_selected);
@@ -5311,18 +6471,12 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 	set_numSpecies();
 	GUI_COMBOBOX_SETUP(uspex_gui.numSpecies,0,uspex_numSpecies_selected);
 	uspex_numSpecies_selected(uspex_gui.numSpecies);
+	toggle_v1030();
 /*per optimization step*/
 	GUI_COMBOBOX_SETUP(uspex_gui.abinitioCode,0,uspex_ai_selected);/*ai means ab initio, not...*/
 	spin_update_curr_step();
 	uspex_ai_selected(uspex_gui.abinitioCode);
-	GUI_LOCK(uspex_gui.ai_generate);/*Use of GDIS to prepare specific calculation parameters is Unavailable for now (TODO)*/
-	GUI_LOCK(uspex_gui.ai_spe);
-	populate_spe();
-	GUI_UNLOCK(uspex_gui.ai_spe);
-	GUI_COMBOBOX_SETUP(uspex_gui.ai_spe,0,ai_spe_selected);
-	ai_spe_selected(uspex_gui.ai_spe);
 	toggle_auto_step();
-	GUI_ENTRY_ACTIVATE(uspex_gui.ai_pot,change_ai_pot,NULL);
 	mag_toggle();
 	GUI_COMBOBOX_SETUP(uspex_gui.dynamicalBestHM,2,uspex_dyn_HM_selected);
 	GUI_COMBOBOX_SETUP(uspex_gui.manyParents,0,uspex_manyParents_selected);
@@ -5355,7 +6509,12 @@ GUI_TOOLTIP(uspex_gui.thicknessB,"thicknessB: Ch. 5.3 DEFAULT: 3.0\nThickness (A
 /* connect to signals */
 	GUI_PAGE_CHANGE(notebook,uspex_gui_page_switch,NULL);
 /* all done, we need to copy uspex parameters from model again */
-if(uspex_gui.have_output) copy_uspex_parameters(uspex_output->calc,&(uspex_gui.calc));
+if(uspex_gui.have_output) {
+		copy_uspex_parameters(uspex_output->calc,&(uspex_gui.calc));
+		toggle_use_specific();
+}else{
+		toggle_set_specific();
+}
 	uspex_gui_refresh();/*refresh once more*/
 	GUI_SHOW(uspex_gui.window);/*display*/
 	update_specific();

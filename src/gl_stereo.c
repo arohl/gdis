@@ -23,6 +23,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gtk/gtkgl.h>
 #ifdef __APPLE__
 #include <OpenGL/gl.h>

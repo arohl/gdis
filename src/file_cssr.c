@@ -145,12 +145,12 @@ struct core_pak *core;
 FILE *fp;
 
 /* checks */
-g_return_val_if_fail(data != NULL, 1);
-g_return_val_if_fail(filename != NULL, 1);
+  g_return_val_if_fail(data != NULL, 1);
+  g_return_val_if_fail(filename != NULL, 1);
 
-fp = fopen(filename, "rt");
-if (!fp)
-  return(1);
+  fp = fopen(filename, "rt");
+  if (!fp)
+    return(1);
 
 /* periodicity search */
   fgetline(fp, line);

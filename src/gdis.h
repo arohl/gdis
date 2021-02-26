@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 The GNU GPL can also be found at http://www.gnu.org
 */
 #define JJM_DEBUG
-#define VERSION 0.91
+#define VERSION 1.00
 #define PATCH 0
-#define YEAR 2015
+#define YEAR 2020
 
 /********************************************/
 /*** Debugging switches					 ****/
@@ -119,7 +119,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #define VALLEY -3
 
 /* convenience macros */
-#define SPIN_FVAL gtk_spin_button_get_value_as_float
+//#define SPIN_FVAL gtk_spin_button_get_value_as_float DEPRECATED
+#define SPIN_FVAL gtk_spin_button_get_value
 #define SPIN_IVAL gtk_spin_button_get_value_as_int
 
 #define P3VEC(s,v) (printf("%s (%.8lf, %.8lf, %.8lf)\n",s,*v,*(v+1),*(v+2)))
@@ -145,6 +146,15 @@ x+sysenv.subcenx[sub], y+sysenv.subceny[sub], w, h, a1, a2))
 /* linked list loops */
 #define FOR_SLIST(item, list) for (item=list ; (item=g_slist_next(item)) ; )
 #define FOR_LIST(item, list) for (item=list ; (item=g_list_next(item)) ; )
+
+/* honestly ignoring a return value --OVHPA*/
+/*-> this is the recipe from the gnulib BTW*/
+#if 3 < __GNUC__ + (4 <= __GNUC_MINOR__)
+# define IGNORE_RETURN(x) \
+    (__extension__ ({ __typeof__ (x) __x = (x); (void) __x; }))
+#else
+# define IGNORE_RETURN(x) ((void) (x))
+#endif
 
 
 /* file parsing keyword/option stuff */
@@ -271,6 +281,13 @@ enum {CLEAN, START, UPDATE, STOP, ASSIGN, RECALL, RELEASE};
 /*****************/
 /* MAIN INCLUDES */
 /*****************/
+#define G_DISABLE_DEPRECATED
+#define GDK_DISABLE_DEPRECATED
+#define GDK_PIXBUF_DISABLE_DEPRECATED
+//#define GTK_DISABLE_DEPRECATED
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
+//#define GLIB_VERSION_MIN_REQUIRED G_ENCODE_VERSION(2,26)
+//#define GLIB_VERSION_MAX_ALLOWED G_ENCODE_VERSION(2,26)
 #include <glib.h>
 #include <gtk/gtk.h>
 #include "pak.h"

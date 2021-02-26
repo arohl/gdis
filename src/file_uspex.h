@@ -46,7 +46,7 @@ typedef enum{
         US_CT_311=311,				/*bulk crystals; mol; var*/
         US_CT_000=0,				/*nanoparticles; no-mol; no-var*/
 	US_CT_s000=1000,			/*+magnetic VER 10.1*/
-	US_CT_001=1,				/*+cluster VER 10.1*/
+	US_CT_001=1,				/*+cluster VER 10.1 - REMOVED in VER 10.2?*/
         US_CT_110=110,				/*polymers;	 no-mol; no-var*/
         US_CT_200=200,				/*surfaces; 	 no-mol; no-var*/
 	US_CT_s200=1200,			/*+magnetic VER 10.1*/
@@ -54,6 +54,8 @@ typedef enum{
 	US_CT_s201=1201,			/*+magnetic VER 10.1*/
         US_CT_m200=-200,			/*2D crystals; 	 no-mol; no-var*/
 	US_CT_sm200=-1200,			/*+magnetic VER 10.1*/
+	US_CT_m201=-201,			/*2D crystals;   no-mol; var VER 10.4*/
+	US_CT_sm201=-1201			/*+magnetic VER 10.4*/
 } uspex_type;
 typedef enum {
 	US_OT_ENTHALPY=1,			/*most stable structure*/
@@ -67,6 +69,7 @@ typedef enum {
 	US_OT_MAG=9,				/*max magnetization*/
 	US_OT_QE=10,				/*max stucture quasientropy*/
 	US_OT_2R=11,				/*birefringence VER 10.1*/
+	US_OT_HM=12,				/*HalfMetalicity VER 10.4*/
 	US_OT_ZT=14,				/*thermoelectric VER 10.1*/
 	US_OT_Fphon=17,				/*free energy & finite temperature VER 10.1*/
 /*elasticity related*/
@@ -118,6 +121,7 @@ typedef struct {
         gboolean        _calctype_var;		/*HIDDEN:  ..X digit in calculation type: variable composition*/
 	gboolean 	_calctype_mag;		/*HIDDEN: s... trigger magnetic calculation VER 10.1*/
         uspex_opt	optType;		/*optimization property*/
+	gboolean	have_new_optType;	/*switch for using new optType*/
 	gchar		*new_optType;		/*extended property of optimization VER 10.1*/
 	gboolean	anti_opt;		/*if set, reverse the optimization direction*/
 	gint		_nspecies;		/*HIDDEN: number of different species*/
@@ -181,7 +185,7 @@ typedef struct {
 	gdouble 	*KresolStart;		/*reciprocal-space resolution (2*pi*ang-1) for k-points generation*/
 	gdouble		*vacuumSize;		/*amount of vacuum added at each optimization step*/
 	gint 		numParallelCalcs;	/*number of structure relaxations at a time (in parallel)*/
-	gint 		numProcessors;		/*how many processors per calculation - undocumented*/
+	gint 		*numProcessors;		/*how many processors for each steps - removed*/
 	gboolean 	_isCmdList;		/*HIDDEN: switch between only 1 commandExecutable and 1 per optimization steps*/
 	gchar 		*commandExecutable;	/*executable file/command for each optimization step*/
 	gint		whichCluster;		/*type of job-submission*/
@@ -191,6 +195,7 @@ typedef struct {
 	gdouble		RmaxFing;		/*the distance cutoff (Ang)*/
 	gdouble 	deltaFing;		/*discretization (Ang) of fingerprint function*/
 	gdouble		sigmaFing;		/*gaussian broadening of interatomic distances*/
+	gdouble		toleranceFing;		/*minimal cosine distance for 2 different structures*/
 /*4.10 Antiseed*/
 	gint 		antiSeedsActivation;	/*generation at which antiseeds will be active*/
 	gdouble		antiSeedsMax;		/*gaussian height in msd of enthalpy in the generation among potential parents*/
@@ -230,6 +235,9 @@ typedef struct {
 	gdouble		thicknessB;		/*thickness (Ang) of the buffer (no adatoms) surface region*/
 	gint		reconstruct;		/*max number of multiplication of the surface cell (for reconstruction)*/
 	gint 		*StoichiometryStart;	/*starting stoichiometry (undocumented)*/
+	gdouble 	E_AB;			/*Energy of AmBn in eV/formula (undocumented)*/
+	gdouble 	Mu_A;			/*Energy of elemental A in eV/atom (undocumented)*/
+	gdouble 	Mu_B;			/*Energy of elemental B in eV/atom (undocumented)*/
 /*VER 10.1 - 5.4 Clusters*/
 			/*no keyword in this section (selection by calculationType)*/
 /*5.5 Variable composition (previously 5.3)*/

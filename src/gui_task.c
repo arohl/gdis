@@ -165,8 +165,17 @@ return;
 #endif
 
 /* dispose of task list if it exists */
+//if (psarray != NULL)
+//  g_array_free(psarray, TRUE);_BUG_ here (SIGSEGV)
+/* global psarray has a _BUG_ in which psarray->data 
+ * is sometimes filled with invalid values (0x1) ...
+ * it happen on rare occasions so it is difficult to
+ * FIX. below is a proposal (still testing). --OVHPA */
 if (psarray != NULL)
-  g_array_free(psarray, TRUE);
+	psarray = g_array_set_size (psarray,0);
+else
+	psarray = g_array_new(FALSE, TRUE, sizeof(struct task_pak));
+
 
 /* initialise process record */
 curr_process.parent = curr_process.child = curr_process.sister = -1;
@@ -201,7 +210,8 @@ if (fgetline(fp, line))
   }
     
 /* load data into array */
-psarray = g_array_new(FALSE, FALSE, sizeof(struct task_pak));
+//psarray = g_array_new(FALSE, FALSE, sizeof(struct task_pak));
+/* psarray line removed as part of the above _BUG_ */
 while (!fgetline(fp, line))
   {
 #if DEBUG_CALC_TASK_INFO
@@ -599,7 +609,7 @@ while (EXIST(child))
   task_kill_tree(process->child);
 /* terminate process */
   cmd = g_strdup_printf("kill TERM %d >& /dev/null", process->pid);
-  system(cmd);
+  IGNORE_RETURN(system(cmd));
   g_free(cmd);
 /* get next process at this level */
   child = process->sister;
@@ -717,7 +727,7 @@ task_list_tv = NULL;
 void task_dialog(void)
 {
 gint i;
-gchar *titles[6] = {"  PID  ", "       Job       ", "   Status   ", "  \% CPU  ", "  \% Mem  ", "  Time  "};
+gchar *titles[6] = {"  PID  ", "       Job       ", "   Status   ", "  % CPU  ", "  % Mem  ", "  Time  "};
 gpointer dialog;
 GtkWidget *window, *swin, *frame, *vbox;
 GtkCellRenderer *renderer;

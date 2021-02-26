@@ -940,6 +940,7 @@ printf("Ignoring bonding...\n");
 /* NB: cartesian z direction is opposite to shift value sign */
     z1 = g_malloc(sizeof(gdouble));
     *z1 = -vec[2];
+    dummy[0]=0;dummy[1]=0;dummy[2]=0;//see the fractional_clamp _BUG_ 
     fractional_clamp(z1, dummy, 1);
     zlist = g_slist_prepend(zlist, z1);
     }
@@ -967,7 +968,8 @@ printf("Using molecule centroids... [%d]\n", g_slist_length(surf->moles));
 /* NB: cartesian z direction is opposite to shift value sign */
     z1 = g_malloc(sizeof(gdouble));
     *z1 = -vec[2];
-    fractional_clamp(z1, dummy, 1);
+    dummy[0]=0;dummy[1]=0;dummy[2]=0;
+    fractional_clamp(z1, dummy, 1);//see the fractional_clamp _BUG_
     zlist = g_slist_prepend(zlist, z1);
     }
   }
@@ -1328,7 +1330,11 @@ task_new("Energy", &exec_ecalc_task, surf, &proc_ecalc_task, surf, NULL);
 #define DEBUG_SURF_CONV 1
 gint surf_conv(FILE *fp, struct model_pak *model, gint type)
 {
-gint i, n, flag, relax, region, r1size, status;
+gint i, n;
+#ifdef   UNUSED_BUT_SET
+gint flag;
+#endif //UNUSED_BUT_SET
+gint relax, region, r1size, status;
 gdouble sbe, de, old_energy;
 gchar *inp, *out, *full_inp, *full_out;
 GSList *list;
@@ -1385,7 +1391,11 @@ sbe = model->gulp.energy;
 sbe /= (gdouble) model->num_atoms;
 
 /* converge region size */
+#ifdef   UNUSED_BUT_SET
 n=flag=0;
+#else  //UNUSED_BUT_SET
+n=0;
+#endif //UNUSED_BUT_SET
 old_energy = 0.0;
 //de = 99999999.9;/*FIX e176b9*/
 status = 0;
