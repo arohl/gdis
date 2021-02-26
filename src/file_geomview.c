@@ -113,12 +113,12 @@ g_assert(v_limit > 0);
 
 g_strfreev(buff);
 buff = scan_get_tokens(scan, &num_tokens);
-vec = g_malloc(v_limit * sizeof(struct vec_pak *));
+vec = g_malloc0(v_limit * sizeof(struct vec_pak *));
 
 v=0;
 while (!scan_complete(scan))
   {
-  vec[v] = g_malloc(sizeof(struct vec_pak));
+  vec[v] = g_malloc0(sizeof(struct vec_pak));
 
   i = 0; 
   remaining = num_tokens;
@@ -219,7 +219,7 @@ while (!scan_complete(scan))
         g_assert(v < v_limit);
 
         /* copy vector, as normals may change depending on current polygon */
-        vec1 = g_malloc(sizeof(struct vec_pak));
+        vec1 = g_malloc0(sizeof(struct vec_pak));
         ARR3SET(vec1->x, vec[v]->x);
         if (normal_flag)
           {

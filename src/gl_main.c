@@ -25,6 +25,11 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#define G_DISABLE_DEPRECATED
+#define GDK_DISABLE_DEPRECATED
+#define GDK_PIXBUF_DISABLE_DEPRECATED
+#define GTK_DISABLE_DEPRECATED
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gdk/gdk.h>
 #include <gtk/gtkgl.h>
 #ifdef __APPLE__

@@ -28,6 +28,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#define GTK_DISABLE_DEPRECATED
 #include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1029,7 +1030,7 @@ filename = g_string_new(NULL);
 i=0;
 do
   {
-  g_string_sprintf(filename,"dummy_%d.%s", i, ext);
+  g_string_printf(filename,"dummy_%d.%s", i, ext);//deprecated g_string_sprintf
 #if DEBUG_GUN
 printf("testing: %s\n", filename->str);
 #endif
@@ -1757,15 +1758,15 @@ if (n > 1)
 /* build new path */
 /* this is a bit fiddly, as we don't want a dir_sep on the end */
 /* EXCEPT if it's the root directory (blame windows for this) */
-g_string_sprintf(path, "%s", *buff);
+g_string_printf(path, "%s", *buff);//deprecated g_string_sprintf
 i=1;
 while (i < n)
   {
-  g_string_sprintfa(path, "%s%s", DIR_SEP, *(buff+i));
+  g_string_append_printf(path, "%s%s", DIR_SEP, *(buff+i));//deprecated g_string_sprintfa
   i++;
   }
 if (n < 2)
-  g_string_sprintfa(path, "%s", DIR_SEP);
+  g_string_append_printf(path, "%s", DIR_SEP);//deprecated g_string_sprintfa
 
 #if DEBUG_SET_PATH
 printf("testing path [%s] ... \n", path->str); 

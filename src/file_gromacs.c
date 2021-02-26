@@ -436,7 +436,7 @@ g_assert(fp != NULL);
 
 /* header */
 fprintf(fp, "\n[ angles ]\n");
-
+for (i=0 ; i<MAX_CORES ; i++) nc[i]=NULL;//avoid uninitialized values
 /* TODO - for all atoms with 2 + bonds -> check if 3 body term that matches */
 for (list1=model->cores,k=1 ; list1 ; list1=g_slist_next(list1),k++)
   {
@@ -453,7 +453,8 @@ for (list1=model->cores,k=1 ; list1 ; list1=g_slist_next(list1),k++)
   i = 0;
   for (list2 = nlist ; list2 ; list2=g_slist_next(list2))
     nc[i++] = list2->data;
-
+  if(i==0) //if n_list is zero/null the nc[xxx] is not initialized
+    continue;//that can be a solution...
 /* iterate over unique neighbour pairs */
   for (i=0 ; i<n-1 ; i++)
     {

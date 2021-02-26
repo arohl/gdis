@@ -516,9 +516,9 @@ else if (g_ascii_strncasecmp(keyword, GMS_NUM_D_TXT, len=strlen(GMS_NUM_D_TXT)) 
   model->gamess.num_d = str_to_float(&keyword[len]);
 else if (g_ascii_strncasecmp(keyword, GMS_NUM_F_TXT, len=strlen(GMS_NUM_F_TXT)) == 0)
   model->gamess.num_f = str_to_float(&keyword[len]);
-else if (g_ascii_strncasecmp(keyword, GMS_DIFFSP_TXT, len=strlen(GMS_DIFFSP_TXT)) == 0)
+else if (g_ascii_strncasecmp(keyword, GMS_DIFFSP_TXT, strlen(GMS_DIFFSP_TXT)) == 0)//len UNUSED
   model->gamess.have_heavy_diffuse = TRUE;
-else if (g_ascii_strncasecmp(keyword, GMS_DIFFS_TXT, len=strlen(GMS_DIFFS_TXT)) == 0)
+else if (g_ascii_strncasecmp(keyword, GMS_DIFFS_TXT, strlen(GMS_DIFFS_TXT)) == 0)//len UNUSED
   model->gamess.have_hydrogen_diffuse = TRUE;
 else 
   {
@@ -593,7 +593,7 @@ else if (g_ascii_strncasecmp(keyword, GMS_MULT_TXT, len=strlen(GMS_MULT_TXT)) ==
   model->gamess.multiplicity = (gint) (str_to_float(&keyword[len]));
 else if (g_ascii_strncasecmp(keyword, GMS_WIDE_OUTPUT_TXT, len=strlen(GMS_WIDE_OUTPUT_TXT)) == 0)
   model->gamess.wide_output = (((gint) (str_to_float(&keyword[len]))) == 6);
-else if (g_ascii_strncasecmp(keyword, GMS_COORD_TXT, len=strlen(GMS_COORD_TXT)) == 0)
+else if (g_ascii_strncasecmp(keyword, GMS_COORD_TXT, strlen(GMS_COORD_TXT)) == 0)//len UNUSED
   ; /* TODO handle different coordinate types */
 else 
   {

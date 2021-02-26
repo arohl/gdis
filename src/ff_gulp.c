@@ -338,7 +338,7 @@ struct forcefield_pak *ff;
 
 m = g_slist_length(labels);
 
-la = g_malloc(m * sizeof(gchar *));
+la = g_malloc0(m * sizeof(gchar *));// malloc0 FIX
 
 i=0;
 output = NULL;
@@ -375,7 +375,7 @@ struct forcefield_pak *ff;
 
 m = g_slist_length(labels);
 
-la = g_malloc(m * sizeof(gchar *));
+la = g_malloc0(m * sizeof(gchar *));// malloc0 FIX
 
 i=0;
 output = NULL;

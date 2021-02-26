@@ -2439,7 +2439,7 @@ fprintf(stdout,"[ ");
 if(!_UO.have_supercell){
 		/*FIX _BUG_ when updating*/
 		if(_UO.ind[idx].atoms==NULL) _UO.ind[idx].atoms=g_malloc(_UO.calc->_nspecies*sizeof(gint));
-		while((ptr2!=NULL)&&(*ptr2!='\0')&&(jdx<_UO.calc->_nspecies)){
+		while((*ptr2!='\0')&&(jdx<_UO.calc->_nspecies)){
 			ptr=ptr2+1;
 			__SKIP_BLANK(ptr);
 			_UO.ind[idx].atoms[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
@@ -2448,6 +2448,8 @@ fprintf(stdout,"%i ",_UO.ind[idx].atoms[jdx]);
 #endif
 			_UO.ind[idx].natoms+=_UO.ind[idx].atoms[jdx];
 			jdx++;
+/* NOTE: there should be no case where ptr2==NULL but to static analysis complained, so...*/
+			if(ptr2==NULL) goto end_loop_ind;
 		}
 		if(*ptr2=='\0') goto end_loop_ind;
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
@@ -2749,6 +2751,7 @@ void uspex_graph_comp_update(struct model_pak *model){
 	gint gen,cur;
 	gchar  *line;
 	gint n_compo;
+	gdouble tempc;/*to FIX a potential out of memory bound*/
 	gdouble compo;
 	gint c_sum,ix;
 	gint32 *c_idx;
@@ -2791,12 +2794,19 @@ void uspex_graph_comp_update(struct model_pak *model){
 			if((compo>=1.0)||(compo<=0.0)) {
 				continue;/*rejected*/
 			}
-			jdx=0;
-			while((jdx<n_compo)&&(compo>gx.x[jdx])) jdx++;
-			if((compo-gx.x[jdx])==0.) continue;/*we already have that one*/
+			jdx=0;tempc=gx.x[0];
+			while((jdx<n_compo)&&(compo>tempc)) {
+				tempc=gx.x[jdx];/*FIX an out of array bounds lookup*/
+				jdx++;
+			}
+			if((compo-tempc)==0.) continue;/*we already have that one*/
 			c=g_malloc((n_compo+1)*sizeof(gdouble));
 			/*FIX 7a93da*/
-			for(jdx=0;(compo>gx.x[jdx])&&(jdx<n_compo);jdx++) c[jdx]=gx.x[jdx];
+			tempc=gx.x[0];
+			for(jdx=0;(compo>tempc)&&(jdx<n_compo);jdx++) {
+				c[jdx]=gx.x[jdx];
+				tempc=gx.x[jdx];/*FIX an out of array bounds lookup*/
+			}
 			c[jdx]=compo;
 			for( ;jdx<n_compo;jdx++) c[jdx+1]=gx.x[jdx];
 			g_free(gx.x);
@@ -3022,7 +3032,10 @@ if(px->x_size!=(_UO.num_gen+1)){/*fix _BUG_ in META*/
 		gtot-=add_gen;/*because update_individuals has already update num_gen*/
 		gx=g_malloc0(sizeof(g_data_x));
 		gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
-		if(gx->x==NULL) return;/*can't realloc, will probably ABORT*/
+		if(gx->x==NULL) {
+			g_free(gx);/*to FIX a potential memory leak*/
+			return;/*can't realloc, will probably ABORT*/
+		}
 		gx->x_size=_UO.num_gen+1;
 		for(idx=gtot;idx<gx->x_size;idx++) gx->x[idx]=(gdouble)(idx);
 		/*COPY*/
@@ -3228,6 +3241,7 @@ void uspex_graph_best_update(uspex_output_struct *uspex_output){
 	struct graph_pak *graph;
 	/**/
 	if(uspex_output==NULL) return;
+	if(_UO.num_gen<1) return;/*to FIX a rare case*/
 	if(_UO.graph_best==NULL) return;/*TODO: prepare a new graph*/
 	graph=(struct graph_pak *)_UO.graph_best;
 	if((_UO.best_ind==NULL)||(_UO.num_best==0)) return;
@@ -3243,7 +3257,10 @@ fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 	gx=g_malloc0(sizeof(g_data_x));
 	gx->x_size=_UO.num_gen+1;
 	gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
-	if(gx->x==NULL) return;/*realloc FAIL, gdis will probably crash*/
+	if(gx->x==NULL) {
+		g_free(gx);/*to fix a potential memory leak*/
+		return;/*realloc FAIL, gdis will probably crash*/
+	}
 	for(idx=0;idx<gx->x_size;idx++) gx->x[idx]=(gdouble)(idx);
 	px->x=gx->x;
 	gx->x=NULL;
@@ -3418,9 +3435,9 @@ fprintf(stdout,"-SENT\n");
 /* +++ add a set for lowest energy values*/
 	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.15;
 	gy.y_size=_UO.num_gen;
-	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
 	gy.idx=NULL;
-	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
 	gy.sym_color=NULL;
 	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
@@ -3885,7 +3902,7 @@ if(find_in_string("Direct",line) != NULL) {
 	}
 }
 	ptr=&(line[0]);
-	atom_n=g_malloc(_UO.calc->_nspecies*sizeof(gint));
+	atom_n=g_malloc0(_UO.calc->_nspecies*sizeof(gint));/*malloc0 FIX*/
 	natoms=0;
 	jdx=0;
 	while((*ptr!='\0')&&(*ptr!='\n')){
@@ -3927,6 +3944,7 @@ if(!model->silent){
 		g_free(line);
 }
 		g_free(aux_file);
+		g_free(atom_n);//to FIX a potential memory leak
 		goto uspex_fail;
 	}
 	g_free(aux_file);
@@ -3966,6 +3984,7 @@ if(!model->silent){
 		g_free(line);
 }
 		g_free(aux_file);
+		g_free(atom_n);//to FIX a potential memory leak
 		goto uspex_fail;
 	}
 	g_free(aux_file);
@@ -3973,8 +3992,8 @@ if(!model->silent){
 	if(_UO.have_supercell){
 		/*rescale atoms,natoms in case of a supercell calculation NOTE: first supercell has to be [1,1,1]*/
 		for(idx=0;idx<_UO.num_struct;idx++) {
-		for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
-		_UO.ind[idx].natoms*=natoms;
+			for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
+			_UO.ind[idx].natoms = _UO.ind[idx].natoms * natoms;
 		}
 	}
 	g_free(atom_n);

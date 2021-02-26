@@ -23,6 +23,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#define GTK_DISABLE_DEPRECATED
 #include <gmodule.h>
 
 #include "gdis.h"

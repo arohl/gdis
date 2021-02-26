@@ -27,6 +27,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -75,7 +76,7 @@ void gui_uspex_init(struct model_pak *model){
 	uspex_gui._tmp_num_opt_steps=(gdouble)uspex_gui.calc._num_opt_steps;
 	uspex_gui._tmp_curr_step=1.;
 	if(uspex_gui.calc._isfixed==NULL) {
-		uspex_gui.calc._isfixed=g_malloc(uspex_gui.calc._num_opt_steps*sizeof(gboolean));
+		uspex_gui.calc._isfixed=g_malloc0(uspex_gui.calc._num_opt_steps*sizeof(gboolean));/*malloc0 FIX*/
 		for(idx=0;idx<uspex_gui.calc._num_opt_steps;idx++) uspex_gui.calc._isfixed[idx]=FALSE;
 	}
 	uspex_gui._tmp_isfixed=uspex_gui.calc._isfixed[0];
@@ -1831,7 +1832,8 @@ void toggle_auto_C_ion(void){
 		GUI_COMBOBOX_WIPE(uspex_gui.IonDistances);
 		/*NEW: create calc.IonDistances if not here...*/
 		if(uspex_gui.calc.IonDistances==NULL){
-			uspex_gui.calc.IonDistances = g_malloc(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
+			/*malloc0 to avoid a possible use of uninitialized value*/
+			uspex_gui.calc.IonDistances = g_malloc0(uspex_gui.calc._nspecies*uspex_gui.calc._nspecies*sizeof(gdouble));
 			for(i=0;i<uspex_gui.calc._nspecies*uspex_gui.calc._nspecies;i++) 
 				uspex_gui.calc.IonDistances[i]=0.;/*no default*/
 		}
@@ -4195,7 +4197,7 @@ gdouble sigma;
 gboolean is_meta;
 gchar *title;
 is_meta=((uspex_gui.calc.calculationMethod==US_CM_META)||(uspex_gui.calc.calculationMethod==US_CM_MINHOP));
-if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)&&(uspex_gui.calc.calculationMethod == US_CM_TPS)){
+if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)||(uspex_gui.calc.calculationMethod == US_CM_TPS)){
 /*in that case, there should be only one step*/
 	if(step_n!=1) {
 		title = g_strdup_printf("USPEX: VC-NEB & TPS calculation only require 1 calculation step!\nUSPEX: STEP %i IGNORED!\n",step_n);
@@ -4648,7 +4650,7 @@ fprintf(there,"switch rfo 0.010\n");
 /*********************************************/
 void gulp_specific_step_goptions(FILE *there,gint step_n){
 /*PSO and USPEX method are supposed to take identical steps, COPEX method is unknowned*/
-if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)&&(uspex_gui.calc.calculationMethod == US_CM_TPS)){
+if((uspex_gui.calc.calculationMethod == US_CM_VCNEB)||(uspex_gui.calc.calculationMethod == US_CM_TPS)){
 /*VC-NEB & TPS*/
 	if(step_n!=1) {
 		gchar *title;

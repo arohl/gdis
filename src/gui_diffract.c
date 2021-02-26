@@ -400,6 +400,10 @@ for (item=list ; item ; item=g_slist_next(item))
 /* create the plots */
 if (model->animation && diff_all_frames)
   {
+/* cleanup to FIX memory leak (OVHPA) */
+g_free(gy.y);
+g_free(gy.idx);
+g_free(gy.symbol);
 /*
 printf("TODO - multiframe animation plotting.\n");
 */

@@ -1387,19 +1387,21 @@ int vasp_xml_plot_energy(struct model_pak *model){
 /* FIXME: should test line for NULL each time? */
 	int idx,jdx;
 	FILE *vf;
+	int ret_val;
 	gchar *line;
 	g_data_x gx;
 	g_data_y gy;
 	gdouble min_E,max_E,E;
 	vasp_output_struct *vasp_out;
 	/*NEW: attach an energy plot*/
+	ret_val=0;
 	if(model==NULL) return 3;
 	if(model->vasp==NULL) return 3;
 	vasp_out=(vasp_output_struct *)model->vasp;
 	/*not an error but no energy graph on a singlepoint calculation*/
-	if(vasp_out->calc_type==VASP_SINGLE) return 0;
+	if(vasp_out->calc_type==VASP_SINGLE) return ret_val;
 	/*not an error but no energy graph on a frequency calculation*/
-	if(vasp_out->calc_type&VASP_FREQ) return 0;
+	if(vasp_out->calc_type&VASP_FREQ) return ret_val;
 	if(model->num_frames<1) return 3;
 	/*populate Y first!*/
 	vf = fopen(model->filename, "rt");
@@ -1430,25 +1432,52 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	gy.y[0]=NAN;/*frame 0 does not exist*/
 	/*2- rewind, process each energy*/
 	rewind(vf);
-	if(fetch_in_file(vf,"<energy>")==0) return 4;/*NO energy... but, n_scf>0 ??*/
+	if(fetch_in_file(vf,"<energy>")==0) {
+		ret_val=4;
+		goto plot_energy_fail;
+		/*NO energy... but, n_scf>0 ??*/
+	}
 	line = file_read_line(vf);
-	if(line==NULL) return 4;/*this is not normal*/
-	if (find_in_string("alphaZ",line) == NULL) return 4;/*this is not normal*/
+	if(line==NULL) {
+		ret_val=4;
+		goto plot_energy_fail;
+		/*this is not normal*/
+	}
+	if (find_in_string("alphaZ",line) == NULL) {
+		ret_val=4;
+		goto plot_energy_fail;
+		/*this is not normal*/
+	}
 	g_free(line);
 	/*first value is discarded, look for next one (hence repetition)*/
-	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
-	if(fetch_in_file(vf,"<energy>")==0) return 4;/*not normal*/
+	if(fetch_in_file(vf,"<energy>")==0) {
+		ret_val=4;
+		goto plot_energy_fail;
+		/*not normal*/
+	}
+	if(fetch_in_file(vf,"<energy>")==0) {
+		ret_val=4;
+		goto plot_energy_fail;
+		/*not normal*/
+	}
 	line = file_read_line(vf);
 	if (find_in_string("e_fr_energy",line) != NULL) {
 		g_free(line);line = file_read_line(vf);
-		if (find_in_string("e_wo_entrp",line) == NULL) return 4;/*NOT OK*/
+		if (find_in_string("e_wo_entrp",line) == NULL) {
+			ret_val=4;
+			goto plot_energy_fail;
+			/*NOT OK*/
+		}
 		sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
 		gy.y[1]=E;
 		gy.idx[1]=-1;/*not a STEP -> SCF*/
 		gy.symbol[1]=GRAPH_SYMB_CROSS;
 		vasp_out->last_pos=ftell(vf);/*flag*/
 //fprintf(stdout,"SCF: E[1]=%lf\n",E);
-	}else return 3;
+	}else {
+		ret_val=3;
+		goto plot_energy_fail;
+	}
 	g_free(line);
 	min_E=E;
 	max_E=E;
@@ -1458,7 +1487,11 @@ int vasp_xml_plot_energy(struct model_pak *model){
 		line = file_read_line(vf);if(line==NULL) break;
 		if (find_in_string("e_fr_energy",line) != NULL) {
 			g_free(line);line = file_read_line(vf);if(line==NULL) break;
-			if (find_in_string("e_wo_entrp",line) == NULL) return 4;/*NOT OK*/
+			if (find_in_string("e_wo_entrp",line) == NULL) {
+				ret_val=4;
+				goto plot_energy_fail;
+				/*NOT OK*/
+			}
 			sscanf(line," <i name=\"e_wo_entrp\"> %lf </i>",&E);
 			gy.y[idx+1]=E;
 			/*detect if SCF is a IONIC STEP*/
@@ -1517,7 +1550,12 @@ int vasp_xml_plot_energy(struct model_pak *model){
 	g_free(gy.y);
 	g_free(gy.idx);
 	g_free(gy.symbol);
-	return 0;
+	return ret_val;
+plot_energy_fail:
+	g_free(gy.y);
+	g_free(gy.idx);
+	g_free(gy.symbol);
+	return ret_val;
 }
 
 int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){

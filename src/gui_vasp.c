@@ -594,7 +594,7 @@ void vasp_gui_refresh(){
 		g_free(text);
 	}
 	if(vasp_gui.calc.ibrion==3){
-		g_free(text);text=g_strdup_printf("%.1lf",vasp_gui.calc.smass);
+		text=g_strdup_printf("%.1lf",vasp_gui.calc.smass);
 		GUI_ENTRY_TEXT(vasp_gui.smass,text);
 	}
 	/*POSCAR*/

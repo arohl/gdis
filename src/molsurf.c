@@ -123,7 +123,8 @@ VEC3MUL(x, 1.0/model->siesta.eden_scale);
 
 /* convert from cartesian to fractional (grid space) */
 vecmat(model->siesta.icell, x);
-fractional_clamp(x, dummy, 3);
+dummy[0]=0;dummy[1]=0;dummy[2]=0;
+fractional_clamp(x, dummy, 3);//see the fractional_clamp _BUG_
 
 /* compute grid location */
 x[0] *= model->siesta.grid[0];

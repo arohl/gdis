@@ -108,8 +108,8 @@ g_assert(model->animation == TRUE);
     read_raw_frame(fp, i+1, model);
     matrix_lattice_init(model);
 
-    frame = g_malloc(sizeof(struct frame_pak *));
-    for(gint idx=0;idx<9;idx++) frame->latmat[idx]=model->latmat[idx];
+    frame = g_malloc0(sizeof(struct frame_pak));// _BUG_: allocate pointer instead of structure
+    for(gint idx=0;idx<9;idx++) frame->latmat[idx] = model->latmat[idx];
     frame->core_list = dup_core_list(model->cores);
     frame->shell_list = dup_shell_list(model->shels);
 

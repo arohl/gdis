@@ -473,6 +473,8 @@ for (i = 0; i<num_lines; i++)
   buff = get_tokenized_line(fp, &num_tokens);
   if (!buff)
     {
+//according to static analysis when buff is NULL, many bad things are gonna happen...
+      goto phonon_fail;
 //error not enough lines in file...
 //matrix_2d_free(bigmat);
     }
@@ -505,6 +507,8 @@ mesch_me_set(bigmat, i/(2*num_atoms), ((3*i)+2)%(3*num_atoms), value);
       }
     else
       {
+        //for completion
+        goto phonon_fail;
 //what happened - why is there not 3 things on the line?
 //matrix_2d_free(bigmat);
        }
@@ -744,6 +748,10 @@ model->siesta.num_animations = mesch_dim_get(model->siesta.eigen_values);
 model->siesta.vibration_calc_complete = TRUE;
 
 return(0);
+
+phonon_fail:
+  mesch_m_free(bigmat);
+  return -1;
 }
 
 /********************************/

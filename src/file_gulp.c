@@ -1259,7 +1259,7 @@ return(model);
 #define DEBUG_READ_GULP 0
 gint read_gulp(gchar *filename, struct model_pak *model)
 {
-gint i, j, nc, ns;
+gint i, j, nc=0, ns=0;//nc, ns used uninitialized
 gint keywords_found, keywords_expected, num_tokens, remaining;
 gint code, context, run, method, optimiser, optimiser2, unit, fix, switch_type;
 gint region, breathe, coulomb, maxcyc, qeq, free, zsisa, compare, nosym, phonon, eigen;
@@ -2459,8 +2459,10 @@ P2MAT("new lattice matrix: ", svec);
                 }
 
 /* prevent core dump on comment */
-              if (**buff == '#')
-                break;
+              if(buff!=NULL) //FIX a possible NULL-pointer ref
+                if(*buff!=NULL)
+                  if (**buff == '#')
+                    break;
 
 /* add new species data if the 1st item an element, otherwise end */
               if (elem_test(*buff))

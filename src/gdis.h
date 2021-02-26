@@ -119,7 +119,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #define VALLEY -3
 
 /* convenience macros */
-#define SPIN_FVAL gtk_spin_button_get_value_as_float
+//#define SPIN_FVAL gtk_spin_button_get_value_as_float DEPRECATED
+#define SPIN_FVAL gtk_spin_button_get_value
 #define SPIN_IVAL gtk_spin_button_get_value_as_int
 
 #define P3VEC(s,v) (printf("%s (%.8lf, %.8lf, %.8lf)\n",s,*v,*(v+1),*(v+2)))
@@ -280,6 +281,13 @@ enum {CLEAN, START, UPDATE, STOP, ASSIGN, RECALL, RELEASE};
 /*****************/
 /* MAIN INCLUDES */
 /*****************/
+#define G_DISABLE_DEPRECATED
+#define GDK_DISABLE_DEPRECATED
+#define GDK_PIXBUF_DISABLE_DEPRECATED
+//#define GTK_DISABLE_DEPRECATED
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
+//#define GLIB_VERSION_MIN_REQUIRED G_ENCODE_VERSION(2,26)
+//#define GLIB_VERSION_MAX_ALLOWED G_ENCODE_VERSION(2,26)
 #include <glib.h>
 #include <gtk/gtk.h>
 #include "pak.h"

@@ -302,6 +302,7 @@ while (TRUE)
     if (fgetline(fp, line))
       {
       gui_text_show(ERROR, "unexpected end of file reading name of pseudopotential file\n");
+      g_free(species);// FIX _BUG_ (memory leak)
       return(2);
       }
     buff = tokenize((gchar *)(line), &num_tokens);
