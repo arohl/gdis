@@ -101,7 +101,7 @@ if (!sysenv.gamess_path)
 /*
 if (gethostname(hostname, sizeof(hostname)))
 */
-  sprintf(hostname, "localhost");
+sprintf(hostname, "localhost");
 
 #if __WIN32
 {

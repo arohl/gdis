@@ -26,6 +26,10 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#define G_DISABLE_DEPRECATED
+#define GDK_DISABLE_DEPRECATED
+#define GDK_PIXBUF_DISABLE_DEPRECATED
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
 #include <gdk/gdk.h>
@@ -261,8 +265,7 @@ switch (event->button)
   case 1:
 
 /* HACK */
-if (sysenv.stereo)
-  return(FALSE);
+  if (sysenv.stereo) return(FALSE);
 
 /* clean up after move operations */
   switch(data->mode)
@@ -2207,15 +2210,29 @@ hbox = gtk_hbox_new (FALSE, 10);
 gtk_container_add (GTK_CONTAINER(event_box), hbox);
 gtk_container_set_border_width(GTK_CONTAINER(hbox), PANEL_SPACING);
 
-
+#ifdef   USE_DEPRECATED
 gdis_pix = gdk_pixmap_create_from_xpm_d(window->window, &mask,
                           &style->bg[GTK_STATE_NORMAL], logo_left_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+GdkPixbuf *gdis_pixb;
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)logo_left_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&gdis_pix,&mask,1);
+#endif //USE_DEPRECATED
 gdis_wid = gtk_image_new_from_pixmap(gdis_pix, mask);
 gtk_box_pack_start(GTK_BOX(hbox), gdis_wid, FALSE, FALSE, 0);
 
 
+#ifdef   USE_DEPRECATED
 gdis_pix = gdk_pixmap_create_from_xpm_d(window->window, &mask,
                           &style->bg[GTK_STATE_NORMAL], logo_right_81_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)logo_right_81_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&gdis_pix,&mask,1);
+#endif //USE_DEPRECATED
 gdis_wid = gtk_image_new_from_pixmap(gdis_pix, mask);
 gtk_box_pack_end(GTK_BOX(hbox), gdis_wid, FALSE, FALSE, 0);
 
@@ -2250,7 +2267,7 @@ text = g_strdup_printf("This is free software, distributed under the terms of th
 gui_text_show(WARNING, text);
 g_free(text);
 
-text = g_strdup_printf("Welcome to GDIS version %4.2f.%d, Copyright (C) %d by Sean Fleming and Andrew Rohl\n",VERSION,PATCH,YEAR); 
+text = g_strdup_printf("Welcome to GDIS version %4.2f.%d (%d), brought to you by Sean Fleming, Okadome Valencia, and Andrew Rohl",VERSION,PATCH,YEAR);
 gui_text_show(STANDARD, text);
 g_free(text);
 

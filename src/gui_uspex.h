@@ -73,8 +73,9 @@ struct uspex_calc_gui{
 	GUI_OBJ *_calctype_mag;			/*VER 10.1*/
 	GUI_OBJ *_calctype_mag_2;		/*VER 10.1*/
 	GUI_OBJ *optType;
-	gboolean have_new_opt;			/*VER 10.1*/
+	gboolean have_new_optType;		/*VER 10.1*/
 	GUI_OBJ *new_optType;			/*VER 10.1*/
+	GUI_OBJ *sel_new_opt;
 	gchar *_tmp_new_optType;		/*VER 10.1*/
 	/*atoms definition: apply/remove*/
 	gint _tmp_nspecies;/*for BACKUP*/
@@ -99,8 +100,8 @@ struct uspex_calc_gui{
 	GUI_OBJ *_bond_d;
 	gchar *_tmp_bond_d;
 	gboolean auto_bonds;
-	//checkMolecules is auto-sync
-	//checkConnectivity is auto-sync
+	GUI_OBJ *checkMolecules;
+	GUI_OBJ *checkConnectivity;
 	GUI_OBJ *fitLimit;			/*VER 10.1*/
 	gchar *_tmp_ldaU;			/*VER 10.1*/
 	GUI_OBJ *ldaU;				/*VER 10.1*/
@@ -158,6 +159,12 @@ struct uspex_calc_gui{
 	GUI_OBJ *pickUpFolder;
 	gboolean restart_cleanup;
 /*4.8 Ab initio*/
+	gboolean have_specific;/*NEW: specific toggles*/
+	GUI_OBJ *use_specific;/*NEW: specific toggles*/
+	GUI_OBJ *set_specific;/*NEW: specific toggles*/
+	gchar *_tmp_spe_folder;/*NEW: specific toggles*/
+	GUI_OBJ *spe_folder;/*NEW: specific toggles*/
+	GUI_OBJ *spe_folder_button;/**/
 	gdouble _tmp_num_opt_steps;/*because gtk_spin type is double*/
 	GUI_OBJ *_num_opt_steps;/*usually determined indirectly*/
 	gdouble _tmp_curr_step;/*because gtk_spin type is double*/
@@ -175,12 +182,13 @@ struct uspex_calc_gui{
 	GUI_OBJ *ai_opt;
 	GUI_OBJ *ai_opt_button;
 	GUI_OBJ *ai_generate;
-	gchar *_tmp_ai_spe;
-	GUI_OBJ *ai_spe;
-	gchar **_potentials;
-	gchar *_tmp_ai_pot;
-	GUI_OBJ *ai_pot;
-	GUI_OBJ *ai_pot_button;
+	GUI_OBJ *ai_lib;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_button;/*NEW: Specific auto-update*/
+	gchar **_tmp_ai_lib_folder;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_flavor;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_flavor_button;/*NEW: Specific auto-update*/
+	GUI_OBJ *ai_lib_sel;/*NEW: Specific auto-update*/
+	gchar **_tmp_ai_lib_sel;/*NEW: Specific auto-update*/
 	GUI_OBJ *numProcessors;
 	GUI_OBJ *numParallelCalcs;
 	gchar **_tmp_commandExecutable;
@@ -192,6 +200,7 @@ struct uspex_calc_gui{
 	GUI_OBJ *RmaxFing;
 	GUI_OBJ *deltaFing;
 	GUI_OBJ *sigmaFing;
+	GUI_OBJ *toleranceFing;
 /*4.10 Antiseed*/
 	GUI_OBJ *antiSeedsActivation;
 	GUI_OBJ *antiSeedsMax;
@@ -245,6 +254,9 @@ struct uspex_calc_gui{
 	GUI_OBJ *thicknessB;
 	GUI_OBJ *reconstruct;
 	GUI_OBJ *StoichiometryStart;/*almost undocumented*/
+	GUI_OBJ *E_AB;/*almost undocumented*/
+	GUI_OBJ *Mu_A;/*almost undocumented*/
+	GUI_OBJ *Mu_B;/*almost undocumented*/
 	GUI_OBJ *substrate_model;/*additional*/
 	GUI_OBJ *substrate_model_button;/*additional*/
 /*5.4 Clusters*/
@@ -319,9 +331,11 @@ struct uspex_calc_gui{
 	GUI_OBJ *job_uspex_exe;
 	GUI_OBJ *job_path;
 	gboolean have_result;
-	gboolean have_v1010;
+	gboolean have_v1030;
+	GUI_OBJ *sel_v1030_1;
+	GUI_OBJ *sel_v1030_3;
+	GUI_OBJ *sel_octave;
 	gboolean have_octave;
-	gboolean copySpecific;/*NEW: copy the Specific directory*/
 	gint index;
 /*buttons*/
 	GUI_OBJ *button_save;

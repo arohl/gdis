@@ -174,7 +174,7 @@ write_gromacs(inp, model);
 
 cmd = g_strdup_printf("%s -cs -cp %s -o %s", genbox, inp, out);
 
-system(cmd);
+IGNORE_RETURN(system(cmd));
 
 /* TODO - delete old atoms */
 core_delete_all(model);

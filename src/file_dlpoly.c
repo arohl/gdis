@@ -152,7 +152,7 @@ static gint read_dlpoly_pbc(gint imcon, FILE *fp, struct model_pak *model)
             model->periodic = 0;
             /*eat 3 lines*/
             for (i=0; i < 3; ++i) 
-                fgets(line, 1024, fp);
+                IGNORE_RETURN(fgets(line, 1024, fp));
             gui_text_show(WARNING, "Sorry, not supported imcon (PBC key). "
                                    "Assuming no periodic boundaries.\n");
             return 0;

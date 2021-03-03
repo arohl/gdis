@@ -283,6 +283,7 @@ gint read_pdb_block(FILE *fp, struct model_pak *data)
 {
 gchar *line, *atom_name, *res_name, *element;
 struct core_pak *core;
+gdouble a,b,c;
 GSList *clist;
 
 clist = data->cores;
@@ -309,10 +310,16 @@ while (!fort_read_line(fp, &line))
          67 - 70       Integer        z             Z value.
     */
     {
+// prevent fake default 1x1x1:90x90x90 box of some molecules
+    a=fort_read_gdouble(line, 7, 15);
+    b=fort_read_gdouble(line, 16, 24);
+    c=fort_read_gdouble(line, 25, 33);
+    if((a<=1.0)&&(b<=1.0)&&(c<=1.0))
+       continue;/*this should skip the fake 3D initilization*/
     data->periodic = 3;
-    data->pbc[0] = fort_read_gdouble(line, 7, 15);
-    data->pbc[1] = fort_read_gdouble(line, 16, 24);
-    data->pbc[2] = fort_read_gdouble(line, 25, 33);
+    data->pbc[0] = a;
+    data->pbc[1] = b;
+    data->pbc[2] = c;
     data->pbc[3] = fort_read_gdouble(line, 34, 40) * PI/180.0;
     data->pbc[4] = fort_read_gdouble(line, 41, 47) * PI/180.0;
     data->pbc[5] = fort_read_gdouble(line, 48, 54) * PI/180.0;

@@ -1442,9 +1442,20 @@ static int FindGCD2(int ri, int rj)
   {
     for (;;)
     {
-      rk = ri % rj; if (rk == 0) { ri = rj; break; }
-      ri = rj % rk; if (ri == 0) { ri = rk; break; }
-      rj = rk % ri; if (rj == 0) {          break; }
+      rk = ri % rj;
+      if (rk == 0) {
+        ri = rj;
+        break;
+      }
+      ri = rj % rk;//static analysis complains % can be undefined?
+      if (ri == 0) {
+        ri = rk;
+        break;
+      }
+      rj = rk % ri;
+      if (rj == 0) {
+        break;
+      }
     }
 
     if (ri < 0) ri = -ri;

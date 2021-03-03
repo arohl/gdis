@@ -25,6 +25,11 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#define G_DISABLE_DEPRECATED
+#define GDK_DISABLE_DEPRECATED
+#define GDK_PIXBUF_DISABLE_DEPRECATED
+#define GTK_DISABLE_DEPRECATED
+#define GLIB_DISABLE_DEPRECATION_WARNINGS
 #include <gdk/gdk.h>
 #include <gtk/gtkgl.h>
 #ifdef __APPLE__
@@ -1018,7 +1023,7 @@ for (list=cores ; list ; list=g_slist_next(list))
 /*
       if (gl_vertex_tolerate(x, dx))
 */
-        gl_draw_sphere(&sphere, x, radius);
+      gl_draw_sphere(&sphere, x, radius);
       }
     while (ilist);
     }
@@ -1370,18 +1375,18 @@ for (list=pipe_list ; list ; list=g_slist_next(list))
 /*
     if (gl_vertex_tolerate(v1, dx) && gl_vertex_tolerate(v2, dx))
 */
+//    {
+    glColor4dv(pipe->colour);
+    if (line)
       {
-      glColor4dv(pipe->colour);
-      if (line)
-        {
-        glBegin(GL_LINES);
-        glVertex3dv(v1);
-        glVertex3dv(v2);
-        glEnd();
-        }
-      else
-        gl_draw_cylinder(v1, v2, pipe->radius, q);
+      glBegin(GL_LINES);
+      glVertex3dv(v1);
+      glVertex3dv(v2);
+      glEnd();
       }
+    else
+      gl_draw_cylinder(v1, v2, pipe->radius, q);
+//    }
     }
   while (ilist);
   }

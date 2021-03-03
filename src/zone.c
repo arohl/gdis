@@ -170,6 +170,11 @@ for (i=3 ; i-- ; )
   za->idx[i] = 1.0/dx[i];
 za->periodic = model->periodic;
 num_zones = div[0] * div[1] * div[2];
+if((div[0]<1)||(div[1]<1)||(div[2]<1)) {
+	/*while this is unlikely, a div <1 will create a NULL-pointer reference in za->zone*/
+	g_free(za);
+	return NULL;
+}
 za->size = num_zones;
 
 #if DEBUG_ZONE_MAKE
@@ -326,7 +331,8 @@ printf("x1: %.20f %.20f %.20f\n", x[0], x[1], x[2]);
 #endif
 
 /* NB: grid is just used as a dummy variable here */
-fractional_clamp(x, grid, za->periodic);
+grid[0]=0;grid[1]=0;grid[2]=0;
+fractional_clamp(x, grid, za->periodic);//see the fractional_clamp _BUG_
 
 #if DEBUG_ZONE_INDEX
 printf("x2: %.20f %.20f %.20f\n", x[0], x[1], x[2]);

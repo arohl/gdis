@@ -33,7 +33,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define HARTREE_TO_EV 27.21162
 
 /* FORTRAN ugliness */
-#define READ_RECORD fread(&sysenv.fortran_buffer, sizeof(int), 1, fp)
+#define READ_RECORD IGNORE_RETURN(fread(&sysenv.fortran_buffer, sizeof(int), 1, fp))
 #define WRITE_RECORD fwrite(&sysenv.fortran_buffer, sizeof(int), 1, fp)
 
 /* useful ADDONs --OVHPA*/

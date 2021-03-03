@@ -345,6 +345,7 @@ while (!fgetline(fp, line))
       else if (g_ascii_strncasecmp(tokens[0], "Force", 5) == 0)
         {
         property_add_ranked(2, "Calculation", "Forces", model);
+        g_strfreev(tokens);//FIX _BUG_ (memory leak) 
         continue;
         }
       else if (g_ascii_strncasecmp(tokens[0], "SCRF", 4) == 0)

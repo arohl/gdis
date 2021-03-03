@@ -197,7 +197,7 @@ if (VEC3MAGSQ(elem.colour) > 3.0)
     }
 
 /* scattering factor coeffs */
-  if (g_ascii_strncasecmp("\%gdis_sfc", line, 9) == 0)
+  if (g_ascii_strncasecmp("%gdis_sfc", line, 9) == 0)
     {
     while ((str = file_read_line(fp)))
       {

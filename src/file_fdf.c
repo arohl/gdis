@@ -730,11 +730,11 @@ switch (precision)
   {
   case 1:
     READ_RECORD;
-    fread(cell_double, sizeof(double), 9, fp);
+    IGNORE_RETURN(fread(cell_double, sizeof(double), 9, fp));
     READ_RECORD;
 
     READ_RECORD;
-    fread(&grid_int, sizeof(int), 4, fp);
+    IGNORE_RETURN(fread(&grid_int, sizeof(int), 4, fp));
     READ_RECORD;
 
 /* byte ordering check */
@@ -922,7 +922,7 @@ printf("density grid in au, scale = %f\n", icell[0]);
   for (i=0 ; i<n ; i++)
     {
     READ_RECORD;
-    fread(f, sizeof(float), grid[0], fp);
+    IGNORE_RETURN(fread(f, sizeof(float), grid[0], fp));
     READ_RECORD;
 
     if (ptr)
@@ -1266,7 +1266,7 @@ for (;;)
     continue;
 
 /* NEW - block/enblock processing */
-  if (g_ascii_strncasecmp("\%block", line, 6) == 0)
+  if (g_ascii_strncasecmp("%block", line, 6) == 0)
     {
     block_type = SIESTA_DEFAULT;
 
@@ -1296,7 +1296,7 @@ printf("processing block [type %d]\n", block_type);
       line = file_read_line(fp);
       if (!line)
         goto siesta_done_file;
-      if (g_ascii_strncasecmp("\%endblock", line, 9) == 0)
+      if (g_ascii_strncasecmp("%endblock", line, 9) == 0)
         {
 #if DEBUG_READ_FDF_BLOCK
 printf("end of block.\n");
@@ -2020,7 +2020,7 @@ printf("end of block.\n");
     }
 
 #if OLD_STYLE
-  if (g_ascii_strncasecmp("\%block", *buff, 6) == 0 && num_tokens > 1)
+  if (g_ascii_strncasecmp("%block", *buff, 6) == 0 && num_tokens > 1)
   {
     if  (g_ascii_strncasecmp("MD.TargetStress", *(buff+1), 15) == 0)
     {
@@ -2030,7 +2030,7 @@ printf("end of block.\n");
         buff = get_tokenized_line(fp, &num_tokens);
         if (!buff)
            break;
-        if (g_ascii_strncasecmp("\%endblock", *buff, 9) == 0)
+        if (g_ascii_strncasecmp("%endblock", *buff, 9) == 0)
           break;
 
         if (num_tokens == 6)
@@ -2491,7 +2491,7 @@ while (!fgetline(fp, line))
     }
 
 /* default cell dimensions */
-  if (g_ascii_strncasecmp("\%block LatticeParameters", line, 24) == 0)
+  if (g_ascii_strncasecmp("%block LatticeParameters", line, 24) == 0)
   {
      if (fgetline(fp, line))
      return(2);
@@ -2509,7 +2509,7 @@ while (!fgetline(fp, line))
       }
     g_strfreev(buff);
   }
-  else if (g_ascii_strncasecmp("\%block LatticeVectors", line, 20) == 0)
+  else if (g_ascii_strncasecmp("%block LatticeVectors", line, 20) == 0)
   {
       for (i=0; i<3; i++)
       {

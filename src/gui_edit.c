@@ -793,6 +793,7 @@ for (i=imin ; i<=imax ; i++)
       p[1] /= VEC3MAGSQ(t);
 
 /* clamp to one unit's worth of atoms */
+      dummy[0]=0;dummy[1]=0;//see the fractional_clamp _BUG_
       fractional_clamp(p, dummy, 2);
 
 /* choose basis atom type */

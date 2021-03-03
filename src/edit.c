@@ -451,11 +451,21 @@ core = g_malloc(sizeof(struct core_pak));
 core_init(elem, core, model);
 
 /* general initialization */
+gchar *tamp;
 if (label)
-  core->atom_label = g_strdup(label);
+  tamp=g_strdup_printf("%s",label);
+else
+  tamp=g_strdup_printf("%s",elem);
+core->atom_label=tamp;
+/* the following now trigger a heap-buffer-overflow
+ *  I think this is due to g_strdup being used on a
+ *  possibly non null-terminated string array.
+ *                                         -- OVHPA
+if (label)
+  core->atom_label = g_strdup(label);//trigger a heap-buffer-overflow
 else
   core->atom_label = g_strdup(elem);
-
+*/
 VEC4SET(core->x, 0.0, 0.0, 0.0, 1.0);
 VEC4SET(core->rx, 0.0, 0.0, 0.0, 1.0);
 VEC3SET(core->v, 0.0, 0.0, 0.0);
@@ -792,7 +802,8 @@ P3VEC("inp: ", vec);
 
 /* NB: init ALL 3 coords as isolated molecules call this */
 /* routine & it is expected that mov to be set to 0,0,0 */
-mov[0] = mov[1] = mov[2] = 0;
+//mov[0] = mov[1] = mov[2] = 0;// _BUG_ fractional_clamp can be used with [2] mov dimension
+//solution -> initialize mov BEFORE entering fractional_clamp
 
 /*
 for (i=0 ; i<dim ; i++)
@@ -837,6 +848,7 @@ if (!model->periodic)
 for (list=cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
+  dummy[0]=0;dummy[1]=0;dummy[2]=0;
   fractional_clamp(core->x, dummy, model->periodic);
 
 /* move shell */
@@ -864,6 +876,7 @@ gdouble mov[3];
 GSList *list;
 struct core_pak *core;
 
+xlat[0]=0;xlat[1]=0;xlat[2]=0;
 /* calc moves required to bring centroid within pbc */
 fractional_clamp(mol->centroid, xlat, model->periodic);
 ARR3SET(mov, xlat);
@@ -1120,6 +1133,7 @@ if (direction == UP)
 ARR3SUB(core->x, tmp);
 core->region = primary;
 /* pbc constrain */
+mov[0]=0;mov[1]=0;/*_BUG_ mov[3] is initialized in fractional_clamp*/
 fractional_clamp(core->x, mov, 2);
 
 if (core->shell)

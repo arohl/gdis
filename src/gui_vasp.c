@@ -593,6 +593,10 @@ void vasp_gui_refresh(){
 		GUI_ENTRY_TEXT(vasp_gui.apaco,text);
 		g_free(text);
 	}
+	if(vasp_gui.calc.ibrion==3){
+		text=g_strdup_printf("%.1lf",vasp_gui.calc.smass);
+		GUI_ENTRY_TEXT(vasp_gui.smass,text);
+	}
 	/*POSCAR*/
 	text=g_strdup_printf("%s",vasp_gui.calc.species_symbols);
 	GUI_ENTRY_TEXT(vasp_gui.poscar_species,text);
@@ -680,7 +684,7 @@ void vasp_apply_simple(void){
 		vasp_gui.calc.kpoints_kz=1.;
 	}else{
 		vasp_gui.calc.kpoints_mode=VKP_AUTO;
-		vasp_gui.calc.kpoints_kx = (gdouble)(dim+dim*(1+2*(2*kgrid+1)));/*not a serious formula*/
+		vasp_gui.calc.kpoints_kx = (gdouble)(4.0*dim*(kgrid+1.0));/*not a serious formula*/
 		text=g_strdup_printf("SET AUTO gamma-centered grid w/ AUTO = %i\n",(gint)vasp_gui.calc.kpoints_kx);
 		GUI_TEXTVIEW_INSERT(vasp_gui.simple_message_buff,text);
 		g_free(text);
@@ -1416,19 +1420,54 @@ void vasp_lorbit_selected(GUI_OBJ *w){
 	GUI_COMBOBOX_GET(w,index);
 	switch(index){
 	case 1://1:lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=1;break;
 	case 2://2:phase+lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=2;break;
 	case 3://5:PROOUT
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_UNLOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=5;break;
 	case 4://10:PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=10;break;
 	case 5://11:lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=11;break;
 	case 6://12:phase+lm-PROCAR
+		GUI_UNLOCK(vasp_gui.nedos);
+		GUI_UNLOCK(vasp_gui.emin);
+		GUI_UNLOCK(vasp_gui.emax);
+		GUI_UNLOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=12;break;
 	case 0://0:PROCAR
 	default:
+		GUI_LOCK(vasp_gui.nedos);
+		GUI_LOCK(vasp_gui.emin);
+		GUI_LOCK(vasp_gui.emax);
+		GUI_LOCK(vasp_gui.efermi);
+		GUI_LOCK(vasp_gui.rwigs);
 		vasp_gui.calc.lorbit=0;
 	}
 }
@@ -1462,6 +1501,7 @@ void vasp_ibrion_selected(GUI_OBJ *w){
 	case 3://2:Conjugate Gradients
 		vasp_gui.calc.ibrion=2;break;
 	case 4://3:Damped
+		GUI_UNLOCK(vasp_gui.smass);
 		vasp_gui.calc.ibrion=3;break;
 	case 5://5:Finite Differences
 		vasp_gui.calc.ibrion=5;break;
@@ -2271,7 +2311,7 @@ void potcar_folder_register(gchar *item){
 void potcar_folder_get_info(){
 	/*using POTCAR files, given they are not stored in a ZCOMPRESS format*/
 	gchar *path;
-	GSList *folders;
+	GSList *folders,*folder;
 	gchar *item;
 	gchar sym[3];
 	gchar *text;
@@ -2287,8 +2327,8 @@ void potcar_folder_get_info(){
 	/*wipe all entry in vasp_gui.species_flavor*/
 	GUI_COMBOBOX_WIPE(vasp_gui.species_flavor);
 	sym[2]='\0';
-	for ( ; folders ; folders=g_slist_next(folders)){
-		item=g_strdup_printf("%s",(char *)folders->data);
+	for (folder=folders ; folder ; folder=g_slist_next(folder)){
+		item=g_strdup_printf("%s",(char *)folder->data);
 		/*check if this item is of interest*/
 		if(g_ascii_islower (item[1])){
 			sym[0]=item[0];
@@ -2323,6 +2363,7 @@ void potcar_folder_get_info(){
 	GUI_ENTRY_TEXT(vasp_gui.potcar_species_flavor,text);
 	g_free(text);
 	GUI_COMBOBOX_SET(vasp_gui.species_flavor,0);
+	g_slist_free(folders);
 }
 /***************************************************************/
 /* point to a folder where POTCAR are stored for each elements */
@@ -3618,8 +3659,21 @@ GUI_TOOLTIP(vasp_gui.have_paw,"Is set if a PAW POTCAR file is detected.");
 	GUI_TEXT_TABLE(table,vasp_gui.rwigs,vasp_gui.calc.rwigs,"RWIGS=",2,5,1,2);
 GUI_TOOLTIP(vasp_gui.rwigs,"RWIGS: Ch. 6.33 DEFAULT: -\nSets the Wigner Seitz radius for each species.\nDefault value is read from POTCAR.");
 /* initialize */
-if(vasp_gui.calc.have_paw) GUI_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
-else GUI_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+if(vasp_gui.calc.have_paw) {
+	GUI_COMBOBOX_SETUP(vasp_gui.lorbit,4,vasp_lorbit_selected);
+	GUI_UNLOCK(vasp_gui.nedos);
+	GUI_UNLOCK(vasp_gui.emin);
+	GUI_UNLOCK(vasp_gui.emax);
+	GUI_UNLOCK(vasp_gui.efermi);
+	GUI_UNLOCK(vasp_gui.rwigs);
+} else {
+	GUI_COMBOBOX_SETUP(vasp_gui.lorbit,0,vasp_lorbit_selected);
+	GUI_LOCK(vasp_gui.nedos);
+	GUI_LOCK(vasp_gui.emin);
+	GUI_LOCK(vasp_gui.emax);
+	GUI_LOCK(vasp_gui.efermi);
+	GUI_LOCK(vasp_gui.rwigs);
+}
 /* --- end frame */
 /* --- Linear Response */
 	GUI_FRAME_NOTE(page,frame,"Linear Response");
@@ -3635,7 +3689,7 @@ GUI_TOOLTIP(vasp_gui.lrpa,"LRPA: Ch. 6.72.5 DEFAULT: FALSE\nSwitch local field e
 	GUI_CHECK_TABLE(table,vasp_gui.lnabla,vasp_gui.calc.lnabla,NULL,"LNABLA",3,4,0,1);/*not calling anything*/
 GUI_TOOLTIP(vasp_gui.lnabla,"LNABLA: Ch. 6.72.3 DEFAULT: FALSE\nSwitch to the simple transversal expressions\nof the frequency dependent dielectric matrix.\nUsually there is no use to change this setting.");
 	GUI_ENTRY_TABLE(table,vasp_gui.cshift,vasp_gui.calc.cshift,"%.2lf","CSHIFT=",4,5,0,1);
-GUI_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift \%nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
+GUI_TOOLTIP(vasp_gui.cshift,"CSHIFT: Ch. 6.72.2 DEFAULT: 0.1\nSets the complex shift nu of the Kramers-Kronig\ntransformation of the dielectric function.\nIf CSHIFT is decreased, NEDOS should be increased.");
 /* --- end frame */
 
 
@@ -3727,7 +3781,8 @@ GUI_TOOLTIP(vasp_gui.apaco,"APACO: Ch. 6.31 DEFAULT: 16\nMax distance (Ang) for 
 	}else{
 		GUI_LOCK(vasp_gui.tebeg);
 		GUI_LOCK(vasp_gui.teend);
-		GUI_LOCK(vasp_gui.smass);
+		if(vasp_gui.calc.ibrion==3) GUI_UNLOCK(vasp_gui.smass);
+		else GUI_LOCK(vasp_gui.smass);
 		GUI_LOCK(vasp_gui.nblock);
 		GUI_LOCK(vasp_gui.kblock);
 		GUI_LOCK(vasp_gui.npaco);

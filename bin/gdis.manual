@@ -197,6 +197,11 @@ VASP (Vienna Ab initio Simulation Package) is a 3D-periodic, plane wave basis se
 If the starting model is a VASP calculation, its keywords will be pre-loaded but it is also possible to load keywords from any other calculation output. In case such method is used to prepare the calculation setting, all keywords should be checked carefully, some will be unsuited for a new calculation.
 Since the plane wave basis set require a 3D-periodic system, one will be created for any lower dimension model structure. Such transformation needs to be checked since the automatically-added vacuum thickness, separating surface slabs, linear systems, or molecules, may results in a very large system.
 
+\h USPEX
+
+USPEX (Universal Structure Predictor: Evolutionary Xtallography) is a crystal prediction package, based on evolutionary algorithms. The USPEX interface in GDIS allows to use the latest and the BSD versions, for which all keywords and functionalities are supported. At present, GDIS only lacks the ability to visualize transition path sampling simulations, even though it can be parametrized and run within GDIS. Similarly to VASP, a tooltip short help is proposed for all keywords with a reference to the latest official documentation chapters (https://uspex-team.org/static/file/uspex_manual_10.4.pdf).
+Some tutorials about using GDIS with USPEX (and VASP) are available on youtube. To start a USPEX calculation, at least an empty model must be provided, but a USPEX calculation can also be imported, modified, and launched. USPEX can use many simulation software, but has focused on VASP and GULP historically. For this reason, the interface is better used when combining USPEX, VASP, and GULP. A systematic parametrization of VASP and GULP is provided by GDIS  for USPEX jobs. However, it is only basic, while it tries to be reliable in most situations, it is recommended to seek experienced users' advice for serious calculations.
+
 %topic 5. Analysis
 
 \h Making Measurements
@@ -225,22 +230,35 @@ Each loaded file can contain one or more chemical structures, or models. These c
 ============================================================================
 \f Recognized file type	 Read Extension         Write Extension
 ============================================================================
+\f Abinit                  (.about, .abot)         -
+\f Biograph                (.bgf, .xtl)           (.bgf, .xtl)
 \f Biosym/MSI/Accelrys     (.arc, .car, .cor)     (.car)
 \f CASTEP output           (.castep)               -
 \f CIF                     (.cif)                 (.cif)
+\f CSSR                    (.cssr)                (.cssr)
+\f DIFFaX                  (.dfx)                 (.dfx)
+\f DMOL                    (.dmol)                (.dmol)
+\f DL_POLY                 (.dlpoly)              (.dlpoly)
 \f GAMESS input            (.inp)                 (.inp)
 \f GAMESS output           (.gmot, .gmout)         -
-\f GDIS morphology         (.gmf)                 (.gmf)
+\f GDIS morphology         (.gmf, .pcf)           (.gmf, .pcf)
 \f GDIS structure          (.xml)                 (.xml)
+\f GEOMVIEW                (.off)                  -
+\f GROMACS                 (.gro)                 (.gro)
 \f GULP input/restart      (.gin, .res)           (.gin, .res)
 \f GULP output             (.got, .gout)           -
 \f MARVIN input/restart    (.mar, .mvn, .mvn-r)   (.mar, .mvn, .mvn-r)
 \f MARVIN output           (.mot, .mvout .mvnout)  -
+\f MONTY                   (.cgf)                 (.cgf)
 \f MOPAC output            (.out)                  -
+\f NWCHEM                  (.nwin, nw)            (.nwout, nwot, .nwo)
 \f Protein DataBase (PDB)  (.pdb)                 (.pdb)
+\f PowderCell              (.cell)                 -
+\f QuantumEspresso         (.qein, .qeout)        (.qein)
 \f Rietica                 (.inp)                  -
 \f SIESTA input            (.fdf)                 (.fdf)
 \f SIESTA output           (.out)                  -
+\f TRIPOS                  (.mol2)                 -
 \f USPEX output            (OUTPUT.txt)            -
 \f VASP xml output         (.xml)                  -
 \f XTL                     (.xtl)                 (.xtl)

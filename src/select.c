@@ -224,6 +224,7 @@ redraw_canvas(SINGLE);
 /*****************************/
 void cb_select_colour(gpointer *csd)
 {
+#ifdef   USE_DEPRECATED_GTK
 gdouble colour[3];
 GSList *list;
 struct core_pak *core;
@@ -246,7 +247,27 @@ for (list=model->selection ; list ; list=g_slist_next(list))
   ARR3SET(core->colour, colour);
   VEC3MUL(core->colour, 65535.0);
   }
+#else  //USE_DEPRECATED_GTK
+GdkColor colour;
+GSList *list;
+struct core_pak *core;
+struct model_pak *model;
 
+model = sysenv.active_model;
+if (!model)
+  return;
+
+gtk_color_selection_get_current_color((GtkColorSelection *) csd,&colour);
+
+for (list=model->selection ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+
+  core->colour[0]=colour.red;
+  core->colour[1]=colour.green;
+  core->colour[2]=colour.blue;
+  }
+#endif //USE_DEPRECATED_GTK
 /* TODO - close the csd */
 redraw_canvas(SINGLE);
 }

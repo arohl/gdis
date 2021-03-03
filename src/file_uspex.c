@@ -76,7 +76,9 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC._calctype_var=FALSE;
 	_UC._calctype_mag=FALSE;	//VER 10.1
 	_UC.optType=US_OT_ENTHALPY;
-	_UC.new_optType=NULL;		//VER 10.1
+	_UC.new_optType=
+	  g_strdup("MIN_enthalpy");	//VER 10.1
+	_UC.have_new_optType=TRUE;
 	_UC.anti_opt=FALSE;
 	_UC._nspecies=0;
 	_UC.atomType=NULL;
@@ -137,7 +139,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.KresolStart=NULL;
 	_UC.vacuumSize=NULL;
 	_UC.numParallelCalcs=1;
-	_UC.numProcessors=1;/*undocumented*/
+	_UC.numProcessors=NULL;/*removed*/
 	_UC._isCmdList=FALSE;/*default is only 1 commandExecutable*/
 	_UC.commandExecutable=NULL;
 	_UC.whichCluster=0;
@@ -146,6 +148,7 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.RmaxFing=10.0;
 	_UC.deltaFing=0.08;
 	_UC.sigmaFing=0.03;
+	_UC.toleranceFing=0.008;
 	_UC.antiSeedsActivation=5000;
 	_UC.antiSeedsMax=0.;
 	_UC.antiSeedsSigma=0.001;
@@ -176,6 +179,9 @@ void init_uspex_parameters(uspex_calc_struct *uspex_calc){
 	_UC.thicknessB=3.0;
 	_UC.reconstruct=1;
 	_UC.StoichiometryStart=NULL;/*almost undocumented*/
+	_UC.E_AB=0.0;/*almost undocumented*/
+	_UC.Mu_A=0.0;/*almost undocumented*/
+	_UC.Mu_B=0.0;/*almost undocumented*/
 	_UC.firstGeneMax=11;
 	_UC.minAt=0;
 	_UC.maxAt=0;
@@ -467,7 +473,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 		if (find_in_string("optType",line) != NULL) {
 			/*VER 10.1 has a new format: 
 			  old format: "XXX : optType"
-			  new fromat: "% optType"
+			  new format: "% optType"
 			              "XXX XXX XXX"
 			              "%endOptType"*/
 			ptr=&(line[0]);
@@ -479,10 +485,12 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				__SKIP_BLANK(ptr);
 				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
 				_UC.new_optType=g_strdup(ptr);
+				_UC.have_new_optType=TRUE;
 			}else{/*old fashion optType*/
 				__STRIP_EOL(line);
 				if(_UC.new_optType!=NULL) g_free(_UC.new_optType);
 				_UC.new_optType=NULL;
+				_UC.have_new_optType=FALSE;
 			}
 			ptr=&(line[0]);
 			__SKIP_BLANK(ptr);
@@ -516,8 +524,14 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					break;
 				case 'h':
 				case 'H':
-					_UC.optType=US_OT_HARDNESS;
-					if(j==-1) _UC.anti_opt=TRUE;
+					if((*(ptr+2)=='r')||(*(ptr+2)=='R')){
+						_UC.optType=US_OT_HARDNESS;
+						if(j==-1) _UC.anti_opt=TRUE;
+					}else if((*(ptr+2)=='l')||(*(ptr+2)=='L')){
+						/*HalfMetalicity VER 10.4*/
+						_UC.optType=US_OT_HM;
+						if(j==-1) _UC.anti_opt=TRUE;
+					}else _UC.optType=US_OT_UNKNOWN;
 					break;
 				case 's':
 				case 'S':
@@ -617,6 +631,9 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 				case 11:/*VER 10.1*/
 					_UC.optType=US_OT_2R;
 					break;
+				case 12:/*VER 10.4*/
+					_UC.optType=US_OT_HM;
+					break;
 				case 14:/*VER 10.1*/
 					_UC.optType=US_OT_ZT;
 					break;
@@ -660,7 +677,7 @@ fprintf(stdout,"#DBG: PROBE LINE: %s",line);
 					_UC.optType=US_OT_UNKNOWN;
 				}
 			} else _UC.optType=US_OT_UNKNOWN;
-			if(_UC.new_optType!=NULL){
+			if(_UC.have_new_optType){
 				g_free(line);
 				line = file_read_line(vf);/*This is the EndOptType line*/
 			}
@@ -1072,7 +1089,23 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 			continue;
 		}
 		__GET_INT(numParallelCalcs);
-		__GET_INT(numProcessors);/*undocumented*/
+                if (find_in_string("numProcessors",line) != NULL) {/*removed*/
+                        g_free(line);line = file_read_line(vf);/*go next line*/
+                        _UC.numProcessors=g_malloc(_UC._nspecies*sizeof(gint));
+                        for(i=0;i<_UC._num_opt_steps;i++) _UC.numProcessors[i]=0;
+                        ptr=&(line[0]);i=0;
+                        while((*ptr!='\n')&&(*ptr!='\0')){
+                                __SKIP_BLANK(ptr);
+                                _UC.numProcessors[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+                                ptr=ptr2+1;
+                                i++;
+                        }
+                        g_free(line);
+                        line = file_read_line(vf);/*this is the EndProcessors line*/
+                        g_free(line);
+                        line = file_read_line(vf);
+                        continue;
+                }
 		if (find_in_string("commandExecutable",line) != NULL) {
 			g_free(line);line = file_read_line(vf);/*go next line*/
 			/*there is also 1<x<_num_opt_steps lines of commandExecutable?*/
@@ -1105,6 +1138,7 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 		__GET_DOUBLE(RmaxFing);
 		__GET_DOUBLE(deltaFing);
 		__GET_DOUBLE(sigmaFing);
+		__GET_DOUBLE(toleranceFing);
 		__GET_INT(antiSeedsActivation);
 		__GET_DOUBLE(antiSeedsMax);
 		__GET_DOUBLE(antiSeedsSigma);
@@ -1233,6 +1267,9 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 			line = file_read_line(vf);
 			continue;
 		}
+		__GET_DOUBLE(E_AB);
+		__GET_DOUBLE(Mu_A);
+		__GET_DOUBLE(Mu_B);
 		__GET_INT(firstGeneMax);
 		__GET_INT(minAt);
 		__GET_INT(maxAt);
@@ -1495,6 +1532,7 @@ void copy_uspex_parameters(uspex_calc_struct *src,uspex_calc_struct *dest){
 	_CP(_calctype_var);
 	_CP(_calctype_mag);/*VER 10.1*/
 	_CP(optType);
+	_CP(have_new_optType);
 	_STRCP(new_optType);/*VER 10.1*/
 	_CP(anti_opt);
 	_CP(_nspecies);
@@ -1575,7 +1613,7 @@ if(_SRC._nlattice_line==0){
 	_DBLCP(KresolStart,_SRC._num_opt_steps);
 	_DBLCP(vacuumSize,_SRC._num_opt_steps);
 	_CP(numParallelCalcs);
-	_CP(numProcessors);
+	_COPY(numProcessors,_SRC._num_opt_steps,gint);
 	_CP(_isCmdList);
 	_STRCP(commandExecutable);/*unsure*/
 	_CP(whichCluster);
@@ -1584,6 +1622,7 @@ if(_SRC._nlattice_line==0){
 	_CP(RmaxFing);
 	_CP(deltaFing);
 	_CP(sigmaFing);
+	_CP(toleranceFing);
 	_CP(antiSeedsActivation);
 	_CP(antiSeedsMax);
 	_CP(antiSeedsSigma);
@@ -1614,6 +1653,9 @@ if(_SRC._nlattice_line==0){
 	_CP(thicknessB);
 	_CP(reconstruct);
 	_COPY(StoichiometryStart,_SRC._nspecies,gint);
+	_CP(E_AB);
+	_CP(Mu_A);
+	_CP(Mu_B);
 	_CP(firstGeneMax);
 	_CP(minAt);
 	_CP(maxAt);
@@ -1837,11 +1879,13 @@ if((_UC.calculationMethod != US_CM_VCNEB)&&(_UC.calculationMethod != US_CM_TPS))
 	_CS(US_CT,calculationType,s201);
 	case US_CT_m200: fprintf(vf,"-200\t: calculationType\n");break;
 	case US_CT_sm200: fprintf(vf,"-s200\t: calculationType\n");break;
+	case US_CT_m201: fprintf(vf,"-201\t: calculationType\n");break;
+	case US_CT_sm201: fprintf(vf,"-s201\t: calculationType\n");break;
 	default:
 		fprintf(vf,"???\t: calculationType (unsupported type)\n");
 	}
 if(_UC.calculationMethod != US_CM_MINHOP){
-	if(_UC.new_optType==NULL){
+	if(!_UC.have_new_optType){
 		/*old fashion optType*/
 		if(!_UC.anti_opt) __OUT_INT(optType);
 		else {
@@ -2019,25 +2063,25 @@ zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=_UC._isfixed[i];
 if(!zero_check) 
 	for(i=0;i<_UC._num_opt_steps;i++)
 	       	_UC._isfixed[i]=TRUE;
-	        fprintf(vf,"%% abinitioCode\n");
-		if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
-		else fprintf(vf,"%i",_UC.abinitioCode[0]);
-	        for(i=1;i<(_UC._num_opt_steps);i++) {
-			if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
-				if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
-				else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
-			}else{
-				fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
-			}
-		}
-	        if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
-		else fprintf(vf,")\n");/*terminate on non fixed*/
-		fprintf(vf,"%% ENDabinit\n");
+fprintf(vf,"%% abinitioCode\n");
+if(!_UC._isfixed[0]) fprintf(vf,"(%i",_UC.abinitioCode[0]);/*possible?*/
+else fprintf(vf,"%i",_UC.abinitioCode[0]);
+for(i=1;i<(_UC._num_opt_steps);i++) {
+	if(_UC._isfixed[i]!=_UC._isfixed[i-1]) {
+		if(!_UC._isfixed[i]) fprintf(vf," (%i",_UC.abinitioCode[i]);/*has become not fixed*/
+		else fprintf(vf,") %i",_UC.abinitioCode[i]);/*has become fixed (possible?)*/
+	}else{
+		fprintf(vf," %i",_UC.abinitioCode[i]);/*same as previous*/
+	}
+}
+if(_UC._isfixed[_UC._num_opt_steps-1]) fprintf(vf,"\n");/*terminate on fixed ie. normal*/
+else fprintf(vf,")\n");/*terminate on non fixed*/
+fprintf(vf,"%% ENDabinit\n");
 /*restore previous values*/
 if(!zero_check)
 	for(i=0;i<_UC._num_opt_steps;i++)
 		_UC._isfixed[i]=FALSE;
-	        is_w++;
+is_w++;
 //__OUT_BK_INT(abinitioCode,"ENDabinit",_UC._num_opt_steps);
 }
 /*do not print KresolStart if linearly = {0.2~0.08}*/
@@ -2051,7 +2095,7 @@ if(_UC.vacuumSize!=NULL){
 zero_check=FALSE;for(i=0;i<_UC._num_opt_steps;i++) zero_check|=(_UC.vacuumSize[i]!=10.0);
 	if(zero_check) __OUT_BK_DOUBLE(vacuumSize,"endVacuumSize",_UC._num_opt_steps);
 }
-	if(_UC.numProcessors>1) __OUT_INT(numProcessors);
+	if(_UC.numProcessors!=NULL) __OUT_BK_INT(numProcessors,"EndProcessors",_UC._num_opt_steps);
 /*often commandExecutable (which should be mandatory) is omitted when abinitioCode==1 (VASP)*/
 	if((_UC.abinitioCode[0]!=0)&&(_UC.commandExecutable!=NULL)) __OUT_BK_STRING(commandExecutable,"EndExecutable");/*let's be permissive*/
 //	if(_UC.whichCluster!=0) __OUT_INT(whichCluster);
@@ -2070,6 +2114,7 @@ is_w=0;
 	if(_UC.RmaxFing!=10.) __OUT_DOUBLE(RmaxFing);
 	if(_UC.deltaFing!=0.08) __OUT_DOUBLE(deltaFing);
 	if(_UC.sigmaFing!=0.03) __OUT_DOUBLE(sigmaFing);
+	if(_UC.toleranceFing!=0.008) __OUT_DOUBLE(toleranceFing);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -2156,6 +2201,9 @@ is_w=0;
 	if(_UC.thicknessB!=3.0) __OUT_DOUBLE(thicknessB);
 	if(_UC.reconstruct!=1) __OUT_INT(reconstruct);
 	if(_UC.StoichiometryStart!=NULL) __OUT_BK_INT(StoichiometryStart,"endStoichiometryStart",_UC._nspecies);
+	if(_UC.E_AB!=0.0) __OUT_DOUBLE(E_AB);
+	if(_UC.Mu_A!=0.0) __OUT_DOUBLE(Mu_A);
+	if(_UC.Mu_B!=0.0) __OUT_DOUBLE(Mu_B);
 if(is_w==0) fseek(vf,vfpos,SEEK_SET);/* rewind to flag */
 else vfpos=ftell(vf);/* flag */
 is_w=0;
@@ -2391,7 +2439,7 @@ fprintf(stdout,"[ ");
 if(!_UO.have_supercell){
 		/*FIX _BUG_ when updating*/
 		if(_UO.ind[idx].atoms==NULL) _UO.ind[idx].atoms=g_malloc(_UO.calc->_nspecies*sizeof(gint));
-		while((ptr2!=NULL)&&(*ptr2!='\0')&&(jdx<_UO.calc->_nspecies)){
+		while((*ptr2!='\0')&&(jdx<_UO.calc->_nspecies)){
 			ptr=ptr2+1;
 			__SKIP_BLANK(ptr);
 			_UO.ind[idx].atoms[jdx]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
@@ -2400,6 +2448,8 @@ fprintf(stdout,"%i ",_UO.ind[idx].atoms[jdx]);
 #endif
 			_UO.ind[idx].natoms+=_UO.ind[idx].atoms[jdx];
 			jdx++;
+/* NOTE: there should be no case where ptr2==NULL but to static analysis complained, so...*/
+			if(ptr2==NULL) goto end_loop_ind;
 		}
 		if(*ptr2=='\0') goto end_loop_ind;
 #if DEBUG_USPEX_READ || DEBUG_TRACK_USPEX
@@ -2499,6 +2549,7 @@ fprintf(stdout,"\n");
 	/*FIX a _BUG_ with EX13 where all energy are = 100000.000*/
 	if(_UO.min_E>10000.000) _UO.min_E=_UO.ind[1].E;
 	if(_UO.max_E<-10000.000) _UO.max_E=_UO.ind[1].E;
+	fclose(vf);/*FIX a _BUG_ leaving Individual file opened!*/
 	return 0;
 }
 /*****************/
@@ -2700,6 +2751,7 @@ void uspex_graph_comp_update(struct model_pak *model){
 	gint gen,cur;
 	gchar  *line;
 	gint n_compo;
+	gdouble tempc;/*to FIX a potential out of memory bound*/
 	gdouble compo;
 	gint c_sum,ix;
 	gint32 *c_idx;
@@ -2742,12 +2794,19 @@ void uspex_graph_comp_update(struct model_pak *model){
 			if((compo>=1.0)||(compo<=0.0)) {
 				continue;/*rejected*/
 			}
-			jdx=0;
-			while((jdx<n_compo)&&(compo>gx.x[jdx])) jdx++;
-			if((compo-gx.x[jdx])==0.) continue;/*we already have that one*/
+			jdx=0;tempc=gx.x[0];
+			while((jdx<n_compo)&&(compo>tempc)) {
+				tempc=gx.x[jdx];/*FIX an out of array bounds lookup*/
+				jdx++;
+			}
+			if((compo-tempc)==0.) continue;/*we already have that one*/
 			c=g_malloc((n_compo+1)*sizeof(gdouble));
 			/*FIX 7a93da*/
-			for(jdx=0;(compo>gx.x[jdx])&&(jdx<n_compo);jdx++) c[jdx]=gx.x[jdx];
+			tempc=gx.x[0];
+			for(jdx=0;(compo>tempc)&&(jdx<n_compo);jdx++) {
+				c[jdx]=gx.x[jdx];
+				tempc=gx.x[jdx];/*FIX an out of array bounds lookup*/
+			}
 			c[jdx]=compo;
 			for( ;jdx<n_compo;jdx++) c[jdx+1]=gx.x[jdx];
 			g_free(gx.x);
@@ -2973,7 +3032,10 @@ if(px->x_size!=(_UO.num_gen+1)){/*fix _BUG_ in META*/
 		gtot-=add_gen;/*because update_individuals has already update num_gen*/
 		gx=g_malloc0(sizeof(g_data_x));
 		gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
-		if(gx->x==NULL) return;/*can't realloc, will probably ABORT*/
+		if(gx->x==NULL) {
+			g_free(gx);/*to FIX a potential memory leak*/
+			return;/*can't realloc, will probably ABORT*/
+		}
 		gx->x_size=_UO.num_gen+1;
 		for(idx=gtot;idx<gx->x_size;idx++) gx->x[idx]=(gdouble)(idx);
 		/*COPY*/
@@ -3179,6 +3241,7 @@ void uspex_graph_best_update(uspex_output_struct *uspex_output){
 	struct graph_pak *graph;
 	/**/
 	if(uspex_output==NULL) return;
+	if(_UO.num_gen<1) return;/*to FIX a rare case*/
 	if(_UO.graph_best==NULL) return;/*TODO: prepare a new graph*/
 	graph=(struct graph_pak *)_UO.graph_best;
 	if((_UO.best_ind==NULL)||(_UO.num_best==0)) return;
@@ -3194,7 +3257,10 @@ fprintf(stdout,"#DBG update_graph_best: num_best=%i\n",_UO.num_best);
 	gx=g_malloc0(sizeof(g_data_x));
 	gx->x_size=_UO.num_gen+1;
 	gx->x=g_realloc(px->x,(_UO.num_gen+1)*sizeof(gdouble));
-	if(gx->x==NULL) return;/*realloc FAIL, gdis will probably crash*/
+	if(gx->x==NULL) {
+		g_free(gx);/*to fix a potential memory leak*/
+		return;/*realloc FAIL, gdis will probably crash*/
+	}
 	for(idx=0;idx<gx->x_size;idx++) gx->x[idx]=(gdouble)(idx);
 	px->x=gx->x;
 	gx->x=NULL;
@@ -3369,9 +3435,9 @@ fprintf(stdout,"-SENT\n");
 /* +++ add a set for lowest energy values*/
 	max_E=_UO.max_E+(_UO.max_E-_UO.min_E)*0.15;
 	gy.y_size=_UO.num_gen;
-	gy.y=g_malloc(gy.y_size*sizeof(gdouble));
+	gy.y=g_malloc0(gy.y_size*sizeof(gdouble));
 	gy.idx=NULL;
-	gy.symbol=g_malloc(gy.y_size*sizeof(graph_symbol));
+	gy.symbol=g_malloc0(gy.y_size*sizeof(graph_symbol));
 	gy.sym_color=NULL;
 	gy.type=GRAPH_IY_TYPE;/*CHANGED TYPE*/
 	gy.line=GRAPH_LINE_DOT;
@@ -3744,14 +3810,19 @@ if(!model->silent){
 		line=g_strdup_printf("USPEX version undetected!\n");
 		gui_text_show(ERROR, line);
 	}else if(_UO.version==944){
-		line=g_strdup_printf("USPEX version %i detected!\n",_UO.version);
+		line=g_strdup_printf("USPEX BSD version %i detected!\n",_UO.version);
 		gui_text_show(STANDARD, line);
-	}else if(_UO.version==1010){
+	}else if(_UO.version==1040){
 		line=g_strdup_printf("USPEX new version %i detected!\n",_UO.version);
 		gui_text_show(STANDARD, line);
 	}else{
-		line=g_strdup_printf("USPEX unsupported version %i detected!\n",_UO.version);
-		gui_text_show(WARNING, line);
+		if((_UO.version>944)&&(_UO.version<1040)){
+			line=g_strdup_printf("USPEX version %i detected!\n",_UO.version);
+			gui_text_show(STANDARD, line);
+		}else{
+			line=g_strdup_printf("USPEX unsupported version %i detected!\n",_UO.version);
+			gui_text_show(WARNING, line);
+		}
 	}
 	g_free(line);
 	if((method==US_CM_UNKNOWN)&&(nspecies==0)){
@@ -3831,7 +3902,7 @@ if(find_in_string("Direct",line) != NULL) {
 	}
 }
 	ptr=&(line[0]);
-	atom_n=g_malloc(_UO.calc->_nspecies*sizeof(gint));
+	atom_n=g_malloc0(_UO.calc->_nspecies*sizeof(gint));/*malloc0 FIX*/
 	natoms=0;
 	jdx=0;
 	while((*ptr!='\0')&&(*ptr!='\n')){
@@ -3873,6 +3944,7 @@ if(!model->silent){
 		g_free(line);
 }
 		g_free(aux_file);
+		g_free(atom_n);//to FIX a potential memory leak
 		goto uspex_fail;
 	}
 	g_free(aux_file);
@@ -3912,6 +3984,7 @@ if(!model->silent){
 		g_free(line);
 }
 		g_free(aux_file);
+		g_free(atom_n);//to FIX a potential memory leak
 		goto uspex_fail;
 	}
 	g_free(aux_file);
@@ -3919,8 +3992,8 @@ if(!model->silent){
 	if(_UO.have_supercell){
 		/*rescale atoms,natoms in case of a supercell calculation NOTE: first supercell has to be [1,1,1]*/
 		for(idx=0;idx<_UO.num_struct;idx++) {
-		for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
-		_UO.ind[idx].natoms*=natoms;
+			for(jdx=0;jdx<_UO.calc->_nspecies;jdx++) _UO.ind[idx].atoms[jdx]=atom_n[jdx]*_UO.ind[idx].natoms;
+			_UO.ind[idx].natoms = _UO.ind[idx].natoms * natoms;
 		}
 	}
 	g_free(atom_n);
@@ -4926,6 +4999,7 @@ if(_UO.ind[idx].have_data){
 /********************************/
 gboolean track_uspex(void *data){
 	/**/
+	gboolean still_running=TRUE;
 	FILE *vf=NULL;
 	long int vfpos=0L;
 	gchar *line;
@@ -4996,7 +5070,20 @@ fprintf(stdout,"TRACK: READ SUCCESS\n");
 		g_free(line);
 		return FALSE;
 	}
-
+/*NEW: detect termination of calculation*/
+if(_UC.calculationMethod!=US_CM_TPS){
+	/*because, as of v. 10.3, TPS does not have a OUTPUT.txt*/
+	aux_file = g_strdup_printf("%s%s",_UO.res_folder,"OUTPUT.txt");
+	vf = fopen(aux_file,"rt");
+	g_free(aux_file);
+	if(vf!=NULL){
+		__GET_LAST_LINE(vf,line);
+		if(line!=NULL){
+			if(find_in_string("Finished",line) != NULL) still_running=FALSE;
+		}
+		fclose(vf);
+	}
+}
 /*+++ Everything BUT VCNEB and TPS*/
 if((_UC.calculationMethod==US_CM_USPEX)
         ||(_UC.calculationMethod==US_CM_META)
@@ -5038,7 +5125,7 @@ if((_UC.calculationMethod==US_CM_USPEX)
 		sysenv.refresh_dialog=TRUE;
 		tree_model_refresh(model);
 		redraw_canvas(ALL);
-		return TRUE;
+		return still_running;
 	}
 	/*we have several new structures*/
 #if DEBUG_TRACK_USPEX
@@ -5055,8 +5142,6 @@ fprintf(stdout,"TRACK: ADD-%i-INDIVIDUAL(S) (gen=%i,idx=%i)\n",(new_ind-old_ind)
 	}
 	/*2- prepare & replace*/
 	for(jdx=new_ind;jdx>old_ind;jdx--){/*_BUG_*/
-//	for(idx=0;idx<(new_ind-old_ind);idx++){
-//		jdx=old_ind+1+idx;/*because old_ind=num_struct-1*/
 		ind[jdx].have_data=FALSE;
 		ind[jdx].struct_number=-1;
 		ind[jdx].gen=0;
@@ -5247,7 +5332,6 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 		fclose(vf);
 		/*6- update BEST graph*/
 		uspex_graph_best_redo(uspex_output);
-//		uspex_graph_best_update(uspex_output); FIXME
 		if(_UO.num_gen>15) idx=5;
 		else idx=_UO.num_gen+1;
 if(idx<2) idx=2;/*fix _BUG_ with META*/
@@ -5326,7 +5410,7 @@ fprintf(stdout,"TRACK: NO-NEW-IMAGE gen=%i num=%i\n",new_gen,new_ind);
 		sysenv.refresh_dialog=TRUE;
 		tree_model_refresh(model);
 		redraw_canvas(ALL);
-		return TRUE;
+		return still_running;
 	}
 	/*there is NEW data, update ind*/
 	_UO.last_ind_pos=vfpos;
@@ -5466,7 +5550,7 @@ else{
 	canvas_shuffle();
 	redraw_canvas(ALL);
 
-	return TRUE;/*keep tracking (default)*/
+	return still_running;/*keep tracking unless job finished (default)*/
 }
 void track_uspex_cleanup(void *data){
         gchar *ptr;
@@ -5484,14 +5568,6 @@ fprintf(stdout,"TRACK: CONTINUE TRACKING AT %p\n",model->t_next);
                 other_model=model->t_next;
                 tree_model_add(other_model);
                 tree_select_model(model);
-#ifdef NO_NO_NO
-                if(model->uspex!=NULL) {
-                        /*optional (tree_select_delete should do that)*/
-			free_uspex_out(model->uspex);
-                        g_free(model->uspex);
-                        model->uspex=NULL;
-                }
-#endif
                 tree_select_delete();
                 tree_select_model(other_model);
                 model=NULL;/*_BUG_ spotted*/

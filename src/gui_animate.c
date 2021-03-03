@@ -108,8 +108,8 @@ g_assert(model->animation == TRUE);
     read_raw_frame(fp, i+1, model);
     matrix_lattice_init(model);
 
-    frame = g_malloc(sizeof(struct frame_pak *));
-    memcpy(frame->latmat, model->latmat, 9*sizeof(gdouble));
+    frame = g_malloc0(sizeof(struct frame_pak));// _BUG_: allocate pointer instead of structure
+    for(gint idx=0;idx<9;idx++) frame->latmat[idx] = model->latmat[idx];
     frame->core_list = dup_core_list(model->cores);
     frame->shell_list = dup_shell_list(model->shels);
 
@@ -333,7 +333,7 @@ if (sysenv.render.animate && !sysenv.render.no_povray_exec)
 
   if (text)
     {
-    system(text);
+    IGNORE_RETURN(system(text));
     g_free(text);
     gui_text_show(DEFAULT, "Completed movie creation.\n");
     }
@@ -344,10 +344,10 @@ if (sysenv.render.no_keep_tempfiles)
   {
 #ifndef __WIN32
   text = g_strdup_printf("rm -rf %s_*.pov", sysenv.render.animate_file);
-  system(text);
+  IGNORE_RETURN(system(text));
   g_free(text);
   text = g_strdup_printf("rm -rf %s_*.tga", sysenv.render.animate_file);
-  system(text);
+  IGNORE_RETURN(system(text));
   g_free(text);
 #endif
 /* TODO - windows equivalents */

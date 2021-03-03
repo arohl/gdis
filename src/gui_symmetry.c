@@ -1625,31 +1625,36 @@ for (i=0 ; i<PointGroupsCount ; i++ )
     }
   }
 
-#if DEBUG
+/* update dialog */
 switch(matching_count)
   {
   case 0:
+#if DEBUG
     printf("No matching point group.\n");
+#endif
+    g_free(data->symmetry.pg_name);
+    data->symmetry.pg_name = g_strdup("unknown");
     break;
   case 1:
+#if DEBUG
     printf("Apparent point group: %s\n",PointGroups[last_matching].group_name);
+#endif
+    if (PointGroups[last_matching].group_name != NULL)
+      {
+      g_free(data->symmetry.pg_name);
+      data->symmetry.pg_name = g_strdup(PointGroups[last_matching].group_name);
+     }
+    else
+      {
+      g_free(data->symmetry.pg_name);
+      data->symmetry.pg_name = g_strdup("unknown");
+      }
     break;
   default:
+#if DEBUG
     printf("Error in point group lookup.\n");
-    return;
-  }
 #endif
-
-/* update dialog */
-if (PointGroups[last_matching].group_name != NULL)
-  {
-  g_free(data->symmetry.pg_name);
-  data->symmetry.pg_name = g_strdup(PointGroups[last_matching].group_name);
-  }
-else
-  {
-  g_free(data->symmetry.pg_name);
-  data->symmetry.pg_name = g_strdup("unknown");
+    return;
   }
 }
 

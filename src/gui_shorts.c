@@ -26,6 +26,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <math.h>
 
 #include "gdis.h"
+#undef GTK_DISABLE_DEPRECATED
 #include "dialog.h"
 #include "interface.h"
 #include "gui_image.h"
@@ -92,7 +93,7 @@ while (list)
 #if DEBUG_RELATION
 printf(" : relation (%p)", relation);
 #endif
-//    g_free(relation);/*FIX 5c2f9f*/
+//    g_free(relation);//FIX 5c2f9f
     gui_relation_list = g_slist_remove(gui_relation_list, relation);
     g_free(relation);/*FIX 5c2f9f*/
     }
@@ -539,7 +540,9 @@ GtkWidget *gui_button_x(gchar *text,
 GtkWidget *hbox, *button, *label, *image;
 GdkPixmap *pixmap;
 GdkBitmap *mask;
+#ifdef   USE_DEPRECATED
 GtkStyle *style;
+#endif //USE_DEPRECATED
 
 /* create button */
 button = gtk_button_new();
@@ -547,10 +550,19 @@ hbox = gtk_hbox_new(FALSE, 0);
 gtk_container_add(GTK_CONTAINER(button), hbox);
 
 /* create image */
+#ifdef   USE_DEPRECATED
 style = gtk_widget_get_style(window);
 pixmap = gdk_pixmap_create_from_xpm_d
           (window->window, &mask, &style->white, go_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+GdkPixbuf *gdis_pixb;
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)go_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
 image = gtk_image_new_from_pixmap(pixmap, mask);
+
 
 gtk_box_pack_start(GTK_BOX(hbox), image, FALSE, FALSE, 0);
 
@@ -1012,7 +1024,11 @@ gpointer data;
 GtkWidget *hbox, *button, *label, *image=NULL;
 GdkBitmap *mask;
 GdkPixmap *pixmap;
+#ifndef   USE_DEPRECATED
+GdkPixbuf *gdis_pixb;
+#else  //USE_DEPRECATED
 GtkStyle *style;
+#endif //USE_DEPRECATED
 
 /* button */
 button = gtk_button_new();
@@ -1037,70 +1053,126 @@ if (g_ascii_strncasecmp(id, "IMAGE_", 6) == 0)
 /* GDIS icons */
 if (g_ascii_strncasecmp(id, "GDIS_PAUSE", 10) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         pause_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)pause_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_PLAY", 9) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         play_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)play_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_REWIND", 11) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         rewind_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)rewind_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_FASTFORWARD", 16) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         fastforward_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)fastforward_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_STOP", 9) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         stop_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)stop_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_STEP_FORWARD", 17) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         step_forward_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)step_forward_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;
   }
 if (g_ascii_strncasecmp(id, "GDIS_STEP_BACKWARD", 18) == 0)
   {
+#ifdef   USE_DEPRECATED
   style = gtk_widget_get_style(window);
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         step_backward_xpm);
+#else  //USE_DEPRECATED
+/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
+/*but it probably will...  -- OVHPA*/
+gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)step_backward_xpm);
+gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
+#endif //USE_DEPRECATED
+
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
   stock = FALSE;

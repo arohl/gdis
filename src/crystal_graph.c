@@ -140,7 +140,7 @@ gdouble run_gulp(GSList *cores, gchar *species)
   write_gulp(new_model->gulp.temp_file, new_model);
   gchar * cmd = g_strdup_printf("%s < %s > %s", sysenv.gulp_path, 
                                 new_model->gulp.temp_file, new_model->gulp.out_file);
-  system(cmd);
+  IGNORE_RETURN(system(cmd));
   g_free(cmd);
   
   read_gulp_output(new_model->gulp.out_file, result_model);
