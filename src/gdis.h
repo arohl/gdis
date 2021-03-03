@@ -22,7 +22,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define JJM_DEBUG
 #define VERSION 1.00
 #define PATCH 0
-#define YEAR 2020
+#define YEAR 2021
 
 /********************************************/
 /*** Debugging switches					 ****/
