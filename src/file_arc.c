@@ -210,7 +210,7 @@ gint core_flag, end_count;
 GSList *clist, *slist;
 struct core_pak *core=NULL;
 struct shel_pak *shel;
-gchar *line;
+gchar *line,*tamp;
 gdouble energy;
 #define DEBUG_ARC 0
 gchar c_type[5],c_ptype[8],c_symb[3];
@@ -232,8 +232,13 @@ end_count=0;
 	/*The energy is stored on the frame 1st line starting from the 65th caracter*/
 line = file_read_line(fp);
 sscanf(&(line[65])," %lf",&energy);
-sprintf(line,"%lf eV",energy);/*is it really always eV?*/
-property_add_ranked(3,"Energy",line,data);
+//this now trigger a heap-buffer-overflow, replacing with safer g_strdup_printf version
+//sprintf(line,"%lf eV",energy);/*is it really always eV?*/
+//g_sprintf(line,"%lf eV",energy);
+//property_add_ranked(3,"Energy",line,data);
+tamp=g_strdup_printf("%lf eV",energy);
+property_add_ranked(3,"Energy",tamp,data);
+g_free(tamp);
 	/*Note that title of calculation is given in the first 64 character BUT it can be empty*/
 /*get to the begining*/
 while(g_ascii_strncasecmp("!date", line, 5)!=0) {

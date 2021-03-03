@@ -451,11 +451,21 @@ core = g_malloc(sizeof(struct core_pak));
 core_init(elem, core, model);
 
 /* general initialization */
+gchar *tamp;
 if (label)
-  core->atom_label = g_strdup(label);
+  tamp=g_strdup_printf("%s",label);
+else
+  tamp=g_strdup_printf("%s",elem);
+core->atom_label=tamp;
+/* the following now trigger a heap-buffer-overflow
+ *  I think this is due to g_strdup being used on a
+ *  possibly non null-terminated string array.
+ *                                         -- OVHPA
+if (label)
+  core->atom_label = g_strdup(label);//trigger a heap-buffer-overflow
 else
   core->atom_label = g_strdup(elem);
-
+*/
 VEC4SET(core->x, 0.0, 0.0, 0.0, 1.0);
 VEC4SET(core->rx, 0.0, 0.0, 0.0, 1.0);
 VEC3SET(core->v, 0.0, 0.0, 0.0);
