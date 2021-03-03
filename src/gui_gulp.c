@@ -140,9 +140,9 @@ switch (data->gulp.run)
 /* update energy (TODO - only if successful) */
     line = g_string_new(NULL);
     if (data->gulp.free)
-      g_string_sprintf(line, "%f (free energy)", data->gulp.energy);
+      g_string_printf(line, "%f (free energy)", data->gulp.energy);//g_string_sprintf deprecated
     else
-      g_string_sprintf(line, "%f", data->gulp.energy);
+      g_string_printf(line, "%f", data->gulp.energy);//g_string_sprintf deprecated
 
 property_add_ranked(2, "Energy", line->str, data);
 
@@ -152,17 +152,17 @@ property_add_ranked(2, "Energy", line->str, data);
     if (data->periodic == 2)
       {
 /* update surface dipole dialog entry */
-      g_string_sprintf(line,"%f e.Angs",data->gulp.sdipole);
+      g_string_printf(line,"%f e.Angs",data->gulp.sdipole);//g_string_sprintf deprecated
       if (GTK_IS_ENTRY(data->gulp.sdipole_entry))
         gtk_entry_set_text(GTK_ENTRY(data->gulp.sdipole_entry), line->str);
 
 /* update surface energy dialog entry */
-      g_string_sprintf(line,"%f    %s",data->gulp.esurf[0], data->gulp.esurf_units);
+      g_string_printf(line,"%f    %s",data->gulp.esurf[0], data->gulp.esurf_units);//g_string_sprintf deprecated
       if (GTK_IS_ENTRY(data->gulp.esurf_entry))
         gtk_entry_set_text(GTK_ENTRY(data->gulp.esurf_entry), line->str);
 
 /* update attachment energy dialog entry */
-      g_string_sprintf(line,"%f    %s",data->gulp.eatt[0], data->gulp.eatt_units);
+      g_string_printf(line,"%f    %s",data->gulp.eatt[0], data->gulp.eatt_units);//g_string_sprintf deprecated
       if (GTK_IS_ENTRY(data->gulp.eatt_entry))
         gtk_entry_set_text(GTK_ENTRY(data->gulp.eatt_entry), line->str);
       }
@@ -1801,9 +1801,9 @@ gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
 
 model->gulp.energy_entry = gtk_entry_new_with_max_length(LINELEN);
 if (model->gulp.free)
-  g_string_sprintf(line,"%f (free energy)",model->gulp.energy);
+  g_string_printf(line,"%f (free energy)",model->gulp.energy);//g_string_sprintf deprecated
 else
-  g_string_sprintf(line,"%f",model->gulp.energy);
+  g_string_printf(line,"%f",model->gulp.energy);//g_string_sprintf deprecated
 
 gtk_entry_set_text(GTK_ENTRY(model->gulp.energy_entry),line->str);
 gtk_box_pack_start (GTK_BOX (vbox), model->gulp.energy_entry, TRUE, TRUE, 0);
@@ -1812,7 +1812,7 @@ gtk_entry_set_editable(GTK_ENTRY(model->gulp.energy_entry), FALSE);
 if (model->periodic == 2)
   {
   model->gulp.sbe_entry = gtk_entry_new_with_max_length(LINELEN);
-  g_string_sprintf(line,"%f",model->gulp.sbulkenergy);
+  g_string_printf(line,"%f",model->gulp.sbulkenergy);//g_string_sprintf deprecated
   gtk_entry_set_text(GTK_ENTRY(model->gulp.sbe_entry),line->str);
   gtk_box_pack_start(GTK_BOX(vbox), model->gulp.sbe_entry, TRUE, TRUE, 0);
 
@@ -1825,17 +1825,17 @@ g_object_set_data(G_OBJECT(model->gulp.sbe_entry), "ptr", (gpointer) model);
 
 /* surface dipole */
   model->gulp.sdipole_entry = gtk_entry_new_with_max_length(LINELEN);
-  g_string_sprintf(line,"%f e.Angs", model->gulp.sdipole);
+  g_string_printf(line,"%f e.Angs", model->gulp.sdipole);//g_string_sprintf deprecated
   gtk_entry_set_text(GTK_ENTRY(model->gulp.sdipole_entry), line->str);
   gtk_box_pack_start(GTK_BOX(vbox), model->gulp.sdipole_entry, TRUE, TRUE, 0);
   gtk_entry_set_editable(GTK_ENTRY(model->gulp.sdipole_entry), FALSE);
 /* surface energy */
   model->gulp.esurf_entry = gtk_entry_new_with_max_length(LINELEN);
   if (model->gulp.esurf[1] == 0.0)
-     g_string_sprintf(line,"%f    %s",
+     g_string_printf(line,"%f    %s",//g_string_sprintf deprecated
                             model->gulp.esurf[0], model->gulp.esurf_units);
   else
-     g_string_sprintf(line,"%f    %s",
+     g_string_printf(line,"%f    %s",//g_string_sprintf deprecated
                             model->gulp.esurf[1], model->gulp.esurf_units);
 
   gtk_entry_set_text(GTK_ENTRY(model->gulp.esurf_entry), line->str);
@@ -1844,10 +1844,10 @@ g_object_set_data(G_OBJECT(model->gulp.sbe_entry), "ptr", (gpointer) model);
 /* attachment energy */
   model->gulp.eatt_entry = gtk_entry_new_with_max_length(LINELEN);
   if (model->gulp.eatt[1] == 0.0)
-     g_string_sprintf(line,"%f    %s",
+     g_string_printf(line,"%f    %s",//g_string_sprintf deprecated
                             model->gulp.eatt[0], model->gulp.eatt_units);
   else
-     g_string_sprintf(line,"%f    %s",
+     g_string_printf(line,"%f    %s",//g_string_sprintf deprecated
                             model->gulp.eatt[1], model->gulp.eatt_units);
   gtk_entry_set_text(GTK_ENTRY(model->gulp.eatt_entry), line->str);
   gtk_box_pack_start(GTK_BOX(vbox), model->gulp.eatt_entry, TRUE, TRUE, 0);

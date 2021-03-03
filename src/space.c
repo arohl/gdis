@@ -326,18 +326,18 @@ if (!data->sginfo.lookup)
 /* cell choice (TODO - neaten this ugly code) */
 name = g_string_new(NULL);
 if (data->sginfo.spacename)
-  g_string_sprintf(name, "%s", g_strstrip(data->sginfo.spacename));
+  g_string_printf(name, "%s", g_strstrip(data->sginfo.spacename));//g_string_sprintf deprecated
 else
   {
   if (data->sginfo.spacenum > 0)
-    g_string_sprintf(name, "%d", data->sginfo.spacenum);
+    g_string_printf(name, "%d", data->sginfo.spacenum);//g_string_sprintf deprecated
   else
-    g_string_sprintf(name, "P 1");
+    g_string_printf(name, "P 1");////g_string_sprintf deprecated
   }
 
 /* cell choice */
 if (data->sginfo.cellchoice)
-  g_string_sprintfa(name, ":%d", data->sginfo.cellchoice);
+  g_string_append_printf(name, ":%d", data->sginfo.cellchoice);//g_string_sprintfa deprecated
 
 /* if trigonal lattice, determine if cell is in hex or rhombo format */
 if (g_strrstr(name->str, "R") || data->sginfo.spacenum == 146
@@ -349,7 +349,7 @@ if (g_strrstr(name->str, "R") || data->sginfo.spacenum == 146
                               || data->sginfo.spacenum == 167)
   {
   if (space_primitive_cell(data))
-    g_string_sprintfa(name, ":R");
+    g_string_append_printf(name, ":R");//g_string_sprintfa deprecated
   }
 
 #if DEBUG_GEN_POS

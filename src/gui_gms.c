@@ -225,9 +225,9 @@ if (data->gamess.run_type < GMS_OPTIMIZE && !data->animation)
 /* update energy (TODO - only if successful) */
     line = g_string_new(NULL);
     if (data->gamess.have_energy)
-      g_string_sprintf(line,"%f",data->gamess.energy);
+      g_string_printf(line,"%f",data->gamess.energy);//g_string_sprintf deprecated
     else
-      g_string_sprintf(line, "not yet calculated");
+      g_string_printf(line, "not yet calculated");//g_string_sprintf deprecated
 /* is there a dialog entry to be updated? */
     if (GTK_IS_ENTRY(data->gamess.energy_entry))
       gtk_entry_set_text(GTK_ENTRY(data->gamess.energy_entry), line->str);
@@ -870,9 +870,9 @@ g_object_set_data(G_OBJECT(entry), "id", (gpointer) GAMESS_TITLE);
 
 data->gamess.energy_entry = gtk_entry_new_with_max_length(LINELEN);
 if (data->gamess.have_energy)
-  g_string_sprintf(line,"%f",data->gamess.energy);
+  g_string_printf(line,"%f",data->gamess.energy);//g_string_sprintf deprecated
 else
-  g_string_sprintf(line,"not yet calculated");
+  g_string_printf(line,"not yet calculated");//g_string_sprintf deprecated
 
 gtk_entry_set_text(GTK_ENTRY(data->gamess.energy_entry),line->str);
 gtk_box_pack_start (GTK_BOX (vbox), data->gamess.energy_entry, TRUE, TRUE, 0);

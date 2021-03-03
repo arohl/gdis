@@ -210,7 +210,7 @@ name = g_string_new(NULL);
 i=0;
 do
   {
-  g_string_sprintf(name, "project_%06d", i);
+  g_string_printf(name, "project_%06d", i);//g_string_sprintf deprecated
   i++;
   }
 while (g_file_test(name->str, G_FILE_TEST_EXISTS));
@@ -232,7 +232,7 @@ if (mkdir(dock->path, 0700))
   }
 
 /* project control file */
-g_string_sprintf(name, "%s%sproject.pcf", dock->path, DIR_SEP);
+g_string_printf(name, "%s%sproject.pcf", dock->path, DIR_SEP);//g_string_sprintf deprecated
 fp = fopen(name->str, "wt");
 
 /* save original variables */
@@ -246,11 +246,11 @@ if (model->gulp.rigid)
   {
   rigid = g_string_new(NULL);
   if (dock_rigid_x)
-    g_string_sprintf(rigid, "x");
+    g_string_printf(rigid, "x");//g_string_sprintf deprecated
   if (dock_rigid_y)
-    g_string_sprintfa(rigid, "y");
+    g_string_append_printf(rigid, "y");//g_string_sprintfa deprecated
   if (dock_rigid_z)
-    g_string_sprintfa(rigid, "z");
+    g_string_append_printf(rigid, "z");//g_string_sprintfa deprecated
   model->gulp.rigid_move = g_string_free(rigid, FALSE);
   }
 

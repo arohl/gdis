@@ -1488,7 +1488,7 @@ symops = data->symmetry.symops;
 j = k = 0;
 if (InversionCentersCount) 
   {
-  g_string_sprintfa(code, "(i) " ) ;
+  g_string_append_printf(code, "(i) " ) ;//g_string_sprintfa deprecated
   *((data->symmetry.items)+k++) = g_strdup("Inversion centre");
 /* store the symmetry operation */
   (symops+j)->type = INVERSION;
@@ -1503,7 +1503,7 @@ if (NormalAxesCounts[0])
   {
   *((data->symmetry.items)+k++) = g_strdup_printf("%d infinite rotation axes",
                                                    NormalAxesCounts[0]);
-  g_string_sprintfa(code, "%d*(Cinf) ", NormalAxesCounts[0] ) ;
+  g_string_append_printf(code, "%d*(Cinf) ", NormalAxesCounts[0] ) ;//g_string_sprintfa deprecated
 /*
   j += NormalAxesCounts[0];
 */
@@ -1517,10 +1517,10 @@ for (i=MaxAxisOrder ; i>=2 ; i--)
     case 0:
       continue;
     case 1:
-      g_string_sprintfa(code, "(C%d) ", i );
+      g_string_append_printf(code, "(C%d) ", i );//g_string_sprintfa deprecated
       break;
     default:
-      g_string_sprintfa(code, "%d*(C%d) ", NormalAxesCounts[i], i );
+      g_string_append_printf(code, "%d*(C%d) ", NormalAxesCounts[i], i );//g_string_sprintfa deprecated
     }
   *((data->symmetry.items)+k++) = g_strdup_printf("%d order %d rotation axes",
                                                     NormalAxesCounts[i],i);
@@ -1549,10 +1549,10 @@ for (i=MaxAxisOrder ; i>=2 ; i--)
     case 0:
       continue;
     case 1:
-      g_string_sprintfa(code, "(S%d) ", i);
+      g_string_append_printf(code, "(S%d) ", i);//g_string_sprintfa deprecated
       break;
     default:
-      g_string_sprintfa(code, "%d*(S%d) ", ImproperAxesCounts[i], i);
+      g_string_append_printf(code, "%d*(S%d) ", ImproperAxesCounts[i], i);//g_string_sprintfa deprecated
     }
   *((data->symmetry.items)+k++) = g_strdup_printf("%d order %d improper axes",
                                                     ImproperAxesCounts[i],i);
@@ -1564,11 +1564,11 @@ switch (PlanesCount)
   case 0:
     break;
   case 1:
-    g_string_sprintfa(code, "(sigma) ");
+    g_string_append_printf(code, "(sigma) ");//g_string_sprintfa deprecated
     *((data->symmetry.items)+k++) = g_strdup_printf("reflection plane");
     break;
   default:
-    g_string_sprintfa(code, "%d*(sigma) ", PlanesCount);
+    g_string_append_printf(code, "%d*(sigma) ", PlanesCount);//g_string_sprintfa deprecated
     *((data->symmetry.items)+k++) = g_strdup_printf("%d reflection planes",
                                                              PlanesCount);
 /* store the symmetry operation */

@@ -1415,7 +1415,7 @@ g_assert(buff != NULL);
           break;
 
         default:
-          g_string_sprintfa(key_buff, "%s ", *(buff+i));
+          g_string_append_printf(key_buff, "%s ", *(buff+i));//g_string_sprintfa deprecated
 
         }
       }
@@ -1442,7 +1442,7 @@ printf("Warning: context = %d\n", context);
 printf(" > %s", scan_cur_line(scan));
 #endif
     }
-  g_string_sprintfa(ex_buff, "%s", scan_cur_line(scan));
+  g_string_append_printf(ex_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
   }
 
 /*
@@ -1553,7 +1553,7 @@ printf("code: %d, context: %d\n", code, context);
           break;
 
         case ENDFORCE:
-          g_string_sprintfa(ex_buff, "%s", scan_cur_line(scan));
+          g_string_append_printf(ex_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
           break;
 
         case PRINT:
@@ -1656,7 +1656,7 @@ printf("code: %d, context: %d\n", code, context);
       case WEIGHT:
       case GULP_OBSERVABLES:
       case GULP_VARIABLES:
-        g_string_sprintfa(ex_buff, "%s", scan_cur_line(scan));
+        g_string_append_printf(ex_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
         while (!scan_complete(scan))
           {
           g_strfreev(buff);
@@ -1666,7 +1666,7 @@ printf("code: %d, context: %d\n", code, context);
 /* check first item only */
             code = gulp_is_option(*(buff));
             if (code == -1)
-              g_string_sprintfa(ex_buff, "%s", scan_cur_line(scan));
+              g_string_append_printf(ex_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
             else
               {
 /* terminate when we hit a new option */
@@ -1676,7 +1676,7 @@ printf("code: %d, context: %d\n", code, context);
                 scan_put_line(scan);
                 }
               else
-                g_string_sprintfa(ex_buff, "%s", scan_cur_line(scan));
+                g_string_append_printf(ex_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
               break;
               }
             }
@@ -2466,7 +2466,7 @@ P2MAT("new lattice matrix: ", svec);
 
 /* add new species data if the 1st item an element, otherwise end */
               if (elem_test(*buff))
-                g_string_sprintfa(species_buff, "%s", scan_cur_line(scan));
+                g_string_append_printf(species_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
               else
                 break;
               }
@@ -2491,7 +2491,7 @@ P2MAT("new lattice matrix: ", svec);
                 break;
                 }
               else
-                g_string_sprintfa(elem_buff, "%s", scan_cur_line(scan));
+                g_string_append_printf(elem_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
               }
             g_strfreev(buff);
             buff = scan_get_tokens(scan, &num_tokens);
@@ -2508,7 +2508,7 @@ P2MAT("new lattice matrix: ", svec);
             if (num_tokens)
               {
               if (str_is_float(*buff))
-                g_string_sprintfa(kpoints_buff, "%s", scan_cur_line(scan));
+                g_string_append_printf(kpoints_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
               }
             else
               break;
@@ -2541,14 +2541,14 @@ P2MAT("new lattice matrix: ", svec);
 
 /* special case - only one line expected */
         case GULP_SINGLE_LINE_POTENTIAL:
-          g_string_sprintfa(ff_buff, "%s", scan_cur_line(scan));
+          g_string_append_printf(ff_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
           context = -1;
           break;
 
 /* multi-line potentials */
 	case GULP_POTENTIAL:
 /* store potential header */
-          g_string_sprintfa(ff_buff, "%s", scan_cur_line(scan));
+          g_string_append_printf(ff_buff, "%s", scan_cur_line(scan));//g_string_sprintfa deprecated
 
           while (!scan_complete(scan))
             {
@@ -2596,7 +2596,7 @@ P2MAT("new lattice matrix: ", svec);
                 } 
               }
 /* store potential data */
-            g_string_sprintfa(ff_buff, "%s", line);
+            g_string_append_printf(ff_buff, "%s", line);//g_string_sprintfa deprecated
             }
           break;
         }

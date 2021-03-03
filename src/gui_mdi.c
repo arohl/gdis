@@ -232,7 +232,7 @@ window = dialog_window(dialog);
 /* create input (spin) widgets */
 /* box dimensions */
 frame_label = g_string_new(NULL);
-g_string_sprintf(frame_label,"Box dimension");
+g_string_printf(frame_label,"Box dimension");//g_string_sprintf deprecated
 frame = gtk_frame_new(frame_label->str);
 gtk_box_pack_start(GTK_BOX(GTK_DIALOG(window)->vbox), frame, TRUE, TRUE, 0);
 vbox = gtk_vbox_new(FALSE, 0);
@@ -249,7 +249,7 @@ spinner[0] = gtk_spin_button_new (adj, 0, 0);
 gtk_spin_button_set_wrap(GTK_SPIN_BUTTON (spinner[0]), FALSE);
 gtk_box_pack_start(GTK_BOX (vbox), spinner[0], FALSE, TRUE, 0);
 
-g_string_sprintf(frame_label,"Model: %s",data->basename);
+g_string_printf(frame_label,"Model: %s",data->basename);//g_string_sprintf deprecated
 
 frame = gtk_frame_new(frame_label->str);
 gtk_box_pack_start(GTK_BOX(GTK_DIALOG(window)->vbox), frame, TRUE, TRUE, 0);
@@ -269,7 +269,7 @@ while (list)
 /* don't include any previous MDI model */
   if (data->id == MDI)
     continue;
-  g_string_sprintf(frame_label,"Model: %s",data->basename);
+  g_string_printf(frame_label,"Model: %s",data->basename);//g_string_sprintf deprecated
 
   frame = gtk_frame_new(frame_label->str);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(window)->vbox), frame, TRUE, TRUE, 0);

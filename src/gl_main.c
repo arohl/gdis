@@ -1882,7 +1882,7 @@ glColor3f(1.0, 1.0, 1.0);
 /* box labels */
 for (i=0 ; i<n ; i++)
   {
-  g_string_sprintf(text, "%6.2f", z1);
+  g_string_printf(text, "%6.2f", z1);//g_string_sprintf
   pango_print(text->str,x+30,y+i*20+18,canvas,gl_fontsize,0);
   z1 -= dz;
   }
@@ -2015,40 +2015,40 @@ while (list)
   if (data->show_atom_index)
     {
     i = g_slist_index(data->cores, core[0]);
-    g_string_sprintfa(label, "[%d]", i+1);
+    g_string_append_printf(label, "[%d]", i+1);//g_string_sprintfa deprecated
     }
 
 /* setup atom labels */
   if (data->show_atom_labels)
     {
-    g_string_sprintfa(label, "(%s)", core[0]->atom_label);
+    g_string_append_printf(label, "(%s)", core[0]->atom_label);//g_string_sprintfa deprecated
     }
   if (data->show_atom_types)
     {
     if (core[0]->atom_type)
       {
-      g_string_sprintfa(label, "(%s)", core[0]->atom_type);
+      g_string_append_printf(label, "(%s)", core[0]->atom_type);//g_string_sprintfa deprecated
       }
     else
       {
-      g_string_sprintfa(label, "(?)");
+      g_string_append_printf(label, "(?)");//g_string_sprintfa deprecated
       }
     }
 
 /*VZ*/
   if (data->show_nmr_shifts)
     {
-    g_string_sprintfa(label, "(%4.2f)", core[0]->atom_nmr_shift);
+    g_string_append_printf(label, "(%4.2f)", core[0]->atom_nmr_shift);//g_string_sprintfa deprecated
     }
   if (data->show_nmr_csa)
     {
-    g_string_sprintfa(label, "(%4.2f;", core[0]->atom_nmr_aniso);
-    g_string_sprintfa(label, "%4.2f)", core[0]->atom_nmr_asym);
+    g_string_append_printf(label, "(%4.2f;", core[0]->atom_nmr_aniso);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_asym);//g_string_sprintfa deprecated
     }
   if (data->show_nmr_efg)
     {
-    g_string_sprintfa(label, "(%g;", core[0]->atom_nmr_cq);
-    g_string_sprintfa(label, "%4.2f)", core[0]->atom_nmr_efgasym);
+    g_string_append_printf(label, "(%g;", core[0]->atom_nmr_cq);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_efgasym);//g_string_sprintfa deprecated
     }
 
 /* get atom charge, add shell charge (if any) to get net result */
@@ -2060,7 +2060,7 @@ while (list)
       shell = core[0]->shell;
       q += shell->charge;
       }
-    g_string_sprintfa(label, "{%6.4f}", q);
+    g_string_append_printf(label, "{%6.4f}", q);//g_string_sprintfa deprecated
     }
 
 /* print */

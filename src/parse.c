@@ -787,7 +787,7 @@ for (;;)
     break;
     }
   else
-    g_string_sprintfa(line, "%c", c);
+    g_string_append_printf(line, "%c", c);//g_string_sprintfa is deprecated
   }
 
 return(g_string_free(line, FALSE));

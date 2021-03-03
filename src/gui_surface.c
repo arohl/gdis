@@ -2365,7 +2365,7 @@ l2 = get_facet_equiv(model, plane->index);
 for (l1=l2 ; l1 ; l1=g_slist_next(l1))
   {
   m = l1->data;
-  g_string_sprintfa(family, "(%d %d %d) ", m[0], m[1], m[2]);
+  g_string_append_printf(family, "(%d %d %d) ", m[0], m[1], m[2]);//g_string_sprintfa deprecated
   }
 
 gtk_entry_set_text(GTK_ENTRY(surf_hkl_family), family->str);

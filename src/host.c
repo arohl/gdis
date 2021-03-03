@@ -492,7 +492,7 @@ for (;;)
     if (strstr(cmd, "host:done"))
       break;
     else
-      g_string_sprintfa(response, "%s", cmd);
+      g_string_append_printf(response, "%s", cmd);//g_string_sprintfa deprecated
     }
   }
 
@@ -520,14 +520,14 @@ for (i=0 ; i<strlen(input) ; i++)
 /* escape special chars */
     case '$':
     case '!':
-      g_string_sprintfa(output, "\\%c", input[i]);
+      g_string_append_printf(output, "\\%c", input[i]);//g_string_sprintfa
       break;
 
     default:
 /* disallow control chars */
       if (g_ascii_iscntrl(input[i]))
         break;
-      g_string_sprintfa(output, "%c", input[i]);
+      g_string_append_printf(output, "%c", input[i]);//g_string_sprintfa
     }
   }
 

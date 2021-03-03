@@ -350,16 +350,16 @@ cmd = g_string_new(NULL);
 file = g_shell_quote(ptr);
 
 /* build the command line */
-g_string_sprintf(cmd, "%s +I%s -Ga -P +W%d +H%d +FT",
+g_string_printf(cmd, "%s +I%s -Ga -P +W%d +H%d +FT",//g_string_sprintf deprecated
                        sysenv.povray_path, file, 
                        (gint) sysenv.render.width, (gint) sysenv.render.height); 
 if (sysenv.render.antialias)
-  g_string_sprintfa(cmd, " +A +AM2");
+  g_string_append_printf(cmd, " +A +AM2");//g_string_sprintfa deprecated
 
 g_free(file);
 
 /* don't do continuous display updates */
-g_string_sprintfa(cmd, " -D");
+g_string_append_printf(cmd, " -D");//g_string_sprintfa deprecated
 
 task->is_async = TRUE;
 //task->status_file = g_build_filename(sysenv.cwd,???,NULL);/*what should be the status file?*/
@@ -425,18 +425,18 @@ cmd = g_string_new(NULL);
 filename = g_shell_quote(name);
 
 /* build the command line */
-g_string_sprintf(cmd, "%s +I%s -GA -P +W%d +H%d +FT ",
+g_string_printf(cmd, "%s +I%s -GA -P +W%d +H%d +FT ",//g_string_sprintf deprecated
                       sysenv.povray_path, filename,
                       (gint) sysenv.render.width , (gint) sysenv.render.height);
 if (sysenv.render.antialias)
-  g_string_sprintfa(cmd,"+A +AM2 ");
+  g_string_append_printf(cmd,"+A +AM2 ");//g_string_sprintfa deprecated
 
 /* after rendering delete input file, */
 if (sysenv.render.no_keep_tempfiles)
-  g_string_sprintfa(cmd, "; rm -f %s ", filename);
+  g_string_append_printf(cmd, "; rm -f %s ", filename);//g_string_sprintfa deprecated
 
 /* don't do continuous display updates */
-g_string_sprintfa(cmd, " -D");
+g_string_append_printf(cmd, " -D");//g_string_sprintfa deprecated
 
 /* execute */
 printf("system: %s\n", cmd->str);

@@ -111,12 +111,14 @@ void task_queue_init(void)
 {
 #ifdef G_THREADS_ENABLED
 gdk_threads_init();
-if (!g_thread_supported())
-  {
+//g_thread_supported is now depreacted and replaced by a define:
+//#define g_thread_supported()     (1)
+//if (!g_thread_supported())
+//  {
 /* TODO - disallow queueing of background tasks if this happens */
-  gui_text_show(ERROR, "Task queue initialization failed.\n");
-  }
-else
+//  gui_text_show(ERROR, "Task queue initialization failed.\n");
+//  }
+//else
   sysenv.thread_pool = g_thread_pool_new((GFunc) task_process, NULL,
                                          sysenv.max_threads,
                                          FALSE, NULL);
