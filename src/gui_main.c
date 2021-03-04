@@ -2267,7 +2267,7 @@ text = g_strdup_printf("This is free software, distributed under the terms of th
 gui_text_show(WARNING, text);
 g_free(text);
 
-text = g_strdup_printf("Welcome to GDIS version %4.2f.%d (%d), brought to you by Sean Fleming, Okadome Valencia, and Andrew Rohl",VERSION,PATCH,YEAR);
+text = g_strdup_printf("Welcome to GDIS version %4.2f.%d (%d), brought to you by Sean Fleming, Okadome Valencia, and Andrew Rohl\n",VERSION,PATCH,YEAR);
 gui_text_show(STANDARD, text);
 g_free(text);
 
