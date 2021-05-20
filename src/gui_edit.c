@@ -249,18 +249,18 @@ update_transmat();
 /********************************************/
 /* put text entry values into actual matrix */
 /********************************************/
-void change_transmat(GtkWidget *w)
+void change_transmat(GtkWidget *w, gint i)
 {
-gint i;
 const gchar *text;
+
 if(w==NULL) return;
-for(i=0;i<12;i++){
-	text = gtk_entry_get_text(GTK_ENTRY(CEDIT.transmat[i]));
-	if (i < 9)
-	  CEDIT.tmat[i] = str_to_float(text);
-	else
-	  CEDIT.tvec[i-9] = str_to_float(text);
-	}
+
+text = gtk_entry_get_text(GTK_ENTRY(CEDIT.transmat[i]));
+if (i < 9)
+  CEDIT.tmat[i] = str_to_float(text);
+else
+  CEDIT.tvec[i-9] = str_to_float(text);
+
 }
 
 /************************************************/
@@ -2340,7 +2340,7 @@ reset_transmat();
 //                   GTK_SIGNAL_FUNC(change_transmat), p_i);
 for(i=0;i<12;i++)
 	g_signal_connect(GTK_OBJECT(CEDIT.transmat[i]), "changed",
-			GTK_SIGNAL_FUNC(change_transmat), NULL);
+			GTK_SIGNAL_FUNC(change_transmat), GINT_TO_POINTER(i));
 }
 
 /***********************************************/
