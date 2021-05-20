@@ -249,8 +249,9 @@ update_transmat();
 /********************************************/
 /* put text entry values into actual matrix */
 /********************************************/
-void change_transmat(GtkWidget *w, gint i)
+void change_transmat(GtkWidget *w, gpointer ptr)
 {
+gint i = GPOINTER_TO_INT(ptr);
 const gchar *text;
 
 if(w==NULL) return;
@@ -266,8 +267,9 @@ else
 /************************************************/
 /* apply the current transformation/translation */
 /************************************************/
-void apply_transmat(GtkWidget *w, gint mode)
+void apply_transmat(GtkWidget *w, gpointer ptr)
 {
+gint mode = GPOINTER_TO_INT(ptr);
 GSList *item, *list=NULL;
 struct model_pak *data;
 struct core_pak *core;
@@ -2331,13 +2333,7 @@ gtk_widget_show_all(window);
  
 /* init the transformation values */
 reset_transmat();
-//for (i=0 ; i<12; i++)
-//  g_signal_connect(GTK_OBJECT(CEDIT.transmat[i]), "changed", 
-//                   GTK_SIGNAL_FUNC(change_transmat), (gpointer) i);
-//p_i=0;
-//for(i=0;i<12;p_i++ , i++)
-//  g_signal_connect(GTK_OBJECT(CEDIT.transmat[i]), "changed",
-//                   GTK_SIGNAL_FUNC(change_transmat), p_i);
+
 for(i=0;i<12;i++)
 	g_signal_connect(GTK_OBJECT(CEDIT.transmat[i]), "changed",
 			GTK_SIGNAL_FUNC(change_transmat), GINT_TO_POINTER(i));
