@@ -73,7 +73,6 @@ for (item=list ; item ; item=g_slist_next(item))
 
 void print_core_list(GSList *list)
 {
-gint i=0;
 GSList *item;
 struct core_pak *core;
 struct shel_pak *shell;
@@ -82,10 +81,6 @@ for (item=list ; item ; item=g_slist_next(item))
   {
   core = item->data;
 
-/*
-if (i==4)
-*/
-  {
   printf("[%4s] %1d %1d c %10.4f %10.4f %10.4f : %6.2f\n",
           core->atom_label, core->primary, core->orig,
           core->x[0], core->x[1], core->x[2], core->charge);
@@ -99,13 +94,10 @@ if (i==4)
             shell->x[0], shell->x[1], shell->x[2], shell->charge);
     }
   }
-  i++;
-  }
 }
 
 void print_core_list_cart(GSList *list)
 {
-    gint i=0;
     GSList *item;
     struct core_pak *core;
     struct shel_pak *shell;
@@ -114,24 +106,18 @@ void print_core_list_cart(GSList *list)
     {
         core = item->data;
         
-        /*
-         if (i==4)
-         */
-        {
-            printf("[%4s] %1d %1d c %10.4f %10.4f %10.4f : %6.2f\n",
-                   core->atom_label, core->primary, core->orig,
-                   core->rx[0], core->rx[1], core->rx[2], core->charge);
+        printf("[%4s] %1d %1d c %10.4f %10.4f %10.4f : %6.2f\n",
+               core->atom_label, core->primary, core->orig,
+               core->rx[0], core->rx[1], core->rx[2], core->charge);
             
-            if (core->shell)
-            {
-                shell = core->shell;
-                
-                printf("[%4s] %1d %1d s %10.4f %10.4f %10.4f : %6.2f\n",
-                       shell->shell_label, shell->primary, shell->orig,
-                       shell->rx[0], shell->rx[1], shell->rx[2], shell->charge);
-            }
+        if (core->shell)
+        {
+            shell = core->shell;
+              
+            printf("[%4s] %1d %1d s %10.4f %10.4f %10.4f : %6.2f\n",
+                   shell->shell_label, shell->primary, shell->orig,
+                   shell->rx[0], shell->rx[1], shell->rx[2], shell->charge);
         }
-        i++;
     }
 }
 
@@ -154,8 +140,8 @@ switch(type)
     init_model_charges(data);
 /* update electrostatic info */
     calc_emp(data);
-/* repetition here, since there is interdependence */
-/* between centroid (coords_center) and latmat (coords_compute) calc */
+/* repetition here, since there is interdependence 
+   between centroid (coords_center) and latmat (coords_compute) calc */
     coords_center(data);
     coords_compute(data);
   case CENT_COORDS:
@@ -267,7 +253,7 @@ void make_axes(struct model_pak *data)
 VEC3SET(data->axes[0].x, 1.0, 0.0, 0.0);
 VEC3SET(data->axes[1].x, 0.0, 1.0, 0.0);
 VEC3SET(data->axes[2].x, 0.0, 0.0, 1.0);
-/*solve a long time valgind _BUG_*/
+/* solve a long time valgrind _BUG_ */
 VEC3SET(data->axes[3].x, 0.0, 0.0, 0.0);
 VEC3SET(data->axes[4].x, 0.0, 0.0, 0.0);
 VEC3SET(data->axes[5].x, 0.0, 0.0, 0.0);
@@ -727,11 +713,11 @@ for (n=8 ; n-- ; )
 for (n=6 ; n-- ; )
   {
   ARR3SET(vec4, data->axes[n].x);
-//  vec4[3] = 0.0;
+  vec4[3] = 0.0;
   if (data->axes_type != CARTESIAN)
     {
     vec4mat(mat4, vec4);
-    normalize(vec4, 3);/*valgrind _BUG_*/
+    normalize(vec4, 3); /* valgrind _BUG_ */
     }
   ARR3SET(data->axes[n].rx, vec4);
   VEC3MUL(data->axes[n].rx, 0.06*data->rmax);
@@ -1041,4 +1027,3 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 g_slist_free(data->cores);
 data->cores = NULL;
 }
-
