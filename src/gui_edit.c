@@ -468,7 +468,7 @@ struct model_pak *data;
 data = model_new();
 sysenv.active_model = data;
 
-/* setup model parameters */
+/* set up model parameters */
 data->id = CREATOR;
 strcpy(data->filename, "new_model");
 g_free(data->basename);
@@ -565,7 +565,7 @@ if (!model)
 /* remove all symmetry and convert to cartesian */
 space_make_p1(model);
 
-/* make coordinates cartesian for the prep stqage */
+/* make coordinates cartesian for the prep stage */
 for (list=model->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
@@ -626,7 +626,9 @@ if (n > model->periodic)
                                       GTK_DIALOG_DESTROY_WITH_PARENT,
                                       GTK_MESSAGE_WARNING,
                                       GTK_BUTTONS_YES_NO,
-                                     "Are you sure the transformation matrix contains the appropriate repeat vectors for this change in periodicity?");
+                                     "Are you sure the transformation matrix contains "
+				     "the appropriate repeat vectors for this change "
+				     "in periodicity?");
 
       button = gtk_dialog_run(GTK_DIALOG(dialog));
       gtk_widget_destroy(dialog);
@@ -641,7 +643,7 @@ if (n > model->periodic)
 /* remove all symmetry and convert to cartesian */
 space_make_p1(model);
 
-/* make coordinates cartesian for the prep stqage */
+/* make coordinates cartesian for the prep stage */
 for (list=model->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
@@ -664,7 +666,18 @@ for (i=model->periodic ; i<n ; i++)
 /* init new lattice */
 model->periodic = n;
 model->fractional = FALSE;
-model->construct_pbc = TRUE;
+	
+/* Reset pbc's for non-periodic structure */
+if (n == 0) 
+  {
+  VEC3SET(&model->pbc[0], 1.0, 1.0, 1.0);
+  VEC3SET(&model->pbc[3], 0.5*G_PI, 0.5*G_PI, 0.5*G_PI);
+  model->construct_pbc = FALSE;
+  model->axes_type = CARTESIAN;
+  }
+else
+  model->construct_pbc = TRUE; 
+
 model_prep(model);
 
 /* GUI updates */
@@ -795,7 +808,7 @@ for (i=imin ; i<=imax ; i++)
       p[1] /= VEC3MAGSQ(t);
 
 /* clamp to one unit's worth of atoms */
-      dummy[0]=0;dummy[1]=0;//see the fractional_clamp _BUG_
+      dummy[0]=0; dummy[1]=0; // see fractional_clamp _BUG_
       fractional_clamp(p, dummy, 2);
 
 /* choose basis atom type */
