@@ -626,9 +626,9 @@ if (n > model->periodic)
                                       GTK_DIALOG_DESTROY_WITH_PARENT,
                                       GTK_MESSAGE_WARNING,
                                       GTK_BUTTONS_YES_NO,
-                                     "Are you sure the transformation matrix contains "
-				     "the appropriate repeat vectors for this change "
-				     "in periodicity?");
+                                      "Are you sure the transformation matrix contains "
+                                      "the appropriate repeat vectors for this change "
+                                      "in periodicity?");
 
       button = gtk_dialog_run(GTK_DIALOG(dialog));
       gtk_widget_destroy(dialog);
