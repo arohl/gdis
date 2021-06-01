@@ -454,7 +454,7 @@ return(button);
 /*************************************************/
 /* activate/deactivate based on a checkbox state */
 /*************************************************/
-/* TODO - shortcut for setup up one of these widgets */
+/* TODO - shortcut for setting up one of these widgets */
 void gui_checkbox_refresh(GtkWidget *w, GtkWidget *box)
 {
 if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)))
@@ -509,7 +509,7 @@ GtkWidget *button;
 /* create the button */
 button = gtk_button_new_with_label(txt);
 
-/* setup the packing requirements */
+/* set up the packing requirements */
 if (w)
   {
   fill1 = fill2 = FALSE;
@@ -622,7 +622,7 @@ active = i;
 count = 0;
 box = pack_box;
 
-/* setup the packing requirements */
+/* set up the packing requirements */
 fill1 = fill2 = FALSE;
 if (mask & 1)
   fill1 = TRUE;
@@ -672,7 +672,7 @@ GtkWidget *csd;
 /* create colour selection dialog */
 csd = gtk_color_selection_dialog_new(title);
 
-/* setup callbacks */
+/* set up callbacks */
 g_signal_connect_swapped(G_OBJECT(GTK_COLOR_SELECTION_DIALOG(csd)->ok_button),
                         "clicked", 
                          GTK_SIGNAL_FUNC(callback),
@@ -1420,13 +1420,12 @@ if (text)
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   }
 
-button = gtk_button_new_with_label("    ");
-gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-g_signal_connect(GTK_OBJECT(button), "clicked",
-                 GTK_SIGNAL_FUNC(dialog_colour_new), rgb);
+colour.red   = rgb[0]*COLOUR_SCALE;
+colour.green = rgb[1]*COLOUR_SCALE;
+colour.blue  = rgb[2]*COLOUR_SCALE;
 
-colour.red   = rgb[0]*65535.0;
-colour.green = rgb[1]*65535.0;
-colour.blue  = rgb[2]*65535.0;
-gtk_widget_modify_bg(button, GTK_STATE_NORMAL, &colour);
+button = gtk_color_button_new_with_color(&colour);
+gtk_color_button_set_title(GTK_COLOR_BUTTON(button), "Edit color");
+gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
 }
