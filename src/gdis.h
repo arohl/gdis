@@ -90,6 +90,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define AMU 1.6605402e-27
 #define AVOGADRO 6.0221367e23
 
+#define MAXIMUM(a,b) (((a) > (b)) ? (a) : (b))
 #define MINIMUM(a,b) (((a) < (b)) ? (a) : (b))
 
 /* location of data file - TODO - IMPROVE ie rc file/scan etc */
