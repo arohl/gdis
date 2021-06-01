@@ -136,17 +136,18 @@ gui_relation_update_widget(&elem_edit.cova);
 gui_relation_update_widget(&elem_edit.vdw);
 gui_relation_update_widget(&elem_edit.charge);
 
-colour.red   = elem_edit.colour[0]*65535.0;
-colour.green = elem_edit.colour[1]*65535.0;
-colour.blue  = elem_edit.colour[2]*65535.0;
-gtk_widget_modify_bg(elem_edit_colour, GTK_STATE_NORMAL, &colour);
+colour.red   = elem_edit.colour[0]*COLOUR_SCALE;
+colour.green = elem_edit.colour[1]*COLOUR_SCALE;
+colour.blue  = elem_edit.colour[2]*COLOUR_SCALE;
+gtk_widget_modify_bg(GTK_WIDGET(elem_edit_colour), GTK_STATE_NORMAL, &colour);
 }
 
 /***************************/
 /* Single element dialogue */
 /***************************/
-void display_element_dialog(GtkWidget *w, gint i)
+void display_element_dialog(GtkWidget *w, gpointer ptr)
 {
+gint i = GPOINTER_TO_INT(ptr);
 gchar *text;
 gpointer dialog;
 GtkWidget *window, *frame, *vbox, *hbox, *label;
@@ -155,6 +156,7 @@ struct table_entry *entry;
 
 entry = (struct table_entry *) &table[i];
 #endif
+
 /* get global elem data */
 get_elem_data(i+1, &elem_edit, NULL);
 
@@ -264,10 +266,10 @@ for(i=0 ; i<sizeof(table) ; i++)
 /* jump the gaps */
   if (GTK_IS_WIDGET(table[i].button)) 
     {
-    colour.red   = element.colour[0]*65535.0;
-    colour.green = element.colour[1]*65535.0;
-    colour.blue  = element.colour[2]*65535.0;
-    gtk_widget_modify_bg(table[i].button, GTK_STATE_NORMAL, &colour);
+    colour.red   = element.colour[0]*COLOUR_SCALE;
+    colour.green = element.colour[1]*COLOUR_SCALE;
+    colour.blue  = element.colour[2]*COLOUR_SCALE;
+    gtk_widget_modify_bg(GTK_WIDGET(table[i].button), GTK_STATE_NORMAL, &colour);
     }
   }
 }
@@ -298,6 +300,7 @@ gint i;
 gchar *text=NULL;
 gpointer dialog;
 GtkWidget *w, *label, *vbox, *periodic_table;
+GtkWidget *symbol, *event_box;
 struct elem_pak elem;
 GdkColor colour;
 
@@ -308,10 +311,10 @@ if (!dialog)
 w = dialog_window(dialog);
 
 /* background colour for periodic table */
-colour.red = 65535;
-colour.green = 65535;
-colour.blue = 65535;
-gtk_widget_modify_bg(w, GTK_STATE_NORMAL, &colour);
+colour.red = COLOUR_SCALE;
+colour.green = COLOUR_SCALE;
+colour.blue = COLOUR_SCALE;
+gtk_widget_modify_bg(GTK_WIDGET(w), GTK_STATE_NORMAL, &colour);
 
 /* use a vbox for the menubar and the table of elements... */
 vbox = gtk_vbox_new(FALSE, PANEL_SPACING);
@@ -334,12 +337,17 @@ for (i=0 ; i<sizeof(table) ; i++ )
   if (get_elem_data(i+1, &elem, NULL))
     break;
 
+  colour.red   = elem.colour[0]*COLOUR_SCALE;
+  colour.green = elem.colour[1]*COLOUR_SCALE;
+  colour.blue  = elem.colour[2]*COLOUR_SCALE;
+
 /* create the button */
-  table[i].button = gtk_button_new_with_label(elem.symbol);
-  colour.red   = elem.colour[0]*65535.0;
-  colour.green = elem.colour[1]*65535.0;
-  colour.blue  = elem.colour[2]*65535.0;
-  gtk_widget_modify_bg(table[i].button, GTK_STATE_NORMAL, &colour);
+  symbol = gtk_label_new(elem.symbol);
+  table[i].button = gtk_button_new();
+  event_box = gtk_event_box_new();
+  gtk_container_add(GTK_CONTAINER(event_box), symbol);
+  gtk_container_add(GTK_CONTAINER(table[i].button), event_box);
+  gtk_widget_modify_bg(GTK_WIDGET(event_box), GTK_STATE_NORMAL, &colour);
 
 /* set up a string for the tooltips */
   text = g_strdup_printf("%s  n:%d", elem.symbol, elem.number);
