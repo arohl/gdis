@@ -93,9 +93,9 @@ while (list)
 #if DEBUG_RELATION
 printf(" : relation (%p)", relation);
 #endif
-//    g_free(relation);//FIX 5c2f9f
+//    g_free(relation); // FIX 5c2f9f
     gui_relation_list = g_slist_remove(gui_relation_list, relation);
-    g_free(relation);/*FIX 5c2f9f*/
+    g_free(relation); /* FIX 5c2f9f */
     }
   }
 #if DEBUG_RELATION
@@ -173,7 +173,7 @@ printf("model %p : relation %p : setting variable to %f\n",
 }
 
 /***************************************************/
-/* updates dependant widget with new variable data */
+/* updates dependent widget with new variable data */
 /***************************************************/
 void gui_relation_update_widget(gpointer value)
 {
@@ -331,7 +331,7 @@ printf("relation %p : type %d : model change\n", relation, relation->type);
 }
 
 /**************************************************/
-/* create a new variable to widget correspondance */
+/* create a new variable to widget correspondence */
 /**************************************************/
 void
 gui_relation_submit(GtkWidget        *widget,
@@ -454,7 +454,7 @@ return(button);
 /*************************************************/
 /* activate/deactivate based on a checkbox state */
 /*************************************************/
-/* TODO - shortcut for setup up one of these widgets */
+/* TODO - shortcut for setting up one of these widgets */
 void gui_checkbox_refresh(GtkWidget *w, GtkWidget *box)
 {
 if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w)))
@@ -509,7 +509,7 @@ GtkWidget *button;
 /* create the button */
 button = gtk_button_new_with_label(txt);
 
-/* setup the packing requirements */
+/* set up the packing requirements */
 if (w)
   {
   fill1 = fill2 = FALSE;
@@ -542,7 +542,7 @@ GdkPixmap *pixmap;
 GdkBitmap *mask;
 #ifdef   USE_DEPRECATED
 GtkStyle *style;
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
 /* create button */
 button = gtk_button_new();
@@ -554,13 +554,13 @@ gtk_container_add(GTK_CONTAINER(button), hbox);
 style = gtk_widget_get_style(window);
 pixmap = gdk_pixmap_create_from_xpm_d
           (window->window, &mask, &style->white, go_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 GdkPixbuf *gdis_pixb;
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)go_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 image = gtk_image_new_from_pixmap(pixmap, mask);
 
 
@@ -622,7 +622,7 @@ active = i;
 count = 0;
 box = pack_box;
 
-/* setup the packing requirements */
+/* set up the packing requirements */
 fill1 = fill2 = FALSE;
 if (mask & 1)
   fill1 = TRUE;
@@ -672,7 +672,7 @@ GtkWidget *csd;
 /* create colour selection dialog */
 csd = gtk_color_selection_dialog_new(title);
 
-/* setup callbacks */
+/* set up callbacks */
 g_signal_connect_swapped(G_OBJECT(GTK_COLOR_SELECTION_DIALOG(csd)->ok_button),
                         "clicked", 
                          GTK_SIGNAL_FUNC(callback),
@@ -788,8 +788,9 @@ GtkWidget *gui_direct_spin(gchar *text, gdouble *value,
                              gdouble min, gdouble max, gdouble step,
                              gpointer callback, gpointer arg, GtkWidget *box)
 {
-gint size=0;
-gdouble digits;
+gint size;
+gint stepdigits;
+gdouble maxdigits;
 GtkWidget *spin;
 struct model_pak *model;
 
@@ -799,15 +800,14 @@ model = sysenv.active_model;
 spin = new_spinner(text, min, max, step, NULL, NULL, box);
 
 /* HACK - cope with GTK underestimating the size needed to display spin values */
-/* TODO - examine sig fig of *value to get dp */
-digits = log10(step);
-if (digits < 0.0)
-  {
-  digits -= 0.9;
-  size = 3 + fabs(digits);
-  }
-if (size < 5)
-  size = 5;
+stepdigits = (gint) ceil(fabs(log10(fabs(step))))+3;
+maxdigits = (gint) ceil(max == 0.0 ? 0: log10(fabs(max+step)));
+size = (gint) maxdigits;
+size += stepdigits;
+if (log10(fabs(step)) > 0)
+   size -= 1;
+if (max < 1.0)
+   size += 1;
 
 gtk_widget_set_size_request(spin, sysenv.gtk_fontsize*size, -1);
 
@@ -1026,9 +1026,9 @@ GdkBitmap *mask;
 GdkPixmap *pixmap;
 #ifndef   USE_DEPRECATED
 GdkPixbuf *gdis_pixb;
-#else  //USE_DEPRECATED
+#else  // USE_DEPRECATED
 GtkStyle *style;
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
 /* button */
 button = gtk_button_new();
@@ -1058,12 +1058,12 @@ if (g_ascii_strncasecmp(id, "GDIS_PAUSE", 10) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         pause_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)pause_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1076,12 +1076,12 @@ if (g_ascii_strncasecmp(id, "GDIS_PLAY", 9) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         play_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA*/
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)play_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1094,12 +1094,12 @@ if (g_ascii_strncasecmp(id, "GDIS_REWIND", 11) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         rewind_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)rewind_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1112,12 +1112,12 @@ if (g_ascii_strncasecmp(id, "GDIS_FASTFORWARD", 16) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         fastforward_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)fastforward_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1130,12 +1130,12 @@ if (g_ascii_strncasecmp(id, "GDIS_STOP", 9) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         stop_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)stop_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1148,12 +1148,12 @@ if (g_ascii_strncasecmp(id, "GDIS_STEP_FORWARD", 17) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         step_forward_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)step_forward_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1166,12 +1166,12 @@ if (g_ascii_strncasecmp(id, "GDIS_STEP_BACKWARD", 18) == 0)
 
   pixmap = gdk_pixmap_create_from_xpm_d(window->window, &mask, &style->white,
                                         step_backward_xpm);
-#else  //USE_DEPRECATED
-/*for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated*/
-/*but it probably will...  -- OVHPA*/
+#else  // USE_DEPRECATED
+/* for now, it seems that gdk_pixbuf_render_pixmap_and_mask is not deprecated
+   but it probably will be...  -- OVHPA */
 gdis_pixb = gdk_pixbuf_new_from_xpm_data ((const char **)step_backward_xpm);
 gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixmap,&mask,1);
-#endif //USE_DEPRECATED
+#endif // USE_DEPRECATED
 
   image = gtk_image_new_from_pixmap(pixmap, mask);
 
@@ -1182,7 +1182,7 @@ gdk_pixbuf_render_pixmap_and_mask_for_colormap (gdis_pixb,sysenv.colourmap,&pixm
 if (stock)
   image = gtk_image_new_from_stock(id, GTK_ICON_SIZE_BUTTON);
 
-/* label dependent packing  */
+/* label-dependent packing  */
 if (text)
   {
   gtk_box_pack_start(GTK_BOX(hbox), image, FALSE, FALSE, 0);
@@ -1204,9 +1204,9 @@ if (cb)
 return(button);
 }
 
-/*******************************************/
-/* update function for scolled text window */
-/*******************************************/
+/********************************************/
+/* update function for scrolled text window */
+/********************************************/
 void gui_text_window_update(GtkTextBuffer *buffer, gchar **text)
 {
 GtkTextIter start, end;
@@ -1253,8 +1253,8 @@ return(swin);
 }
 
 /**********************************/
-/* vbox in a frame layout shorcut */
-/**********************************/
+/* vbox in a frame layout shortcut */
+/***********************************/
 GtkWidget *gui_frame_vbox(const gchar *label, gint p1, gint p2, GtkWidget *box)
 {
 GtkWidget *frame, *vbox;
@@ -1420,13 +1420,12 @@ if (text)
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   }
 
-button = gtk_button_new_with_label("    ");
-gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-g_signal_connect(GTK_OBJECT(button), "clicked",
-                 GTK_SIGNAL_FUNC(dialog_colour_new), rgb);
+colour.red   = rgb[0]*COLOUR_SCALE;
+colour.green = rgb[1]*COLOUR_SCALE;
+colour.blue  = rgb[2]*COLOUR_SCALE;
 
-colour.red   = rgb[0]*65535.0;
-colour.green = rgb[1]*65535.0;
-colour.blue  = rgb[2]*65535.0;
-gtk_widget_modify_bg(button, GTK_STATE_NORMAL, &colour);
+button = gtk_color_button_new_with_color(&colour);
+gtk_color_button_set_title(GTK_COLOR_BUTTON(button), "Edit color");
+gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
 }

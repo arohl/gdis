@@ -38,9 +38,6 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #define PIX2SCALE 0.005
 
-/* Added by C. Fisher 2004 */
-#define MAXIMUM(x,y)  ((x>y)?x:y)
-
 /* main operation modes */
 enum 
 {
