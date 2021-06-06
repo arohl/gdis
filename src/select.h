@@ -8,6 +8,7 @@ void select_paste(void);
 void select_colour(void);
 void select_delete(void);
 void select_hide(void);
+void unselect_hide(void);
 void select_invert(void);
 void select_all(void);
 
