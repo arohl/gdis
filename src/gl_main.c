@@ -1923,6 +1923,14 @@ if (sysenv.render.show_energy)
     pango_print(text, canvas->x+20, sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
   }
 
+if( data->selection)
+  {
+  text = g_strdup_printf("Selected: %d", g_slist_length(data->selection));
+  pango_print(text, canvas->x+canvas->width-gl_text_width(text),
+        sysenv.height-canvas->y-canvas->height+40, canvas, gl_fontsize, 0);
+  g_free(text);
+  }
+
 /* print current frame */
 if (data->show_frame_number)
   {
