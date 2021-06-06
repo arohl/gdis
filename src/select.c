@@ -358,6 +358,39 @@ data->selection = NULL;
 redraw_canvas(SINGLE);
 }
 
+/***************************/
+/* hide non-selected atoms */
+/***************************/
+void unselect_hide(void)
+{
+GSList *list;
+struct model_pak *data;
+struct core_pak *core;
+struct shel_pak *shell;
+
+/* deletion for the active model only */
+data = sysenv.active_model;
+if (!data)
+  return;
+
+/* hide */
+for (list=data->cores ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  if (core->status & SELECT)
+    continue;
+  core->status |= HIDDEN;
+  if (core->shell)
+    {
+    shell = core->shell;
+    shell->status |= HIDDEN;
+    }
+  }
+
+/* update */
+redraw_canvas(SINGLE);
+}
+
 /********************/
 /* select all cores */
 /********************/
