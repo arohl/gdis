@@ -141,6 +141,7 @@ void gui_plots_dialog(void);
 void gui_render_dialog(void);
 void gui_mdi_dialog(void);
 void gui_help_dialog(void);
+void gui_about_dialog(void);
 void gui_dock_dialog(void);
 void gui_defect_dialog(void);
 void gui_setup_dialog(void);
