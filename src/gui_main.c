@@ -147,7 +147,7 @@ if (data->graph_active)
   return(FALSE);
   }
 
-/* can we assoc. with a single atom */
+/* can we assoc. with a single atom? */
 core = gl_seek_core(x, y, data);
 
 /* allow shift+click to add/remove single atoms in the selection */
@@ -754,7 +754,7 @@ g_assert(tv == NULL);
   tv = gtk_tree_view_new_with_model(GTK_TREE_MODEL(ls));
   gtk_box_pack_start(GTK_BOX(box), tv, TRUE, TRUE, 0);
 
-/* setup cell renderers */
+/* set up cell renderers */
   renderer = gtk_cell_renderer_text_new();
   column = gtk_tree_view_column_new_with_attributes(" ", renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW(tv), column);
@@ -875,7 +875,7 @@ module_ts = gtk_tree_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
 module_tv = gtk_tree_view_new_with_model(GTK_TREE_MODEL(module_ts));
 gtk_box_pack_start(GTK_BOX(box), module_tv, TRUE, TRUE, 0);
 
-/* setup the text rendering colum */
+/* set up the text rendering colum */
 renderer = gtk_cell_renderer_text_new();
 column = gtk_tree_view_column_new_with_attributes("a", renderer, "text", 0, NULL);
 gtk_tree_view_append_column(GTK_TREE_VIEW(module_tv), column);
@@ -884,7 +884,7 @@ gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(module_tv), FALSE);
 /* fill in with valid modules */
 module_widget_redraw();
 
-/* setup the selection handler */
+/* set up the selection handler */
 g_signal_connect(G_OBJECT(module_tv), "row-activated",
                  G_CALLBACK(cb_module_activate),
                  NULL);
@@ -1329,13 +1329,13 @@ gui_mode_switch(FREE);
 static GtkItemFactoryEntry menu_items[] = 
 {
   { "/_File",                 NULL, NULL, 0, "<Branch>" },
-/*
-  { "/File/_New",             NULL, create_new_model, 1, NULL },
-  { "/File/sep1",             NULL, NULL, 0, "<Separator>" },
-*/
-  { "/File/_Open...",         NULL, file_load_dialog, 1, NULL },
-  { "/File/_Save...",         NULL, file_save_dialog, 1, NULL },
-  { "/File/_Close",           NULL, tree_select_delete, 1, NULL },
+
+  { "/File/_New",             "<CTRL>N", edit_model_create, 1, NULL },
+/*  { "/File/sep1",             NULL, NULL, 0, "<Separator>" }, */
+
+  { "/File/_Open...",         "<CTRL>O", file_load_dialog, 1, NULL },
+  { "/File/_Save...",         "<CTRL>S", file_save_dialog, 1, NULL },
+  { "/File/_Close",           "<CTRL>W", tree_select_delete, 1, NULL },
   { "/File/sep1",             NULL, NULL, 0, "<Separator>" },
 
   { "/File/Import",              NULL, NULL, 0, "<Branch>" },
@@ -1348,24 +1348,23 @@ static GtkItemFactoryEntry menu_items[] =
   { "/File/Export/Graph data...",       NULL, analysis_export_dialog, 1, NULL },
 
   { "/File/sep1",             NULL, NULL, 0, "<Separator>" },
-  { "/File/_Quit",            NULL, gdis_exit_test, 0, NULL },
+  { "/File/_Quit",            "<CTRL>Q", gdis_exit_test, 0, NULL },
 
   { "/_Edit",               NULL, NULL, 0, "<Branch>" },
-  { "/Edit/_Copy",          NULL, select_copy, 0, NULL },
-  { "/Edit/_Paste",         NULL, select_paste, 0, NULL },
-  { "/Edit/sep1",           NULL, NULL, 0, "<Separator>" },
-
-  { "/Edit/Delete",         NULL, select_delete, 0, NULL },
-  { "/Edit/Undo",           NULL, undo_active, 0, NULL },
+  { "/Edit/Undo",           "<CTRL>Z", undo_active, 0, NULL },
+  { "/Edit/_Copy",          "<CTRL>C", select_copy, 0, NULL },
+  { "/Edit/_Paste",         "<CTRL>V", select_paste, 0, NULL },
 
   { "/Edit/sep1",           NULL, NULL, 0, "<Separator>" },
 
   { "/Edit/Colour...",      NULL, select_colour, 0, NULL },
-  { "/Edit/Hide",           NULL, select_hide, 0, NULL },
-  { "/Edit/Unhide all",     NULL, unhide_atoms, 0, NULL },
   { "/Edit/sep1",           NULL, NULL, 0, "<Separator>" },
-  { "/Edit/Select all",     NULL, select_all, 0, NULL },
-  { "/Edit/Invert",         NULL, select_invert, 0, NULL },
+  { "/Edit/Delete selected",  NULL, select_delete, 0, NULL },
+  { "/Edit/Select all",     "<CTRL>A", select_all, 0, NULL },
+  { "/Edit/Invert selection", "<CTRL>I", select_invert, 0, NULL },
+  { "/Edit/Hide selected",  "<CTRL>H", select_hide, 0, NULL },
+  { "/Edit/Hide unselected",  "<CTRL>U", unselect_hide, 0, NULL },
+  { "/Edit/Unhide all",     NULL, unhide_atoms, 0, NULL },
 
   { "/_Tools",                                NULL, NULL, 0, "<Branch>" },
   { "/Tools/Visualization",                   NULL, NULL, 0, "<Branch>" },
@@ -1374,7 +1373,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Visualization/Periodic table...", NULL, gui_gperiodic_dialog, 0, NULL },
 
   { "/Tools/Building",                           NULL, NULL, 0, "<Branch>" },
-  { "/Tools/Building/Editing...",                NULL, gui_edit_dialog, 0, NULL },
+  { "/Tools/Building/Editing...",                "<CTRL>E", gui_edit_dialog, 0, NULL },
   { "/Tools/Building/Dislocations...",           NULL, gui_defect_dialog, 0, NULL },
   { "/Tools/Building/Docking...",                NULL, gui_dock_dialog, 0, NULL },
   { "/Tools/Building/Dynamics...",               NULL, gui_mdi_dialog, 0, NULL },
@@ -1396,7 +1395,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/Tools/Analysis/Plots...",               NULL, gui_plots_dialog, 0, NULL },
 
   { "/_View",                       NULL, NULL, 0, "<Branch>"},
-  { "/View/Display properties...",  NULL, gui_render_dialog, 0, NULL},
+  { "/View/Display properties...",  "<CTRL>D", gui_render_dialog, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
   { "/View/Reset model images",     NULL, space_image_widget_reset, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
@@ -1414,9 +1413,9 @@ static GtkItemFactoryEntry menu_items[] =
   { "/_Help",                  NULL, NULL, 0, "<Branch>"},
 
 /* about info -> manual acknowlegements */
-/*
-  { "/Help/About...",          NULL, gui_help_dialog, 0, NULL},
-*/
+
+  { "/Help/About...",          NULL, gui_about_dialog, 0, NULL},
+
   { "/Help/Manual...",         NULL, gui_help_dialog, 0, NULL},
 };
 
@@ -1425,11 +1424,23 @@ static GtkItemFactoryEntry menu_items[] =
 /********************************/
 gint cb_key_press(GtkWidget *w, GdkEventKey *event, gpointer dummy)
 {
+#ifdef UNUSED_BUT_SET
+GdkModifierType state;
+
+state = (GdkModifierType) event->state;
+
+if ((state & GDK_CONTROL_MASK))
+  ctrl = TRUE;
+
+if ((state & GDK_MOD1_MASK))
+  alt = TRUE;
+#endif
+
 switch(event->keyval)
   {
-/* selection delete */
+/* colour settings */
   case GDK_Insert:
-    undo_active();
+    select_colour();
     break;
 
 /* selection delete */
@@ -1474,7 +1485,18 @@ switch(event->keyval)
     stereo_close_window();
     redraw_canvas(SINGLE);
     break;
+
+/* about dialog */
+  case GDK_F9:
+    gui_about_dialog();
+    break;
+
+/* manual */
+  case GDK_F12:
+    gui_help_dialog();
+    break;
   }
+
 return(FALSE);
 }
 
@@ -1732,9 +1754,9 @@ for (list=active_list ; list ; list=g_list_next(list))
   }
 }
 
-/*********************************/
-/* setup the active model widget */
-/*********************************/
+/**********************************/
+/* set up the active model widget */
+/**********************************/
 void gui_active_setup(GtkWidget *box)
 {
 gpointer entry;
@@ -1808,11 +1830,15 @@ GdkPixmap *gdis_pix=NULL;
 GdkPixbuf *pixbuf;
 GtkStyle *style;
 GtkItemFactory *item;
+GtkAccelGroup *accel;
 GdkColor colour;
 
 gtk_init(&argc, &argv);
 gdk_gl_init(&argc, &argv);
 gtk_gl_init(&argc, &argv);
+
+/* Make an accelerator group (shortcut keys) */
+accel = gtk_accel_group_new();
 
 /* enforce true colour (fixes SG problems) */
 sysenv.visual = gdk_visual_get_best_with_type(GDK_VISUAL_TRUE_COLOR);
@@ -1853,9 +1879,10 @@ vbox = gtk_vbox_new(FALSE, 0);
 gtk_container_add(GTK_CONTAINER(window), vbox);
 
 /* item factory menu creation */
-item = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
+item = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", accel);
 gtk_item_factory_create_items(item, nmenu_items, menu_items, NULL);
 menu_bar = gtk_item_factory_get_widget(item, "<main>");
+gtk_window_add_accel_group(GTK_WINDOW (window), accel);
 
 /* FALSE,FALSE => don't expand to fill (eg on resize) */
 gtk_box_pack_start(GTK_BOX(vbox), menu_bar, FALSE, FALSE, 0);
@@ -2012,7 +2039,7 @@ gtk_toolbar_append_item(GTK_TOOLBAR (toolbar),
                         GTK_SIGNAL_FUNC(gui_render_dialog),
                         NULL);
 
-/* model geomtry */
+/* model geometry */
 pixbuf = image_table_lookup("image_axes");
 gdis_wid = gtk_image_new_from_pixbuf(pixbuf);
 gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
@@ -2263,7 +2290,7 @@ gtk_paned_pack2(GTK_PANED(vpaned), sysenv.tpane, TRUE, TRUE);
 gtk_widget_set_size_request(sysenv.tpane, -1, sysenv.tray_height);
 gtk_widget_show(sysenv.tpane);
 
-text = g_strdup_printf("This is free software, distributed under the terms of the GNU public license (GPL).\nFor more information visit http://www.gnu.org\n");
+text = g_strdup_printf("This is free software, distributed under the terms of the GNU public license (GPL).\nFor more information visit http://www.gnu.org/\n");
 gui_text_show(WARNING, text);
 g_free(text);
 
