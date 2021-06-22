@@ -120,9 +120,9 @@ if (vector_angle(v, n, 3) < 0.5*G_PI)
 return(TRUE);
 }
 
-/***************************************************/
-/* setup the visual for subsequent canvas creation */
-/***************************************************/
+/****************************************************/
+/* set up the visual for subsequent canvas creation */
+/****************************************************/
 gint gl_init_visual(void)
 {
 /* attempt to get best visual */
@@ -168,9 +168,9 @@ if (!sysenv.glconfig)
 return(0);
 }
 
-/****************************************/
-/* setup the camera and projection mode */
-/****************************************/
+/*****************************************/
+/* set up the camera and projection mode */
+/*****************************************/
 #define DEBUG_INIT_PROJ 0
 void gl_init_projection(struct canvas_pak *canvas, struct model_pak *model)
 {
@@ -181,7 +181,7 @@ struct camera_pak *camera;
 
 g_assert(canvas != NULL);
 
-/* setup matrices even if no model in the current canvas */
+/* set up matrices even if no model in the current canvas */
 glViewport(canvas->x, canvas->y, canvas->width, canvas->height);
 if (!model)
   {
@@ -211,7 +211,7 @@ sysenv.rsize = r;
 glMatrixMode(GL_MODELVIEW);
 glLoadIdentity();
 
-/* setup camera */
+/* set up camera */
 camera = model->camera;
 ARR3SET(x, camera->x);
 ARR3SET(o, camera->o);
@@ -291,9 +291,9 @@ VEC3SET(&gl_acm[3],  0.0, -1.0,  0.0);
 VEC3SET(&gl_acm[6],  0.0,  0.0, -1.0);
 }
 
-/***************************/
-/* setup all light sources */
-/***************************/
+/****************************/
+/* set up all light sources */
+/****************************/
 void gl_init_lights(struct model_pak *data)
 {
 gint i;
@@ -989,7 +989,7 @@ printf("%f : %d [%d]\n", radius, max, quality);
     sysenv.render.sphere_quality = max;
   }
 
-/* setup geometric primitve */
+/* set up geometric primitive */
 gl_init_sphere(&sphere, model);
 
 /* draw desired cores */
@@ -1895,6 +1895,7 @@ g_string_free(text, TRUE);
 void gl_draw_text(struct canvas_pak *canvas, struct model_pak *data)
 {
 gint i, j, type;
+gint hidden = 0;
 gchar *text;
 gdouble q, v1[3], v2[3], v3[3];
 GSList *list;
@@ -1920,14 +1921,15 @@ if (sysenv.render.show_energy)
   {
   text = property_lookup("Energy", data);
   if (text)
-    pango_print(text, canvas->x+20, sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
+    pango_print(text, canvas->x+canvas->width-gl_text_width(text), 
+		    sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
   }
 
 if( data->selection)
   {
   text = g_strdup_printf("Selected: %d", g_slist_length(data->selection));
   pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-        sysenv.height-canvas->y-canvas->height+40, canvas, gl_fontsize, 0);
+        sysenv.height-canvas->y-canvas->height+3*gl_fontsize, canvas, gl_fontsize, 0);
   g_free(text);
   }
 
@@ -2014,6 +2016,7 @@ while (list)
   if (core[0]->status & (DELETED | HIDDEN))
     {
     list = g_slist_next(list);
+    hidden += 1;
     continue;
     }
 
@@ -2026,7 +2029,7 @@ while (list)
     g_string_append_printf(label, "[%d]", i+1);//g_string_sprintfa deprecated
     }
 
-/* setup atom labels */
+/* set up atom labels */
   if (data->show_atom_labels)
     {
     g_string_append_printf(label, "(%s)", core[0]->atom_label);//g_string_sprintfa deprecated
@@ -2082,56 +2085,64 @@ while (list)
   }
 g_string_free(label, TRUE);
 
+if( hidden > 0)
+  {
+  text = g_strdup_printf("Hidden: %d  ", hidden);
+  pango_print(text, canvas->x+canvas->width-gl_text_width(text),
+        sysenv.height-canvas->y-canvas->height+5*gl_fontsize, canvas, gl_fontsize, 0);
+  g_free(text);
+  }
+
 /* geom measurement labels */
 if (data->show_geom_labels)
-for (list=data->measure_list ; list ; list=g_slist_next(list))
-  {
-  type = measure_type_get(list->data);
-  switch(type)
+  for (list=data->measure_list ; list ; list=g_slist_next(list))
     {
-    case MEASURE_BOND:
-    case MEASURE_DISTANCE:
-    case MEASURE_INTER:
-    case MEASURE_INTRA:
-      measure_coord_get(v1, 0, list->data, data);
-      measure_coord_get(v2, 1, list->data, data);
-      ARR3ADD(v1, v2);
-      VEC3MUL(v1, 0.5);
-      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
-      break;
+    type = measure_type_get(list->data);
+    switch(type)
+      {
+      case MEASURE_BOND:
+      case MEASURE_DISTANCE:
+      case MEASURE_INTER:
+      case MEASURE_INTRA:
+        measure_coord_get(v1, 0, list->data, data);
+        measure_coord_get(v2, 1, list->data, data);
+        ARR3ADD(v1, v2);
+        VEC3MUL(v1, 0.5);
+        pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
+        break;
 
-    case MEASURE_ANGLE:
+      case MEASURE_ANGLE:
 /* angle is i-j-k */
-      measure_coord_get(v1, 0, list->data, data);
-      measure_coord_get(v2, 1, list->data, data);
-      measure_coord_get(v3, 2, list->data, data);
+        measure_coord_get(v1, 0, list->data, data);
+        measure_coord_get(v2, 1, list->data, data);
+        measure_coord_get(v3, 2, list->data, data);
 /* angle label */
 /* FIXME - should use a similar process to the draw_arc code to */
 /* determine which arm is shorter & use that to determine label position */
-      ARR3ADD(v1, v2);
-      ARR3ADD(v1, v3);
-      VEC3MUL(v1, 0.3333);
-      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
-      break;
+        ARR3ADD(v1, v2);
+        ARR3ADD(v1, v3);
+        VEC3MUL(v1, 0.3333);
+        pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
+        break;
+      }
     }
-  }
 
 /* spatial object labels */
 //glDisable(GL_COLOR_LOGIC_OP);
 /* FIXME - need to change the variable name */
 if (data->morph_label)
-for (list=data->spatial ; list ; list=g_slist_next(list))
-  {
-  spatial = list->data;
-  if (spatial->show_label)
+  for (list=data->spatial ; list ; list=g_slist_next(list))
     {
-    glColor4f(spatial->c[0], spatial->c[1], spatial->c[2], 1.0);
-    v = g_slist_nth_data(spatial->list, 0);
-    if (gl_visible(v->rn, data))
-      pango_print_world(spatial->label, spatial->x[0], spatial->x[1], spatial->x[2], canvas);
+    spatial = list->data;
+    if (spatial->show_label)
+      {
+      glColor4f(spatial->c[0], spatial->c[1], spatial->c[2], 1.0);
+      v = g_slist_nth_data(spatial->list, 0);
+      if (gl_visible(v->rn, data))
+        pango_print_world(spatial->label, spatial->x[0], spatial->x[1], spatial->x[2], canvas);
 
+      }
     }
-  }
 }
 
 /********************************/
@@ -2522,10 +2533,10 @@ if (data->mode == RECORD)
   data->num_frames++;
   }
 
-/* setup the lighting */
+/* set up the lighting */
 gl_init_lights(data);
 
-/* setup the fontsize --OVHPA */
+/* set up the fontsize --OVHPA */
 gl_get_fontsize();
 
 /* scaling affects placement to avoid near/far clipping */
@@ -3001,7 +3012,7 @@ printf("canvas: %p\nactive: %d\nresize: %d\nmodel: %p\n",
         canvas, canvas->active, canvas->resize, canvas->model);
 #endif
 
-/* setup viewing transformations (even if no model - border) */
+/* set up viewing transformations (even if no model - border) */
   gl_init_projection(canvas, model);
 
 /* drawing (model only) */
