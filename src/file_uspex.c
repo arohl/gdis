@@ -1090,18 +1090,29 @@ if(j==0) for(i=0;i<_UC._num_opt_steps;i++) _UC._isfixed[i]=FALSE;
 		}
 		__GET_INT(numParallelCalcs);
                 if (find_in_string("numProcessors",line) != NULL) {/*removed*/
-                        g_free(line);line = file_read_line(vf);/*go next line*/
-                        _UC.numProcessors=g_malloc(_UC._nspecies*sizeof(gint));
-                        for(i=0;i<_UC._num_opt_steps;i++) _UC.numProcessors[i]=0;
-                        ptr=&(line[0]);i=0;
-                        while((*ptr!='\n')&&(*ptr!='\0')){
-                                __SKIP_BLANK(ptr);
-                                _UC.numProcessors[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
-                                ptr=ptr2+1;
-                                i++;
-                        }
-                        g_free(line);
-                        line = file_read_line(vf);/*this is the EndProcessors line*/
+			/*numProcessor can _also_ be a single value _or_ a block*/
+			/*as shown by example 15 of USPEX version 9.4.4*/
+                        ptr=&(line[0]);
+                        __SKIP_BLANK(ptr);
+			if(*ptr=='%'){/*block type*/
+                        	g_free(line);line = file_read_line(vf);/*go next line*/
+                        	_UC.numProcessors=g_malloc(_UC._nspecies*sizeof(gint));
+                        	for(i=0;i<_UC._num_opt_steps;i++) _UC.numProcessors[i]=0;
+                        	ptr=&(line[0]);i=0;
+                        	while((*ptr!='\n')&&(*ptr!='\0')){
+                        	        __SKIP_BLANK(ptr);
+                        	        _UC.numProcessors[i]=(gint)g_ascii_strtoull(ptr,&ptr2,10);
+                        	        ptr=ptr2+1;
+                        	        i++;
+                        	}
+                        	g_free(line);
+                        	line = file_read_line(vf);/*this is the EndProcessors line*/
+			}else{/*single value*/
+				__STRIP_EOL(line);
+				_UC.numProcessors=g_malloc(1*sizeof(gint));
+				sscanf(line,"%i%*s",&(_UC.numProcessors[0]));
+				if(_UC.numProcessors[0] < 1) _UC.numProcessors[0]=1;
+			}
                         g_free(line);
                         line = file_read_line(vf);
                         continue;

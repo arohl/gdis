@@ -38,9 +38,6 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #define PIX2SCALE 0.005
 
-/* Added by C. Fisher 2004 */
-#define MAXIMUM(x,y)  ((x>y)?x:y)
-
 /* main operation modes */
 enum 
 {
@@ -144,6 +141,7 @@ void gui_plots_dialog(void);
 void gui_render_dialog(void);
 void gui_mdi_dialog(void);
 void gui_help_dialog(void);
+void gui_about_dialog(void);
 void gui_dock_dialog(void);
 void gui_defect_dialog(void);
 void gui_setup_dialog(void);

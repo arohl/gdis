@@ -36,6 +36,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "parse.h"
 #include "interface.h"
 #include "gui_image.h"
+#include "logo_wide.xpm"
 
 extern struct sysenv_pak sysenv;
 
@@ -43,6 +44,40 @@ extern struct sysenv_pak sysenv;
 
 GtkTextTag *help_tag_bold, *help_tag_italic, *help_tag_invisible, *help_tag_fixed;
 
+/****************************/
+/* display an About banner  */
+/****************************/
+void gui_about_dialog()
+{
+GError *error = NULL;
+GdkPixbuf *logo = gdk_pixbuf_new_from_xpm_data ((const gchar **) logo_wide_xpm);
+GtkWidget *window;
+gchar *text;
+
+/* Check if logo loaded successfully */
+if (logo == NULL) {
+   text = g_strdup_printf("Error loading file: #%d %s\n", error->code, error->message);
+   gui_text_show(ERROR, text);
+   g_error_free(error);
+}
+
+window = gtk_about_dialog_new();
+gtk_about_dialog_set_name(GTK_ABOUT_DIALOG(window), "GDIS");
+
+gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(window), "1.0");
+gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(window),"\302\251 2021 Sean Fleming and Andrew Rohl");
+gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(window),
+   "GTK Display Interface for Structures");
+gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(window),
+   "https://github.com/arohl/gdis");
+gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(window), logo);
+g_object_unref(logo), logo = NULL;
+gtk_dialog_run(GTK_DIALOG (window));
+
+/* expose the dialog */
+gtk_widget_show_all(window);
+gtk_widget_destroy(window);
+}
 /**********************/
 /* add a single topic */
 /**********************/
