@@ -135,7 +135,7 @@ if (!model->show_bonds)
   return;
 
 /* common pipe width */
-radius = sysenv.render.stick_rad;
+radius = sysenv.render.stick_radius;
 
 /* enumerate bonds to construct the pipe list */
 for (list=model->bonds; list ; list=g_slist_next(list))

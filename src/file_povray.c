@@ -318,6 +318,7 @@ gdouble rf, gf, bf;
 gdouble vec[3], vec1[3], vec2[3];
 gdouble v1[4], v2[4], v3[3], n1[3], n2[3], n3[3];
 gdouble ctrl[8][3], mat4[16];
+gdouble radius;
 gint colour_index[3];
 GSList *list, *ilist, *plist, *rlist, *pipe_list[4];
 struct core_pak *core1;
@@ -421,8 +422,15 @@ for (list=data->cores ; list ; list=g_slist_next(list))
         if (core1->bonds)
           break;
       case BALL_STICK:
+        radius *= sysenv.render.ball_radius;
+        if (sysenv.render.scale_ball_size)
+          {
+          get_elem_data(core1->atom_code, &elem, data);
+          radius *= elem.vdw;
+          }
+
         fprintf(fp,"sphere { <%f, %f, %f>, %f ",vec1[0],vec1[1],vec1[2],
-                                             sysenv.render.ball_rad);
+                                             radius);
 /* TODO - can we adjust this to get a wire frame sphere? */
         fprintf(fp,"texture{pigment{color rgb<%f,%f,%f>",rf,gf,bf);  
 
@@ -503,7 +511,7 @@ for (i=0 ; i<4 ; i++)
 /* normal */
         case 0:
           fprintf(fp,"cylinder { <%f,%f,%f>,\n<%f,%f,%f>, %f\n",
-                      v1[0],v1[1],v1[2],v2[0],v2[1],v2[2], sysenv.render.stick_rad);
+                      v1[0],v1[1],v1[2],v2[0],v2[1],v2[2], sysenv.render.stick_radius);
           fprintf(fp,"open texture{pigment{color rgb<%f,%f,%f>}\n",
                       pipe->colour[0], pipe->colour[1], pipe->colour[2]);
 		  fprintf(fp, " finish{Phong_Shiny}}}\n");
@@ -514,7 +522,7 @@ for (i=0 ; i<4 ; i++)
 /* ghosts */
         case 1:
           fprintf(fp,"cylinder { <%f,%f,%f>,\n<%f,%f,%f>, %f\n",
-                      v1[0],v1[1],v1[2],v2[0],v2[1],v2[2], sysenv.render.stick_rad);
+                      v1[0],v1[1],v1[2],v2[0],v2[1],v2[2], sysenv.render.stick_radius);
           fprintf(fp,"open texture{pigment{color rgb<%f,%f,%f> transmit 0.6}",
                       pipe->colour[0], pipe->colour[1], pipe->colour[2]);
 		  fprintf(fp, " finish{Phong_Shiny}}}\n");

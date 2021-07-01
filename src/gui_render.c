@@ -562,6 +562,8 @@ vbox = gui_frame_vbox(NULL, FALSE, FALSE, vbox1);
 
 gui_direct_check("Antialias", &sysenv.render.antialias,
                    render_refresh, NULL, vbox);
+gui_direct_check("Scale ball & stick atoms", &sysenv.render.scale_ball_size,
+                   render_refresh, NULL, vbox);
 gui_direct_check("Wire frame surfaces", &sysenv.render.wire_surface,
                    render_refresh, NULL, vbox);
 gui_direct_check("Show hidden surfaces", &sysenv.render.wire_show_hidden,
@@ -590,11 +592,11 @@ gui_direct_spin("Zone grid size ",
 vbox = gui_frame_vbox(NULL, FALSE, FALSE, vbox2);
 
 gui_direct_spin("Ball radius",
-                  &sysenv.render.ball_rad, 0.1, 0.5, 0.02,
+                  &sysenv.render.ball_radius, 0.1, 0.5, 0.02,
                   render_refresh, NULL, vbox);
 
 gui_direct_spin("Cylinder radius",
-                  &sysenv.render.stick_rad, 0.02, 0.5, 0.01,
+                  &sysenv.render.stick_radius, 0.02, 0.5, 0.01,
                   render_refresh, NULL, vbox);
 
 gui_direct_spin("Stick thickness",
