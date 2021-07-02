@@ -411,7 +411,7 @@ switch (core->render_mode)
       {
 /* TODO - calling get_elem_data() all the time is inefficient */
       get_elem_data(core->atom_code, &elem, model);
-      radius *= sysenv.render.ball_radius * elem.vdw;
+      radius *= sysenv.render.cpk_scale * elem.vdw;
       }
     else
       radius *= sysenv.render.ball_radius;

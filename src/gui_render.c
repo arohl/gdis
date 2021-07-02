@@ -562,7 +562,7 @@ vbox = gui_frame_vbox(NULL, FALSE, FALSE, vbox1);
 
 gui_direct_check("Antialias", &sysenv.render.antialias,
                    render_refresh, NULL, vbox);
-gui_direct_check("Scale ball & stick atoms", &sysenv.render.scale_ball_size,
+gui_direct_check("CPK scaling for B&S atoms", &sysenv.render.scale_ball_size,
                    render_refresh, NULL, vbox);
 gui_direct_check("Wire frame surfaces", &sysenv.render.wire_surface,
                    render_refresh, NULL, vbox);
@@ -608,7 +608,7 @@ gui_direct_spin("Line drawing width ",
                   render_refresh, NULL, vbox);
 
 gui_direct_spin("CPK scaling",
-                  &sysenv.render.cpk_scale, 0.1, 3.0, 0.05,
+                  &sysenv.render.cpk_scale, 0.1, 3.0, 0.02,
                   render_refresh, NULL, vbox);
 
 /* highlighting frame */
