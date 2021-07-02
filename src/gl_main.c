@@ -508,8 +508,8 @@ gdouble fg[3], bg[3];
 
 ARR3SET(fg, sysenv.render.fg_colour);
 ARR3SET(bg, sysenv.render.bg_colour);
-VEC3MUL(fg, COLOUR_SCALE);
-VEC3MUL(bg, COLOUR_SCALE);
+VEC3MUL(fg, (gdouble)COLOUR_SCALE);
+VEC3MUL(bg, (gdouble)COLOUR_SCALE);
 /* XOR to get a visible colour */
 fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
 fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
@@ -519,7 +519,7 @@ ARR3SET(sysenv.render.fg_colour, fg);
 
 /* adjust label colour for visibility against the current background */
 ARR3SET(fg, sysenv.render.label_colour);
-VEC3MUL(fg, COLOUR_SCALE);
+VEC3MUL(fg, (gdouble)COLOUR_SCALE);
 /* XOR to get a visible colour */
 fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
 fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
@@ -531,7 +531,7 @@ ARR3SET(sysenv.render.label_colour, fg);
 /* adjust title colour for visibility against the current background */
 /*
 ARR3SET(fg, sysenv.render.title_colour);
-VEC3MUL(fg, COLOUR_SCALE);
+VEC3MUL(fg, (gdouble)COLOUR_SCALE);
 */
 /* force to zero, so we get cyan (not white) for a black background */
 fg[0] = 0.0;
