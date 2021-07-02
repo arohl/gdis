@@ -400,6 +400,7 @@ do
 for (list=data->cores ; list ; list=g_slist_next(list))
   {
   core1 = list->data;
+  radius = 1.0;
   if (core1->status & (DELETED | HIDDEN))
     continue;
 

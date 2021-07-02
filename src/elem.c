@@ -140,7 +140,7 @@ g_assert(key < n);
                 elem.colour[2] = str_to_float(*(buff+3));
 if (VEC3MAGSQ(elem.colour) > 3.0)
   {
-  VEC3MUL(elem.colour, 1.0/65535.0);
+  VEC3MUL(elem.colour, INV_COLOUR_SCALE);
   }
                 set[key]++;
                 break; 
@@ -397,7 +397,7 @@ struct elem_pak elem_data;
 
 get_elem_data(core->atom_code, &elem_data, model);
 ARR3SET(core->colour, elem_data.colour);
-VEC3MUL(core->colour, 65535.0);
+VEC3MUL(core->colour, COLOUR_SCALE);
 if (core->ghost)
   core->colour[3] = 0.5;
 else
@@ -463,7 +463,7 @@ core->atom_code = elem.number;
 core->bond_cutoff = elem.cova;
 core->charge = elem.charge;
 ARR3SET(core->colour, elem.colour);
-VEC3MUL(core->colour, 65535.0);
+VEC3MUL(core->colour, COLOUR_SCALE);
 }
 
 /*********************************************************/
@@ -938,7 +938,7 @@ if (t < 0.0)
   }
 
 ARR3SET(core->colour, elem.colour);
-VEC3MUL(core->colour, 65535.0);
+VEC3MUL(core->colour, COLOUR_SCALE);
 }
 
 /*************************************/

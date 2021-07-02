@@ -245,7 +245,7 @@ for (list=model->selection ; list ; list=g_slist_next(list))
   core = list->data;
 
   ARR3SET(core->colour, colour);
-  VEC3MUL(core->colour, 65535.0);
+  VEC3MUL(core->colour, COLOUR_SCALE);
   }
 #else  //USE_DEPRECATED_GTK
 GdkColor colour;

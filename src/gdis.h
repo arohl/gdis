@@ -68,6 +68,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define MESH_SPACE_MIN 0.1
 #define MESH_SPACE_MAX 10.0
 #define COLOUR_SCALE 65535
+#define INV_COLOUR_SCALE 1.0/COLOUR_SCALE
 /* 1st is roughly (no accounting for latmat) in Angs */
 #define POSITION_TOLERANCE 0.01
 #define FRACTION_TOLERANCE 0.000001
