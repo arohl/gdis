@@ -1895,7 +1895,7 @@ g_string_free(text, TRUE);
 void gl_draw_text(struct canvas_pak *canvas, struct model_pak *data)
 {
 gint i, j, type;
-gint hidden = 0;
+gint n = 0, hidden = 0;
 gchar *text;
 gdouble q, v1[3], v2[3], v3[3];
 GSList *list;
@@ -1925,15 +1925,6 @@ if (sysenv.render.show_energy)
 		    sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
   }
 
-if( data->selection)
-  {
-  text = g_strdup_printf("Selected: %d", g_slist_length(data->selection));
-  pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-        sysenv.height-canvas->y-canvas->height+3*gl_fontsize, canvas, gl_fontsize, 0);
-  g_free(text);
-  }
-
-/* print current frame */
 if (data->show_frame_number)
   {
   if (data->animation)
@@ -2087,12 +2078,23 @@ g_string_free(label, TRUE);
 
 if( hidden > 0)
   {
-  text = g_strdup_printf("Hidden: %d  ", hidden);
-  pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-        sysenv.height-canvas->y-canvas->height+5*gl_fontsize, canvas, gl_fontsize, 0);
+  n += 2;
+  text = g_strdup_printf("hidden: %d", hidden);
+  pango_print(text, canvas->x+20,
+        canvas->height-canvas->y-n*gl_fontsize, canvas, gl_fontsize, 0);
   g_free(text);
   }
 
+if( data->selection)
+  {
+  n += 2;
+  text = g_strdup_printf("selected: %d", g_slist_length(data->selection));
+  pango_print(text, canvas->x+20,
+        canvas->height-canvas->y-n*gl_fontsize, canvas, gl_fontsize, 0);
+  g_free(text);
+  }
+
+/* print current frame */
 /* geom measurement labels */
 if (data->show_geom_labels)
   for (list=data->measure_list ; list ; list=g_slist_next(list))
