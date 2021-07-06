@@ -425,7 +425,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
       case BALL_STICK:
         if (sysenv.render.scale_ball_size)
           {
-	  get_elem_data(core->atom_code, &elem, data);
+	  get_elem_data(core1->atom_code, &elem, data);
           radius *= sysenv.render.cpk_scale * elem.vdw;
           }
 	else
