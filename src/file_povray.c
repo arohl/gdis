@@ -423,12 +423,13 @@ for (list=data->cores ; list ; list=g_slist_next(list))
         if (core1->bonds)
           break;
       case BALL_STICK:
-        radius *= sysenv.render.ball_radius;
         if (sysenv.render.scale_ball_size)
           {
-          get_elem_data(core1->atom_code, &elem, data);
-          radius *= elem.vdw;
+	  get_elem_data(core->atom_code, &elem, data);
+          radius *= sysenv.render.cpk_scale * elem.vdw;
           }
+	else
+          radius *= sysenv.render.ball_radius;
 
         fprintf(fp,"sphere { <%f, %f, %f>, %f ",vec1[0],vec1[1],vec1[2],
                                              radius);
