@@ -23,8 +23,8 @@ symbol: He
   name: Helium
 number: 2
 weight: 4.002600
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 0.460000
+   vdw: 1.400000
 charge: 0.000000
 colour: 65535 65535 65535
 %gdis_end
@@ -103,8 +103,8 @@ symbol: Ne
   name: Neon
 number: 10
 weight: 20.179701
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 0.670000
+   vdw: 1.540000
 charge: 0.000000
 colour: 65535 65535 65535
 %gdis_end
@@ -183,8 +183,8 @@ symbol: Ar
   name: Argon
 number: 18
 weight: 39.948002
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 1.060000
+   vdw: 1.880000
 charge: 0.000000
 colour: 65535 65535 65535
 %gdis_end
@@ -543,8 +543,8 @@ symbol: Xe
   name: Xenon
 number: 54
 weight: 131.289993
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 1.310000
+   vdw: 2.160000
 charge: 0.000000
 colour: 65535 65535 65535
 %gdis_end
@@ -853,8 +853,8 @@ symbol: At
   name: Astatine
 number: 85
 weight: 209.987106
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 1.470000
+   vdw: 2.020000
 charge: 7.000000
 colour: 65535 40700 64300
 %gdis_end
@@ -863,8 +863,8 @@ symbol: Rn
   name: Radon
 number: 86
 weight: 222.017593
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 1.420000
+   vdw: 2.200000
 charge: 0.000000
 colour: 65535 65535 65535
 %gdis_end
@@ -873,8 +873,8 @@ symbol: Fr
   name: Francium
 number: 87
 weight: 223.019699
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 1.000000
 colour: 30000 52600 60600
 %gdis_end
@@ -963,8 +963,8 @@ symbol: Cm
   name: Curium
 number: 96
 weight: 247.070297
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 1.690000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -973,8 +973,8 @@ symbol: Bk
   name: Berkelium
 number: 97
 weight: 247.070297
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -983,8 +983,8 @@ symbol: Cf
   name: Californium
 number: 98
 weight: 251.079605
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -993,8 +993,8 @@ symbol: Es
   name: Einsteinium
 number: 99
 weight: 252.082993
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1003,8 +1003,8 @@ symbol: Fm
   name: Fermium
 number: 100
 weight: 257.095093
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1013,8 +1013,8 @@ symbol: Md
   name: Mendelevium
 number: 101
 weight: 258.100006
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1023,8 +1023,8 @@ symbol: No
   name: Nobelium
 number: 102
 weight: 259.100891
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1033,8 +1033,8 @@ symbol: Lr
   name: Lawrencium
 number: 103
 weight: 262.109985
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1043,8 +1043,8 @@ symbol: Rf
   name: Rutherfordium
 number: 104
 weight: 261.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1053,8 +1053,8 @@ symbol: Db
   name: Dubnium
 number: 105
 weight: 262.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1063,8 +1063,8 @@ symbol: Sg
   name: Seaborgium
 number: 106
 weight: 266.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1073,8 +1073,8 @@ symbol: Bh
   name: Bohrium
 number: 107
 weight: 264.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1083,8 +1083,8 @@ symbol: Hs
   name: Hassium
 number: 108
 weight: 269.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
@@ -1093,8 +1093,8 @@ symbol: Mt
   name: Meitnerium
 number: 109
 weight: 268.000000
-  cova: 0.000000
-   vdw: 0.000000
+  cova: 2.600000
+   vdw: 3.000000
 charge: 0.000000
 colour: 53100 53100 53100
 %gdis_end
