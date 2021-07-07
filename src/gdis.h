@@ -269,6 +269,7 @@ enum {INITIAL, REFRESH, RESTORE, CREATE};
 #define PRUNED 16
 #define ZEOL_HIDDEN 32
 #define OFF_SCREEN 64
+#define DEFAULT_ANGLE 90.0
 
 /* drawing mode */
 enum {DRAW_OFF, DRAW_GDK, DRAW_GL};
