@@ -49,7 +49,9 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zmatrix_pak.h"
 #include "model.h"
 #include "interface.h"
+#ifdef   WITH_GUI
 #include "graph.h"
+#endif //WITH_GUI
 #include "file_vasp.h"
 #include "file_uspex.h"
 
@@ -2686,6 +2688,7 @@ fprintf(stdout,"READ: REF[%i] NATOMS=%i E_REF=%lf\n",spe_index,tmp_nspec,ef_ref)
 /* update PATH graph */
 /*********************/
 void uspex_graph_path_update(struct model_pak *model){
+#ifdef   WITH_GUI
 	uspex_output_struct *uspex_output;
 	g_data_x   gx;
 	g_data_y   gy;
@@ -2746,11 +2749,13 @@ void uspex_graph_path_update(struct model_pak *model){
 	else jdx=_UO.num_struct+2;
 	graph_set_xticks(TRUE,jdx,_UO.graph_best);
 	graph_set_yticks(TRUE,5,_UO.graph_best);
+#endif //WITH_GUI
 }
 /***********************/
 /* update COMP_X graph */
 /***********************/
 void uspex_graph_comp_update(struct model_pak *model){
+#ifdef   WITH_GUI
 //uspex_output_struct *uspex_output){
 /*NEW: due to possibly changing references, we delete/redraw the whole graph each time*/
 	gboolean new_graph;
@@ -3005,11 +3010,13 @@ if((_UO.pictave)&&(_UO.ind[idx].atoms[_UO.calc->_nspecies-1]!=0)){
 		dat_graph_add_y(gy,_UO.graph_comp[species_index]);
 		g_free(c_min);g_free(gy.y);g_free(gy.idx);g_free(gy.symbol);g_free(gx.x);
 	}
+#endif //WITH_GUI
 }
 /********************/
 /* update all graph */
 /********************/
 void uspex_graph_all_update(gint add_gen,gint add_ind,uspex_output_struct *uspex_output){
+#ifdef   WITH_GUI
 	gint gtot,ix;
 	gint gen,idx;
 	gint num,jdx;
@@ -3235,11 +3242,13 @@ fprintf(stdout,"-SENT\n");
 	else
 		d=0.;
 	dat_graph_set_limits(0,_UO.num_gen,min_E-d,max_E+d,graph);
+#endif //WITH_GUI
 }
 /*********************/
 /* update BEST graph */
 /*********************/
 void uspex_graph_best_update(uspex_output_struct *uspex_output){
+#ifdef   WITH_GUI
 	gint ix;
 	gint idx,jdx;
 	gint gen,num;
@@ -3490,11 +3499,13 @@ fprintf(stdout,"-ADD\n");
 if(ix<2) ix=2;
 	graph_set_xticks(TRUE,ix,graph);
 	graph_set_yticks(TRUE,5,graph);
+#endif //WITH_GUI
 }
 /*******************/
 /* redo BEST graph */
 /*******************/
 void uspex_graph_best_redo(uspex_output_struct *uspex_output){
+#ifdef   WITH_GUI
 /*in META/MINHOP calculation it is almost impossible to update BEST graph*/
 	gint ix;
 	gint idx,jdx;
@@ -3644,6 +3655,7 @@ fprintf(stdout,"-SENT\n");
 	graph_set_yticks(TRUE,5,_UO.graph);
 	graph_set_xticks(TRUE,ix,_UO.graph_best);
 	graph_set_yticks(TRUE,5,_UO.graph_best);
+#endif //WITH_GUI
 }
 /**********************************************************************************/
 /* Read uspex output                                                              */
@@ -3656,7 +3668,6 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gchar *ptr;
 	gchar *ptr2;
 	gchar *aux_file;
-	gint ix;
 	gint idx;
 	gint jdx;
 	gint min,max,med;
@@ -3668,9 +3679,11 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	gint max_num_i=0;/*FIX: e729cc*/
 	gint n_data;
 	/*graph*/
-	gint gen;
 	gdouble min_E;
 	gdouble max_E;
+#ifdef   WITH_GUI
+	gint ix;
+	gint gen;
 	gdouble d;
 	g_data_x gx;
 	g_data_y gy;
@@ -3684,6 +3697,7 @@ gint read_output_uspex(gchar *filename, struct model_pak *model){
 	graph_symbol *c_sym;
 	graph_color *c_col;
 	gint species_index;
+#endif //WITH_GUI
 	/* results */
 	gint natoms=0;
 	uspex_output_struct *uspex_output;
@@ -4181,6 +4195,7 @@ fprintf(stdout,"\n");
 	fclose(vf);vf=NULL;
 }/*^^^ end of preparing best_ind*/
 /* +++ prepare ALL graph*/
+#ifdef   WITH_GUI
 	_UO.graph=graph_new("ALL", model);
 	/*process ALL graph ; ALL graph is _always_ enthalpy*/
 	if(_UO.min_E==_UO.max_E) d=0.05*_UO.max_E;
@@ -4285,7 +4300,9 @@ fprintf(stdout,"-SENT\n");
 //		idx=jdx;
 		gen++;
 	}
+#endif //WITH_GUI
 /* +++ prepare BEST graph*/
+#ifdef   WITH_GUI
 if(_UO.best_ind==NULL){/*NEW: only prepare BEST graph if we have best_ind*/
 	_UO.graph_best=graph_new("BEST", model);
 	dat_graph_set_limits(0,1,-1.,0.,_UO.graph_best);
@@ -4480,8 +4497,10 @@ fprintf(stdout,"-SENT\n");
 	graph_set_xticks(TRUE,ix,_UO.graph_best);
 	graph_set_yticks(TRUE,5,_UO.graph_best);
 }/*^^^ end of preparing BEST graph*/
+#endif //WITH_GUI
 /* --- variable composition */
 	/*there is extra graphs for variable composition*/
+#ifdef   WITH_GUI
 if((_UO.calc->_calctype_var)&&(_UC._nspecies>1)){
 	gdouble ef;
 	gint spe_index;
@@ -4708,6 +4727,7 @@ while(max!=n_compo-1){
 	g_free(gx.x);
 	}
 }/* ^^^ end variable composition*/
+#endif //WITH_GUI
 	/*refresh model*/
 	tree_model_refresh(model);
 	model->redraw = TRUE;
@@ -5346,9 +5366,10 @@ fprintf(stdout,"TRACK: ADD-BEST-%i (gen=%i idx=%i)\n",idx/2,_UO.best_ind[idx],_U
 		if(_UO.num_gen>15) idx=5;
 		else idx=_UO.num_gen+1;
 if(idx<2) idx=2;/*fix _BUG_ with META*/
+#ifdef   WITH_GUI
 		graph_set_xticks(TRUE,idx,_UO.graph_best);
 		graph_set_yticks(TRUE,5,_UO.graph_best);
-
+#endif //WITH_GUI
 	}else{
 		/*no BESTIndividuals <- just wait for it*/
 	}
@@ -5358,9 +5379,10 @@ if(idx<2) idx=2;/*fix _BUG_ with META*/
 	if(_UO.num_gen>15) idx=5;
 	else idx=_UO.num_gen+1;
 if(idx<2) idx=2;/*fix _BUG_ with META*/
+#ifdef   WITH_GUI
 	graph_set_xticks(TRUE,idx,_UO.graph);
 	graph_set_yticks(TRUE,5,_UO.graph);
-
+#endif //WITH_GUI
 	/*8- update num_struct*/
 	_UO.num_struct=new_ind+1;
 
