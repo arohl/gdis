@@ -57,12 +57,23 @@ The GNU GPL can also be found at http://www.gnu.org
 
 /* NEW: include a button to create a new model */
 #include "plus.xpm"
-/* NEW: include a control for plots and eps/png export tool -- OVHPA*/
+/* NEW: include a control for plots and eps/png export tool -- OVHPA */
 #include "plots.xpm"
 #include "to_eps.xpm"
 #include "to_png.xpm"
-/* NEW: tracking system --OVHPA*/
+/* NEW: tracking system --OVHPA */
 #include "track.xpm"
+/* NEW: include buttons for aligning model */
+#include "xview.xpm"
+#include "yview.xpm"
+#include "zview.xpm"
+#include "aview.xpm"
+#include "bview.xpm"
+#include "cview.xpm"
+#include "rotate1.xpm"
+#include "rotate2.xpm"
+#include "rotate3.xpm"
+#include "select_all.xpm"
 
 extern struct sysenv_pak sysenv;
 
@@ -162,9 +173,9 @@ gpointer image_table_lookup(const gchar *name)
 return(g_hash_table_lookup(sysenv.image_table, name));
 }
 
-/******************************************/
-/* setup the internal pixbuf lookup table */
-/******************************************/
+/*******************************************/
+/* set up the internal pixbuf lookup table */
+/*******************************************/
 void image_table_init(void)
 {
 gint i;
@@ -262,6 +273,10 @@ if(sysenv.have_eps){
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) plus_xpm);
       name = "image_plus";
       break;    
+    case IMAGE_SELECT_ALL:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) select_all_xpm);
+      name = "image_select_all";
+      break;
     case IMAGE_SURFACE:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) tb_surface_xpm);
       name = "image_surface";
@@ -273,6 +288,42 @@ if(sysenv.have_eps){
     case IMAGE_TRACK:
       pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) track_xpm);
       name = "image_track";
+      break;
+    case IMAGE_XVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) xview_xpm);
+      name = "image_xview";
+      break;
+    case IMAGE_YVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) yview_xpm);
+      name = "image_yview";
+      break;
+    case IMAGE_ZVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) zview_xpm);
+      name = "image_zview";
+      break;
+    case IMAGE_AVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) aview_xpm);
+      name = "image_aview";
+      break;
+    case IMAGE_BVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) bview_xpm);
+      name = "image_bview";
+      break;
+    case IMAGE_CVIEW:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) cview_xpm);
+      name = "image_cview";
+      break;
+    case IMAGE_XROTATE:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) rotate1_xpm);
+      name = "image_rotate1";
+      break;
+    case IMAGE_YROTATE:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) rotate2_xpm);
+      name = "image_rotate2";
+      break;
+    case IMAGE_ZROTATE:
+      pixbuf = gdk_pixbuf_new_from_xpm_data((const gchar **) rotate3_xpm);
+      name = "image_rotate3";
       break;
     default:
       pixbuf = NULL;
