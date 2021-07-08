@@ -3028,7 +3028,7 @@ for (list=sysenv.canvas_list ; list ; list=g_slist_next(list))
   canvas = list->data;
   model = canvas->model;
 
-#if DEBUG_CANVAS_REFRESH
+#if DEBUG_CANVAS
 gchar *str = g_strdup_printf("FPS: %i", sysenv.fps);
 pango_print(str, 5, 5, canvas, 10, 0);
 g_free(str);
