@@ -120,9 +120,9 @@ if (vector_angle(v, n, 3) < 0.5*G_PI)
 return(TRUE);
 }
 
-/***************************************************/
-/* setup the visual for subsequent canvas creation */
-/***************************************************/
+/****************************************************/
+/* set up the visual for subsequent canvas creation */
+/****************************************************/
 gint gl_init_visual(void)
 {
 /* attempt to get best visual */
@@ -168,9 +168,9 @@ if (!sysenv.glconfig)
 return(0);
 }
 
-/****************************************/
-/* setup the camera and projection mode */
-/****************************************/
+/*****************************************/
+/* set up the camera and projection mode */
+/*****************************************/
 #define DEBUG_INIT_PROJ 0
 void gl_init_projection(struct canvas_pak *canvas, struct model_pak *model)
 {
@@ -181,7 +181,7 @@ struct camera_pak *camera;
 
 g_assert(canvas != NULL);
 
-/* setup matrices even if no model in the current canvas */
+/* set up matrices even if no model in the current canvas */
 glViewport(canvas->x, canvas->y, canvas->width, canvas->height);
 if (!model)
   {
@@ -211,7 +211,7 @@ sysenv.rsize = r;
 glMatrixMode(GL_MODELVIEW);
 glLoadIdentity();
 
-/* setup camera */
+/* set up camera */
 camera = model->camera;
 ARR3SET(x, camera->x);
 ARR3SET(o, camera->o);
@@ -291,9 +291,9 @@ VEC3SET(&gl_acm[3],  0.0, -1.0,  0.0);
 VEC3SET(&gl_acm[6],  0.0,  0.0, -1.0);
 }
 
-/***************************/
-/* setup all light sources */
-/***************************/
+/****************************/
+/* set up all light sources */
+/****************************/
 void gl_init_lights(struct model_pak *data)
 {
 gint i;
@@ -407,14 +407,7 @@ switch (core->render_mode)
     break;
 
   case BALL_STICK:
-    if (sysenv.render.scale_ball_size)
-      {
-/* TODO - calling get_elem_data() all the time is inefficient */
-      get_elem_data(core->atom_code, &elem, model);
-      radius *= sysenv.render.cpk_scale * elem.vdw;
-      }
-    else
-      radius *= sysenv.render.ball_radius;
+    radius *= sysenv.render.ball_radius;
     break;
   }
 return(radius);
@@ -495,7 +488,7 @@ gdouble col[3];
 col[0] = (gdouble) *rgb;
 col[1] = (gdouble) *(rgb+1);
 col[2] = (gdouble) *(rgb+2);
-VEC3MUL(col, INV_COLOUR_SCALE);
+VEC3MUL(col, 1.0/65535.0);
 glColor4f(col[0], col[1], col[2], 1.0);
 }
 
@@ -506,24 +499,25 @@ void make_fg_visible(void)
 {
 gdouble fg[3], bg[3];
 
+#define F_COLOUR_SCALE 65535.0
 ARR3SET(fg, sysenv.render.fg_colour);
 ARR3SET(bg, sysenv.render.bg_colour);
-VEC3MUL(fg, (gdouble)COLOUR_SCALE);
-VEC3MUL(bg, (gdouble)COLOUR_SCALE);
+VEC3MUL(fg, F_COLOUR_SCALE);
+VEC3MUL(bg, F_COLOUR_SCALE);
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
-fg[2] = (gint) bg[2] ^ COLOUR_SCALE;
-VEC3MUL(fg, INV_COLOUR_SCALE);
+fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
+fg[2] = (gint) bg[2] ^ (gint) F_COLOUR_SCALE;
+VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
 ARR3SET(sysenv.render.fg_colour, fg);
 
 /* adjust label colour for visibility against the current background */
 ARR3SET(fg, sysenv.render.label_colour);
-VEC3MUL(fg, (gdouble)COLOUR_SCALE);
+VEC3MUL(fg, F_COLOUR_SCALE);
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
-VEC3MUL(fg, INV_COLOUR_SCALE);
+fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
+VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
 /* force to zero, so we get yellow (not white) for a black background */
 fg[2] = 0.0;
 ARR3SET(sysenv.render.label_colour, fg);
@@ -531,14 +525,14 @@ ARR3SET(sysenv.render.label_colour, fg);
 /* adjust title colour for visibility against the current background */
 /*
 ARR3SET(fg, sysenv.render.title_colour);
-VEC3MUL(fg, (gdouble)COLOUR_SCALE);
+VEC3MUL(fg, F_COLOUR_SCALE);
 */
 /* force to zero, so we get cyan (not white) for a black background */
 fg[0] = 0.0;
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
-fg[2] = (gint) bg[2] ^ COLOUR_SCALE;
+fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
+fg[2] = (gint) bg[2] ^ (gint) F_COLOUR_SCALE;
 
 /* faded dark blue */
 fg[0] *= 0.3;
@@ -552,7 +546,7 @@ fg[1] *= 0.7;
 fg[2] *= 0.4;
 */
 
-VEC3MUL(fg, INV_COLOUR_SCALE);
+VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
 ARR3SET(sysenv.render.title_colour, fg);
 
 /*
@@ -582,96 +576,106 @@ pango_font_description_free(pfd);
 /* replacement for gl_print_window */
 /* 2D print.              --OVHPA  */
 /***********************************/
-#define __COLOR_F_2_I(f) floor(f >= 1.0 ? COLOUR_SCALE : f * (COLOUR_SCALE+1.0))
-void pango_print(const gchar *str, gint x, gint y, struct canvas_pak *canvas, guint font_size, gint rotate){
-/*PANGO*/
+void pango_print(const gchar *str, gint x, gint y, struct canvas_pak *canvas, guint font_size, gint rotate)
+{
+/* PANGO */
 PangoLayout *pl;
 PangoFontDescription *pfd;
-/*CAIRO*/
+/* CAIRO */
 cairo_t *cr;
-/**/
-cairo_surface_flush(sysenv.cairo_surface);
-cr=cairo_create(sysenv.cairo_surface);
 
-cairo_translate(cr,x,y);
-pl=pango_cairo_create_layout(cr);
-pango_layout_set_markup(pl,str,strlen(str));
-pango_layout_set_single_paragraph_mode(pl,TRUE);
-pango_layout_set_width(pl,-1);
+cairo_surface_flush(sysenv.cairo_surface);
+cr = cairo_create(sysenv.cairo_surface);
+
+cairo_translate(cr, x, y);
+pl = pango_cairo_create_layout(cr);
+pango_layout_set_markup(pl, str, strlen(str));
+pango_layout_set_single_paragraph_mode(pl, TRUE);
+pango_layout_set_width(pl, -1);
 pfd = pango_font_description_from_string(sysenv.gl_fontname);
 pango_font_description_set_absolute_size(pfd, font_size * PANGO_SCALE);
-pango_layout_set_font_description(pl,pfd);
+pango_layout_set_font_description(pl, pfd);
 pango_font_description_free(pfd);
-cairo_set_source_rgb(cr,(double)sysenv.render.fg_colour[0],(double)sysenv.render.fg_colour[1],(double)sysenv.render.fg_colour[2]);
-if(rotate!=0){
-	cairo_rotate(cr,(double)(rotate) * G_PI / -180.);
-	pango_cairo_update_layout(cr,pl);
-}
-pango_cairo_show_layout(cr,pl);
+cairo_set_source_rgb(cr, (gdouble)sysenv.render.fg_colour[0],
+                         (gdouble)sysenv.render.fg_colour[1],
+                         (gdouble)sysenv.render.fg_colour[2]);
+if(rotate != 0)
+  {
+  cairo_rotate(cr,(double)(rotate) * G_PI / -180.);
+  pango_cairo_update_layout(cr, pl);
+  }
+pango_cairo_show_layout(cr, pl);
 g_object_unref(pl);
 cairo_destroy (cr);
 cairo_surface_mark_dirty(sysenv.cairo_surface);
 }
+
 /**************************************/
 /* pango print_world:  new routine as */
 /* a replacement for gl_print_world   */
 /* 3D print.                 --OVHPA  */
 /**************************************/
 #define DEBUG_PANGO_TEXT 0
-void pango_print_world(gchar *str, gdouble x, gdouble y, gdouble z,struct canvas_pak *canvas){
-gint width=0;
-gint height=0;
-/*cairo*/
+void pango_print_world(gchar *str, gdouble *v, struct canvas_pak *canvas) 
+{
+gint width = 0;
+gint height = 0;
+/* cairo */
 cairo_t *render;
 cairo_surface_t *surface;
 unsigned char* surface_data = NULL;
-/*pango*/
+/* pango */
 PangoRectangle prect;
 PangoFontDescription *pfd;
 PangoLayout *pl;
 PangoContext *pc;
-/**/
-pc=gtk_widget_create_pango_context(sysenv.glarea);
-pl=pango_layout_new(pc);
+
+pc = gtk_widget_create_pango_context(sysenv.glarea);
+pl = pango_layout_new(pc);
 pfd = pango_font_description_from_string(sysenv.gl_fontname);
 pango_font_description_set_absolute_size(pfd, gl_fontsize * PANGO_SCALE);
-pango_layout_set_font_description(pl,pfd);
+pango_layout_set_font_description(pl, pfd);
 pango_font_description_free(pfd);
-pango_layout_set_markup(pl,str,strlen(str));
-pango_layout_set_single_paragraph_mode(pl,TRUE);
-pango_layout_set_width(pl,-1);
-/*new*/
+pango_layout_set_markup(pl, str, strlen(str));
+pango_layout_set_single_paragraph_mode(pl, TRUE);
+pango_layout_set_width(pl, -1);
+
+/* new */
 pango_layout_get_pixel_extents (pl, NULL, &prect);
-pango_layout_get_size(pl,&width,&height);
-width/=PANGO_SCALE;
-height/=PANGO_SCALE;
-surface_data=g_malloc0(4*width*height*sizeof(unsigned char));
-surface=cairo_image_surface_create_for_data(surface_data,CAIRO_FORMAT_ARGB32,width,height,4*width);
-render=cairo_create(surface);
-cairo_translate(render,-prect.x,-prect.y);/*important?*/
-cairo_set_source_rgba (render,sysenv.render.fg_colour[0],sysenv.render.fg_colour[1],sysenv.render.fg_colour[2], 1.0);
+pango_layout_get_size(pl, &width, &height);
+width /= PANGO_SCALE;
+height /= PANGO_SCALE;
+surface_data = g_malloc0(4*width*height*sizeof(unsigned char));
+surface = cairo_image_surface_create_for_data(surface_data, CAIRO_FORMAT_ARGB32, width, height, 4*width);
+render = cairo_create(surface);
+cairo_translate(render, -prect.x, -prect.y); /* important? */
+cairo_set_source_rgba(render, sysenv.render.fg_colour[0], sysenv.render.fg_colour[1], sysenv.render.fg_colour[2], 1.0);
 cairo_move_to(render, 0, 0);
-pango_cairo_show_layout(render,pl);
+pango_cairo_show_layout(render, pl);
 cairo_destroy(render);
 g_object_unref(pl);
+
 //#if DEBUG_PANGO_TEXT
-//cairo_surface_write_to_png(surface,"./test.png");/*PROVE OK*/
+//cairo_surface_write_to_png(surface,"./test.png"); /* PROVE OK */
 //#endif
-/*copy to framebuffer*/
-glRasterPos3f(x,y,z);
-glPixelZoom( 1, -1 );
-glDrawPixels(width,height,GL_BGRA,GL_UNSIGNED_BYTE,surface_data);
-/*for DEBUG we draw a box around the text, via unproject*/
+
+/* copy to framebuffer */
+glRasterPos3f(v[0], v[1], v[2]);
+glPixelZoom( 1, -1);
+glDrawPixels(width, height, GL_BGRA, GL_UNSIGNED_BYTE, surface_data);
+
+/* for DEBUG we draw a box around the text, via unproject */
 #if DEBUG_PANGO_TEXT
 gint rx[2];
 gdouble w[3];
-w[0]=x;
-w[1]=y;
-w[2]=z;
-gl_unproject(rx,w,canvas);
-gl_draw_box(rx[0],rx[1],rx[0]+width,rx[1]+height,canvas);
+w[0] = v[0];
+w[1] = v[1];
+w[2] = v[2];
+gl_unproject(rx, w, canvas);
+gl_draw_box(rx[0], rx[1], rx[0]+width, rx[1]+height, canvas);
 #endif
-/*destroy*/
+
+/* destroy */
 g_free(surface_data);
 }
 /********************************/
@@ -995,7 +999,7 @@ printf("%f : %d [%d]\n", radius, max, quality);
     sysenv.render.sphere_quality = max;
   }
 
-/* setup geometric primitve */
+/* set up geometric primitive */
 gl_init_sphere(&sphere, model);
 
 /* draw desired cores */
@@ -1005,7 +1009,7 @@ for (list=cores ; list ; list=g_slist_next(list))
 
 /* set colour */
   ARR3SET(colour, core->colour);
-  VEC3MUL(colour, INV_COLOUR_SCALE);
+  VEC3MUL(colour, 1.0/65535.0);
   colour[3] = core->colour[3];
   glColor4dv(colour);
 
@@ -1401,7 +1405,7 @@ for (list=pipe_list ; list ; list=g_slist_next(list))
 /***************************/
 /* draw crystal morphology */
 /***************************/
-/* deprec */
+/* deprecated */
 #define DEBUG_DRAW_MORPH 0
 void gl_draw_morph(struct model_pak *data)
 {
@@ -1573,7 +1577,7 @@ else
     ARR3SET(x2, data->axes[i].rx);
     VEC3MUL(x2, f);
     ARR3ADD(x2, x1);
-    pango_print_world(label, x2[0], x2[1], x2[2], canvas);
+    pango_print_world(label, x2, canvas);
     label[1]++;
     }
   }
@@ -1802,7 +1806,7 @@ while (plist != NULL)
                                       plane->index[1],
                                       plane->index[2]);
     ARR3SET(vec, plane->rx);
-    pango_print_world(label, vec[0], vec[1], vec[2], canvas_find(data));
+    pango_print_world(label, vec, canvas_find(data));
     g_free(label);
 
 /* TODO - vector font (display list) with number + overbar number */
@@ -1889,7 +1893,7 @@ glColor3f(1.0, 1.0, 1.0);
 for (i=0 ; i<n ; i++)
   {
   g_string_printf(text, "%6.2f", z1);//g_string_sprintf
-  pango_print(text->str,x+30,y+i*20+18,canvas,gl_fontsize,0);
+  pango_print(text->str, x+30, y+i*20+18, canvas,gl_fontsize, 0);
   z1 -= dz;
   }
 g_string_free(text, TRUE);
@@ -1901,6 +1905,7 @@ g_string_free(text, TRUE);
 void gl_draw_text(struct canvas_pak *canvas, struct model_pak *data)
 {
 gint i, j, type;
+gint n = 0, hidden = 0;
 gchar *text;
 gdouble q, v1[3], v2[3], v3[3];
 GSList *list;
@@ -1918,7 +1923,7 @@ if (!data)
 /* print mode */
 text = get_mode_label(data);
 pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-	     sysenv.height-canvas->y-20,canvas,gl_fontsize,0);
+	     canvas->height-canvas->y-20, canvas, gl_fontsize, 0);
 g_free(text);
 
 /* print some useful info */
@@ -1926,25 +1931,17 @@ if (sysenv.render.show_energy)
   {
   text = property_lookup("Energy", data);
   if (text)
-    pango_print(text, canvas->x+20, sysenv.height-canvas->y-20, canvas, gl_fontsize, 0);
+    pango_print(text, canvas->x+canvas->width-gl_text_width(text),
+        canvas->y+2*gl_fontsize, canvas, gl_fontsize, 0);
   }
 
-if( data->selection)
-  {
-  text = g_strdup_printf("Selected: %d", g_slist_length(data->selection));
-  pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-        sysenv.height-canvas->y-canvas->height+40, canvas, gl_fontsize, 0);
-  g_free(text);
-  }
-
-/* print current frame */
 if (data->show_frame_number)
   {
   if (data->animation)
     {
     text = g_strdup_printf("[%d:%d]", data->cur_frame, data->num_frames-1);
-    pango_print(text, canvas->x+canvas->width-gl_text_width(text),
-	sysenv.height-canvas->y-canvas->height+40, canvas, gl_fontsize, 0);
+    pango_print(text, (canvas->x+canvas->width-gl_text_width(text))/2,
+	canvas->y+40, canvas, gl_fontsize, 0);
     g_free(text);
     }
   }
@@ -1966,7 +1963,7 @@ if (data->show_cell_lengths)
     ARR3SET(v1, data->cell[0].rx);
     ARR3ADD(v1, data->cell[j].rx);
     VEC3MUL(v1, 0.5);
-    pango_print_world(text, v1[0], v1[1], v1[2], canvas);
+    pango_print_world(text, v1, canvas);
     g_free(text);
     }
   }
@@ -1988,7 +1985,7 @@ if (data->show_waypoints && !data->animating)
       continue;
 
     text = g_strdup_printf("%d", i);
-    pango_print_world(text, camera->x[0], camera->x[1], camera->x[2], canvas);
+    pango_print_world(text, camera->x, canvas);
     g_free(text);
     }
   }
@@ -2020,6 +2017,7 @@ while (list)
   if (core[0]->status & (DELETED | HIDDEN))
     {
     list = g_slist_next(list);
+    hidden += 1;
     continue;
     }
 
@@ -2029,115 +2027,146 @@ while (list)
   if (data->show_atom_index)
     {
     i = g_slist_index(data->cores, core[0]);
-    g_string_append_printf(label, "[%d]", i+1);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "[%d]", i+1);
     }
 
-/* setup atom labels */
+/* set up atom labels */
   if (data->show_atom_labels)
     {
-    g_string_append_printf(label, "(%s)", core[0]->atom_label);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "(%s)", core[0]->atom_label);
     }
   if (data->show_atom_types)
     {
     if (core[0]->atom_type)
       {
-      g_string_append_printf(label, "(%s)", core[0]->atom_type);//g_string_sprintfa deprecated
+      g_string_append_printf(label, "(%s)", core[0]->atom_type);
       }
     else
       {
-      g_string_append_printf(label, "(?)");//g_string_sprintfa deprecated
+      g_string_append_printf(label, "(?)");
       }
     }
 
 /*VZ*/
   if (data->show_nmr_shifts)
     {
-    g_string_append_printf(label, "(%4.2f)", core[0]->atom_nmr_shift);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "(%4.2f)", core[0]->atom_nmr_shift);
     }
   if (data->show_nmr_csa)
     {
-    g_string_append_printf(label, "(%4.2f;", core[0]->atom_nmr_aniso);//g_string_sprintfa deprecated
-    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_asym);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "(%4.2f;", core[0]->atom_nmr_aniso);
+    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_asym);
     }
   if (data->show_nmr_efg)
     {
-    g_string_append_printf(label, "(%g;", core[0]->atom_nmr_cq);//g_string_sprintfa deprecated
-    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_efgasym);//g_string_sprintfa deprecated
+    g_string_append_printf(label, "(%g;", core[0]->atom_nmr_cq);
+    g_string_append_printf(label, "%4.2f)", core[0]->atom_nmr_efgasym);
     }
 
 /* get atom charge, add shell charge (if any) to get net result */
   if (data->show_atom_charges)
     {
+    q = atom_charge(core[0]);
+    g_string_append_printf(label, "{%6.4f}", q);
+    }
+
+  if (data->show_core_charges)
+    {
     q = core[0]->charge;
+    g_string_append_printf(label, "{%6.4f}", q);
+    }
+
+  if (data->show_shell_charges)
+    {
     if (core[0]->shell)
       {
       shell = core[0]->shell;
-      q += shell->charge;
+      q = shell->charge;
+      g_string_append_printf(label, "{%6.4f}", q);
       }
-    g_string_append_printf(label, "{%6.4f}", q);//g_string_sprintfa deprecated
+    else
+      g_string_append_printf(label, "{}");
     }
 
 /* print */
   if (label->str)
     {
     ARR3SET(v1, core[0]->rx);
-    pango_print_world(label->str, v1[0], v1[1], v1[2], canvas);
+    pango_print_world(label->str, v1, canvas);
     }
 
   list = g_slist_next(list); 
   }
 g_string_free(label, TRUE);
 
+if( hidden > 0)
+  {
+  n += 2;
+  text = g_strdup_printf("hidden: %d", hidden);
+  pango_print(text, canvas->x+20,
+        canvas->height-canvas->y-n*gl_fontsize, canvas, gl_fontsize, 0);
+  g_free(text);
+  }
+
+if( data->selection)
+  {
+  n += 2;
+  text = g_strdup_printf("selected: %d", g_slist_length(data->selection));
+  pango_print(text, canvas->x+20,
+        canvas->height-canvas->y-n*gl_fontsize, canvas, gl_fontsize, 0);
+  g_free(text);
+  }
+
+/* print current frame */
 /* geom measurement labels */
 if (data->show_geom_labels)
-for (list=data->measure_list ; list ; list=g_slist_next(list))
-  {
-  type = measure_type_get(list->data);
-  switch(type)
+  for (list=data->measure_list ; list ; list=g_slist_next(list))
     {
-    case MEASURE_BOND:
-    case MEASURE_DISTANCE:
-    case MEASURE_INTER:
-    case MEASURE_INTRA:
-      measure_coord_get(v1, 0, list->data, data);
-      measure_coord_get(v2, 1, list->data, data);
-      ARR3ADD(v1, v2);
-      VEC3MUL(v1, 0.5);
-      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
-      break;
+    type = measure_type_get(list->data);
+    switch(type)
+      {
+      case MEASURE_BOND:
+      case MEASURE_DISTANCE:
+      case MEASURE_INTER:
+      case MEASURE_INTRA:
+        measure_coord_get(v1, 0, list->data, data);
+        measure_coord_get(v2, 1, list->data, data);
+        ARR3ADD(v1, v2);
+        VEC3MUL(v1, 0.5);
+        pango_print_world(measure_value_get(list->data), v1, canvas);
+        break;
 
-    case MEASURE_ANGLE:
+      case MEASURE_ANGLE:
 /* angle is i-j-k */
-      measure_coord_get(v1, 0, list->data, data);
-      measure_coord_get(v2, 1, list->data, data);
-      measure_coord_get(v3, 2, list->data, data);
+        measure_coord_get(v1, 0, list->data, data);
+        measure_coord_get(v2, 1, list->data, data);
+        measure_coord_get(v3, 2, list->data, data);
 /* angle label */
 /* FIXME - should use a similar process to the draw_arc code to */
 /* determine which arm is shorter & use that to determine label position */
-      ARR3ADD(v1, v2);
-      ARR3ADD(v1, v3);
-      VEC3MUL(v1, 0.3333);
-      pango_print_world(measure_value_get(list->data), v1[0], v1[1], v1[2], canvas);
-      break;
+        ARR3ADD(v1, v2);
+        ARR3ADD(v1, v3);
+        VEC3MUL(v1, 0.3333);
+        pango_print_world(measure_value_get(list->data), v1, canvas);
+        break;
+      }
     }
-  }
 
 /* spatial object labels */
 //glDisable(GL_COLOR_LOGIC_OP);
 /* FIXME - need to change the variable name */
 if (data->morph_label)
-for (list=data->spatial ; list ; list=g_slist_next(list))
-  {
-  spatial = list->data;
-  if (spatial->show_label)
+  for (list=data->spatial ; list ; list=g_slist_next(list))
     {
-    glColor4f(spatial->c[0], spatial->c[1], spatial->c[2], 1.0);
-    v = g_slist_nth_data(spatial->list, 0);
-    if (gl_visible(v->rn, data))
-      pango_print_world(spatial->label, spatial->x[0], spatial->x[1], spatial->x[2], canvas);
-
+    spatial = list->data;
+    if (spatial->show_label)
+      {
+      glColor4f(spatial->c[0], spatial->c[1], spatial->c[2], 1.0);
+      v = g_slist_nth_data(spatial->list, 0);
+      if (gl_visible(v->rn, data))
+        pango_print_world(spatial->label, spatial->x, canvas);
+      }
     }
-  }
 }
 
 /********************************/
@@ -2528,10 +2557,10 @@ if (data->mode == RECORD)
   data->num_frames++;
   }
 
-/* setup the lighting */
+/* set up the lighting */
 gl_init_lights(data);
 
-/* setup the fontsize --OVHPA */
+/* set up the fontsize --OVHPA */
 gl_get_fontsize();
 
 /* scaling affects placement to avoid near/far clipping */
@@ -3000,14 +3029,14 @@ for (list=sysenv.canvas_list ; list ; list=g_slist_next(list))
   model = canvas->model;
 
 #if DEBUG_CANVAS_REFRESH
-gchar *str=g_strdup_printf("FPS: %i",sysenv.fps);
-pango_print(str,5,5,canvas,10,0);
+gchar *str = g_strdup_printf("FPS: %i", sysenv.fps);
+pango_print(str, 5, 5, canvas, 10, 0);
 g_free(str);
 printf("canvas: %p\nactive: %d\nresize: %d\nmodel: %p\n",
         canvas, canvas->active, canvas->resize, canvas->model);
 #endif
 
-/* setup viewing transformations (even if no model - border) */
+/* set up viewing transformations (even if no model - border) */
   gl_init_projection(canvas, model);
 
 /* drawing (model only) */

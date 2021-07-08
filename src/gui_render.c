@@ -1848,10 +1848,12 @@ gui_auto_check("Show cell lengths", render_refresh, NULL, &model->show_cell_leng
 gui_auto_check("Show cores", render_refresh, NULL, &model->show_cores, vbox);
 gui_auto_check("Show shells", render_refresh, NULL, &model->show_shells, vbox);
 gui_auto_check("Show core-shell links", render_refresh, NULL, &model->show_links, vbox);
-gui_auto_check("Show core index", render_refresh, NULL, &model->show_atom_index, vbox);
-gui_auto_check("Show core label", render_refresh, NULL, &model->show_atom_labels, vbox);
-gui_auto_check("Show core type", render_refresh, NULL, &model->show_atom_types, vbox);
-gui_auto_check("Show core charge", render_refresh, NULL, &model->show_atom_charges, vbox);
+gui_auto_check("Show core indices", render_refresh, NULL, &model->show_atom_index, vbox);
+gui_auto_check("Show core labels", render_refresh, NULL, &model->show_atom_labels, vbox);
+gui_auto_check("Show core types", render_refresh, NULL, &model->show_atom_types, vbox);
+gui_auto_check("Show core charges", render_refresh, NULL, &model->show_core_charges, vbox);
+gui_auto_check("Show shell charges", render_refresh, NULL, &model->show_shell_charges, vbox);
+gui_auto_check("Show atom charges", render_refresh, NULL, &model->show_atom_charges, vbox);
 
 /*VZ*/
 gui_auto_check("Show NMR shielding", render_refresh, NULL, &model->show_nmr_shifts, vbox);
@@ -1863,8 +1865,6 @@ gui_auto_check("Show normal bonds", connect_refresh_global, NULL, &model->build_
 */
 gui_auto_check("Show hydrogen bonds", connect_refresh_global, NULL, &model->build_hydrogen, vbox);
 gui_auto_check("Show zeolite bonds", connect_refresh_global, NULL, &model->build_zeolite, vbox);
-
-gui_auto_check("Show total charge", render_refresh, NULL, &model->show_charge, vbox);
 
 gui_auto_check("Show labels on selection ", render_refresh, NULL, &model->show_selection_labels, vbox);
 

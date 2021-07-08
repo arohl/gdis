@@ -39,8 +39,9 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "model.h"
 #include "interface.h"
 #include "file_vasp.h"
+#ifdef   WITH_GUI
 #include "graph.h"
-
+#endif //WITH_GUI
 enum {VASP_DEFAULT, VASP_XML, VASP_TRIKS, VASP_NLOOPS};
 
 /* main structures */
@@ -1384,6 +1385,7 @@ int vasp_xml_read_energy(FILE *vf, struct model_pak *model){
 	return 0;
 }
 int vasp_xml_plot_energy(struct model_pak *model){
+#ifdef   WITH_GUI
 /* FIXME: should test line for NULL each time? */
 	int idx,jdx;
 	FILE *vf;
@@ -1556,9 +1558,12 @@ plot_energy_fail:
 	g_free(gy.idx);
 	g_free(gy.symbol);
 	return ret_val;
+#else  //WITH_GUI
+	return 0;
+#endif //WITH_GUI
 }
-
 int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
+#ifdef   WITH_GUI
 /*we have a previous graph and just want to update latest values*/
 	long int vfpos;
 	int idx,jdx,old_size;
@@ -1710,6 +1715,7 @@ int vasp_xml_update_plot_energy(FILE *vf,struct model_pak *model){
 	}else{
 		dat_graph_set_limits(0,vasp_out->n_scf,min_E,max_E,vasp_out->graph_energy);
 	}
+#endif //WITH_GUI
 	return 0;
 }
 
@@ -2061,15 +2067,17 @@ void vasp_out_reset(vasp_output_struct * vo){
 	vo->F=NULL;
 	if(vo->P!=NULL) g_free(vo->P);
 	vo->P=NULL;
+#ifdef   WITH_GUI
 	/*use graph_free?*/
 	if(vo->graph_energy!=NULL) graph_reset(vo->graph_energy);
+	if(vo->graph_volume!=NULL) graph_reset(vo->graph_volume);
+	if(vo->graph_forces!=NULL) graph_reset(vo->graph_forces);
+	if(vo->graph_stress!=NULL) graph_reset(vo->graph_stress);
+#endif //WITH_GUI
 	vo->graph_energy=NULL;
-	if(vo->graph_volume) graph_reset(vo->graph_volume);
 	vo->graph_volume=NULL;
-	if(vo->graph_volume) graph_reset(vo->graph_volume);
-	vo->graph_volume=NULL;
-	if(vo->graph_volume) graph_reset(vo->graph_volume);
-	vo->graph_volume=NULL;
+	vo->graph_forces=NULL;
+	vo->graph_stress=NULL;
 }
 /*******************************************/
 /* free vasp_output_structure from outside */
