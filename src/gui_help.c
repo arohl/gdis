@@ -222,7 +222,7 @@ if (!help_tag_invisible)
  * _BUG_ --- OVHPA 
 if (!help_tag_invisible)
   {
-  GdkColor white = {0, 65535, 65535, 65535};
+  GdkColor white = {0, COLOUR_SCALE, COLOUR_SCALE, COLOUR_SCALE};
   help_tag_invisible = gtk_text_buffer_create_tag(buffer,
                                                  "invisible",
                                                  "foreground-gdk",

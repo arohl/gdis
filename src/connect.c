@@ -393,11 +393,11 @@ printf("This [%s] has %d candidates.\n", core1->atom_label, n);
 
 /* central atom's colour */
       ARR3SET(p1->colour, core1->colour);
-      VEC3MUL(p1->colour, 1.0/65535.0);
+      VEC3MUL(p1->colour, INV_COLOUR_SCALE);
       ARR3SET(p2->colour, core1->colour);
-      VEC3MUL(p2->colour, 1.0/65535.0);
+      VEC3MUL(p2->colour, INV_COLOUR_SCALE);
       ARR3SET(p3->colour, core1->colour);
-      VEC3MUL(p3->colour, 1.0/65535.0);
+      VEC3MUL(p3->colour, INV_COLOUR_SCALE);
 
 /* triangle, defined by 3 surrounding bonds */
 /* compute midpoints */

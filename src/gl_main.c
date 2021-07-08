@@ -395,19 +395,19 @@ switch (core->render_mode)
 /* more than one bond - put in a small sphere to smooth bond joints */
 /* no bonds (isolated) - use normal ball radius */
     if (core->bonds)
-      radius *= sysenv.render.stick_rad;
+      radius *= sysenv.render.stick_radius;
     else
-      radius *= sysenv.render.ball_rad;
+      radius *= sysenv.render.ball_radius;
     break;
 
   case STICK:
-    radius *= sysenv.render.stick_rad;
+    radius *= sysenv.render.stick_radius;
     if (core->bonds)
       radius *= -1.0;
     break;
 
   case BALL_STICK:
-    radius *= sysenv.render.ball_rad;
+    radius *= sysenv.render.ball_radius;
     break;
   }
 return(radius);
@@ -1299,7 +1299,7 @@ for (list=data->shels ; list ; list=g_slist_next(list))
     switch (mode)
       {
       case BALL_STICK:
-        radius *= sysenv.render.ball_rad;
+        radius *= sysenv.render.ball_radius;
         break;
 
       case CPK:
@@ -1307,7 +1307,7 @@ for (list=data->shels ; list ; list=g_slist_next(list))
         break;
 
       case STICK:
-        radius *= sysenv.render.stick_rad;
+        radius *= sysenv.render.stick_radius;
         break;
       }
     if (!omit_atom)
@@ -3028,8 +3028,8 @@ for (list=sysenv.canvas_list ; list ; list=g_slist_next(list))
   canvas = list->data;
   model = canvas->model;
 
-#if DEBUG_CANVAS_REFRESH
-gchar *str = g_strdup_printf("FPS: %i",sysenv.fps);
+#if DEBUG_CANVAS
+gchar *str = g_strdup_printf("FPS: %i", sysenv.fps);
 pango_print(str, 5, 5, canvas, 10, 0);
 g_free(str);
 printf("canvas: %p\nactive: %d\nresize: %d\nmodel: %p\n",

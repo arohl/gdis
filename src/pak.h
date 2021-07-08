@@ -37,6 +37,7 @@ gchar filename[FILELEN];
 gint mode;              /* default render mode for atoms */
 gint perspective;
 gint antialias;
+gboolean scale_ball_size;
 gint shadowless;
 gint fog;
 gint axes;
@@ -82,8 +83,8 @@ gdouble fog_density;
 gdouble fog_start;
 
 /* geometry */
-gdouble ball_rad;
-gdouble stick_rad;
+gdouble ball_radius;
+gdouble stick_radius;
 gdouble stick_thickness;
 gdouble line_thickness;
 gdouble frame_thickness;

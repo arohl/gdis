@@ -831,7 +831,7 @@ gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(cs), &colour);
 x[0] = colour.red;
 x[1] = colour.green;
 x[2] = colour.blue;
-VEC3MUL(x, 1.0/65535.0);
+VEC3MUL(x, INV_COLOUR_SCALE);
 }
 
 /**********************************/

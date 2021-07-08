@@ -602,7 +602,7 @@ for (list=points ; list ; list=g_slist_next(list))
   if (core)
     {
     ARR3SET(p->colour, core->colour);
-    VEC3MUL(p->colour, 1.0/65535.0);
+    VEC3MUL(p->colour, INV_COLOUR_SCALE);
     }
   else
     {
