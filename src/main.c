@@ -520,8 +520,8 @@ sysenv.render.diffuse = 0.9;
 sysenv.render.specular = 0.9;
 sysenv.render.transmit = 1.0;
 sysenv.render.ghost_opacity = 0.5;
-sysenv.render.ball_rad = 0.3;
-sysenv.render.stick_rad = 0.1;
+sysenv.render.ball_radius = 0.3;
+sysenv.render.stick_radius = 0.1;
 sysenv.render.stick_thickness = GTKGL_LINE_WIDTH;
 sysenv.render.line_thickness = GTKGL_LINE_WIDTH;
 sysenv.render.frame_thickness = GTKGL_LINE_WIDTH;
@@ -809,7 +809,7 @@ return(0);
 }
 
 /* CURRENT */
-/* routines that are not cleanly seperable when we build with no GUI */
+/* routines that are not cleanly separable when we build with no GUI */
 #ifndef WITH_GUI
 void gui_text_show(gint type, gchar *msg)
 {

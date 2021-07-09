@@ -603,6 +603,7 @@ void unhide_atoms(void)
 GSList *list;
 struct model_pak *data;
 struct core_pak *core;
+struct shel_pak *shell;
 
 /* deletion for the active model only */
 data = sysenv.active_model;
@@ -612,6 +613,11 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
   core->status &= ~HIDDEN;
+  if (core->shell)
+    {
+    shell = core->shell;
+    shell->status &= ~HIDDEN;
+    }
   }
 
 /* update */
@@ -1179,6 +1185,8 @@ if (sysenv.canvas)
 /* tags */
     gtk_text_buffer_create_tag(buffer, "fg_blue", "foreground", "blue", NULL);  
     gtk_text_buffer_create_tag(buffer, "fg_red", "foreground", "red", NULL);
+    gtk_text_buffer_create_tag(buffer, "fg_green", "foreground", "#008000", NULL);
+    gtk_text_buffer_create_tag(buffer, "fg_orange", "foreground", "#ff5e13", NULL);
     gtk_text_buffer_create_tag(buffer, "italic", "style", PANGO_STYLE_ITALIC, NULL);
 /* position iterator */
     gtk_text_buffer_get_iter_at_line(buffer, &iter, 0);
@@ -1192,9 +1200,14 @@ if (sysenv.canvas)
         (buffer, &iter, message, -1, "fg_red", NULL); 
       break;
 
-    case WARNING:
+    case INFO:
       gtk_text_buffer_insert_with_tags_by_name
        (buffer, &iter, message, -1, "fg_blue", NULL); 
+      break;
+
+    case WARNING:
+      gtk_text_buffer_insert_with_tags_by_name
+       (buffer, &iter, message, -1, "fg_orange", NULL); 
       break;
 
     case ITALIC:
@@ -2479,7 +2492,7 @@ gtk_widget_set_size_request(sysenv.tpane, -1, sysenv.tray_height);
 gtk_widget_show(sysenv.tpane);
 
 text = g_strdup_printf("This is free software, distributed under the terms of the GNU public license (GPL).\nFor more information visit http://www.gnu.org/\n");
-gui_text_show(WARNING, text);
+gui_text_show(INFO, text);
 g_free(text);
 
 text = g_strdup_printf("Welcome to GDIS version %4.2f.%d (%d), brought to you by Sean Fleming, Okadome Valencia, and Andrew Rohl\n",VERSION,PATCH,YEAR);

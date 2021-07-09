@@ -447,7 +447,7 @@ if (!model->surface.ignore_symmetry)
 
 if (n == 100)
   {
-  printf("WARNING: screwed up systematic absence check.\n");
+  gui_text_show(WARNING, "Screwed up systematic absence check.\n");
   h /= 99;
   k /= 99;
   l /= 99;
@@ -482,7 +482,7 @@ if (len > FRACTION_TOLERANCE)
   }
 else
   {
-  gui_text_show(WARNING, "plane of zero length created.\n");
+  gui_text_show(WARNING, "Plane of zero length created.\n");
   }
 
 plane->esurf_shift = 0.0;

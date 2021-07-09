@@ -135,7 +135,7 @@ if (!model->show_bonds)
   return;
 
 /* common pipe width */
-radius = sysenv.render.stick_rad;
+radius = sysenv.render.stick_radius;
 
 /* enumerate bonds to construct the pipe list */
 for (list=model->bonds; list ; list=g_slist_next(list))
@@ -197,9 +197,9 @@ for (list=model->bonds; list ; list=g_slist_next(list))
 
     default:
       ARR4SET(colour1, core1->colour);
-      VEC3MUL(colour1, 1.0/65535.0);
+      VEC3MUL(colour1, INV_COLOUR_SCALE);
       ARR4SET(colour2, core2->colour);
-      VEC3MUL(colour2, 1.0/65535.0);
+      VEC3MUL(colour2, INV_COLOUR_SCALE);
     }
 
 /* setup half-bond (pipe) for core1 */
