@@ -809,7 +809,7 @@ return(0);
 }
 
 /* CURRENT */
-/* routines that are not cleanly seperable when we build with no GUI */
+/* routines that are not cleanly separable when we build with no GUI */
 #ifndef WITH_GUI
 void gui_text_show(gint type, gchar *msg)
 {

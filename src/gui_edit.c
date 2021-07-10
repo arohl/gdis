@@ -898,9 +898,22 @@ gui_refresh(GUI_CANVAS);
 /***********************/
 void edit_atom_add(void)
 {
-if (!sysenv.active_model)
+struct model_pak *model;
+
+model = sysenv.active_model;
+
+if (model)
+  {
+  if (model->num_frames > 1)
+    {
+    gui_text_show(WARNING, "Atoms cannot be added to multiframe model.\n");
+    return;
+    }
+  gui_mode_switch(ATOM_ADD);
+  }
+else
   edit_model_create();
-gui_mode_switch(ATOM_ADD);
+
 }
 
 /********************************/
@@ -916,6 +929,12 @@ struct model_pak *model;
 model = sysenv.active_model;
 if (model)
   {
+  if (model->num_frames > 1)
+    {
+    gui_text_show(WARNING, "Shells cannot be added to multiframe model.\n");
+    return;
+    }
+
   for (list=model->selection ; list ; list=g_slist_next(list))
     {
     core = list->data;

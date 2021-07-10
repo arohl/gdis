@@ -407,7 +407,14 @@ switch (core->render_mode)
     break;
 
   case BALL_STICK:
-    radius *= sysenv.render.ball_radius;
+    if (sysenv.render.scale_ball_size)
+      {
+/* TODO - calling get_elem_data() all the time is inefficient */
+      get_elem_data(core->atom_code, &elem, model);
+      radius *= sysenv.render.cpk_scale * elem.vdw;
+      }
+    else
+      radius *= sysenv.render.ball_radius;
     break;
   }
 return(radius);

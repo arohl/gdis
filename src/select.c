@@ -152,6 +152,7 @@ for (list=model->selection ; list ; list=g_slist_next(list))
   }
 g_slist_free(model->selection);
 model->selection=NULL;
+gui_refresh_selection();
 }
 
 /******************/
@@ -161,7 +162,7 @@ void select_copy(void)
 {
 struct model_pak *model;
 
-/* setup & check */
+/* set up & check */
 model = sysenv.active_model;
 if (!model)
   return;
@@ -187,6 +188,12 @@ if (data == NULL || src == NULL)
   return;
 if (data->id == NODATA || !src->selection)
   return;
+
+if (data->num_frames > 1)
+  {
+  gui_text_show(WARNING, "Atoms cannot be added to multiframe model.\n");
+  return;
+  }
 
 /* copy the selection - just in case src == data */
 slist = g_slist_copy(src->selection);
@@ -298,6 +305,12 @@ data = sysenv.active_model;
 if (!data)
   return;
 
+if (data->num_frames > 1)
+  {
+  gui_text_show(WARNING, "Atoms cannot be deleted from multiframe model.\n");
+  return;
+  }
+
 /* delete */
 list = data->selection;
 while (list)
@@ -331,6 +344,7 @@ void select_hide(void)
 GSList *list;
 struct model_pak *data;
 struct core_pak *core;
+struct shel_pak *shell;
 
 /* deletion for the active model only */
 data = sysenv.active_model;
@@ -346,6 +360,11 @@ for (list=data->selection ; list ; list=g_slist_next(list))
   core = list->data;
   core->status |= HIDDEN;
   core->status &= ~SELECT;
+  if (core->shell)
+    {
+    shell = core->shell;
+    shell->status |= HIDDEN;
+    }
   }
 sysenv.select_source = NULL;
 
@@ -373,7 +392,7 @@ data = sysenv.active_model;
 if (!data)
   return;
 
-/* hide */
+/* hide unselected atoms */
 for (list=data->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
@@ -406,8 +425,14 @@ if (!data)
   return;
 
 /* assign the new selection */
-g_slist_free(data->selection);
-data->selection = g_slist_copy(data->cores);
+select_clear(data);
+for (list=data->cores ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  if (core->status & (DELETED | HIDDEN))
+     continue;
+  data->selection = g_slist_append(data->selection, core);
+  }
 
 /* update the highlighting */
 for (list=data->selection ; list ; list=g_slist_next(list))
@@ -416,6 +441,7 @@ for (list=data->selection ; list ; list=g_slist_next(list))
   core->status |= SELECT;
   }
 redraw_canvas(SINGLE);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /************************/

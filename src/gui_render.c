@@ -555,7 +555,7 @@ gui_button_x("Stick", render_mode_set, GINT_TO_POINTER(STICK), vbox);
 gui_button_x("Zone based (experimental)", render_mode_zone, NULL, vbox);
 gui_button_x("Wire frame molecules", render_wire_atoms, NULL, vbox);
 gui_button_x("Solid molecules", render_solid_atoms, NULL, vbox);
-gui_button_x("Axes type", toggle_axes_type, NULL, vbox);
+gui_button_x("Switch axes type", toggle_axes_type, NULL, vbox);
 
 /* extra toggles */
 vbox = gui_frame_vbox(NULL, FALSE, FALSE, vbox1);
