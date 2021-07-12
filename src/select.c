@@ -461,13 +461,20 @@ if (!data)
 /* copy the core list */
 new = g_slist_copy(data->cores);
 
-/* remove the old selection */
-for (list=data->selection ; list ; list=g_slist_next(list))
+for (list=data->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
 
-  core->status &= ~SELECT;
-  new = g_slist_remove(new, core);
+/* Don't select hidden atoms */
+  if (core->status & HIDDEN)
+    new = g_slist_remove(new, core);
+
+/* remove the old selection */
+  if (g_slist_find(data->selection, core))
+    {
+    core->status &= ~SELECT;
+    new = g_slist_remove(new, core);
+    }
   }
 
 /* assign the new selection */

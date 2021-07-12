@@ -95,6 +95,14 @@ if (core->shell)
   (core->shell)->status |= DELETED;
 }
 
+/**********************************/
+/* flag shell only                */
+/**********************************/
+void delete_shell(struct shel_pak *shell)
+{
+  shell->status |= DELETED;
+}
+
 /*********************************/
 /* delete primitive for one core */
 /*********************************/
@@ -485,6 +493,8 @@ core->has_sof = FALSE;
 core->sof = 1.0;
 core->charge = 0.0;
 core->lookup_charge = TRUE;
+core->mass = 0.0;
+core->lookup_mass = TRUE;
 core->flags = NULL;
 core->bonds = NULL;
 core->mol = NULL;
@@ -559,9 +569,9 @@ shell->core = NULL;
 shell->primary_shell = NULL;
 shell->radius = 0.0;
 shell->charge = 0.0;
+shell->mass = 0.0;
 shell->has_sof = FALSE;
 shell->sof = 1.0;
-shell->lookup_charge = TRUE;
 shell->flags = NULL;
 
 return(shell);
