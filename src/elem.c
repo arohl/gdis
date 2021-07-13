@@ -551,7 +551,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 /* monopole */
   qsum += core->charge;
 
-/* NB: add shell constribution at the core's z location */
+/* NB: add shell contribution at the core's z location */
   if (core->shell)
     {
     shell = core->shell;

@@ -326,6 +326,7 @@ zone_init(data);
 connect_bonds(data);
 connect_molecules(data);
 
+model_content_refresh(data);
 redraw_canvas(SINGLE);
 }
 
@@ -582,6 +583,15 @@ for (list=model->shels ; list ; list=g_slist_next(list))
 matmat(CEDIT.tmat, model->latmat);
 model->fractional = FALSE;
 model->construct_pbc = TRUE;
+
+/* Set lattice matrix to identity matrix for non-periodic systems */
+if( model->periodic == 0 )
+  {
+  matrix_identity(model->latmat);
+  matrix_identity(model->ilatmat);
+  matrix_identity(model->rlatmat);
+  }
+
 model_prep(model);
 
 /* GUI updates */
@@ -616,7 +626,7 @@ n = (guint)SPIN_IVAL(GTK_SPIN_BUTTON(CEDIT.periodicity_spin));
 /* if we're increasing the periodicity, we need repeat vector info */
 if (n > model->periodic)
   {
-/* check if its the unit vector (ie likely unchanged from default) */
+/* check if it's the unit vector (ie likely unchanged from default) */
   for (i=model->periodic ; i<n ; i++)
     {
     VEC3SET(x, CEDIT.tmat[i], CEDIT.tmat[i+3], CEDIT.tmat[i+6]);
@@ -641,6 +651,9 @@ if (n > model->periodic)
     }
   }
 
+/* remove all images */
+space_image_widget_reset();
+
 /* remove all symmetry and convert to cartesian */
 space_make_p1(model);
 
@@ -656,7 +669,7 @@ for (list=model->shels ; list ; list=g_slist_next(list))
   vecmat(model->latmat, shell->x);
   }
 
-/* set the (extra) new lattice matrix periodicty */
+/* set the (extra) new lattice matrix periodicity */
 for (i=model->periodic ; i<n ; i++)
   {
   model->latmat[i+0] = CEDIT.tmat[i+0];
@@ -680,6 +693,7 @@ else
   model->construct_pbc = TRUE; 
 
 model_prep(model);
+model_content_refresh(model);
 
 /* GUI updates */
 /* REFRESH */
@@ -961,6 +975,7 @@ if (model)
       }
     }
   }
+  model_content_refresh(model);
 }
 
 /*************************************/
@@ -1001,6 +1016,7 @@ if (model)
   }
 delete_commit(model);
 redraw_canvas(SINGLE);
+model_content_refresh(model);
 }
 
 /*****************************/
@@ -1038,6 +1054,8 @@ struct model_pak *model = sysenv.active_model;
 if (model)
   {
   model->show_bonds ^= 1;
+  model->surface.ignore_bonding ^= 1;
+  model_content_refresh(model);
 
   redraw_canvas(SINGLE);
   }
@@ -3063,4 +3081,5 @@ gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 gui_button_x("Mark as ghost", select_flag_ghost, NULL, vbox);
 gui_button_x("Mark as normal", select_flag_normal, NULL, vbox);
+
 }

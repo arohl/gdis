@@ -412,9 +412,9 @@ for (list=data->cores ; list ; list=g_slist_next(list))
     g = core1->colour[1];
     b = core1->colour[2];
 /* convert to povray rgb format */
-    rf = (gdouble) (r) / 65535.0;
-    gf = (gdouble) (g) / 65535.0;
-    bf = (gdouble) (b) / 65535.0;
+    rf = (gdouble) (r) * INV_COLOUR_SCALE;
+    gf = (gdouble) (g) * INV_COLOUR_SCALE;
+    bf = (gdouble) (b) * INV_COLOUR_SCALE;
     switch(core1->render_mode)
       {
 /* rounded end are now draw in the bond section */
