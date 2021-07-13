@@ -626,6 +626,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /****************/
@@ -1528,7 +1529,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/_View",                       NULL, NULL, 0, "<Branch>"},
   { "/View/Display properties...",  "<CTRL>D", gui_render_dialog, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
-  { "/View/Reset model images",     NULL, space_image_widget_reset, 0, NULL},
+  { "/View/Reset model images",     "<CTRL>R", space_image_widget_reset, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
   { "/View/Normal mode",            NULL, gui_mode_default, 0, NULL},
   { "/View/Recording mode",         NULL, gui_mode_record, 0, NULL},

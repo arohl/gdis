@@ -539,7 +539,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   if (core->region != REGION1A)
     continue;
 */
-  if (core->status & DELETED)
+  if (core->status & (DELETED | HIDDEN))
     continue;
 
   ARR3SET(x, core->x);

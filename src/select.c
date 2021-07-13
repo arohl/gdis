@@ -334,6 +334,7 @@ data->selection = NULL;
 sysenv.select_source = NULL;
 
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /******************/
@@ -375,6 +376,7 @@ data->selection = NULL;
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /***************************/
@@ -408,6 +410,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /********************/
@@ -509,7 +512,7 @@ if (core->status & HIDDEN)
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
 
-gui_refresh(GUI_MODEL_PROPERTIES);
+model_content_refresh(data);
 return(0);
 }
 
@@ -1595,6 +1598,7 @@ backbone = 0;
 /* recalc coords (ie the ribbon coords) & draw */
 coords_init(REDO_COORDS, data);
 redraw_canvas(SINGLE);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /******************************************************/
