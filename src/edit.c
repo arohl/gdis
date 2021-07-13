@@ -32,6 +32,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "gdis.h"
 #include "coords.h"
 #include "edit.h"
+#include "model.h"
 #include "matrix.h"
 #include "measure.h"
 #include "opengl.h"
@@ -81,6 +82,7 @@ connect_atom_compute(core, model);
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_bonds(model);
 connect_molecules(model);
+model_content_refresh(model);
 
 return(TRUE);
 }
@@ -129,6 +131,7 @@ if (core->shell)
 
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_molecules(model);
+model_content_refresh(model);
 }
 
 /*********************************/
@@ -974,7 +977,7 @@ printf("[%s] : [%s]\n", label, core->atom_label);
 
 code = elem_symbol_test(label);
 
-/* if input label doesnt match the element symbol length - it means the */
+/* if input label doesn't match the element symbol length - it means the */
 /* user has put in something like H1 - compare this with the atom label */
 if (code)
   {
