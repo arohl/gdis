@@ -512,7 +512,6 @@ if (core->status & HIDDEN)
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
 
-model_content_refresh(data);
 return(0);
 }
 

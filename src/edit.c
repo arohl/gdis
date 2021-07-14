@@ -81,8 +81,7 @@ connect_atom_compute(core, model);
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_bonds(model);
 connect_molecules(model);
-//model_content_refresh(model);
-gui_refresh(GUI_MODEL_PROPERTIES);
+model_content_refresh(model);
 
 return(TRUE);
 }
@@ -131,8 +130,6 @@ if (core->shell)
 
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_molecules(model);
-//model_content_refresh(model);
-gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /*********************************/
@@ -156,8 +153,8 @@ model->cores = NULL;
 /* redo dependancies */
 zone_init(model);
 calc_emp(model);
-gui_refresh(GUI_MODEL_PROPERTIES);
 model->state = 0;
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /*******************************************************/
