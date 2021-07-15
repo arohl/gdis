@@ -34,6 +34,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "edit.h"
 #include "matrix.h"
 #include "measure.h"
+#include "model.h"
 #include "opengl.h"
 #include "render.h"
 #include "select.h"
@@ -81,6 +82,8 @@ connect_atom_compute(core, model);
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_bonds(model);
 connect_molecules(model);
+model_content_refresh(model);
+gui_refresh(GUI_MODEL_PROPERTIES);
 
 return(TRUE);
 }
@@ -93,6 +96,14 @@ void delete_core(struct core_pak *core)
 core->status |= DELETED;
 if (core->shell)
   (core->shell)->status |= DELETED;
+}
+
+/**********************************/
+/* flag shell only                */
+/**********************************/
+void delete_shell(struct shel_pak *shell)
+{
+  shell->status |= DELETED;
 }
 
 /*********************************/
@@ -121,6 +132,7 @@ if (core->shell)
 
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_molecules(model);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /*********************************/
@@ -485,6 +497,8 @@ core->has_sof = FALSE;
 core->sof = 1.0;
 core->charge = 0.0;
 core->lookup_charge = TRUE;
+core->mass = 0.0;
+core->lookup_mass = TRUE;
 core->flags = NULL;
 core->bonds = NULL;
 core->mol = NULL;
@@ -559,9 +573,9 @@ shell->core = NULL;
 shell->primary_shell = NULL;
 shell->radius = 0.0;
 shell->charge = 0.0;
+shell->mass = 0.0;
 shell->has_sof = FALSE;
 shell->sof = 1.0;
-shell->lookup_charge = TRUE;
 shell->flags = NULL;
 
 return(shell);
@@ -964,7 +978,7 @@ printf("[%s] : [%s]\n", label, core->atom_label);
 
 code = elem_symbol_test(label);
 
-/* if input label doesnt match the element symbol length - it means the */
+/* if input label doesn't match the element symbol length - it means the */
 /* user has put in something like H1 - compare this with the atom label */
 if (code)
   {

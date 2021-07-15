@@ -92,6 +92,9 @@ gdouble radius;
 /* charge info */
 gint lookup_charge;
 gdouble charge;
+/* mass info */
+gint lookup_mass;
+gdouble mass;
 /* fitting flags */
 gchar *flags;
 
@@ -135,6 +138,9 @@ gint pic[3];
 /* charge info */
 gint lookup_charge;
 gdouble charge;
+/* mass info */
+gint lookup_mass;
+gdouble mass;
 /* site occupancy factor */
 gint has_sof;
 gdouble sof;
@@ -235,6 +241,7 @@ struct core_pak *copy_core(struct core_pak *, struct model_pak *, struct model_p
 
 void delete_commit(struct model_pak *);
 void delete_core(struct core_pak *);
+void delete_shell(struct shel_pak *);
 void delete_duplicate_cores(struct model_pak *);
 void add_atom(gint, gint, struct model_pak *);
 
@@ -246,6 +253,9 @@ void model_colour_scheme(gint, struct model_pak *);
 void init_atom_colour(struct core_pak *, struct model_pak *);
 void init_atom_charge(struct core_pak *, struct model_pak *);
 void init_model_charges(struct model_pak *);
+void init_atom_mass(struct core_pak *, struct model_pak *);
+void init_model_masses(struct model_pak *);
+gdouble atom_mass(struct core_pak *);
 gdouble atom_charge(struct core_pak *);
 void calc_emp(struct model_pak *);
 

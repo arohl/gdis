@@ -495,7 +495,7 @@ gdouble col[3];
 col[0] = (gdouble) *rgb;
 col[1] = (gdouble) *(rgb+1);
 col[2] = (gdouble) *(rgb+2);
-VEC3MUL(col, 1.0/65535.0);
+VEC3MUL(col, INV_COLOUR_SCALE);
 glColor4f(col[0], col[1], col[2], 1.0);
 }
 
@@ -506,25 +506,24 @@ void make_fg_visible(void)
 {
 gdouble fg[3], bg[3];
 
-#define F_COLOUR_SCALE 65535.0
 ARR3SET(fg, sysenv.render.fg_colour);
 ARR3SET(bg, sysenv.render.bg_colour);
-VEC3MUL(fg, F_COLOUR_SCALE);
-VEC3MUL(bg, F_COLOUR_SCALE);
+VEC3MUL(fg, COLOUR_SCALE);
+VEC3MUL(bg, COLOUR_SCALE);
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
-fg[2] = (gint) bg[2] ^ (gint) F_COLOUR_SCALE;
-VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
+fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
+fg[2] = (gint) bg[2] ^ COLOUR_SCALE;
+VEC3MUL(fg, INV_COLOUR_SCALE);
 ARR3SET(sysenv.render.fg_colour, fg);
 
 /* adjust label colour for visibility against the current background */
 ARR3SET(fg, sysenv.render.label_colour);
-VEC3MUL(fg, F_COLOUR_SCALE);
+VEC3MUL(fg, COLOUR_SCALE);
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
-VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
+fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
+VEC3MUL(fg, INV_COLOUR_SCALE);
 /* force to zero, so we get yellow (not white) for a black background */
 fg[2] = 0.0;
 ARR3SET(sysenv.render.label_colour, fg);
@@ -532,14 +531,14 @@ ARR3SET(sysenv.render.label_colour, fg);
 /* adjust title colour for visibility against the current background */
 /*
 ARR3SET(fg, sysenv.render.title_colour);
-VEC3MUL(fg, F_COLOUR_SCALE);
+VEC3MUL(fg, COLOUR_SCALE);
 */
 /* force to zero, so we get cyan (not white) for a black background */
 fg[0] = 0.0;
 /* XOR to get a visible colour */
-fg[0] = (gint) bg[0] ^ (gint) F_COLOUR_SCALE;
-fg[1] = (gint) bg[1] ^ (gint) F_COLOUR_SCALE;
-fg[2] = (gint) bg[2] ^ (gint) F_COLOUR_SCALE;
+fg[0] = (gint) bg[0] ^ COLOUR_SCALE;
+fg[1] = (gint) bg[1] ^ COLOUR_SCALE;
+fg[2] = (gint) bg[2] ^ COLOUR_SCALE;
 
 /* faded dark blue */
 fg[0] *= 0.3;
@@ -553,7 +552,7 @@ fg[1] *= 0.7;
 fg[2] *= 0.4;
 */
 
-VEC3MUL(fg, 1.0/F_COLOUR_SCALE);
+VEC3MUL(fg, INV_COLOUR_SCALE);
 ARR3SET(sysenv.render.title_colour, fg);
 
 /*
@@ -1016,7 +1015,7 @@ for (list=cores ; list ; list=g_slist_next(list))
 
 /* set colour */
   ARR3SET(colour, core->colour);
-  VEC3MUL(colour, 1.0/65535.0);
+  VEC3MUL(colour, INV_COLOUR_SCALE);
   colour[3] = core->colour[3];
   glColor4dv(colour);
 
