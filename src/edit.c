@@ -34,6 +34,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "edit.h"
 #include "matrix.h"
 #include "measure.h"
+#include "model.h"
 #include "opengl.h"
 #include "render.h"
 #include "select.h"
@@ -82,6 +83,7 @@ connect_atom_compute(core, model);
 connect_bonds(model);
 connect_molecules(model);
 model_content_refresh(model);
+gui_refresh(GUI_MODEL_PROPERTIES);
 
 return(TRUE);
 }
@@ -130,6 +132,7 @@ if (core->shell)
 
 /* TODO - more fine grained molecule recalc (ie recalc of affected molecules only) */
 connect_molecules(model);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /*********************************/
@@ -153,8 +156,8 @@ model->cores = NULL;
 /* redo dependancies */
 zone_init(model);
 calc_emp(model);
-model->state = 0;
 gui_refresh(GUI_MODEL_PROPERTIES);
+model->state = 0;
 }
 
 /*******************************************************/

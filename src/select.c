@@ -30,6 +30,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "matrix.h"
 #include "quaternion.h"
 #include "measure.h"
+#include "model.h"
 #include "spatial.h"
 #include "opengl.h"
 #include "render.h"
@@ -512,6 +513,7 @@ if (core->status & HIDDEN)
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
 
+model_content_refresh(data);
 return(0);
 }
 

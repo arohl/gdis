@@ -2801,7 +2801,7 @@ void gui_refresh_selection(void)
 {
 gint n, cflag=FALSE;
 gdouble q=0, m=0, centroid[3];
-gchar *element, *label, *type, *charge, *x, *y, *z;
+gchar *label, *type, *charge, *x, *y, *z;
 gchar *mass, *growth, *region, *translate;
 struct core_pak *core;
 struct model_pak *model;
@@ -2843,7 +2843,6 @@ if (model)
 if (core && model)
   {
 /* data available */
-  element = g_strdup(elements[core->atom_code].symbol);
   label = g_strdup(core->atom_label);
 
   if (core->atom_type)
@@ -2870,9 +2869,7 @@ if (core && model)
 else
   {
 /* otherwise defaults */
-  element = g_strdup("");
   type = g_strdup("");
-  charge = g_strdup("");
 
   if (cflag)
     {
@@ -2916,7 +2913,6 @@ gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_translate), translate);
 CEDIT.apd_data = model;
 
 /* cleanup */
-g_free(element);
 g_free(label);
 g_free(type);
 g_free(charge);
