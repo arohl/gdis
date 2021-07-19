@@ -114,9 +114,9 @@ gdouble ghost_opacity;
 gdouble fg_colour[3];
 gdouble bg_colour[3];
 gdouble morph_colour[3];
-gdouble rsurf_colour[3];         /* re-entrant surface */
-gdouble label_colour[3];         /* geometry labels */
-gdouble title_colour[3];         /* axes titles */
+gdouble rsurf_colour[3];      /* re-entrant surface */
+gdouble label_colour[3];      /* geometry labels */
+gdouble title_colour[3];      /* axes titles */
 gdouble ribbon_colour[3];
 gchar *morph_finish;
 };
@@ -149,8 +149,8 @@ struct model_pak *diffract_model;
 GtkWidget *diffract_layer_total;
 GtkWidget *diffract_layer_order;
 /* globals for the atom properties dialog */
-GtkWidget *apd_label, *apd_type, *apd_charge, *apd_x, *apd_y, *apd_z;
-GtkWidget *apd_growth, *apd_region, *apd_translate;
+GtkWidget *apd_element, *apd_label, *apd_type, *apd_charge, *apd_mass, *apd_sof, \
+	  *apd_x, *apd_y, *apd_z, *apd_growth, *apd_region, *apd_translate;
 struct model_pak *apd_data;
 struct core_pak *apd_core;
 };
