@@ -954,6 +954,13 @@ for (list=model->cores ; list ; list=g_slist_next(list))
   if (core->render_mode == ZONE)
     continue;
 
+/* Checks for MARVIN regions */
+  if ((!model->show_region1A && core->region == REGION1A) ||
+      (!model->show_region1B && core->region == REGION1B) ||
+      (!model->show_region2A && core->region == REGION2A) ||
+      (!model->show_region2B && core->region == REGION2B))
+    continue;
+
 /* build appropriate lists */
   if (core->render_wire)
     *wire = g_slist_prepend(*wire, core);
@@ -1260,6 +1267,13 @@ for (list=data->shels ; list ; list=g_slist_next(list))
   {
   shel = list->data;
   if (shel->status & (DELETED | HIDDEN))
+    continue;
+
+/* Checks for MARVIN regions */
+  if ((!data->show_region1A && shel->region==REGION1A) ||
+      (!data->show_region1B && shel->region==REGION1B) ||
+      (!data->show_region2A && shel->region==REGION2A) ||
+      (!data->show_region2B && shel->region==REGION2B))
     continue;
 
 /* shell colour */

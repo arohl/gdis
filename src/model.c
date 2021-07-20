@@ -158,6 +158,12 @@ data->show_nmr_shifts = FALSE;
 data->show_nmr_csa = FALSE;
 data->show_nmr_efg = FALSE;
 
+/* Marvin regions */
+data->show_region1A = TRUE;
+data->show_region1B = TRUE;
+data->show_region2A = TRUE;
+data->show_region2B = TRUE;
+
 /* NEW */
 data->property_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, property_free);
 data->property_list = NULL;
