@@ -1158,6 +1158,14 @@ gint show_nmr_shifts;
 gint show_nmr_csa;
 gint show_nmr_efg;
 
+/* 2D regions */
+GtkWidget * custom_regions_frame;          //HACK HACK HACK
+GtkWidget * edit_regions_frame;            //HACK HACK HACK
+gint show_region1A;
+gint show_region1B;
+gint show_region2A;
+gint show_region2B;
+
 /* ghosts */
 gint num_atoms;
 gint num_asym;

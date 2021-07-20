@@ -441,6 +441,166 @@ gui_text_show(STANDARD, txt);
 redraw_canvas(SINGLE);
 }
 
+/********************************************/
+/* change region of selection               */
+/********************************************/
+#define DEBUG_REGION_CHANGE 0
+void region_change(GtkWidget *w, gint region)
+{
+GSList *list;
+struct model_pak *data;
+struct core_pak *core;
+
+data = sysenv.active_model;
+
+/* checks */
+if (!data)
+  return;
+if (!data->selection)
+  {
+  gui_text_show(WARNING, "Empty selection.\n");
+  return;
+  }
+
+#if DEBUG_REGION_CHANGE
+printf(stderr, "New region: %d\n", region);
+#endif
+
+/* change all atoms in selection */
+for (list=data->selection ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  switch (region)
+    {
+    case REGION1A:
+      core->region = REGION1A;
+      if (core->shell)
+        (core->shell)->region = REGION1A;
+      break;
+    case REGION2A:
+      core->region = REGION2A;
+      if (core->shell)
+        (core->shell)->region = REGION2A;
+      break;
+    case REGION1B:
+      core->region = REGION1B;
+      if (core->shell)
+        (core->shell)->region = REGION1B;
+      break;
+    case REGION2B:
+      core->region = REGION2B;
+      if (core->shell)
+        (core->shell)->region = REGION2B;
+      break;
+    default:
+      break;
+    }
+  }
+
+redraw_canvas(SINGLE);
+}
+
+/********************************************/
+/* add/remove from growth slice             */
+/********************************************/
+#define DEBUG_GROWTH_CHANGE 0
+void region_growth_slice(GtkWidget *w, gint growth)
+{
+GSList *list;
+struct model_pak *data;
+struct core_pak *core;
+
+data = sysenv.active_model;
+
+/* checks */
+if (!data)
+  return;
+if (data->periodic != 2)
+  return;
+if (!data->selection)
+  {
+  gui_text_show(WARNING, "Empty selection.\n");
+  return;
+  }
+
+/* change all atoms in selection */
+for (list=data->selection ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  switch (growth)
+    {
+    case GROWTH_ADD:
+      core->growth = TRUE;
+      break;
+    case GROWTH_DEL:
+      core->growth = FALSE;
+      break;
+    default:
+      break;
+    }
+  }
+
+redraw_canvas(SINGLE);
+}
+
+/**********************************************/
+/* change the atom labels to elemental symbol */
+/**********************************************/
+#define DEBUG_ATOM_LABELS 0
+void label_change(GtkWidget *w, gint label)
+{
+GSList *list;
+struct model_pak *data;
+struct core_pak *core;
+struct shel_pak *shel;
+struct elem_pak elem_data;
+
+data = sysenv.active_model;
+
+/* checks */
+if (!data)
+  return;
+
+switch (label)
+  {
+  case ELEM:
+     for (list=data->cores ; list ; list=g_slist_next(list))
+       {
+       core = list->data;
+       get_elem_data(core->atom_code, &elem_data, data);
+       g_free(core->atom_label);
+       core->atom_label = g_strdup(elem_data.symbol);
+       /* update atttached shell */
+        if (core->shell)
+          {
+          shel = core->shell;
+          g_free(shel->shell_label);
+          shel->shell_label = g_strdup(elem_data.symbol);
+          }
+       }
+    break;
+  case SELECT:
+     for (list=data->selection ; list ; list=g_slist_next(list))
+       {
+       core = list->data;
+       get_elem_data(core->atom_code, &elem_data, data);
+       g_free(core->atom_label);
+       core->atom_label = g_strdup(elem_data.symbol);
+       /* update atttached shell */
+        if (core->shell)
+          {
+          shel = core->shell;
+          g_free(shel->shell_label);
+          shel->shell_label = g_strdup(elem_data.symbol);
+          }
+       }
+    break;
+  default:
+    break;
+  }
+gui_refresh_selection();
+redraw_canvas(SINGLE);
+}
 /****************************/
 /* connectivity only update */
 /****************************/
@@ -2221,6 +2381,51 @@ else
   gui_text_show(WARNING, "Empty or missing Forcefield.\n");
 }
 
+/***********************/
+/* region manipulation */
+/***********************/
+void regions_page(GtkWidget *box, gpointer dialog)
+{
+GtkWidget *frame;
+GtkWidget *vbox;
+/* GtkWidget *region_edit_sensitive_box; */
+//struct model_pak *model;
+
+// g_assert(box != NULL);
+
+/* TODO - allow regions dialog even when no models, but dont draw */
+/* or make insensitive model specific buttons */
+/* model = sysenv.active_model; */
+/* FIXME - dont draw anything if no models are loaded (needs a better/dynamic fix) */
+/* if (!model || model->periodic != 2)
+  return;
+*/
+/* Region options */
+
+frame = gtk_frame_new(NULL);
+gtk_box_pack_start(GTK_BOX (box), frame, FALSE, FALSE, 0);
+
+vbox = gtk_vbox_new(TRUE, 1);
+gtk_container_add(GTK_CONTAINER(frame), vbox);
+gtk_container_set_border_width(GTK_CONTAINER (vbox), PANEL_SPACING);
+gui_button_x("Move selection up", region_move, (gpointer) UP, vbox);
+gui_button_x("Move selection down", region_move, (gpointer) DOWN, vbox);
+gui_button_x("Add selected atoms to region 1", region_change, GINT_TO_POINTER(REGION1A), vbox);
+gui_button_x("Add selected atoms to region 2", region_change, GINT_TO_POINTER(REGION2A), vbox);
+gui_button_x("Add selected atoms to region 3", region_change, GINT_TO_POINTER(REGION1B), vbox);
+gui_button_x("Add selected atoms to region 4", region_change, GINT_TO_POINTER(REGION2B), vbox);
+gui_button_x("Add selected atoms to growth slice", region_growth_slice, (gpointer) GROWTH_ADD, vbox);
+gui_button_x("Remove selected atoms from growth slice", region_growth_slice, (gpointer) GROWTH_DEL, vbox);
+
+/* if (model->periodic == 0 || model->periodic == 2)
+  gtk_widget_set_sensitive(GTK_WIDGET(model->edit_regions_frame), TRUE);
+else
+  gtk_widget_set_sensitive(GTK_WIDGET(model->edit_regions_frame), FALSE);
+*/
+gtk_widget_show_all(box);
+
+}
+
 /*******************************/
 /* core labelling manipulation */
 /*******************************/
@@ -2228,12 +2433,15 @@ void labelling_page(GtkWidget *box, gpointer dialog)
 {
 GtkWidget *w, *vbox, *hbox;
 
-/* Surface options */
-vbox = gui_frame_vbox("Regions", FALSE, FALSE, box);
+/* struct model_pak *model; */
 
-gui_button_x("Move selection up", region_move, (gpointer) UP, vbox);
-gui_button_x("Move selection down", region_move, (gpointer) DOWN, vbox);
-
+/* TODO - allow render dialog even when no models, but dont draw */
+/* or make insensitive model specific buttons */
+/* model = sysenv.active_model; */
+/* FIXME - dont draw anything if no models are loaded (needs a better/dynamic fix) */
+/* if (!model)
+  return;
+*/
 #define FF_TYPING 1
 #if FF_TYPING
 {
@@ -2407,6 +2615,12 @@ trans_page(page);
 
 /* add page */
 page = gtk_vbox_new(FALSE,0);
+label = gtk_label_new("Regions");
+gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, label);
+regions_page(page, dialog);
+
+/* add page */
+page = gtk_vbox_new(FALSE,0);
 label = gtk_label_new("Labelling");
 gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, label);
 labelling_page(page, dialog);
@@ -2501,7 +2715,7 @@ switch (type)
     if (n)
       {
       get_elem_data(n, &edata, model);
-/* make sure we alow enough space for the string and the \0 */
+/* make sure we allow enough space for the string and the \0 */
 //    n = (LABEL_SIZE-1 > strlen(text)) ? strlen(text) : LABEL_SIZE-1; /* FIX e1c506 */
       for (list=model->selection ; list ; list=g_slist_next(list))
         {
@@ -2515,17 +2729,7 @@ switch (type)
           g_free(shell->shell_label);
           shell->shell_label = g_strdup(text);
           }
-/* NEW - don't update element specific data if the element type was not */
-/* changed - ie the user has just made a labelling change (eg C -> C1) */
-        if (edata.number != core->atom_code)
-          {
-          core->atom_code = edata.number;
-          core->bond_cutoff = edata.cova;
-          }
-        init_atom_colour(core, model);
-        init_atom_charge(core, model);
-        init_atom_mass(core, model);
-        }
+        } 
 /* model updates */
       g_slist_free(model->unique_atom_list);
       model->unique_atom_list = find_unique(ELEMENT, model);
@@ -2948,7 +3152,7 @@ if (model)
 
         q += atom_charge(core);
         m += atom_mass(core);
-	if (core->has_sof) /* Added by C. Fisher 2016 */
+	if (core->has_sof)
           s += core->sof;
         else
           s += 1.0;

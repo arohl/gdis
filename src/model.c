@@ -1324,24 +1324,24 @@ calc_emp(model);
 if( model->periodic == 3 )
   {
   density = model_density(model);
-  text = g_strdup_printf("%6.3f g/cm3", density);
-  property_add_ranked(1, "Density", text, model);
+  text = g_strdup_printf("%6.3f", density);
+  property_add_ranked(1, "Density (g/cm3)", text, model);
   g_free(text);
   }
 else
-  property_add_ranked(0, "Density", "dummy", model);
+  property_add_ranked(0, "Density (g/cm3)", "dummy", model);
 
 if( model->periodic == 2 )
   {
-  text = g_strdup_printf("%6.3f D", fabs(model->gulp.sdipole)<1e-3?0.0:model->gulp.sdipole);
-  property_add_ranked(1, "Dipole (z)", text, model);
+  text = g_strdup_printf("%6.3f", fabs(model->gulp.sdipole)<1e-3?0.0:model->gulp.sdipole);
+  property_add_ranked(1, "Dipole (D)", text, model);
   g_free(text);
   }
 else
-  property_add_ranked(0, "Dipole (z)", "dummy", model);
+  property_add_ranked(0, "Dipole (D)", "dummy", model);
 
-text = g_strdup_printf("%6.3f e", fabs(model->gulp.qsum)<1e-3?0.0:model->gulp.qsum);
-property_add_ranked(1, "Total charge", text, model);
+text = g_strdup_printf("%6.3f", fabs(model->gulp.qsum)<1e-3?0.0:model->gulp.qsum);
+property_add_ranked(1, "Total charge (e)", text, model);
 g_free(text);
 
 text = g_strdup_printf("%d", g_slist_length(model->moles));
