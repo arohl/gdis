@@ -1979,7 +1979,7 @@ if (data->show_cell_lengths)
   for (i=0 ; i<data->periodic ; i++)
     {
     j += pow(-1, i) * (i+1);
-    text = g_strdup_printf("%5.2f", data->pbc[i]);
+    text = g_strdup_printf("%5.2f \u212B", data->pbc[i]);
     ARR3SET(v1, data->cell[0].rx);
     ARR3ADD(v1, data->cell[j].rx);
     VEC3MUL(v1, 0.5);
