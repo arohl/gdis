@@ -884,7 +884,7 @@ gtk_entry_set_editable(GTK_ENTRY(phonon_raman), FALSE);
 gtk_table_attach_defaults(GTK_TABLE(table), phonon_raman, 2, 3, 1, 2);
 
 
-gui_direct_check("Display Eigenvectors", &data->show_eigenvectors, 
+gui_direct_check("Display eigenvectors", &data->show_eigenvectors, 
                  phonon_mode_toggle, data, vbox);
 
 gui_direct_spin("Eigenvector scaling", &sysenv.render.phonon_scaling,
@@ -1259,7 +1259,7 @@ dialog_child_set(dialog, "cosmo_segments", segments);
 new_check_button("Output SAS points ", gulp_cosmo_sas_toggle, model,
                          model->gulp.cosmo_sas, vbox2);
 
-gui_button_x("Visualize SAS points ", gulp_cosmic_display, model, vbox2);
+gui_button_x("Visualise SAS points ", gulp_cosmic_display, model, vbox2);
 
 
 
@@ -1393,7 +1393,7 @@ if (model->gulp.coulomb == MOLMEC)
 
 /* subsequent button... */
 button = gtk_radio_button_new_with_label(gtk_radio_button_group
-       (GTK_RADIO_BUTTON (button)), "Build, but retain coulomb interactions");
+       (GTK_RADIO_BUTTON (button)), "Build but retain coulomb interactions");
 gtk_box_pack_start(GTK_BOX (vbox), button, TRUE, TRUE, 0);
 g_signal_connect(GTK_OBJECT (button), "clicked",
                  GTK_SIGNAL_FUNC (cb_gulp_keyword), (gpointer) button);
@@ -1469,7 +1469,7 @@ if (model->gulp.ensemble == NPT)
 /* dynamics sampling */
 gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), FALSE, FALSE, 0);
 
-gui_text_entry("Timestep", &model->gulp.timestep, TRUE, FALSE, vbox);
+gui_text_entry("Time step (fs)", &model->gulp.timestep, TRUE, FALSE, vbox);
 gui_text_entry("Equilibration  ", &model->gulp.equilibration, TRUE, FALSE, vbox);
 gui_text_entry("Production", &model->gulp.production, TRUE, FALSE, vbox);
 gui_text_entry("Sample", &model->gulp.sample, TRUE, FALSE, vbox);
@@ -1483,10 +1483,10 @@ vbox = gtk_vbox_new(TRUE, 0);
 gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 gui_direct_check("Create input file then stop", &model->gulp.no_exec, NULL, NULL, vbox);
-gui_direct_check("Build cell, then discard symmetry", &model->gulp.nosym, NULL, NULL, vbox);
+gui_direct_check("Build cell then discard symmetry", &model->gulp.nosym, NULL, NULL, vbox);
 
 gui_direct_check("No attachment energy calculation", &model->gulp.no_eatt, NULL, NULL, vbox);
-gui_direct_check("QEq Electronegativity equalisation", &model->gulp.qeq, NULL, NULL, vbox);
+gui_direct_check("QEq electronegativity equalisation", &model->gulp.qeq, NULL, NULL, vbox);
 
 
 /* NEW - text box for GULP control files */

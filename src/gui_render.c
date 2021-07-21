@@ -1820,9 +1820,12 @@ gui_direct_check("Right eye active ", &sysenv.render.stereo_right,
 void render_misc_section(GtkWidget *box)
 {
 GtkWidget *vbox1, *vbox2, *vbox, *hbox;
+GtkWidget *frame;
+//more sensitive boxes
+GtkWidget *region_render_sensitive_box;
 struct model_pak *model;
 
-/* TODO - allow render dialog even when no models, but dont draw */
+/* TODO - allow render dialog even when no models, but don't draw */
 /* or make insensitive model specific buttons */
 model = sysenv.active_model;
 /* FIXME - dont draw anything if no models are loaded (needs a better/dynamic fix) */
@@ -1877,6 +1880,28 @@ gui_direct_check("Show energy", &sysenv.render.show_energy, render_refresh, NULL
 
 gui_auto_check("Show spatial text ", morph_toggle, NULL, &model->morph_label, vbox);
 gui_auto_check("Show camera waypoints ", morph_toggle, NULL, &model->show_waypoints, vbox);
+
+/* Region options for surfaces */
+frame = gtk_frame_new("Regions");
+gtk_box_pack_start(GTK_BOX(vbox2), frame, FALSE, FALSE, 0);
+region_render_sensitive_box = gtk_vbox_new(TRUE, PANEL_SPACING);
+model->custom_regions_frame = region_render_sensitive_box;
+
+gtk_container_add(GTK_CONTAINER(frame), region_render_sensitive_box);
+
+gtk_container_set_border_width(GTK_CONTAINER(region_render_sensitive_box), PANEL_SPACING);
+
+/* gui_auto_check("Show growth slice only", render_refresh, NULL, &model->show_growth_slice, region_render_sensitive_box); */
+
+gui_auto_check("Show region 1", render_refresh, NULL, &model->show_region1A, region_render_sensitive_box);
+
+gui_auto_check("Show region 2", render_refresh, NULL, &model->show_region2A, region_render_sensitive_box);
+
+gui_auto_check("Show region 3", render_refresh, NULL, &model->show_region1B, region_render_sensitive_box);
+
+gui_auto_check("Show region 4", render_refresh, NULL, &model->show_region2B, region_render_sensitive_box);
+
+gtk_widget_set_sensitive(GTK_WIDGET(model->custom_regions_frame), TRUE);
 }
 
 /***************************/

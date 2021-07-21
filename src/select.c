@@ -30,6 +30,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "matrix.h"
 #include "quaternion.h"
 #include "measure.h"
+#include "model.h"
 #include "spatial.h"
 #include "opengl.h"
 #include "render.h"
@@ -334,6 +335,7 @@ data->selection = NULL;
 sysenv.select_source = NULL;
 
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /******************/
@@ -375,6 +377,7 @@ data->selection = NULL;
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /***************************/
@@ -408,6 +411,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /********************/
@@ -431,8 +435,14 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   core = list->data;
   if (core->status & (DELETED | HIDDEN))
      continue;
+  if ((!data->show_region1A && core->region == REGION1A) ||
+      (!data->show_region1B && core->region == REGION1B) ||
+      (!data->show_region2A && core->region == REGION2A) ||
+      (!data->show_region2B && core->region == REGION2B))
+     continue;
   data->selection = g_slist_append(data->selection, core);
   }
+
 
 /* update the highlighting */
 for (list=data->selection ; list ; list=g_slist_next(list))
@@ -461,13 +471,25 @@ if (!data)
 /* copy the core list */
 new = g_slist_copy(data->cores);
 
-/* remove the old selection */
-for (list=data->selection ; list ; list=g_slist_next(list))
+for (list=data->cores ; list ; list=g_slist_next(list))
   {
   core = list->data;
 
-  core->status &= ~SELECT;
-  new = g_slist_remove(new, core);
+/* Don't select hidden atoms */
+  if (core->status & HIDDEN)
+    new = g_slist_remove(new, core);
+
+/* remove the old selection */
+  if (g_slist_find(data->selection, core))
+    {
+    core->status &= ~SELECT;
+    new = g_slist_remove(new, core);
+    }
+  if ((!data->show_region1A && core->region == REGION1A) ||
+      (!data->show_region1B && core->region == REGION1B) ||
+      (!data->show_region2A && core->region == REGION2A) ||
+      (!data->show_region2B && core->region == REGION2B))
+    new = g_slist_remove(new, core);
   }
 
 /* assign the new selection */
@@ -499,10 +521,17 @@ if (g_slist_find(data->selection, core))
 if (core->status & HIDDEN)
   return(0);
 
+/* Checks for MARVIN regions */
+if ((!data->show_region1A && core->region == REGION1A) ||
+    (!data->show_region1B && core->region == REGION1B) ||
+    (!data->show_region2A && core->region == REGION2A) ||
+    (!data->show_region2B && core->region == REGION2B))
+   return(0);
+
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
 
-gui_refresh(GUI_MODEL_PROPERTIES);
+model_content_refresh(data);
 return(0);
 }
 
@@ -1588,6 +1617,7 @@ backbone = 0;
 /* recalc coords (ie the ribbon coords) & draw */
 coords_init(REDO_COORDS, data);
 redraw_canvas(SINGLE);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /******************************************************/

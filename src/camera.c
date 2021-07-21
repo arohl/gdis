@@ -75,6 +75,27 @@ model->camera = model->camera_default;
 camera_default(model->rmax, model->camera);
 }
 
+/**********************************/
+/* restore to default orientation */
+/**********************************/
+void camera_reset(struct model_pak *model)
+{
+struct camera_pak *camera;
+
+g_assert(model != NULL);
+
+if (!model->camera_default)
+  model->camera_default = g_malloc(sizeof(struct camera_pak));
+
+camera = model->camera;
+
+VEC4SET(camera->q, 1.0, 0.0, 0.0, 0.0);
+VEC3SET(camera->x, 0.0, -2.0*model->rmax, 0.0);
+VEC3SET(camera->o, 0.0, 0.0, 1.0);
+VEC3SET(camera->v, 0.0, 1.0, 0.0);
+VEC3SET(camera->e, 1.0, 0.0, 0.0);
+}
+
 /*************/
 /* debugging */
 /*************/
