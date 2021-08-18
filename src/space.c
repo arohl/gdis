@@ -36,6 +36,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "zone.h"
 #include "dialog.h"
 #include "interface.h"
+#include "parse.h"
 
 /**********/
 /* sginfo */
@@ -174,7 +175,7 @@ for (s=1 ; s>smin ; s-=2)
 /* NB: include j=0 in case of inversion centre ie (-x,-y,-z) */
   for (j=(s+1)/2 ; j<model->sginfo.order ; j++)
     {
-/* loop over asymetric cores */
+/* loop over asymmetric cores */
     for (list=model->cores ; list ; list=g_slist_next(list))
       {
       core = list->data;
@@ -192,6 +193,8 @@ for (s=1 ; s>smin ; s-=2)
       sr_core->x[1] += *(*(model->sginfo.offset+j)+1);
       sr_core->x[2] += *(*(model->sginfo.offset+j)+2);
 
+    //  parse_decimal_fraction(sr_core->x);
+
 /* add a symmetry related shell */
       if (sr_core->shell)
         {
@@ -204,6 +207,8 @@ for (s=1 ; s>smin ; s-=2)
         sr_shell->x[0] += *(*(model->sginfo.offset+j)+0);
         sr_shell->x[1] += *(*(model->sginfo.offset+j)+1);
         sr_shell->x[2] += *(*(model->sginfo.offset+j)+2);
+
+    //  parse_decimal_fraction(sr_shell->x);
         }
       }
     }
@@ -233,6 +238,7 @@ space->spacenum=0;
 space->lattice=0;
 space->pointgroup=0;
 space->cellchoice=0;
+space->originchoice=0;
 space->inversion=FALSE;
 space->order=0;
 space->spacename=NULL;
@@ -294,6 +300,54 @@ printf("Treating as hexagonal.\n");
 return(FALSE);
 }
 
+#define DEBUG_CELLCHOICE 0
+gint find_cellchoice(T_SgInfo SgInfo)
+{
+gint n=0;
+const T_TabSgName  *tsgn;
+
+if (SgInfo.TabSgName->Extension)
+  for (tsgn = SgInfo.TabSgName; tsgn->HallSymbol; tsgn++)
+    {
+    if (SgInfo.TabSgName->SgNumber == tsgn->SgNumber)
+      {
+      n++;
+
+      if (!g_ascii_strcasecmp(SgInfo.TabSgName->HallSymbol, tsgn->HallSymbol))
+        {
+#if DEBUG_CELLCHOICE
+printf("Cell choice: %d (%s:%s)\n", n, tsgn->SgLabels, SgInfo.TabSgName->Extension);
+#endif
+        break;
+        }
+      }
+    }
+return n;
+}
+
+#define DEBUG_ORIGINCHOICE 0
+gint find_originchoice(T_SgInfo SgInfo)
+{
+gint n=0;
+gchar *ext;
+const T_TabSgName  *tsgn = SgInfo.TabSgName;
+
+ext = g_strndup(tsgn->Extension,1);
+
+n = g_ascii_digit_value(ext[0]);
+if (n == -1)
+  n = 0;
+
+#if DEBUG_ORIGINCHOICE
+printf("Origin choice: %d (%s:%s)\n", n, tsgn->SgLabels, tsgn->Extension);
+#endif
+
+if (n >= 0 && n < 3)
+  return n;
+else
+  return -1; /* Incorrect space group extension */ /* Not really necessary? */
+}
+
 /**************************/
 /* do space group loopkup */
 /**************************/
@@ -326,30 +380,55 @@ if (!data->sginfo.lookup)
 /* cell choice (TODO - neaten this ugly code) */
 name = g_string_new(NULL);
 if (data->sginfo.spacename)
-  g_string_printf(name, "%s", g_strstrip(data->sginfo.spacename));//g_string_sprintf deprecated
+  g_string_printf(name, "%s", g_strstrip(data->sginfo.spacename));
 else
   {
   if (data->sginfo.spacenum > 0)
-    g_string_printf(name, "%d", data->sginfo.spacenum);//g_string_sprintf deprecated
+    g_string_printf(name, "%d", data->sginfo.spacenum);
   else
-    g_string_printf(name, "P 1");////g_string_sprintf deprecated
+    g_string_printf(name, "P 1");
   }
 
+
 /* cell choice */
-if (data->sginfo.cellchoice)
-  g_string_append_printf(name, ":%d", data->sginfo.cellchoice);//g_string_sprintfa deprecated
+if (data->sginfo.originchoice)
+  {
+  if ( !g_strrstr(name->str, ":"))
+    {
+    if ( g_strrstr(name->str, "R") || data->sginfo.spacenum == 146
+                                   || data->sginfo.spacenum == 148
+                                   || data->sginfo.spacenum == 155
+                                   || data->sginfo.spacenum == 160
+                                   || data->sginfo.spacenum == 161
+                                   || data->sginfo.spacenum == 166
+                                   || data->sginfo.spacenum == 167)
+      {
+      if (data->sginfo.originchoice == 2)
+        g_string_append_printf(name, ":R");
+      else
+        g_string_append_printf(name, ":H");
+      }
+    else if (data->sginfo.originchoice)
+      g_string_append_printf(name, ":%d", data->sginfo.originchoice);
+    }
+  }
 
 /* if trigonal lattice, determine if cell is in hex or rhombo format */
-if (g_strrstr(name->str, "R") || data->sginfo.spacenum == 146
-                              || data->sginfo.spacenum == 148
-                              || data->sginfo.spacenum == 155
-                              || data->sginfo.spacenum == 160
-                              || data->sginfo.spacenum == 161
-                              || data->sginfo.spacenum == 166
-                              || data->sginfo.spacenum == 167)
+if ( !g_strrstr(name->str, ":"))
   {
-  if (space_primitive_cell(data))
-    g_string_append_printf(name, ":R");//g_string_sprintfa deprecated
+  if (g_strrstr(name->str, "R") || data->sginfo.spacenum == 146
+                                || data->sginfo.spacenum == 148
+                                || data->sginfo.spacenum == 155
+                                || data->sginfo.spacenum == 160
+                                || data->sginfo.spacenum == 161
+                                || data->sginfo.spacenum == 166
+                                || data->sginfo.spacenum == 167)
+    {
+    if (space_primitive_cell(data))
+      g_string_append_printf(name, ":R");
+    }
+  else if (data->sginfo.originchoice)
+    g_string_append_printf(name, ":%d", data->sginfo.originchoice);
   }
 
 #if DEBUG_GEN_POS
@@ -362,13 +441,29 @@ if (BuildSgInfo(&SgInfo, name->str) != 0)
 /* CURRENT - if order > 0 -> fill the cell */
   if (data->sginfo.order)
     {
-    gui_text_show(WARNING, "No spacegroup: using explicit matrices.\n");
+    gui_text_show(WARNING, "No space group: using explicit matrices.\n");
     space_fill_cell(data);
     return(0);
     }
   return(2);
   }
 g_string_free(name, TRUE);
+
+/* process returned space group name */
+if( g_strrstr(g_strdup(SgInfo.TabSgName->SgLabels), "= ") == NULL )
+  label = g_strdup(SgInfo.TabSgName->SgLabels);
+else
+  label = g_strdup(g_strrstr(g_strdup(SgInfo.TabSgName->SgLabels), "= "));
+
+parse_char_replace(label, '=', ' ');
+parse_char_replace(label, '_', ' ');
+
+if (label)
+  {
+  g_free(data->sginfo.spacename);
+  data->sginfo.spacename = g_strdup_printf("%s",g_strstrip(label));
+  g_free(label);
+  }
 
 /* process returned space group name */
 label = g_strdup(SgInfo.TabSgName->SgLabels);
@@ -396,13 +491,12 @@ g_free(label);
 /* fill in number (if an invalid value was supplied) */
 if (data->sginfo.spacenum < 1)
   data->sginfo.spacenum = SgInfo.TabSgName->SgNumber;
+else
+  if (data->sginfo.spacenum != SgInfo.TabSgName->SgNumber)
+    gui_text_show(WARNING, "Inconsistent space group name and number.\n");
 
 /* crystal lattice type */
 data->sginfo.lattice = SgInfo.XtalSystem;
-
-if (data->sginfo.latticename)
-  g_free(data->sginfo.latticename);
-
 switch (SgInfo.XtalSystem)
   {
   case XS_CUBIC:
@@ -435,12 +529,29 @@ data->sginfo.pointgroup = SgInfo.PointGroup;
 data->sginfo.inversion = SgInfo.Centric;
 data->sginfo.centering = SgInfo.LatticeInfo->Code;
 
+/* Cell choice is actually origin choice */
+data->sginfo.originchoice = find_originchoice(SgInfo);
+if (data->sginfo.originchoice < 0 ||
+    data->sginfo.originchoice > 2)
+   printf("Unknown origin choice in space_lookup()\n");
+
+if (!(data->sginfo.cellchoice = find_cellchoice(SgInfo)) )
+   printf("Unknown cell choice in space_lookup()\n");
+
+if (SgInfo.InversionOffOrigin == 1 && data->sginfo.originchoice == 0)
+  data->sginfo.originchoice++;
+
 #if DEBUG_GEN_POS
 printf("   Space group name: %s\n", data->sginfo.spacename);
 printf("        Point group: %d\n", data->sginfo.pointgroup);
 printf(" Space group number: %d\n", data->sginfo.spacenum);
 printf("       Lattice type: %c\n", data->sginfo.centering);
 printf("              Order: %d\n", SgInfo.OrderL);
+rintf("          Genoption: %d\n", SgInfo.GenOption);
+printf("            Centric: %d\n", SgInfo.Centric);
+printf("       InvOffOrigin: %d\n", SgInfo.InversionOffOrigin);
+printf("      Origin choice: %d\n", data->sginfo.originchoice);
+printf("        Cell choice: %d\n", data->sginfo.cellchoice);
 printf("   Inversion center: ");
 if (data->sginfo.inversion == -1)
   printf("yes\n");
@@ -452,67 +563,67 @@ else
 if (!data->sginfo.order)
   {
 /* allocate for order number of pointers (to matrices) */
-data->sginfo.order = SgInfo.OrderL;
-data->sginfo.matrix = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
-data->sginfo.offset = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
+  data->sginfo.order = SgInfo.OrderL;
+  data->sginfo.matrix = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
+  data->sginfo.offset = (gdouble **) g_malloc(SgInfo.OrderL*sizeof(gdouble *));
 
 #ifdef UNUSED_BUT_SET
 iMatrix = 0;
 #endif
 
-nLoopInv = Sg_nLoopInv(&SgInfo);
+  nLoopInv = Sg_nLoopInv(&SgInfo);
 
-nTrV = SgInfo.LatticeInfo->nTrVector;
- TrV = SgInfo.LatticeInfo->TrVector;
+  nTrV = SgInfo.LatticeInfo->nTrVector;
+  TrV = SgInfo.LatticeInfo->TrVector;
 
 /* matrix counter */
-m=0;
-for (iTrV = 0; iTrV < nTrV; iTrV++, TrV += 3)
-  {
-  for (iLoopInv = 0; iLoopInv < nLoopInv; iLoopInv++)
+  m=0;
+  for (iTrV = 0; iTrV < nTrV; iTrV++, TrV += 3)
     {
-    if (iLoopInv == 0)
-      f =  1;
-    else
-      f = -1;
+    for (iLoopInv = 0; iLoopInv < nLoopInv; iLoopInv++)
+      {
+      if (iLoopInv == 0)
+        f =  1;
+      else
+        f = -1;
 
-    lsmx = SgInfo.ListSeitzMx;
+      lsmx = SgInfo.ListSeitzMx;
 
 /* loop over all matrices (order of the group) */
-    for (iList = 0; iList < SgInfo.nList; iList++, lsmx++)
-      {
-      for (i = 0; i < 9; i++)
-        SMx.s.R[i] = f * lsmx->s.R[i];
-      for (i = 0; i < 3; i++)
-        SMx.s.T[i] = iModPositive(f * lsmx->s.T[i] + TrV[i], STBF);
-
-      r = SMx.s.R;
-      t = SMx.s.T;
-
-      *(data->sginfo.matrix+m) = (gdouble *) g_malloc(9*sizeof(gdouble));
-      *(data->sginfo.offset+m) = (gdouble *) g_malloc(3*sizeof(gdouble));
-
-      for (i = 0; i < 3; i++, t++)
+      for (iList = 0; iList < SgInfo.nList; iList++, lsmx++)
         {
-        for (j = 0; j < 3; j++, r++)
+        for (i = 0; i < 9; i++)
+          SMx.s.R[i] = f * lsmx->s.R[i];
+        for (i = 0; i < 3; i++)
+          SMx.s.T[i] = iModPositive(f * lsmx->s.T[i] + TrV[i], STBF);
+
+        r = SMx.s.R;
+        t = SMx.s.T;
+
+        *(data->sginfo.matrix+m) = (gdouble *) g_malloc(9*sizeof(gdouble));
+        *(data->sginfo.offset+m) = (gdouble *) g_malloc(3*sizeof(gdouble));
+
+        for (i = 0; i < 3; i++, t++)
           {
+          for (j = 0; j < 3; j++, r++)
+            {
 /* mth general position */
-          *(*(data->sginfo.matrix+m)+3*i+j) = (gdouble) *r;
-          }
-        nt = iModPositive(*t, STBF);
-        if (nt >  STBF / 2)
-          nt -= STBF;
+            *(*(data->sginfo.matrix+m)+3*i+j) = (gdouble) *r;
+            }
+          nt = iModPositive(*t, STBF);
+          if (nt >  STBF / 2)
+            nt -= STBF;
 /* offset matrix (3x1) */
-        *(*(data->sginfo.offset+m)+i) = (gdouble) nt / (gdouble) STBF;
+          *(*(data->sginfo.offset+m)+i) = (gdouble) nt / (gdouble) STBF;
+          }
+        m++;
         }
-      m++;
       }
     }
-  }
 
 /* number of matrices matches the order? */
-  if (m != data->sginfo.order)
-    printf("Serious error in space_lookup()\n");
+    if (m != data->sginfo.order)
+      printf("Serious error in space_lookup()\n");
   }
 else
   {
@@ -718,7 +829,7 @@ g_assert(model != NULL);
 
 #if DEBUG_UPDATE_IMAGES
 printf("---------------------------\n");
-printf("model : %d\n", model->number);
+printf("model : %s\n", model->basename);
 printf("a : %f - %f\n", model->image_limit[0], model->image_limit[1]);
 printf("b : %f - %f\n", model->image_limit[2], model->image_limit[3]);
 printf("c : %f - %f\n", model->image_limit[4], model->image_limit[5]);

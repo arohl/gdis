@@ -50,6 +50,75 @@ The GNU GPL can also be found at http://www.gnu.org
 /* main structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
+//extern struct gdouble fractions[][3];
+
+gdouble fractions[][3] = {{0.1667, 1.0, 6.0},
+                     {0.3333, 1.0, 3.0},
+                     {0.6667, 2.0, 3.0},
+        {0.8333, 5.0, 6.0},
+        {0.0833, 1.0, 12.0},
+        {0.4167, 5.0, 12.0},
+        {0.5883, 7.0, 12.0},
+        {0.9167, 11.0, 12.0},
+        {0.1111, 1.0, 9.0},
+        {0.2222, 2.0, 9.0},
+        {0.4444, 4.0, 9.0},
+        {0.5555, 5.0, 9.0},
+        {0.7777, 7.0, 9.0},
+        {0.8888, 8.0, 9.0},
+        {0.0909, 1.0, 11.0},
+        {0.1818, 2.0, 11.0},
+        {0.2727, 3.0, 11.0},
+        {0.3636, 4.0, 11.0},
+        {0.4545, 5.0, 11.0},
+        {0.5454, 6.0, 11.0},
+        {0.6363, 7.0, 11.0},
+        {0.7272, 8.0, 11.0},
+        {0.8181, 9.0, 11.0},
+        {0.9090, 10.0, 11.0}};
+
+/************************************************************/
+/* round truncated decimals to nearest whole fraction       */
+/************************************************************/
+#define FRAC_PREC 1e-4
+void parse_decimal_fract(gdouble *x)
+{
+gint i, n;
+gint max = sizeof(fractions)/(3*sizeof(gdouble));
+
+printf("%d \n", max);
+for (n = 0; n < max; n++)
+  for (i=3; i--;)
+    {
+    if ( fabs(fabs(x[i]) - fractions[n][0]) <= FRAC_PREC )
+      x[i] = (fractions[n][1]/fractions[n][2])*(x[i]<0.0?-1.0:1.0);
+    }
+}
+/*************************************************************/
+/* replace all instances of character a with character b     */
+/* NEW: more general form of parse_space_replace             */
+/*************************************************************/
+void parse_char_replace(gchar *text, gchar a, gchar b)
+{
+gchar *t = text;
+
+do
+  {
+  switch (*t)
+    {
+/* exceptions */
+    case EOF:
+      return;
+    case '\r':
+    case '\n':
+      break;
+
+    default:
+      if (*t == a)
+        *t = b;
+    }
+  } while (*t++);
+}
 
 /***********************/
 /* strip off extension */
