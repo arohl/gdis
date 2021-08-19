@@ -651,6 +651,8 @@ coords_init_units(data);
 /* convert input cartesian coords to fractional */
 if (!data->fractional)
   coords_make_fractional(data);
+else
+  check_fractional(data);
 
 /* initialize the spatial partitioning */
 zone_init(data);
@@ -676,7 +678,7 @@ data->region_max = region_max(data);
 if (data->periodic == 3)
   {
   if (!data->sginfo.spacenum)
-    data->sginfo.spacenum=1;
+    data->sginfo.spacenum = 1;
   if (space_lookup(data))
     gui_text_show(ERROR, "Error in Space Group lookup.\n");
 
@@ -723,16 +725,16 @@ if (data->gulp.ensemble == NPT)
   switch (data->periodic)
     {
     case 3:
-      n=6;
+      n = 6;
       break;
     case 2:
-      n=3;
+      n = 3;
       break;
     case 1:
-      n=1;
+      n = 1;
       break;
     default:
-      n=0;
+      n = 0;
     }
 
 /* cell vectors */

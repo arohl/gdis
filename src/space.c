@@ -193,8 +193,6 @@ for (s=1 ; s>smin ; s-=2)
       sr_core->x[1] += *(*(model->sginfo.offset+j)+1);
       sr_core->x[2] += *(*(model->sginfo.offset+j)+2);
 
-    //  parse_decimal_fraction(sr_core->x);
-
 /* add a symmetry related shell */
       if (sr_core->shell)
         {
@@ -207,8 +205,6 @@ for (s=1 ; s>smin ; s-=2)
         sr_shell->x[0] += *(*(model->sginfo.offset+j)+0);
         sr_shell->x[1] += *(*(model->sginfo.offset+j)+1);
         sr_shell->x[2] += *(*(model->sginfo.offset+j)+2);
-
-    //  parse_decimal_fraction(sr_shell->x);
         }
       }
     }

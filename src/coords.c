@@ -41,6 +41,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "render.h"
 #include "select.h"
 #include "zone.h"
+#include "parse.h"
 
 /* data structures */
 extern struct sysenv_pak sysenv;
@@ -182,6 +183,29 @@ for (list=model->shels ; list ; list=g_slist_next(list))
 matrix_identity(model->latmat);
 matrix_identity(model->ilatmat);
 matrix_identity(model->rlatmat);
+}
+
+/********************************/
+/* check for recurring decimals */
+/********************************/
+void check_fractional(struct model_pak *model)
+{
+GSList *list;
+struct core_pak *core;
+struct shel_pak *shel;
+
+g_assert(model != NULL);
+
+for (list=model->cores ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  parse_decimal_fraction(core->x);
+  }
+for (list=model->shels ; list ; list=g_slist_next(list))
+  {
+  shel = list->data;
+  parse_decimal_fraction(shel->x);
+  }
 }
 
 /******************************************/

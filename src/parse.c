@@ -43,55 +43,39 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #include "gdis.h"
 #include "file.h"
-#include "parse.h"
+//#include "parse.h"
 #include "keywords.h"
 #include "interface.h"
 
 /* main structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
-//extern struct gdouble fractions[][3];
 
-gdouble fractions[][3] = {{0.1667, 1.0, 6.0},
-                     {0.3333, 1.0, 3.0},
-                     {0.6667, 2.0, 3.0},
-        {0.8333, 5.0, 6.0},
-        {0.0833, 1.0, 12.0},
-        {0.4167, 5.0, 12.0},
-        {0.5883, 7.0, 12.0},
-        {0.9167, 11.0, 12.0},
-        {0.1111, 1.0, 9.0},
-        {0.2222, 2.0, 9.0},
-        {0.4444, 4.0, 9.0},
-        {0.5555, 5.0, 9.0},
-        {0.7777, 7.0, 9.0},
-        {0.8888, 8.0, 9.0},
-        {0.0909, 1.0, 11.0},
-        {0.1818, 2.0, 11.0},
-        {0.2727, 3.0, 11.0},
-        {0.3636, 4.0, 11.0},
-        {0.4545, 5.0, 11.0},
-        {0.5454, 6.0, 11.0},
-        {0.6363, 7.0, 11.0},
-        {0.7272, 8.0, 11.0},
-        {0.8181, 9.0, 11.0},
-        {0.9090, 10.0, 11.0}};
-
-/************************************************************/
-/* round truncated decimals to nearest whole fraction       */
-/************************************************************/
+/*******************************************************************/
+/* extend truncated recurring decimals to avoid precision problems */
+/*******************************************************************/
 #define FRAC_PREC 1e-4
-void parse_decimal_fract(gdouble *x)
+void parse_decimal_fraction(gdouble *x)
 {
 gint i, n;
+gdouble frac;
+/* common fractions with repeating decimals as numerator, denominator */
+gdouble fractions[][3] = {{1.0, 3.0}, {2.0, 3.0}, {1.0, 6.0},
+                          {5.0, 6.0}, {1.0, 12.0}, {5.0, 12.0},
+                          {7.0, 12.0}, {11.0, 12.0}, {1.0, 9.0},
+                          {2.0, 9.0}, {4.0, 9.0}, {5.0, 9.0},
+                          {7.0, 9.0}, {8.0, 9.0}, {1.0, 11.0},
+                          {2.0, 11.0}, {3.0, 11.0}, {4.0, 11.0},
+                          {5.0, 11.0}, {6.0, 11.0}, {7.0, 11.0},
+                          {8.0, 11.0}, {9.0, 11.0}, {10.0, 11.0}};
 gint max = sizeof(fractions)/(3*sizeof(gdouble));
 
-printf("%d \n", max);
 for (n = 0; n < max; n++)
-  for (i=3; i--;)
+  for (i = 3; i--;)
     {
-    if ( fabs(fabs(x[i]) - fractions[n][0]) <= FRAC_PREC )
-      x[i] = (fractions[n][1]/fractions[n][2])*(x[i]<0.0?-1.0:1.0);
+    frac = fractions[n][0]/fractions[n][1];
+    if ( fabs(fabs(x[i]) - frac) <= FRAC_PREC )
+      x[i] = frac*(x[i]<0.0?-1.0:1.0);
     }
 }
 /*************************************************************/
@@ -410,6 +394,118 @@ g_free(str);
 return(val);
 }
 
+/*********************/
+/* tokenize a string */
+/*********************/
+/* replacement routine for get_tokens() */
+/* will get as many tokens as available (no more messing with MAX_TOKENS) */
+#define DEBUG_TOKENIZE 0
+gchar **tokenize(const gchar *src, gint *num)
+{
+gint i, j, n, len;
+gchar *tmp, *ptr;
+gchar **dest;
+GSList *list=NULL, *item=NULL;
+
+/* checks */
+if (!src)
+  {
+  *num=0;
+  return(NULL);
+  }
+
+/* duplicate & replace all whitespace with a space */
+tmp = g_strdup(src);
+for (i=0 ; i<strlen(tmp) ; i++)
+  if (isspace((int) *(tmp+i)))
+    *(tmp+i) = ' ';
+
+/* strange errors can be avoided if a strstrip is done */
+g_strstrip(tmp);
+
+#if DEBUG_TOKENIZE
+printf("tokenizing [%s]\n", tmp);
+#endif
+
+len = strlen(tmp);
+i=n=0;
+while(i<len)
+  {
+/* find end of current token */
+  j=i;
+  while(!isspace((int) *(tmp+j)) && j<len)
+    j++;
+
+/* assign token */
+  ptr = g_strndup(tmp+i, j-i);
+
+  list = g_slist_prepend(list, ptr);
+  n++;
+
+/* find start of new token */
+  i=j;
+
+  while(isspace((int) *(tmp+i)) && i<len)
+    i++;
+  }
+list = g_slist_reverse(list);
+
+/* return a NULL if no tokens were found */
+if (!n)
+  {
+  *num = 0;
+  g_free(tmp);
+  free_slist(list);
+  return(NULL);
+  }
+
+/* num+1 -> last ptr is NULL, so g_strfreev works */
+dest = g_malloc((n+1)*sizeof(gchar *));
+
+i=0;
+/* fill in the non empty tokens */
+item = list;
+while (i<n)
+  {
+  if (item != NULL)
+    {
+/* comment character - ignore all subsequent tokens */
+    ptr = item->data;
+    if (*ptr == '#')
+      break;
+
+    *(dest+i) = g_strdup(ptr);
+#if DEBUG_TOKENIZE
+printf(" (%s)", ptr);
+#endif
+    item = g_slist_next(item);
+    }
+  else
+    {
+/* fake item */
+    *(dest+i) = g_strdup(" ");;
+#if DEBUG_TOKENIZE
+printf(" (empty token)");
+#endif
+    }
+  i++;
+  }
+
+/* terminate */
+*(dest+i) = NULL;
+*num = i;
+
+#if DEBUG_TOKENIZE
+printf(" %p",*(dest+i));
+printf(": found %d tokens\n", *num);
+#endif
+
+/* done */
+g_free(tmp);
+free_slist(list);
+
+return(dest);
+}
 /* Return a list of keywords found */
 /* NEW - match all keywords, not just space separated ones */
 #define DEBUG_GET_KEYWORDS_ANYWHERE 0
@@ -583,118 +679,6 @@ while(keywords[j].code != -1)
 return(-1);
 }
 
-/*********************/
-/* tokenize a string */
-/*********************/
-/* replacement routine for get_tokens() */
-/* will get as many tokens as available (no more messing with MAX_TOKENS) */
-#define DEBUG_TOKENIZE 0
-gchar **tokenize(const gchar *src, gint *num)
-{
-gint i, j, n, len;
-gchar *tmp, *ptr;
-gchar **dest;
-GSList *list=NULL, *item=NULL;
-
-/* checks */
-if (!src)
-  {
-  *num=0;
-  return(NULL);
-  }
-
-/* duplicate & replace all whitespace with a space */
-tmp = g_strdup(src);
-for (i=0 ; i<strlen(tmp) ; i++)
-  if (isspace((int) *(tmp+i)))
-    *(tmp+i) = ' ';
-
-/* strange errors can be avoided if a strstrip is done */
-g_strstrip(tmp);
-
-#if DEBUG_TOKENIZE
-printf("tokenizing [%s]\n", tmp);
-#endif
-
-len = strlen(tmp);
-i=n=0;
-while(i<len)
-  {
-/* find end of current token */
-  j=i;
-  while(!isspace((int) *(tmp+j)) && j<len)
-    j++;
-
-/* assign token */
-  ptr = g_strndup(tmp+i, j-i);
-
-  list = g_slist_prepend(list, ptr);
-  n++;
-
-/* find start of new token */
-  i=j;
-
-  while(isspace((int) *(tmp+i)) && i<len)
-    i++;
-  }
-list = g_slist_reverse(list);
-
-/* return a NULL if no tokens were found */
-if (!n)
-  {
-  *num = 0;
-  g_free(tmp);
-  free_slist(list);
-  return(NULL);
-  }
-
-/* num+1 -> last ptr is NULL, so g_strfreev works */
-dest = g_malloc((n+1)*sizeof(gchar *));
-
-i=0;
-/* fill in the non empty tokens */
-item = list;
-while (i<n)
-  {
-  if (item != NULL)
-    {
-/* comment character - ignore all subsequent tokens */
-    ptr = item->data;
-    if (*ptr == '#')
-      break;
-
-    *(dest+i) = g_strdup(ptr);
-#if DEBUG_TOKENIZE
-printf(" (%s)", ptr);
-#endif
-    item = g_slist_next(item);
-    }
-  else
-    {
-/* fake item */
-    *(dest+i) = g_strdup(" ");;
-#if DEBUG_TOKENIZE
-printf(" (empty token)");
-#endif
-    }
-  i++;
-  }
-
-/* terminate */
-*(dest+i) = NULL;
-*num = i;
-
-#if DEBUG_TOKENIZE
-printf(" %p",*(dest+i));
-printf(": found %d tokens\n", *num);
-#endif
-
-/* done */
-g_free(tmp);
-free_slist(list);
-
-return(dest);
-}
 
 /************************************************/
 /* get the next (non-trivial) line and tokenize */

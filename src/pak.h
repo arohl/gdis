@@ -450,6 +450,7 @@ gint spacenum;
 gint lattice;
 gint pointgroup;
 gint cellchoice;
+gint originchoice;
 gint inversion;
 gint order;
 gchar centering;

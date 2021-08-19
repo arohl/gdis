@@ -211,6 +211,7 @@ void coords_make_cartesian(struct model_pak *);
 
 void fractional_clamp(gdouble *, gint *, gint);
 void fractional_min(gdouble *, gint);
+void check_fractional(struct model_pak *);
 
 void core_free(gpointer);
 void free_core_list(struct model_pak *);
