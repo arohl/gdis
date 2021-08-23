@@ -405,6 +405,54 @@ else
 }
 
 /***********************/
+/* set the atom weight */
+/***********************/
+void init_atom_mass(struct core_pak *core, struct model_pak *model)
+{
+struct elem_pak elem_data;
+struct shel_pak *shell;
+
+if (core->lookup_mass)
+  {
+  get_elem_data(core->atom_code, &elem_data, model);
+  core->mass = elem_data.weight;
+  if (core->shell)
+    {
+    shell = core->shell;
+    shell->mass = 0.0;
+    }
+  }
+}
+
+/************************/
+/* set the atom weights */
+/************************/
+void init_model_masses(struct model_pak *model)
+{
+GSList *list;
+
+for (list=model->cores ; list ; list=g_slist_next(list))
+  init_atom_mass(list->data, model);
+}
+
+/*******************************************/
+/* net mass on atom (ie including shell)   */
+/*******************************************/
+gdouble atom_mass(struct core_pak *core)
+{
+gdouble m;
+struct shel_pak *shell;
+
+m = core->mass;
+if (core->shell)
+  {
+  shell = core->shell;
+  m += shell->mass;
+  }
+return(m);
+}
+
+/***********************/
 /* set the atom charge */
 /***********************/
 void init_atom_charge(struct core_pak *core, struct model_pak *model)
@@ -491,7 +539,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   if (core->region != REGION1A)
     continue;
 */
-  if (core->status & DELETED)
+  if (core->status & (DELETED | HIDDEN))
     continue;
 
   ARR3SET(x, core->x);
@@ -503,7 +551,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 /* monopole */
   qsum += core->charge;
 
-/* NB: add shell constribution at the core's z location */
+/* NB: add shell contribution at the core's z location */
   if (core->shell)
     {
     shell = core->shell;

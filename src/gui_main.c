@@ -307,6 +307,7 @@ return(FALSE);
 /************************/
 /* EVENT - mouse scroll */
 /************************/
+#define DEBUG_SCROLL 0
 gint gui_scroll_event(GtkWidget *w, GdkEventScroll *event)
 {
 /* change zoom -- based on "zoom section" of gui_press_event() */
@@ -337,6 +338,9 @@ switch (event->direction)
 }
 scroll *= PIX2SCALE;
 
+#if DEBUG_SCROLL
+printf("Scroll %f\n", scroll);
+#endif
 if (camera->perspective)
   {
   ARR3SET(v, camera->v);
@@ -622,6 +626,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
+model_content_refresh(data);
 }
 
 /****************/
@@ -959,7 +964,7 @@ struct model_pak *model = sysenv.active_model;
 
 if (model)
   {
-  camera_init(model);
+  camera_reset(model);
   camera = model->camera;
   quat_concat_euler(camera->q, YAW, 0.5*G_PI);
   gui_model_select(model);
@@ -976,7 +981,7 @@ struct model_pak *model = sysenv.active_model;
 
 if (model)
   {
-  camera_init(model);
+  camera_reset(model);
   camera = model->camera;
   quat_concat_euler(camera->q, YAW, G_PI);
   gui_model_select(model);
@@ -993,7 +998,7 @@ struct model_pak *model = sysenv.active_model;
 
 if (model)
   {
-  camera_init(model);
+  camera_reset(model);
   camera = model->camera;
   quat_concat_euler(camera->q, PITCH, -0.5*G_PI);
   gui_model_select(model);
@@ -1005,7 +1010,39 @@ if (model)
 /************************/
 void gui_view_a(void)
 {
-gui_view_x();
+gdouble angle, a[3], v[3];
+struct camera_pak *camera;
+struct model_pak *model = sysenv.active_model;
+
+if (model && (model->periodic > 1 || model->id == MORPH))
+  {
+  camera_reset(model);
+  camera = model->camera;
+
+/* a axis vector */
+  VEC3SET(a, -1.0, 0.0, 0.0);
+  vecmat(model->latmat, a);
+
+/* angle */
+  angle = via(camera->v, a, 3);
+
+/* rotation axis */
+  crossprod(v, camera->v, a);
+  normalize(v, 3);
+
+  if ( v[0] < 1e-6 && v[1] < 1e-6 && v[2] < 1e-6)
+    VEC3SET(v, 1.0, 0.0, 0.0);
+
+/* align */
+  if ( fabs(v[0]) < 1e-6 && fabs(v[1]) < 1e-6 && fabs(v[2]) < 1e-6)
+    quat_concat_euler(camera->q, YAW, 0.5*G_PI);
+  else
+    quat_concat(camera->q, v, angle);
+
+  gui_model_select(model);
+  }
+else
+  gui_view_x();
 }
 
 /************************/
@@ -1013,21 +1050,36 @@ gui_view_x();
 /************************/
 void gui_view_b(void)
 {
+gdouble angle, b[3], v[3];
 struct camera_pak *camera;
 struct model_pak *model = sysenv.active_model;
 
-if (model)
+if (model && (model->periodic > 1 || model->id == MORPH))
   {
-  if (model->periodic > 1 || model->id == MORPH)
-    {
-    gui_view_x();
-    camera = model->camera;
-    quat_concat_euler(camera->q, YAW, model->pbc[5]);
-    gui_model_select(model);
-    }
+  camera_reset(model);
+  camera = model->camera;
+
+/* b axis vector */
+  VEC3SET(b, 0.0, -1.0, 0.0);
+  vecmat(model->latmat, b);
+
+/* angle */
+  angle = via(camera->v, b, 3);
+
+/* rotation axis */
+  crossprod(v, camera->v, b);
+  normalize(v, 3);
+
+/* align */
+  if ( fabs(v[0]) < 1e-6 && fabs(v[1]) < 1e-6 && fabs(v[2]) < 1e-6)
+    quat_concat_euler(camera->q, YAW, G_PI);
   else
-    gui_view_y();
+    quat_concat(camera->q, v, angle);
+
+  gui_model_select(model);
   }
+else
+  gui_view_y();
 }
 
 /************************/
@@ -1039,32 +1091,29 @@ gdouble a, c[3], v[3];
 struct camera_pak *camera;
 struct model_pak *model = sysenv.active_model;
 
-if (model)
+if (model && (model->periodic > 2 || model->id == MORPH))
   {
-  if (model->periodic > 2 || model->id == MORPH)
-    {
-    camera_init(model);
-    camera = model->camera;
+  camera_reset(model);
+  camera = model->camera;
 
 /* c axis vector */
-    VEC3SET(c, 0.0, 0.0, -1.0);
-    vecmat(model->latmat, c);
+  VEC3SET(c, 0.0, 0.0, -1.0);
+  vecmat(model->latmat, c);
 
 /* angle */
-    a = via(camera->v,c,3);
+  a = via(camera->v,c,3);
 
 /* rotation axis */
-    crossprod(v, camera->v, c);
-    normalize(v, 3);
+   crossprod(v, camera->v, c);
+  normalize(v, 3);
 
 /* align */
-    quat_concat(camera->q, v, a);
+  quat_concat(camera->q, v, a);
 
-    gui_model_select(model);
-    }
-  else
-    gui_view_z();
+  gui_model_select(model);
   }
+else
+  gui_view_z();
 }
 
 /***************************/
@@ -1480,7 +1529,7 @@ static GtkItemFactoryEntry menu_items[] =
   { "/_View",                       NULL, NULL, 0, "<Branch>"},
   { "/View/Display properties...",  "<CTRL>D", gui_render_dialog, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
-  { "/View/Reset model images",     NULL, space_image_widget_reset, 0, NULL},
+  { "/View/Reset model images",     "<CTRL>R", space_image_widget_reset, 0, NULL},
   { "/View/sep1",                   NULL, NULL, 0, "<Separator>"},
   { "/View/Normal mode",            NULL, gui_mode_default, 0, NULL},
   { "/View/Recording mode",         NULL, gui_mode_record, 0, NULL},
@@ -1609,7 +1658,7 @@ return(TRUE);
 /*****************************/
 /* schedule widget update(s) */
 /*****************************/
-/* TODO - include all update request (including canvas) */
+/* TODO - include all update requests (including canvases) */
 /* TODO - make type a mask so that multiple updates can be done */
 void gui_refresh(gint type)
 {
@@ -1660,7 +1709,7 @@ if (g_strrstr(line, "Type"))
   }
 if (g_strrstr(line, "Elements"))
   {
-  if (g_strrstr(line, "molecule"))
+  if (g_strrstr(line, "Molecule"))
     sysenv.select_mode = ELEM_MOL;
   else
     sysenv.select_mode = ELEM;
@@ -1671,7 +1720,7 @@ if (g_strrstr(line, "Molecules"))
   sysenv.select_mode = MOL;
   return;
   }
-if (g_strrstr(line, "fragments"))
+if (g_strrstr(line, "Fragments"))
   {
   sysenv.select_mode = FRAGMENT;
   gui_mode_switch(SELECT_FRAGMENT);
@@ -1948,7 +1997,7 @@ image_table_init();
 
 /* main window */
 window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-sysenv.main_window = window;/*FIXME: move to sysenv. --OVHPA*/
+sysenv.main_window = window; /* FIXME: move to sysenv. --OVHPA */
 gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
 gtk_window_set_title(GTK_WINDOW(window),"GTK Display Interface for Structures");
 gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);

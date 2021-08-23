@@ -149,7 +149,7 @@ struct model_pak *diffract_model;
 GtkWidget *diffract_layer_total;
 GtkWidget *diffract_layer_order;
 /* globals for the atom properties dialog */
-GtkWidget *apd_label, *apd_type, *apd_charge, *apd_x, *apd_y, *apd_z;
+GtkWidget *apd_label, *apd_type, *apd_charge, *apd_mass, *apd_x, *apd_y, *apd_z;
 GtkWidget *apd_growth, *apd_region, *apd_translate;
 struct model_pak *apd_data;
 struct core_pak *apd_core;

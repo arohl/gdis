@@ -191,6 +191,7 @@ gpointer camera_new(void);
 gpointer camera_dup(gpointer);
 void camera_copy(gpointer, gpointer);
 void camera_init(struct model_pak *);
+void camera_reset(struct model_pak *);
 void camera_dump(gpointer);
 void camera_view(gdouble *, gpointer);
 void camera_waypoint_animate(gint, gint, struct model_pak *);
