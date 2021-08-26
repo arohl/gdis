@@ -170,7 +170,7 @@ if (data->periodic == 2)
   }
 
 /* rot to make z positive */
-matrix_rotation(&tmat[0], PI, PITCH);
+matrix_rotation(&tmat[0], G_PI, PITCH);
 
 for (list=data->cores ; list ; list=g_slist_next(list))
   {

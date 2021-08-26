@@ -245,7 +245,7 @@ va->gl_method = GL_TRIANGLES;
 
 /* number of layers - azimuthal sweep */
 layers = sysenv.render.sphere_quality+1.0;
-alpha = 0.5*PI/layers;
+alpha = 0.5*G_PI/layers;
 
 /* alloc */
 n=0;
@@ -295,7 +295,7 @@ printf("[%d/%d]\n", i, (gint) layers);
 
 /* divisions at this level - hexagonal sweep */
   divisions = i*6.0;
-  beta = 2.0*PI/divisions;
+  beta = 2.0*G_PI/divisions;
   for (j=0 ; j<(gint) divisions ; j++)
     {
     theta = j*beta;

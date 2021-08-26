@@ -79,8 +79,8 @@ while ((buff = get_tokenized_line(fp, &num_tokens)))
       model->pbc[0] = str_to_float(*(buff+0));
       model->pbc[1] = str_to_float(*(buff+1));
       model->pbc[2] = str_to_float(*(buff+2));
-      model->pbc[3] = PI/2.0;
-      model->pbc[4] = PI/2.0;
+      model->pbc[3] = G_PI*0.5;
+      model->pbc[4] = G_PI*0.5;
       model->pbc[5] = D2R*str_to_float(*(buff+3));
       }
     }

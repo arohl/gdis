@@ -528,7 +528,7 @@ normalize(n, 3);
 
 /* CURRENT - compute the direction sense (sign) */
 crossprod(c, a, b);
-if (via(c,n,3) < 0.5*PI)
+if (via(c,n,3) < 0.5*G_PI)
   sign = -1.0;
 else
   sign = 1.0;
@@ -1223,7 +1223,7 @@ normalize(n, 3);
 
 /* CURRENT - compute the direction sense (sign) */
 crossprod(c, a, b);
-if (via(c,n,3) < 0.5*PI)
+if (via(c,n,3) < 0.5*G_PI)
   sign = -1.0;
 else
   sign = 1.0;

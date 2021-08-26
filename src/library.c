@@ -286,17 +286,17 @@ printf("Start of new model: %s.\n", data->basename);
         break;
       case CIF_CELL_ALPHA:
         buff = get_tokens(line, 3);
-        data->pbc[3] = PI*str_to_float(*(buff+1))/180.0;
+        data->pbc[3] = D2R*str_to_float(*(buff+1));
         g_strfreev(buff);
         break;
       case CIF_CELL_BETA:
         buff = get_tokens(line, 3);
-        data->pbc[4] = PI*str_to_float(*(buff+1))/180.0;
+        data->pbc[4] = D2R*str_to_float(*(buff+1));
         g_strfreev(buff);
         break;
       case CIF_CELL_GAMMA:
         buff = get_tokens(line, 3);
-        data->pbc[5] = PI*str_to_float(*(buff+1))/180.0;
+        data->pbc[5] = D2R*str_to_float(*(buff+1));
         g_strfreev(buff);
         break;
       case CIF_SPACE_NAME:

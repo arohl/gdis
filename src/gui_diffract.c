@@ -265,7 +265,7 @@ gchar *line;
 /* constant initialization */
 c1 = 4.0*log(2.0);
 sqrt_c1 = sqrt(c1);
-sqrt_pi = sqrt(PI);
+sqrt_pi = sqrt(G_PI);
 
 /* initialize the output spectrum */
 n = 1 + (model->diffract.theta[1] - model->diffract.theta[0])/model->diffract.theta[2];
@@ -352,13 +352,13 @@ for (item=list ; item ; item=g_slist_next(item))
           break;
 
         case DIFF_LORENTZIAN:
-          bf = fwhm/(2.0*PI*(dr*dr + 0.25*fwhm*fwhm));
+          bf = fwhm/(2.0*G_PI*(dr*dr + 0.25*fwhm*fwhm));
           break;
 
         case DIFF_PSEUDO_VOIGT:
           g = model->diffract.asym;
-          bf = g * 2.0 / (fwhm * PI * (1.0 + 4.0*(dr*dr/(fwhm*fwhm))));
-          bf += (1-g) * sqrt_c1 * exp(-c1*dr*dr/(fwhm*fwhm)) / (fwhm*PI);
+          bf = g * 2.0 / (fwhm * G_PI * (1.0 + 4.0*(dr*dr/(fwhm*fwhm))));
+          bf += (1-g) * sqrt_c1 * exp(-c1*dr*dr/(fwhm*fwhm)) / (fwhm*G_PI);
           break;
 
         default:
@@ -631,7 +631,7 @@ for (;;)
       vecmat(model->latmat, vec);
 /* 2pi * dot product */
       ARR3MUL(rdv, vec);
-      tmp = 2.0 * PI * (rdv[0] + rdv[1] + rdv[2]);
+      tmp = 2.0 * G_PI * (rdv[0] + rdv[1] + rdv[2]);
 
 /* get the atomic form factor */
       sfc = diff_get_sfc(model->diffract.radiation, sol, core);

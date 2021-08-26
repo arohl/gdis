@@ -803,7 +803,7 @@ return center ;
 void rotate_atom(SYMMETRY_ELEMENT *axis, OBJECT *from, OBJECT *to)
 {
 gdouble             x[3], y[3], a[3], b[3], c[3] ;
-gdouble             angle = axis->order ? 2*PI/axis->order : 1.0 ;
+gdouble             angle = axis->order ? 2*G_PI/axis->order : 1.0 ;
 gdouble             a_sin = sin( angle ) ;
 gdouble             a_cos = cos( angle ) ;
 gdouble             dot ;
@@ -1013,14 +1013,14 @@ if( rab <= ToleranceSame || rbc <= ToleranceSame || rac <= ToleranceSame ){
     return NULL ;
     }
 rab   = (rab+rbc)/2 ;
-angle = PI - 2*asin( rac/(2*rab) ) ;
+angle = G_PI - 2*asin( rac/(2*rab) ) ;
 if( verbose > 1 ) printf( "    rotation angle is %f\n", angle ) ;
-if( fabs(angle) <= PI/(MaxAxisOrder+1) ){
+if( fabs(angle) <= G_PI/(MaxAxisOrder+1) ){
     StatEarly++ ;
     if( verbose > 0 ) printf( "    atoms are too close to a straight line\n" ) ;
     return NULL ;
     }
-order = floor( (2*PI)/angle + 0.5 ) ;
+order = floor( (2*G_PI)/angle + 0.5 ) ;
 if( order <= 2 || order > MaxAxisOrder ){
     StatEarly++ ;
     if( verbose > 0 ) printf( "    rotation axis order (%d) is not from 3 to %d\n", order, MaxAxisOrder ) ;
@@ -1113,7 +1113,7 @@ return axis ;
 void rotate_reflect_atom( SYMMETRY_ELEMENT *axis, OBJECT *from, OBJECT *to )
 {
 gdouble             x[3], y[3], a[3], b[3], c[3] ;
-gdouble             angle = 2*PI/axis->order ;
+gdouble             angle = 2*G_PI/axis->order ;
 gdouble             a_sin = sin( angle ) ;
 gdouble             a_cos = cos( angle ) ;
 gdouble             dot ;

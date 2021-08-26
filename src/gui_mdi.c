@@ -633,9 +633,9 @@ if (pos >= pow(mdi_data.box_dim,3))
       data = model_ptr(m, RECALL);
       pos++;
 /* create some random rotations */
-      phi = 2.0*PI*ran2();
-      theta = PI - 2.0*PI*ran2();
-      psi = 2.0*PI*ran2();
+      phi = 2.0*G_PI*ran2();
+      theta = G_PI - 2.0*G_PI*ran2();
+      psi = 2.0*G_PI*ran2();
 
       for (list=data->cores ; list ; list=g_slist_next(list))
         {
@@ -673,9 +673,9 @@ dest->periodic = 3;
 dest->pbc[0] = box_len;
 dest->pbc[1] = box_len;
 dest->pbc[2] = box_len;
-dest->pbc[3] = PI/2.0;
-dest->pbc[4] = PI/2.0;
-dest->pbc[5] = PI/2.0;
+dest->pbc[3] = G_PI*0.5;
+dest->pbc[4] = G_PI*0.5;
+dest->pbc[5] = G_PI*0.5;
 
 #if DEBUG
 printf("write_dat() done\n");
