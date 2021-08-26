@@ -435,8 +435,14 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   core = list->data;
   if (core->status & (DELETED | HIDDEN))
      continue;
+  if ((!data->show_region1A && core->region == REGION1A) ||
+      (!data->show_region1B && core->region == REGION1B) ||
+      (!data->show_region2A && core->region == REGION2A) ||
+      (!data->show_region2B && core->region == REGION2B))
+     continue;
   data->selection = g_slist_append(data->selection, core);
   }
+
 
 /* update the highlighting */
 for (list=data->selection ; list ; list=g_slist_next(list))
@@ -479,6 +485,11 @@ for (list=data->cores ; list ; list=g_slist_next(list))
     core->status &= ~SELECT;
     new = g_slist_remove(new, core);
     }
+  if ((!data->show_region1A && core->region == REGION1A) ||
+      (!data->show_region1B && core->region == REGION1B) ||
+      (!data->show_region2A && core->region == REGION2A) ||
+      (!data->show_region2B && core->region == REGION2B))
+    new = g_slist_remove(new, core);
   }
 
 /* assign the new selection */
@@ -509,6 +520,13 @@ if (g_slist_find(data->selection, core))
   return(1);
 if (core->status & HIDDEN)
   return(0);
+
+/* Checks for MARVIN regions */
+if ((!data->show_region1A && core->region == REGION1A) ||
+    (!data->show_region1B && core->region == REGION1B) ||
+    (!data->show_region2A && core->region == REGION2A) ||
+    (!data->show_region2B && core->region == REGION2B))
+   return(0);
 
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
