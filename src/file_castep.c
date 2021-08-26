@@ -61,8 +61,8 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
                 return(2);
             }
             data->periodic = 3;
-            buf=tokenize(line,&num_tokens);
-            printf("entries %d\n",num_tokens);
+            buf = tokenize(line, &num_tokens);
+            printf("entries %d\n", num_tokens);
             data->pbc[0] = str_to_float(*(buf+0));
             data->pbc[1] = str_to_float(*(buf+1));
             data->pbc[2] = str_to_float(*(buf+2));
@@ -71,9 +71,9 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
                 return(2);
             }
             g_strfreev(buf);
-            buf=tokenize(line,&num_tokens);
-            printf("entries %d\n",num_tokens);
-            data->pbc[3] = str_to_float(*(buf+0))* D2R;
+            buf = tokenize(line, &num_tokens);
+            printf("entries %d\n", num_tokens);
+            data->pbc[3] = str_to_float(*(buf+0)) * D2R;
             data->pbc[4] = str_to_float(*(buf+1)) * D2R;
             data->pbc[5] = str_to_float(*(buf+2)) * D2R;
             printf("al be ga %f %f %f\n",data->pbc[3],data->pbc[4],data->pbc[5]);
@@ -95,7 +95,7 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
             } /* go to next line */
             
             while (g_strrstr(line, "ENDBLOCK POSITIONS_") == 0) {
-                buf = tokenize(line,&num_tokens);
+                buf = tokenize(line, &num_tokens);
                 element = g_strdup(*(buf+0));
                 atom_name = g_strdup(element);
                 if (clist)
