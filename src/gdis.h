@@ -86,7 +86,7 @@ The GNU GPL can also be found at http://www.gnu.org
 #define R2D 57.295779513
 #define AU2ANG 0.529177249
 
-/* fundamental constants, etc (C. Fisher 2004) */
+/* fundamental constants, etc */
 #define ELCHARGE 1.60217733e-19
 #define AMU 1.6605402e-27
 #define AVOGADRO 6.0221367e23
@@ -198,6 +198,7 @@ CIF_CELL_GAMMA, CIF_SPACE_NAME, CIF_SPACE_NUM, CIF_REFINE,
 CIF_ATOM_SITE, CIF_LABEL, CIF_TYPE_SYMBOL,
 CIF_SOF, CIF_EQUIV_SITE, CIF_EQUIV_POS,
 CIF_CART_X, CIF_CART_Y, CIF_CART_Z, CIF_FRAC_X, CIF_FRAC_Y, CIF_FRAC_Z,
+CIF_ATOM_TYPE, CIF_OXID_NUM,
 MARVIN_BASIS, MARVIN_COORD,
 DIPOLE_TOLERANCE,
 /* Moldy parameters */
