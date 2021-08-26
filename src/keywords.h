@@ -79,11 +79,22 @@ struct keyword_pak keywords[] =
 {"_cell_angle_alpha", CIF_CELL_ALPHA},
 {"_cell_angle_beta",  CIF_CELL_BETA},
 {"_cell_angle_gamma", CIF_CELL_GAMMA},
+/********************************************/
+/* _symmetry_ items deprecated              */
 {"_symmetry_space_group_name_H-M", CIF_SPACE_NAME},
 {"_symmetry_Int_Tables_number", CIF_SPACE_NUM},
 {"_symmetry_equiv_pos_site_id", CIF_EQUIV_SITE},
 {"_symmetry_equiv_pos_as_xyz", CIF_EQUIV_POS},
+/*******************************************/
+{"_space_group_name_H-M", CIF_SPACE_NAME},
+{"_space_group_name_H-M_alt", CIF_SPACE_NAME_ALT},
+{"_space_group_IT_number", CIF_SPACE_NUM},
+{"_Int_Tables_number", CIF_SPACE_NUM},
+{"_equiv_pos_site_id", CIF_EQUIV_SITE},
+{"_equiv_pos_as_xyz", CIF_EQUIV_POS},
+/*******************************************/
 {"_atom_site", CIF_ATOM_SITE},
+{"_atom_type", CIF_ATOM_TYPE},
 {"label", CIF_LABEL},
 {"type_symbol", CIF_TYPE_SYMBOL},
 {"cartn_x", CIF_CART_X},
@@ -93,6 +104,7 @@ struct keyword_pak keywords[] =
 {"fract_y", CIF_FRAC_Y},
 {"fract_z", CIF_FRAC_Z},
 {"occupancy", CIF_SOF},
+{"_oxidation_number", CIF_OXID_NUM},
 
 /* marvin */
 {"basis", MARVIN_BASIS},
