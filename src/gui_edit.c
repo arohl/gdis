@@ -2934,9 +2934,15 @@ gdouble temp;
 const gchar *text;
 struct elem_pak edata;
 struct model_pak *model;
-if(w==NULL) return;
+
+if(w == NULL)
+  return;
+
 model = sysenv.active_model;
 if (!model)
+  return;
+
+if (g_slist_length(model->selection) == 0)
   return;
 
 /* act on multiple atoms? */
@@ -3119,53 +3125,45 @@ gui_refresh(GUI_CANVAS);
 /*************************************/
 void gui_refresh_selection(void)
 {
-gint n, cflag=FALSE;
+gint n=0;
 gdouble q=0, m=0, s=0, centroid[3];
 gchar *element, *label, *type, *charge, *x, *y, *z;
 gchar *mass, *sof, *growth, *region, *translate;
-struct core_pak *core;
+struct core_pak *core=NULL;
 struct model_pak *model;
 GSList *list;
 
 model = sysenv.active_model;
-core = NULL;
+if (!model)
+  return;
+
 VEC3SET(centroid, 0.0, 0.0, 0.0);
-if (model)
+if (model->selection)
   {
-  list = model->selection;
-  n = g_slist_length(list);
-  switch (n)
+  n = g_slist_length(model->selection);
+  if( n == 1)
+    core = (model->selection)->data;
+  else
     {
-    case -1:
-      g_assert_not_reached();
-    case 0:
-      break;
-    case 1:
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
       core = list->data;
-      break;
-
-    default:
-      for (list=model->selection ; list ; list=g_slist_next(list))
-        {
-        core = list->data;
-        ARR3ADD(centroid, core->x);
-
-        q += atom_charge(core);
-        m += atom_mass(core);
-	if (core->has_sof)
-          s += core->sof;
-        else
-          s += 1.0;
-        }
-      s /= (gdouble) n;
-      VEC3MUL(centroid, 1.0 / (gdouble) n);
+      ARR3ADD(centroid, core->x);
+      q += atom_charge(core);
+      m += atom_mass(core);
+      if (core->has_sof)
+        s += core->sof;
+      else
+        s += 1.0;
+      }
+    s /= (gdouble) n;
+    VEC3MUL(centroid, 1.0 / (gdouble) n);
 /* special print case - centroid display */
-      cflag = TRUE;
-      core = NULL;
-    }
+    core = NULL;
   }
+}
 
-if (core && model)
+if (core)
   {
 /* data available */
   element = g_strdup(elements[core->atom_code].symbol);
@@ -3202,7 +3200,7 @@ else
   element = g_strdup("");
   type = g_strdup("");
 
-  if (cflag)
+  if (n > 1)
     {
     label = g_strdup("centroid");
     x = g_strdup_printf("%9.4f", centroid[0]);
@@ -3247,7 +3245,7 @@ gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_translate), translate);
 
 CEDIT.apd_data = model;
 
-/* cleanup */
+/* clean up */
 g_free(element);
 g_free(label);
 g_free(type);
@@ -3256,14 +3254,15 @@ g_free(mass);
 g_free(x);
 g_free(y);
 g_free(z);
+g_free(sof);
 g_free(growth);
 g_free(region);
 g_free(translate);
 }
 
-/*******************************************/
-/* display the properties of a single atom */
-/*******************************************/
+/******************************************************/
+/* display the properties of a selected atom or atoms */
+/******************************************************/
 void gui_edit_widget(GtkWidget *box)
 {
 GtkWidget *frame, *hbox, *vbox, *entry;
