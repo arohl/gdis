@@ -141,6 +141,8 @@ switch(type)
     init_model_charges(data);
 /* update electrostatic info */
     calc_emp(data);
+/* init the masses */
+    init_model_masses(data);
 /* repetition here, since there is interdependence 
    between centroid (coords_center) and latmat (coords_compute) calc */
     coords_center(data);

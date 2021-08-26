@@ -1243,7 +1243,7 @@ for (list=data->moles ; list ; list=g_slist_next(list))
     }
   }
 coords_compute(data);
-model_content_refresh(data); /* Added by C.Fisher 2005 */
+model_content_refresh(data);
 
 /* NEW - ensure core ordering in molecules is the same as in the main list */
 sort_mol_cores(data);
@@ -1349,7 +1349,7 @@ void connect_refresh(struct model_pak *model)
 {
 connect_bonds(model);
 connect_molecules(model);
-model_content_refresh(model); /* Added by C.Fisher 2005 */
+model_content_refresh(model);
 }
 
 /********************************************/
@@ -1366,6 +1366,6 @@ connect_bonds(model);
 connect_molecules(model);
 
 redraw_canvas(SINGLE);
-model_content_refresh(model); /* Added by C.Fisher 2005 */
+model_content_refresh(model);
 }
 

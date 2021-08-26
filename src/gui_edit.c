@@ -326,6 +326,7 @@ zone_init(data);
 connect_bonds(data);
 connect_molecules(data);
 
+model_content_refresh(data);
 redraw_canvas(SINGLE);
 }
 
@@ -541,6 +542,7 @@ g_slist_free(data->unique_atom_list);
 data->unique_atom_list = find_unique(ELEMENT, data);
 init_atom_colour(core, data);
 init_atom_charge(core, data);
+init_atom_mass(core, data);
 calc_emp(data);
 
 /* done */
@@ -581,6 +583,15 @@ for (list=model->shels ; list ; list=g_slist_next(list))
 matmat(CEDIT.tmat, model->latmat);
 model->fractional = FALSE;
 model->construct_pbc = TRUE;
+
+/* Set lattice matrix to identity matrix for non-periodic systems */
+if( model->periodic == 0 )
+  {
+  matrix_identity(model->latmat);
+  matrix_identity(model->ilatmat);
+  matrix_identity(model->rlatmat);
+  }
+
 model_prep(model);
 
 /* GUI updates */
@@ -615,7 +626,7 @@ n = (guint)SPIN_IVAL(GTK_SPIN_BUTTON(CEDIT.periodicity_spin));
 /* if we're increasing the periodicity, we need repeat vector info */
 if (n > model->periodic)
   {
-/* check if its the unit vector (ie likely unchanged from default) */
+/* check if it's the unit vector (ie likely unchanged from default) */
   for (i=model->periodic ; i<n ; i++)
     {
     VEC3SET(x, CEDIT.tmat[i], CEDIT.tmat[i+3], CEDIT.tmat[i+6]);
@@ -640,6 +651,9 @@ if (n > model->periodic)
     }
   }
 
+/* remove all images */
+space_image_widget_reset();
+
 /* remove all symmetry and convert to cartesian */
 space_make_p1(model);
 
@@ -655,7 +669,7 @@ for (list=model->shels ; list ; list=g_slist_next(list))
   vecmat(model->latmat, shell->x);
   }
 
-/* set the (extra) new lattice matrix periodicty */
+/* set the (extra) new lattice matrix periodicity */
 for (i=model->periodic ; i<n ; i++)
   {
   model->latmat[i+0] = CEDIT.tmat[i+0];
@@ -679,6 +693,7 @@ else
   model->construct_pbc = TRUE; 
 
 model_prep(model);
+model_content_refresh(model);
 
 /* GUI updates */
 /* REFRESH */
@@ -960,6 +975,48 @@ if (model)
       }
     }
   }
+  model_content_refresh(model);
+}
+
+/*************************************/
+/* delete shells from selected cores */
+/*************************************/
+void edit_shells_delete(void)
+{
+GSList *list;
+struct core_pak *core;
+struct model_pak *model;
+gdouble charge, mass;
+
+model = sysenv.active_model;
+if (model)
+  {
+  if (model->num_frames > 1)
+    {
+    gui_text_show(INFO, "Shells cannot be deleted from multiframe model.\n");
+    return;
+    }
+
+  for (list=model->selection ; list ; list=g_slist_next(list))
+    {
+    core = list->data;
+
+/* delete shell if present */
+    if (core->shell)
+      {
+      charge = atom_charge(core);
+      mass = atom_mass(core);
+
+      core->charge = charge;
+      core->mass = mass;
+      delete_shell(core->shell);
+      core->shell = NULL;
+      }
+    }
+  }
+delete_commit(model);
+redraw_canvas(SINGLE);
+model_content_refresh(model);
 }
 
 /*****************************/
@@ -997,6 +1054,8 @@ struct model_pak *model = sysenv.active_model;
 if (model)
   {
   model->show_bonds ^= 1;
+  model->surface.ignore_bonding ^= 1;
+  model_content_refresh(model);
 
   redraw_canvas(SINGLE);
   }
@@ -1020,6 +1079,7 @@ gui_button_x("Add atoms", edit_atom_add, NULL, vbox);
 gui_button_x("Confine atoms to cell", edit_confine, (gpointer) CORE, vbox);
 gui_button_x("Confine molecules to cell", edit_confine, (gpointer) MOL, vbox);
 gui_button_x("Add shells to selected cores", edit_shells_add, NULL, vbox);
+gui_button_x("Remove shells to selected cores", edit_shells_delete, NULL, vbox);
 
 /* Frame */
 /* FIXME - fix up user bonds then re-introduce */
@@ -2380,6 +2440,7 @@ void selection_properties_change(gint type)
 {
 gint n, growth, region, translate;
 gdouble charge;
+gdouble mass, coord, centre=0;
 const gchar *text;
 GSList *list;
 struct elem_pak edata;
@@ -2401,7 +2462,7 @@ switch (type)
       {
       get_elem_data(n, &edata, model);
 /* make sure we alow enough space for the string and the \0 */
-//    n = (LABEL_SIZE-1 > strlen(text)) ? strlen(text) : LABEL_SIZE-1;/*FIX e1c506*/
+//    n = (LABEL_SIZE-1 > strlen(text)) ? strlen(text) : LABEL_SIZE-1; /* FIX e1c506 */
       for (list=model->selection ; list ; list=g_slist_next(list))
         {
         core = list->data;
@@ -2423,6 +2484,7 @@ switch (type)
           }
         init_atom_colour(core, model);
         init_atom_charge(core, model);
+        init_atom_mass(core, model);
         }
 /* model updates */
       g_slist_free(model->unique_atom_list);
@@ -2439,8 +2501,98 @@ switch (type)
 /* core updates */
       core->charge = charge;
       core->lookup_charge = FALSE;
+      if (core->shell)
+        {
+        (core->shell)->charge = 0.0;
+        (core->shell)->lookup_charge = TRUE;
+        }
       }
     calc_emp(model);
+    break;
+
+  case MASS:
+    mass = str_to_float(gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_mass)));
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+/* core updates */
+      core->mass = mass;
+      core->lookup_mass = FALSE;
+      if (core->shell)
+        {
+        (core->shell)->mass = 0.0;
+        (core->shell)->lookup_mass = TRUE;
+        }
+      }
+    break;
+
+    case COORD_X:
+    coord = str_to_float(gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_x)));
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      centre += core->x[0];
+      }
+    centre /= g_slist_length(model->selection);
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      core->x[0] += (coord - centre);
+/* update attached shell */
+      if (core->shell)
+        {
+        struct shel_pak *shell = core->shell;
+        shell->x[0] += (coord - centre);
+        }
+      }
+    coords_compute(model);
+    connect_refresh(model);
+    break;
+
+  case COORD_Y:
+    coord = str_to_float(gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_y)));
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      centre += core->x[1];
+      }
+    centre /= g_slist_length(model->selection);
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      core->x[1] += (coord - centre);
+/* update attached shell */
+      if (core->shell)
+        {
+        struct shel_pak *shell = core->shell;
+        shell->x[1] += (coord - centre);
+        }
+      }
+    coords_compute(model);
+    connect_refresh(model);
+    break;
+ 
+  case COORD_Z:
+    coord = str_to_float(gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_z)));
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      centre += core->x[2];
+      }
+    centre /= g_slist_length(model->selection);
+    for (list=model->selection ; list ; list=g_slist_next(list))
+      {
+      core = list->data;
+      core->x[2] += (coord - centre);
+/* update attached shell */
+      if (core->shell)
+        {
+        struct shel_pak *shell = core->shell;
+        shell->x[2] += (coord - centre);
+        }
+      }
+    coords_compute(model);
+    connect_refresh(model);
     break;
 
   case CORE_GROWTH_SLICE:
@@ -2557,6 +2709,7 @@ if (CEDIT.apd_core->shell)
         }
       init_atom_colour(CEDIT.apd_core, model);
       init_atom_charge(CEDIT.apd_core, model);
+      init_atom_mass(CEDIT.apd_core, model);
 
       g_slist_free(model->unique_atom_list);
       model->unique_atom_list = find_unique(ELEMENT, model);
@@ -2581,6 +2734,12 @@ if (CEDIT.apd_core->shell)
     calc_emp(model);
     break;
 
+  case MASS:
+    text = gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_mass));
+    CEDIT.apd_core->mass = str_to_float(text);
+    CEDIT.apd_core->lookup_mass = FALSE;
+    break;
+  
   case COORD_X:
     text = gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_x));
     CEDIT.apd_core->x[0] = str_to_float(text);
@@ -2641,8 +2800,9 @@ gui_refresh(GUI_CANVAS);
 void gui_refresh_selection(void)
 {
 gint n, cflag=FALSE;
-gdouble q, centroid[3];
-gchar *element, *label, *type, *charge, *x, *y, *z, *growth, *region, *translate;
+gdouble q=0, m=0, centroid[3];
+gchar *label, *type, *charge, *x, *y, *z;
+gchar *mass, *growth, *region, *translate;
 struct core_pak *core;
 struct model_pak *model;
 GSList *list;
@@ -2669,6 +2829,9 @@ if (model)
         {
         core = list->data;
         ARR3ADD(centroid, core->x);
+
+        q += atom_charge(core);
+        m += atom_mass(core);
         }
       VEC3MUL(centroid, 1.0 / (gdouble) n);
 /* special print case - centroid display */
@@ -2680,7 +2843,6 @@ if (model)
 if (core && model)
   {
 /* data available */
-  element = g_strdup(elements[core->atom_code].symbol);
   label = g_strdup(core->atom_label);
 
   if (core->atom_type)
@@ -2688,8 +2850,11 @@ if (core && model)
   else
     type = g_strdup("");
 
-  q = atom_charge(core); /* Replaced by C. Fisher 2004 */
+  q = atom_charge(core);
   charge = g_strdup_printf("%9.4f", q);
+
+  m = atom_mass(core);
+  mass = g_strdup_printf("%9.4f", m);
 
   x = g_strdup_printf("%9.4f", core->x[0]);
   y = g_strdup_printf("%9.4f", core->x[1]);
@@ -2704,9 +2869,7 @@ if (core && model)
 else
   {
 /* otherwise defaults */
-  element = g_strdup("");
   type = g_strdup("");
-  charge = g_strdup("");
 
   if (cflag)
     {
@@ -2714,6 +2877,8 @@ else
     x = g_strdup_printf("%9.4f", centroid[0]);
     y = g_strdup_printf("%9.4f", centroid[1]);
     z = g_strdup_printf("%9.4f", centroid[2]);
+    charge = g_strdup_printf("%9.4f", q);
+    mass = g_strdup_printf("%9.4f", m);
     }
   else
     {
@@ -2721,6 +2886,8 @@ else
     x = g_strdup("");
     y = g_strdup("");
     z = g_strdup("");
+    charge = g_strdup("");
+    mass = g_strdup("");
     }
 
   growth = g_strdup("");
@@ -2735,6 +2902,7 @@ CEDIT.apd_data = NULL;
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_label), label);
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_type), type);
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_charge), charge);
+gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_mass), mass);
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_x), x);
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_y), y);
 gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_z), z);
@@ -2745,10 +2913,10 @@ gtk_entry_set_text(GTK_ENTRY(CEDIT.apd_translate), translate);
 CEDIT.apd_data = model;
 
 /* cleanup */
-g_free(element);
 g_free(label);
 g_free(type);
 g_free(charge);
+g_free(mass);
 g_free(x);
 g_free(y);
 g_free(z);
@@ -2808,6 +2976,11 @@ gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
 entry = gtk_entry_new();
+gtk_entry_set_text(GTK_ENTRY(entry), "Mass");
+gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
+gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
+
+entry = gtk_entry_new();
 gtk_entry_set_text(GTK_ENTRY(entry), "Growth");
 gtk_entry_set_editable(GTK_ENTRY(entry), FALSE);
 gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
@@ -2844,6 +3017,9 @@ gtk_box_pack_start(GTK_BOX(vbox), CEDIT.apd_z, FALSE, FALSE, 0);
 CEDIT.apd_charge = gtk_entry_new();
 gtk_box_pack_start(GTK_BOX(vbox), CEDIT.apd_charge, FALSE, FALSE, 0);
 
+CEDIT.apd_mass = gtk_entry_new();
+gtk_box_pack_start(GTK_BOX(vbox), CEDIT.apd_mass, FALSE, FALSE, 0);
+
 CEDIT.apd_growth = gtk_entry_new();
 gtk_box_pack_start(GTK_BOX(vbox), CEDIT.apd_growth, FALSE, FALSE, 0);
 
@@ -2865,6 +3041,9 @@ g_signal_connect(GTK_OBJECT(CEDIT.apd_y), "activate",
                  GTK_SIGNAL_FUNC(atom_properties_change), GINT_TO_POINTER(COORD_Y));
 g_signal_connect(GTK_OBJECT(CEDIT.apd_z), "activate",
                  GTK_SIGNAL_FUNC(atom_properties_change), GINT_TO_POINTER(COORD_Z));
+
+g_signal_connect(GTK_OBJECT(CEDIT.apd_mass), "activate",
+                 GTK_SIGNAL_FUNC(atom_properties_change), GINT_TO_POINTER(MASS));
 
 g_signal_connect(GTK_OBJECT(CEDIT.apd_charge), "activate",
                  GTK_SIGNAL_FUNC(atom_properties_change), GINT_TO_POINTER(CHARGE));
@@ -2898,4 +3077,5 @@ gtk_container_add(GTK_CONTAINER(frame), vbox);
 
 gui_button_x("Mark as ghost", select_flag_ghost, NULL, vbox);
 gui_button_x("Mark as normal", select_flag_normal, NULL, vbox);
+
 }
