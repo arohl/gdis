@@ -1457,7 +1457,7 @@ if (data->surface.ignore_bonding)
 /* allocate & init for surface data */
 surf = model_new();
 
-/* NEW - label it as MARVIN, so it's build mode follows the */
+/* NEW - label it as MARVIN, so its build mode follows the */
 /* source model, rather than the GULP setup data - see model_prep() */
 surf->id = MARVIN;
 

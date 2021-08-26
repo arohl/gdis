@@ -954,6 +954,13 @@ for (list=model->cores ; list ; list=g_slist_next(list))
   if (core->render_mode == ZONE)
     continue;
 
+/* Checks for MARVIN regions */
+  if ((!model->show_region1A && core->region == REGION1A) ||
+      (!model->show_region1B && core->region == REGION1B) ||
+      (!model->show_region2A && core->region == REGION2A) ||
+      (!model->show_region2B && core->region == REGION2B))
+    continue;
+
 /* build appropriate lists */
   if (core->render_wire)
     *wire = g_slist_prepend(*wire, core);
@@ -1260,6 +1267,13 @@ for (list=data->shels ; list ; list=g_slist_next(list))
   {
   shel = list->data;
   if (shel->status & (DELETED | HIDDEN))
+    continue;
+
+/* Checks for MARVIN regions */
+  if ((!data->show_region1A && shel->region==REGION1A) ||
+      (!data->show_region1B && shel->region==REGION1B) ||
+      (!data->show_region2A && shel->region==REGION2A) ||
+      (!data->show_region2B && shel->region==REGION2B))
     continue;
 
 /* shell colour */
@@ -1965,7 +1979,7 @@ if (data->show_cell_lengths)
   for (i=0 ; i<data->periodic ; i++)
     {
     j += pow(-1, i) * (i+1);
-    text = g_strdup_printf("%5.2f", data->pbc[i]);
+    text = g_strdup_printf("%5.2f \u212B", data->pbc[i]);
     ARR3SET(v1, data->cell[0].rx);
     ARR3ADD(v1, data->cell[j].rx);
     VEC3MUL(v1, 0.5);
