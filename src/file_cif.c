@@ -69,7 +69,7 @@ if (data->periodic == 2)
   }
 
 /* rot to make z positive */
-matrix_rotation(&tmat[0], PI, PITCH);
+matrix_rotation(&tmat[0], G_PI, PITCH);
 
 t1 = time(NULL);
 fprintf(fp, "data_%s\n", data->basename);

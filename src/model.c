@@ -972,13 +972,13 @@ g_free(data->title);
 
 space_free(&data->sginfo);
 
-/*free vasp pointer*/
+/* free vasp pointer */
 if(data->vasp!=NULL){
 	free_vasp_out(data->vasp);
 	g_free(data->vasp);
 	data->vasp=NULL;
 }
-/*free uspex pointer*/
+/* free uspex pointer */
 if(data->uspex!=NULL){
 	free_uspex_out(data->uspex);
 	g_free(data->uspex);
@@ -1241,7 +1241,7 @@ gchar *value;
  * thread.
  * FIX: use static allocation for value.
  */
-gchar value[MAX_VALUE_SIZE];//_BUG_OVHPA_1
+gchar value[MAX_VALUE_SIZE]; //_BUG_OVHPA_1
 };
 
 /*************************/
@@ -1290,21 +1290,21 @@ if (p)
 #define DEBUG_PROPERTY 0
 	if(value==NULL) return; /* refuse to update with a null value */
 	if(value[0]=='\0') return; /* refuse to update with no value */
-	if(g_strlcpy(p->value,value,MAX_VALUE_SIZE)>=MAX_VALUE_SIZE)
-		fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increased and code recompiled!\n",MAX_VALUE_SIZE);
+	if(g_strlcpy(p->value, value, MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
+	  fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increased and code recompiled!\n", MAX_VALUE_SIZE);
 	p->rank = rank;
 	model->property_list = g_slist_remove(model->property_list, p);
 #if DEBUG_PROPERTY
-fprintf(stdout,"#DBG: update old %i: %s %s -> ",p->rank,p->label,p->value);
-fprintf(stdout,"new %i: %s %s\n",rank,key,value);
+fprintf(stdout,"#DBG: update old %i: %s %s -> ", p->rank, p->label, p->value);
+fprintf(stdout,"new %i: %s %s\n", rank, key, value);
 #endif //DEBUG_PROPERTY
   }
 else
   {
 /* create new property */
   p = g_malloc(sizeof(struct property_pak));
-  if(g_strlcpy(p->value,value,MAX_VALUE_SIZE)>=MAX_VALUE_SIZE)
-		fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increase and code recompiled!\n",MAX_VALUE_SIZE);
+  if(g_strlcpy(p->value,value,MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
+    fprintf(stderr, "_BUG_ the MAX_VALUE_SIZE (=%i) must be increase and code recompiled!\n", MAX_VALUE_SIZE);
   p->label = g_strdup(key);
   p->rank = rank;
   g_hash_table_replace(model->property_table, p->label, p);
@@ -1352,7 +1352,10 @@ text = g_strdup_printf("%6.3f", fabs(model->gulp.qsum)<1e-3?0.0:model->gulp.qsum
 property_add_ranked(1, "Total charge (e)", text, model);
 g_free(text);
 
-text = g_strdup_printf("%d", g_slist_length(model->moles));
+if (model->show_bonds)
+  text = g_strdup_printf("%d", g_slist_length(model->moles));
+else
+  text = g_strdup_printf("%d", g_slist_length(model->cores));
 property_add_ranked(1, "Total molecules", text, model);
 g_free(text);
 
@@ -1364,14 +1367,9 @@ g_free(text);
 */
 
 n = g_slist_length(model->shels);
-if (n)
-  {
-  text = g_strdup_printf("%d", n);
-  property_add_ranked(1, "Total shells", text, model);
-  g_free(text);
-  }
-else
-  property_add_ranked(0, "Total shells", "dummy", model);
+text = g_strdup_printf("%d", n);
+property_add_ranked((n>0?1:0), "Total shells", text, model);
+g_free(text);
 
 text = g_strdup_printf("%d", g_slist_length(model->cores));
 property_add_ranked(1, "Total atoms", text, model);
