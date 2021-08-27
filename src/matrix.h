@@ -75,6 +75,7 @@ gdouble via(gdouble *, gdouble *, gint);
 
 gdouble matrix_determinant(gdouble *);
 
+gint matrix_is_empty(gdouble *, gint);
 gint matrix_is_inversion(gdouble *);
 gint matrix_is_identity(gdouble *);
 gint matrix_is_z_rotation(gdouble *);
