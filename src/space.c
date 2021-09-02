@@ -375,6 +375,7 @@ if (!data->sginfo.lookup)
 /* request info via number or name */
 /* cell choice (TODO - neaten this ugly code) */
 name = g_string_new(NULL);
+printf("raw sg name %s origin %d\n", data->sginfo.spacename, data->sginfo.originchoice);
 if (data->sginfo.spacename)
   g_string_printf(name, "%s", g_strstrip(data->sginfo.spacename));
 else
@@ -484,6 +485,8 @@ if (!data->sginfo.spacename)
   data->sginfo.spacename = g_strdup_printf("%s", label+i);
 g_free(label);
 
+printf("SGN %d\n", SgInfo.TabSgName->SgNumber);
+
 /* fill in number (if an invalid value was supplied) */
 if (data->sginfo.spacenum < 1)
   data->sginfo.spacenum = SgInfo.TabSgName->SgNumber;
@@ -543,7 +546,7 @@ printf("        Point group: %d\n", data->sginfo.pointgroup);
 printf(" Space group number: %d\n", data->sginfo.spacenum);
 printf("       Lattice type: %c\n", data->sginfo.centering);
 printf("              Order: %d\n", SgInfo.OrderL);
-rintf("          Genoption: %d\n", SgInfo.GenOption);
+printf("          Genoption: %d\n", SgInfo.GenOption);
 printf("            Centric: %d\n", SgInfo.Centric);
 printf("       InvOffOrigin: %d\n", SgInfo.InversionOffOrigin);
 printf("      Origin choice: %d\n", data->sginfo.originchoice);
@@ -571,6 +574,13 @@ iMatrix = 0;
 
   nTrV = SgInfo.LatticeInfo->nTrVector;
   TrV = SgInfo.LatticeInfo->TrVector;
+
+/* check for ill-defined SgInfo */
+  if (SgInfo.nList < 1 || nTrV < 1)
+    {
+    gui_text_show(ERROR, "Error in space group lookup.\n");
+    return 1;
+    }
 
 /* matrix counter */
   m=0;
@@ -697,7 +707,7 @@ for (list=model->shels ; list ; list=g_slist_next(list))
   shell->primary = TRUE;
   }
 
-/* set spacegroup */
+/* set space group */
 space_free(&model->sginfo);
 model->sginfo.spacenum = 1;
 model->sginfo.cellchoice = 0;

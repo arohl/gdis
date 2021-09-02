@@ -182,7 +182,7 @@ return(0);
 /***************/
 /* CIF loading */
 /***************/
-#define DEBUG_LOAD_CIF 0
+#define DEBUG_LOAD_CIF 1
 gint read_cif(gchar *filename, struct model_pak *data)
 {
 gint i, j, n, first, new, order, pos, keyword, loop_count=0;
@@ -537,7 +537,7 @@ printf("Found %d symmetry matrices.\n", order);
             }
 #if DEBUG_LOAD_CIF
           else
-            printf("Not enough tokens found.\n");
+            printf("Not enough tokens found. (%s)\n", *buff);
 #endif
 /* get next line */
           g_strfreev(buff);
