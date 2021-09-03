@@ -592,7 +592,7 @@ data->shels = g_slist_sort(data->shels, (gpointer) sort_shels);
 /*************************/
 /* get coordinate limits */
 /*************************/
-void cor_calc_xlimits(gdouble *min, gdouble *max, GSList *list)
+void core_calc_xlimits(gdouble *min, gdouble *max, GSList *list)
 {
 gint i;
 GSList *item;

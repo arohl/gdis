@@ -375,7 +375,6 @@ if (!data->sginfo.lookup)
 /* request info via number or name */
 /* cell choice (TODO - neaten this ugly code) */
 name = g_string_new(NULL);
-printf("raw sg name %s origin %d\n", data->sginfo.spacename, data->sginfo.originchoice);
 if (data->sginfo.spacename)
   g_string_printf(name, "%s", g_strstrip(data->sginfo.spacename));
 else
@@ -385,7 +384,6 @@ else
   else
     g_string_printf(name, "P 1");
   }
-
 
 /* cell choice */
 if (data->sginfo.originchoice)
@@ -484,8 +482,6 @@ while(i>0)
 if (!data->sginfo.spacename)
   data->sginfo.spacename = g_strdup_printf("%s", label+i);
 g_free(label);
-
-printf("SGN %d\n", SgInfo.TabSgName->SgNumber);
 
 /* fill in number (if an invalid value was supplied) */
 if (data->sginfo.spacenum < 1)

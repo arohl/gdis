@@ -182,10 +182,10 @@ return(0);
 /***************/
 /* CIF loading */
 /***************/
-#define DEBUG_LOAD_CIF 1
+#define DEBUG_LOAD_CIF 0
 gint read_cif(gchar *filename, struct model_pak *data)
 {
-gint i, j, n, first, new, order, pos, keyword, loop_count=0;
+gint i, j, n, new, order, pos, keyword, loop_count=0;
 gint min_tokens, num_tokens, len, flag;
 gint s_pos, l_pos, x_pos, y_pos, z_pos, o_pos;
 gint c_pos;
@@ -207,7 +207,7 @@ if (!fp)
 
 /* atom counter */
 n=-1;
-new = first = 0;
+new = 0;
 data->id = -1;
 for(;;)
   {
@@ -254,8 +254,30 @@ cif_parse:;
         break;
 */
 /* stopgap model name */
+/* candidate new model trigger */
       case CIF_DATA_START:
+	if (new > 0)
+	  {
+          new++;
+/* NEW - some dodgy models have no atom data - so allow new model */
+/* creation if we have (the bare minimum) some new cell parameters */
+          if (!data->periodic || data->periodic > 3)
+            {
+/* if no cell parameters found yet or parameters read incorrectly
+   don't create a new model */
+            new--;
+            break;
+            }
+# if DEBUG_LOAD_CIF
+printf("Found %d atoms. [reset]\n", n);
+#endif
+/* alloc new pointer */
+          data = model_new();
+          if (data == NULL)
+            goto cif_done;
+          }
         name = g_strdup(g_strstrip(&line[5]));
+
         break;
 
 /* candidate new model trigger */
@@ -264,13 +286,14 @@ cif_parse:;
       case CIF_AUDIT:
 /* skip this the 1st time (we've already alloc'd a data pointer for safety) */
         new++;
-        if ((new-first) > 1)
+        if (new > 1)
           {
 /* NEW - some dodgy models have no atom data - so allow new model */
 /* creation if we have (the bare minimum) some new cell parameters */
-          if (!data->periodic)
+          if (!data->periodic || data->periodic > 3)
             {
-/* no cell parameters found yet - don't create a new model */
+/* if no cell parameters found yet or parameters read incorrectly
+   don't create a new model */
             new--;
             break;
             }
@@ -346,7 +369,7 @@ printf("Start of new model: %s.\n", data->basename);
 /* indicate that name should be used in lookup */
         data->sginfo.spacenum = -1;
 #if DEBUG_LOAD_CIF
-printf("space group: [%s]\n",data->sginfo.spacename);
+printf("space group: [%s]\n", data->sginfo.spacename);
 #endif
         g_free(tmp);
         break;
@@ -439,7 +462,7 @@ printf("[%s] [%s] [%s]\n", *(buff+n+0), *(buff+n+1), *(buff+n+2));
               sign = 1.0;
               for (j=0 ; j<strlen(*(buff+i+n)) ; j++)
                 {
-                switch (g_ascii_tolower(*(*(buff+i+n)+j))) /* Modified by Craig */
+                switch (g_ascii_tolower(*(*(buff+i+n)+j)))
                   {
                   case '-':
                     sign = -1.0;
@@ -537,7 +560,7 @@ printf("Found %d symmetry matrices.\n", order);
             }
 #if DEBUG_LOAD_CIF
           else
-            printf("Not enough tokens found. (%s)\n", *buff);
+            printf("Not enough tokens found.\n");
 #endif
 /* get next line */
           g_strfreev(buff);
@@ -720,8 +743,7 @@ cif_done:;
 g_free(line);
 
 /* yet another hack to support the dodgy CIF standard */
-j = new - first;
-if (!j && n)
+if (!new && n)
   {
 /* no new model was triggered - but we found atoms, so we'll */
 /* assume only one model was in the file & hope for the best */
@@ -743,11 +765,10 @@ else
   gui_text_show(ERROR, "File name is too long.\n");
   return(-1);
   }
-
 #if DEBUG_LOAD_CIF
 printf("Found %d atoms.\n", n);
 printf("Found %d symmetry matrices.\n", data->sginfo.order);
-printf("Found %d model(s)\n", new-first);
+printf("Found %d model(s)\n", new);
 #endif
 /* Move identity matrix to first in list */
 j = data->sginfo.order;
@@ -778,7 +799,7 @@ for (list=sysenv.mal ; list ; list=g_slist_next(list))
   }
 
 #if DEBUG_LOAD_CIF
-printf("Setting up %d model(s).\n", new-first);
+printf("Setting up %d model(s).\n", new);
 #endif
 
 /* clean up & exit */

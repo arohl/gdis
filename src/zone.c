@@ -123,13 +123,13 @@ printf("zone_make(%s) [%d D]\n", model->filename, model->periodic);
 za = g_malloc(sizeof(struct zone_array_pak));
 
 /* FIXME - will there be a problem for periodic models */
-/* if atoms are not constrained ie in the range [0-1) */
+/* if atoms are not constrained ie in the range [0-1)? */
 /* TODO - allow zones "outside" pbc, but when comparing -> clamp to within */
 
 /* get the (possibly mixed) frac/cart coord limits */
 VEC3SET(min, 0.0, 0.0, 0.0);
 VEC3SET(max, 0.0, 0.0, 0.0);
-cor_calc_xlimits(min, max, model->cores);
+core_calc_xlimits(min, max, model->cores);
 
 /* set number of divisions - CARTESIAN PART ONLY */
 for (i=model->periodic ; i<3 ; i++)
@@ -170,11 +170,12 @@ for (i=3 ; i-- ; )
   za->idx[i] = 1.0/dx[i];
 za->periodic = model->periodic;
 num_zones = div[0] * div[1] * div[2];
-if((div[0]<1)||(div[1]<1)||(div[2]<1)) {
-	/*while this is unlikely, a div <1 will create a NULL-pointer reference in za->zone*/
-	g_free(za);
-	return NULL;
-}
+if ((div[0] < 1) || (div[1] <1 ) || (div[2] < 1))
+  {
+  /* while this is unlikely, a div <1 will create a NULL-pointer reference in za->zone */
+  g_free(za);
+  return NULL;
+  }
 za->size = num_zones;
 
 #if DEBUG_ZONE_MAKE
@@ -184,7 +185,7 @@ for (i=0 ; i<3 ; i++)
 printf("Allocating %dx%dx%d = %d zones...\n", div[0], div[1], div[2], num_zones);
 #endif
 
-za->zone = g_malloc0(num_zones * sizeof(struct zone_pak *));/*FIX 916071*/
+za->zone = g_malloc0(num_zones * sizeof(struct zone_pak *)); /* FIX 916071 */
 
 #if DEBUG_ZONE_MAKE
 printf("Initializing zone array: %p, size : %d\n", za, num_zones);
@@ -250,7 +251,8 @@ for (list=model->shels ; list ; list=g_slist_next(list))
 
 /* add to the list */
   zone = za->zone[zi];
-  if(zone!=NULL) zone->shells = g_slist_prepend(zone->shells, shel);
+  if (zone != NULL)
+    zone->shells = g_slist_prepend(zone->shells, shel);
 
 /* DEBUG - use region colouring to show zones */
 /*
@@ -331,8 +333,8 @@ printf("x1: %.20f %.20f %.20f\n", x[0], x[1], x[2]);
 #endif
 
 /* NB: grid is just used as a dummy variable here */
-grid[0]=0;grid[1]=0;grid[2]=0;
-fractional_clamp(x, grid, za->periodic);//see the fractional_clamp _BUG_
+grid[0] = 0; grid[1] = 0; grid[2] = 0;
+fractional_clamp(x, grid, za->periodic); // see the fractional_clamp _BUG_
 
 #if DEBUG_ZONE_INDEX
 printf("x2: %.20f %.20f %.20f\n", x[0], x[1], x[2]);

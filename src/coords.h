@@ -262,7 +262,7 @@ void calc_emp(struct model_pak *);
 
 GSList *find_unique(gint, struct model_pak *);
 
-void cor_calc_xlimits(gdouble *, gdouble *, GSList *);
+void core_calc_xlimits(gdouble *, gdouble *, GSList *);
 
 void shell_make_links(struct model_pak *);
 

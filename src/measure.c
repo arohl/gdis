@@ -44,7 +44,7 @@ struct measure_pak
 gint type;                                /* distance, angle, etc. */
 gchar *value;
 gpointer core[MEASURE_MAX_CORES];         /* participants */
-gint image[MEASURE_MAX_CORES][3];         /* perioidic image offset for each core */
+gint image[MEASURE_MAX_CORES][3];         /* periodic image offset for each core */
 gdouble colour[3];
 };
 
@@ -361,7 +361,7 @@ for (list=model->measure_list ; list ; list=g_slist_next(list))
   mp = list->data;
   if (type == mp->type)
     {
-/* setup the required matches */
+/* set up the required matches */
     switch (mp->type)
       {
       case MEASURE_DISTANCE:
@@ -716,7 +716,7 @@ if (!mp)
   for (i=2 ; i-- ; )
     mp->core[i] = c[i];
 
-/* store raw perioidic image offsets */
+/* store raw periodic image offsets */
   VEC3SET(&mp->image[0][0], 0, 0, 0);
   ARR3SET(&mp->image[1][0], image);
   mp->value = NULL;
@@ -729,9 +729,9 @@ if (!mp)
 return(NULL);
 }
 
-/*********************************************************/
-/* measurement testing primitive (perioidic image aware) */
-/*********************************************************/
+/********************************************************/
+/* measurement testing primitive (periodic image aware) */
+/********************************************************/
 gpointer measure_bond_test(struct core_pak **core,
                            gdouble r1, gdouble r2,
                            struct model_pak *model)
@@ -752,7 +752,7 @@ if (r2 < FRACTION_TOLERANCE)
 else
   cutoff_test = TRUE;
 
-/* setup cutoffs */
+/* set up cutoffs */
 r1sq = r1*r1;
 r2sq = r2*r2;
 
@@ -994,9 +994,9 @@ if (!mp)
 return(NULL);
 }
 
-/***************************************/
-/* perioidic image aware angle testing */
-/***************************************/
+/**************************************/
+/* periodic image aware angle testing */
+/**************************************/
 gpointer measure_angle_test(struct core_pak **core,
                             gdouble a1, gdouble a2,
                             struct model_pak *model)
@@ -1049,7 +1049,7 @@ list1 = measure_filter(label[0], model);
 list2 = measure_filter(label[1], model);
 list3 = measure_filter(label[2], model);
 
-/* setup range tests */
+/* set up range tests */
 r12_min = range[0]*range[0];
 r12_max = range[1]*range[1];
 r23_min = range[2]*range[2];

@@ -1110,7 +1110,7 @@ sysenv.mal = g_slist_remove(sysenv.mal, model);
 g_free(model);
 
 /* update */
-sysenv.refresh_dialog=TRUE;
+sysenv.refresh_dialog = TRUE;
 canvas_shuffle();
 redraw_canvas(ALL);
 }
@@ -1274,6 +1274,7 @@ return(0);
 /* add a pre-ranked new model property */
 /***************************************/
 /* NB: property is not displayed if rank = 0 */
+#define DEBUG_PROPERTY 0
 void property_add_ranked(guint rank,
                          const gchar *key,
                          const gchar *value,
@@ -1287,29 +1288,32 @@ g_assert(model != NULL);
 p = g_hash_table_lookup(model->property_table, key);
 if (p)
   { //_BUG_OVHPA_1
-#define DEBUG_PROPERTY 0
-	if(value==NULL) return; /* refuse to update with a null value */
-	if(value[0]=='\0') return; /* refuse to update with no value */
-	if(g_strlcpy(p->value, value, MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
-	  fprintf(stderr,"_BUG_ the MAX_VALUE_SIZE (=%i) must be increased and code recompiled!\n", MAX_VALUE_SIZE);
-	p->rank = rank;
-	model->property_list = g_slist_remove(model->property_list, p);
+  if (value == NULL)
+    return; /* refuse to update with a null value */
+  if (value[0] == '\0')
+    return; /* refuse to update with no value */
+  if (g_strlcpy(p->value, value, MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
+    fprintf(stderr, "_BUG_ the MAX_VALUE_SIZE (=%i) must be increased and code recompiled!.\n", MAX_VALUE_SIZE);
+  p->rank = rank;
+  model->property_list = g_slist_remove(model->property_list, p);
+
 #if DEBUG_PROPERTY
-fprintf(stdout,"#DBG: update old %i: %s %s -> ", p->rank, p->label, p->value);
-fprintf(stdout,"new %i: %s %s\n", rank, key, value);
+fprintf(stdout, "#DBG: update old %i: %s %s -> ", p->rank, p->label, p->value);
+fprintf(stdout, "new %i: %s %s\n", rank, key, value);
 #endif //DEBUG_PROPERTY
   }
 else
   {
 /* create new property */
   p = g_malloc(sizeof(struct property_pak));
-  if(g_strlcpy(p->value,value,MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
-    fprintf(stderr, "_BUG_ the MAX_VALUE_SIZE (=%i) must be increase and code recompiled!\n", MAX_VALUE_SIZE);
+  if(g_strlcpy(p->value, value, MAX_VALUE_SIZE) >= MAX_VALUE_SIZE)
+    fprintf(stderr, "_BUG_ the MAX_VALUE_SIZE (=%i) must be increased and code recompiled!\n", MAX_VALUE_SIZE);
   p->label = g_strdup(key);
   p->rank = rank;
   g_hash_table_replace(model->property_table, p->label, p);
+
 #if DEBUG_PROPERTY
-fprintf(stdout,"#DBG: create new %i: %s %s\n",rank,key,value);
+fprintf(stdout, "#DBG: create new %i: %s %s\n", rank, key, value);
 #endif
   }
 

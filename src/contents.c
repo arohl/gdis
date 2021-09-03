@@ -77,7 +77,7 @@ if (data)
   if( fabs(net_charge) < PRECISION )
     net_charge = 0.0;
 
-  selected = g_strdup_printf("%d",g_slist_length(data->selection));
+  selected = g_strdup_printf("%d", g_slist_length(data->selection));
   total = g_strdup_printf("%d", ntotal);
   charge = g_strdup_printf("%g", net_charge);
   ions = g_strdup_printf("%d", nions);

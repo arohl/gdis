@@ -377,6 +377,7 @@ data->selection = NULL;
 
 /* update */
 redraw_canvas(SINGLE);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /***************************/
@@ -410,6 +411,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /********************/
