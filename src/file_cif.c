@@ -409,7 +409,7 @@ printf("space group: [%s] (%d)\n", data->sginfo.spacename, data->sginfo.spacenum
 /* allocate for order number of pointers (to matrices) */
         data->sginfo.matrix = (gdouble **) g_malloc(sizeof(gdouble *));
         data->sginfo.offset = (gdouble **) g_malloc(sizeof(gdouble *));
-        data->sginfo.order=order=0;
+        data->sginfo.order = order = 0;
         for(;;)
           {
 /* terminate on EOF, */
