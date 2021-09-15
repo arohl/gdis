@@ -545,7 +545,7 @@ return(list);
 #define DEBUG_GET_KEYWORDS 0
 GSList *get_keywords(gchar *str)
 {
-gint i, j, n, len, num_tokens;
+gint i, j, len, num_tokens;
 gchar **buff;
 GSList *list=NULL;
 
