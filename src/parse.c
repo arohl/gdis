@@ -524,7 +524,7 @@ while (keywords[i].code != -1)
   if (strstr(str, keywords[i].label) != NULL)
     {
 #if DEBUG_GET_KEYWORD_ANYWHERE
-printf(" %d",keywords[i].code);
+printf(" %d", keywords[i].code);
 #endif
     list = g_slist_prepend(list, GINT_TO_POINTER(keywords[i].code));
     j++;
@@ -555,11 +555,12 @@ printf("extracting from: %s\n", str);
 
 buff = tokenize(str, &num_tokens);
 
-i=n=0;
+i=0;
 while(i < num_tokens)
   {
   if (*(buff+i) == NULL)
-    break;
+    break; 
+
 /* default keyword code - nothing */
   j=0;
   while(keywords[j].code != -1)
@@ -568,10 +569,9 @@ while(i < num_tokens)
     if (g_ascii_strncasecmp(*(buff+i), keywords[j].label, len) == 0)
       {
 #if DEBUG_GET_KEYWORDS
-printf(" %d",keywords[j].code);
+printf(" %d %s (%s %d)", keywords[j].code, keywords[j].label, *(buff+i), len);
 #endif
       list = g_slist_prepend(list, GINT_TO_POINTER(keywords[j].code));
-      n++;
       }
     j++;
     }
@@ -581,7 +581,7 @@ list = g_slist_reverse(list);
 
 g_strfreev(buff);
 #if DEBUG_GET_KEYWORDS
-printf("\nKeywords found: %d\n", n);
+printf("\nKeywords found: %d\n", g_slist_length(list));
 #endif
 
 return(list);

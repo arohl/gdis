@@ -137,9 +137,9 @@ if (data->periodic)
   }
 else
   {
-  fprintf(fp, "_atom_site_cartn_x\n");
-  fprintf(fp, "_atom_site_cartn_y\n");
-  fprintf(fp, "_atom_site_cartn_z\n");
+  fprintf(fp, "_atom_site_Cartn_x\n");
+  fprintf(fp, "_atom_site_Cartn_y\n");
+  fprintf(fp, "_atom_site_Cartn_z\n");
   }
 
 fprintf(fp, "_atom_site_occupancy\n");
@@ -185,13 +185,13 @@ return(0);
 #define DEBUG_LOAD_CIF 0
 gint read_cif(gchar *filename, struct model_pak *data)
 {
-gint i, j, n, new, order, pos, keyword, loop_count=0;
+gint i, j, n, natom, new, order, pos, keyword, loop_count=0;
 gint min_tokens, num_tokens, len, flag;
 gint s_pos, l_pos, x_pos, y_pos, z_pos, o_pos;
 gint c_pos;
 gchar **buff, *tmp, *name=NULL, *line;
 gdouble sign, mat[9], off[3];
-gboolean comment=FALSE;
+gboolean comment, mstring = FALSE;
 GSList *list=NULL;
 GSList *label=NULL, *oxidation=NULL, *clist=NULL;
 struct core_pak *core;
@@ -206,39 +206,39 @@ fp = fopen(filename, "rt");
 if (!fp)
   return(3);
 
-/* atom counter */
-n=-1;
 new = 0;
+natom = 0;
 data->id = -1;
 for(;;)
   {
+  comment = FALSE;
 /* end if EOF */
   line = file_read_line(fp);
   if (!line)
     break;
 
-/*
-  if (fgetline(fp, line))
-    break;
-*/
-/* Check for comment block beginning with semicolon */
-  if (strncmp(line, ";", 1) == 0)
+/* check for multiline strings beginning with semicolon */
+  if (strncmp(g_strstrip(line), ";", 1) == 0)
+    mstring ^= TRUE;
+
+/* check for comment beginning wiht #*/
+  if (strncmp(g_strstrip(line), "#", 1) == 0)
     comment ^= TRUE;
 
-  if (!comment)
-    {
-  /* search for data */
+/* search for data */
+  if (!mstring && !comment)
     list = get_keywords(line);
-    cif_parse:;
-    if (list != NULL)
+
+  cif_parse:;
+  if (list != NULL)
+    {
+    keyword = GPOINTER_TO_INT(list->data);
+    switch(keyword)
       {
-      keyword = GPOINTER_TO_INT(list->data);
-      switch(keyword)
-        {
 /* model labels */
 /* FIXME - needs to search for the 1st occurrence of ' or " & then get the string */
 
-/*      case CIF_CHEMICAL_NAME:
+/*    case CIF_CHEMICAL_NAME:
         tmp = g_strdup(get_token_pos(line,1));
         for (i=0 ; i<strlen(tmp) ; i++)
           if (*(tmp+i) == '\'')
@@ -261,406 +261,392 @@ for(;;)
 */
 /* stopgap model name */
 /* candidate new model trigger */
-        case CIF_DATA_START:
-          buff = tokenize(line, &num_tokens);
-	      if (num_tokens == 1)
-	        {
-	        if (new > 0)
-	          {
-              new++;
-/* NEW - some dodgy models have no atom data - so allow new model */
-/* creation if we have (the bare minimum) some new cell parameters */
-              if (!data->periodic || data->periodic > 3)
-                {
+      case CIF_DATA_START:
+        buff = tokenize(line, &num_tokens);
+        if (num_tokens == 1)
+          {
+          if (new > 0)
+            {
 /* if no cell parameters found yet or parameters read incorrectly
    don't create a new model */
-                new--;
-                break;
-                }
-# if DEBUG_LOAD_CIF
-printf("Found %d atoms. [reset]\n", n);
-#endif
-/* alloc new pointer */
-              data = model_new();
-              if (data == NULL)
-                goto cif_done;
-              }
-            name = g_strdup(g_strstrip(&line[5]));
-            }
-            g_strfreev(buff);
-          break;
-
-/* candidate new model trigger */
-/* CIF is a pain - there seems to be no clear-cut new structure */ 
-/* trigger (in a multi structure file) that everyone uses */
-        case CIF_AUDIT:
-/* skip this the 1st time (we've already alloc'd a data pointer for safety) */
-          new++;
-          if (new > 1)
-            {
-/* NEW - some dodgy models have no atom data - so allow new model */
-/* creation if we have (the bare minimum) some new cell parameters */
             if (!data->periodic || data->periodic > 3)
               {
-/* if no cell parameters found yet or parameters read incorrectly
-   don't create a new model */
-              new--;
               break;
-              }
+	      }
+/* NEW - some dodgy models have no atom data - so allow new model */
+/* creation if we have (the bare minimum) some new cell parameters */
+            else
+              {
+              new++;
+              data = model_new();
 # if DEBUG_LOAD_CIF
-printf("Found %d atoms. [reset]\n", n);
+printf("Found %d atoms. [reset]\n", natom);
 #endif
+              }
+            }
 /* alloc new pointer */
-            data = model_new();
-            if (data == NULL)
-              goto cif_done;
-            }
-
-/* if we found a name - assign it now */
-          if (name)
-            {
-            g_free(data->basename);
-            data->basename = name;
-            name = NULL;
-            }
-        
+          if (data == NULL)
+            goto cif_done;
+          name = g_strdup(g_strstrip(&line[5]));
+          }
+          g_strfreev(buff);
 #if DEBUG_LOAD_CIF
 printf("Start of new model: %s.\n", data->basename);
 #endif
-          break;
+        break;
 
 /* model specific data - the *data ptr MUST be allocated */
-        case CIF_CELL_A:
+      case CIF_CELL_A:
+	if (data->periodic < 3) /* for safety */
+          {
           buff = get_tokens(line, 3);
           data->pbc[0] = str_to_float(*(buff+1));
           data->periodic++;
           g_strfreev(buff);
-          break;
-        case CIF_CELL_B:
+	  }
+        break;
+      case CIF_CELL_B:
+	if (data->periodic < 3) /* for safety */
+          {
           buff = get_tokens(line, 3);
           data->pbc[1] = str_to_float(*(buff+1));
           data->periodic++;
           g_strfreev(buff);
-          break;
-        case CIF_CELL_C:
+          }
+        break;
+      case CIF_CELL_C:
+	if (data->periodic < 3) /* for safety */
+          {
           buff = get_tokens(line, 3);
           data->pbc[2] = str_to_float(*(buff+1));
           data->periodic++;
           g_strfreev(buff);
-          break;
-        case CIF_CELL_ALPHA:
-          buff = get_tokens(line, 3);
-          data->pbc[3] = D2R*str_to_float(*(buff+1));
-          g_strfreev(buff);
-          break;
-        case CIF_CELL_BETA:
-          buff = get_tokens(line, 3);
-          data->pbc[4] = D2R*str_to_float(*(buff+1));
-          g_strfreev(buff);
-          break;
-        case CIF_CELL_GAMMA:
-          buff = get_tokens(line, 3);
-          data->pbc[5] = D2R*str_to_float(*(buff+1));
-          g_strfreev(buff);
-          break;
-        case CIF_SPACE_NAME:
+          }
+        break;
+      case CIF_CELL_ALPHA:
+        buff = get_tokens(line, 3);
+        data->pbc[3] = D2R*str_to_float(*(buff+1));
+        g_strfreev(buff);
+        break;
+      case CIF_CELL_BETA:
+        buff = get_tokens(line, 3);
+        data->pbc[4] = D2R*str_to_float(*(buff+1));
+        g_strfreev(buff);
+        break;
+      case CIF_CELL_GAMMA:
+        buff = get_tokens(line, 3);
+        data->pbc[5] = D2R*str_to_float(*(buff+1));
+        g_strfreev(buff);
+        break;
+      case CIF_SPACE_NAME:
 /* remove the enclosing ' and " characters */
-          tmp = g_strdup(get_token_pos(line,1));
-          for (i=0 ; i<strlen(tmp) ; i++) 
-            {
-            if (*(tmp+i) == '\'')
-              *(tmp+i) = ' ';
-            if (*(tmp+i) == '\"')
-              *(tmp+i) = ' ';
-            }
+        tmp = g_strdup(get_token_pos(line,1));
+        for (i=0 ; i<strlen(tmp) ; i++) 
+          {
+          if (*(tmp+i) == '\'')
+            *(tmp+i) = ' ';
+          if (*(tmp+i) == '\"')
+            *(tmp+i) = ' ';
+          }
 
 /* store the name, stripping spaces */
-          data->sginfo.spacename = g_strdup(g_strstrip(tmp));
+        data->sginfo.spacename = g_strdup(g_strstrip(tmp));
 /* indicate that name should be used in lookup */
-          data->sginfo.spacenum = -1;
+        data->sginfo.spacenum = -1;
 #if DEBUG_LOAD_CIF
 printf("space group: [%s]\n", data->sginfo.spacename);
 #endif
-          g_free(tmp);
-          break;
-        case CIF_SPACE_NUM:
-          buff = get_tokens(line, 3);
-          data->sginfo.spacenum = (gint)g_ascii_strtod(*(buff+1), NULL);
+        g_free(tmp);
+        break;
+      case CIF_SPACE_NUM:
+        buff = get_tokens(line, 3);
+        data->sginfo.spacenum = (gint)g_ascii_strtod(*(buff+1), NULL);
 #if DEBUG_LOAD_CIF
 printf("space group number: [%d]\n", data->sginfo.spacenum);
 #endif
-          g_strfreev(buff);
+        g_strfreev(buff);
 
 /* If no space group given, or unrecognizable, use number */
-         if( !data->sginfo.spacename || g_ascii_strcasecmp("",data->sginfo.spacename) == 0)
+       if( !data->sginfo.spacename || g_ascii_strcasecmp("",data->sginfo.spacename) == 0)
+         {
+         if( data->sginfo.spacenum > 1)
            {
-           if( data->sginfo.spacenum > 1)
+           if( data->sginfo.spacename)
              {
-             if( data->sginfo.spacename)
-               {
-               g_free(data->sginfo.spacename);
-               data->sginfo.spacename = g_strdup_printf("%d", data->sginfo.spacenum);
-               }
-             }
-           else
-             {
-             data->sginfo.spacename =g_strdup("P 1");
+             g_free(data->sginfo.spacename);
+             data->sginfo.spacename = g_strdup_printf("%d", data->sginfo.spacenum);
              }
            }
+         else
+           {
+           data->sginfo.spacename =g_strdup("P 1");
+           }
+         }
+       break;
 
-          break;
-
-        case CIF_EQUIV_SITE:
-          loop_count++;
-          break;
+      case CIF_EQUIV_SITE:
+        loop_count++;
+        break;
 
 /* NEW - reinserted the lost symmetry matrix code */
-        case CIF_EQUIV_POS:
+      case CIF_EQUIV_POS:
 /* allocate for order number of pointers (to matrices) */
-          data->sginfo.matrix = (gdouble **) g_malloc(sizeof(gdouble *));
-          data->sginfo.offset = (gdouble **) g_malloc(sizeof(gdouble *));
-          data->sginfo.order = order = 0;
-          for(;;)
-            {
+        data->sginfo.matrix = (gdouble **) g_malloc(sizeof(gdouble *));
+        data->sginfo.offset = (gdouble **) g_malloc(sizeof(gdouble *));
+        data->sginfo.order = order = 0;
+        for(;;)
+          {
 /* terminate on EOF, */
-            g_free(line);
-            line = file_read_line(fp);
-            if (!line)
-              break;
+          g_free(line);
+          line = file_read_line(fp);
+          if (!line)
+            break;
 /* blank line, */
-            g_strstrip(line);
-            if (!strlen(line))
-              break;
+          g_strstrip(line);
+          if (!strlen(line))
+            break;
+/* check for multiline strings beginning with semicolon */
+          if (strncmp(g_strstrip(line), ";", 1) == 0)
+            mstring ^= TRUE;
 /* or a new command */
+          if (!mstring && !comment)
             list = get_keywords(line);
-            if (list)
-              goto cif_parse;
+          if (list)
+            goto cif_parse;
 
 /* TODO - make this parsing a subroutine */
-            for(i=0 ; i<strlen(line) ; i++)
-              if (*(line+i) == '\'' || *(line+i) == ',')
-                *(line+i) = ' ';
-            g_strstrip(line);
-            buff = tokenize(line, &num_tokens);
+          for(i=0 ; i<strlen(line) ; i++)
+            if (*(line+i) == '\'' || *(line+i) == ',')
+              *(line+i) = ' ';
+          g_strstrip(line);
+          buff = tokenize(line, &num_tokens);
 
-            n = loop_count;
-            while (n < num_tokens-2)
-              {
+          n = loop_count;
+          while (n < num_tokens-2)
+            {
 /* FIXME - yet another mess that a linked list would greatly simplify */
 /* number of ops */
-              data->sginfo.matrix = (gdouble **) g_renew
-                                  (gdouble *, data->sginfo.matrix , (order+1));
-              data->sginfo.offset = (gdouble **) g_renew
-                                  (gdouble *, data->sginfo.offset , (order+1));
+            data->sginfo.matrix = (gdouble **) g_renew
+                                (gdouble *, data->sginfo.matrix , (order+1));
+            data->sginfo.offset = (gdouble **) g_renew
+                                (gdouble *, data->sginfo.offset , (order+1));
 /* actual op */
-              *(data->sginfo.matrix+order) = (gdouble *) g_malloc(9*sizeof(gdouble));
-              *(data->sginfo.offset+order) = (gdouble *) g_malloc(3*sizeof(gdouble));
+            *(data->sginfo.matrix+order) = (gdouble *) g_malloc(9*sizeof(gdouble));
+            *(data->sginfo.offset+order) = (gdouble *) g_malloc(3*sizeof(gdouble));
 
 #if DEBUG_LOAD_CIF
 printf("[%s] [%s] [%s]\n", *(buff+n+0), *(buff+n+1), *(buff+n+2));
 #endif
-              VEC3SET(&mat[0], 0.0, 0.0, 0.0);
-              VEC3SET(&mat[3], 0.0, 0.0, 0.0);
-              VEC3SET(&mat[6], 0.0, 0.0, 0.0);
-              VEC3SET(&off[0], 0.0, 0.0, 0.0);
+            VEC3SET(&mat[0], 0.0, 0.0, 0.0);
+            VEC3SET(&mat[3], 0.0, 0.0, 0.0);
+            VEC3SET(&mat[6], 0.0, 0.0, 0.0);
+            VEC3SET(&off[0], 0.0, 0.0, 0.0);
 
-              for (i=0 ; i<3 ; i++)
+            for (i=0 ; i<3 ; i++)
+              {
+              pos = 0;
+              sign = 1.0;
+              for (j=0 ; j<strlen(*(buff+i+n)) ; j++)
                 {
-                pos = 0;
-                sign = 1.0;
-                for (j=0 ; j<strlen(*(buff+i+n)) ; j++)
+                switch (g_ascii_tolower(*(*(buff+i+n)+j)))
                   {
-                  switch (g_ascii_tolower(*(*(buff+i+n)+j)))
-                    {
-                    case '-':
-                      sign = -1.0;
-                      break;
-                    case '+':
-                      sign = +1.0;
-                      break;
-                    case 'x':
-                      mat[i*3] = sign*1.0;
-                      pos++;
-                      break;
-                    case 'y':
-                      mat[i*3 + 1] = sign*1.0;
-                      pos++;
-                      break;
-                    case 'z':
-                      mat[i*3 + 2] = sign*1.0;
-                      pos++;
-                      break;
+                  case '-':
+                    sign = -1.0;
+                    break;
+                  case '+':
+                    sign = +1.0;
+                    break;
+                  case 'x':
+                    mat[i*3] = sign*1.0;
+                    pos++;
+                    break;
+                  case 'y':
+                    mat[i*3 + 1] = sign*1.0;
+                    pos++;
+                    break;
+                  case 'z':
+                    mat[i*3 + 2] = sign*1.0;
+                    pos++;
+                    break;
 /* FIXME - a bit crude */
-                    case '/':
-                      g_free(line);
-                      line = g_strndup(*(buff+i+n)+j-1, 3);
+                  case '/':
+                    g_free(line);
+                    line = g_strndup(*(buff+i+n)+j-1, 3);
 
-                      off[i] = sign * str_to_float(line);
-                      break;
+                    off[i] = sign * str_to_float(line);
+                    break;
 /* TODO: better way to parse? */
-                    case '0':
-                      off[i] = sign * str_to_float(*buff);
-                      break;
-                    }
+                  case '0':
+                    off[i] = sign * str_to_float(*buff);
+                    break;
                   }
                 }
-              ARR3SET((*(data->sginfo.matrix+order)+0), &mat[0]);
-              ARR3SET((*(data->sginfo.matrix+order)+3), &mat[3]);
-              ARR3SET((*(data->sginfo.matrix+order)+6), &mat[6]);
-              ARR3SET((*(data->sginfo.offset+order)+0), &off[0]);
+              }
+            ARR3SET((*(data->sginfo.matrix+order)+0), &mat[0]);
+            ARR3SET((*(data->sginfo.matrix+order)+3), &mat[3]);
+            ARR3SET((*(data->sginfo.matrix+order)+6), &mat[6]);
+            ARR3SET((*(data->sginfo.offset+order)+0), &off[0]);
 
 #if DEBUG_LOAD_CIF
 P3MAT("output: ", *(data->sginfo.matrix+order));
 P3VEC("output: ", *(data->sginfo.offset+order));
-printf("\n\n");
+printf("\n");
 #endif
-              order++;
-              data->sginfo.order++;
-              n += 3;
-              }
-            g_strfreev(buff);
+            order++;
+            // data->sginfo.order++;
+            n += 3;
             }
+          g_strfreev(buff);
+          }
 
 #if DEBUG_LOAD_CIF
 printf("Found %d symmetry matrices.\n", order);
 #endif
-          data->sginfo.order = order;
-          break;
+        data->sginfo.order = order;
+        break;
 
-        case CIF_LOOP_START:
-          loop_count = 0;
-          break;
+      case CIF_LOOP_START:
+        loop_count = 0;
+        break;
 
 /* parsing for atom charges. */
-        case CIF_ATOM_TYPE:
-          s_pos = c_pos = -1;
+      case CIF_ATOM_TYPE:
+        s_pos = c_pos = -1;
 
-          while (g_strrstr(line, "atom_type") != NULL)
-            {
-            if (g_strrstr(line, "symbol"))
-              s_pos = loop_count;
-
-            if (g_strrstr(line, "oxidation_number"))
-              c_pos = loop_count;
+        while (g_strrstr(line, "_atom_type") != NULL)
+          {
+          if (g_strrstr(line, "_atom_type_symbol"))
+            s_pos = loop_count;
+          if (g_strrstr(line, "_atom_type_oxidation_number"))
+            c_pos = loop_count;
 
 /* get next line and keyword list */
-            loop_count++;
+          loop_count++;
 
-            g_free(line);
-            line = file_read_line(fp);
-
-            if (!line)
-              goto cif_done;
-            }
-
+          g_free(line);
+          line = file_read_line(fp);
+          if (!line)
+            goto cif_done;
+          }
+/* check for multiline strings beginning with semicolon */
+        if (strncmp(g_strstrip(line), ";", 1) == 0)
+          mstring ^= TRUE;
 /* while no new keywords found */
+        if (!mstring)
           list = get_keywords(line);
 
-          while (list == NULL)
+        while (list == NULL)
+          {
+          buff = tokenize(line, &num_tokens);
+          if (num_tokens >= c_pos && num_tokens >= s_pos)
             {
-            buff = tokenize(line, &num_tokens);
-
-            if (c_pos > -1 && s_pos > -1 &&
-                num_tokens >= c_pos && num_tokens >= s_pos)
-              {
-              label = g_slist_prepend(label, g_strdup(*(buff+s_pos)));
+            if (c_pos > -1)
               oxidation = g_slist_prepend(oxidation, g_strdup(*(buff+c_pos)));
-              }
+            if (c_pos > -1 && s_pos > -1)
+              label = g_slist_prepend(label, g_strdup(*(buff+s_pos)));
+            }
 #if DEBUG_LOAD_CIF
-            else
-              printf("Not enough tokens found.\n");
+          else
+            printf("Not enough tokens found. ('%s')\n", g_strstrip(line));
 #endif
 /* get next line */
-            g_strfreev(buff);
+          g_strfreev(buff);
 
-            g_free(line);
-            line = file_read_line(fp);
-            if (!line)
-              goto cif_done;
+          g_free(line);
+          line = file_read_line(fp);
+          if (!line)
+            goto cif_done;
 
+/* check for multiline strings beginning with semicolon */
+          if (strncmp(g_strstrip(line), ";", 1) == 0)
+            mstring ^= TRUE;
+          if (!mstring)
             list = get_keywords(line);
 /* CURRENT - we really want this keyword list parsed again, just in case */
-/* a new model trigger (ie audit_creation_date) was found */
-            if (list)
-              goto cif_parse;
-            }
-          break;
+/* a new model trigger (audit_creation_date or data_xxxx) was found */
+          if (list)
+            goto cif_parse;
+          }
+        break;
 
 /* parsing for column info ie x,y,z positions frac/cart etc. */
-        case CIF_ATOM_SITE:
-          s_pos = l_pos = x_pos = y_pos = z_pos = o_pos = -1;
+      case CIF_ATOM_SITE:
+        s_pos = l_pos = x_pos = y_pos = z_pos = o_pos = -1;
+	line = g_strstrip(line);
 
-          while (g_strrstr(line, "atom_site") != NULL)
+        while (g_strrstr(line, "_atom_site") != NULL && strncmp(line, "_atom_", 1) == 0)
+          {
+          if (g_strrstr(line, "_atom_site_type_symbol"))
+	    s_pos = loop_count;
+          if (g_strrstr(line, "_atom_site_label"))
+            l_pos = loop_count;
+          if (g_strrstr(line, "_Cartn_x"))
             {
-
-            if (g_strrstr(line, "type_symbol"))
-              s_pos = loop_count;
-            if (g_strrstr(line, "label"))
-              l_pos = loop_count;
-            if (g_strrstr(line, "cart_x"))
-              {
-              x_pos = loop_count;
-              data->fractional = FALSE;
-              }
-            if (g_strrstr(line, "cart_y"))
-              {
-              y_pos = loop_count;
-              data->fractional = FALSE;
-              }
-            if (g_strrstr(line, "cart_z"))
-              {
-              z_pos = loop_count;
-              data->fractional = FALSE;
-              }
-            if (g_strrstr(line, "fract_x"))
-              {
-              x_pos = loop_count;
-              data->fractional = TRUE;
-              }
-            if (g_strrstr(line, "fract_y"))
-              {
-              y_pos = loop_count;
-              data->fractional = TRUE;
-              }
-            if (g_strrstr(line, "fract_z"))
-              {
-              z_pos = loop_count;
-              data->fractional = TRUE;
-              }
-            if (g_strrstr(line, "occupancy"))
-              o_pos = loop_count;
+            x_pos = loop_count;
+            data->fractional = FALSE;
+            }
+          if (g_strrstr(line, "_Cartn_y"))
+            {
+            y_pos = loop_count;
+            data->fractional = FALSE;
+            }
+          if (g_strrstr(line, "_Cartn_z"))
+            {
+            z_pos = loop_count;
+            data->fractional = FALSE;
+            }
+          if (g_strrstr(line, "_fract_x"))
+            {
+            x_pos = loop_count;
+            data->fractional = TRUE;
+            }
+          if (g_strrstr(line, "_fract_y"))
+            {
+            y_pos = loop_count;
+            data->fractional = TRUE;
+            }
+          if (g_strrstr(line, "_fract_z"))
+            {
+            z_pos = loop_count;
+            data->fractional = TRUE;
+            }
+          if (g_strrstr(line, "_occupancy"))
+            o_pos = loop_count;
 
 /* get next line and keyword list */
-            loop_count++;
+          loop_count++;
 
-            g_free(line);
-            line = file_read_line(fp);
+          g_free(line);
+          line = file_read_line(fp);
 
-            if (!line)
-              goto cif_done;
-            }
+          if (strncmp(g_strstrip(line), ";", 1) == 0)
+            mstring ^= TRUE;
+
+          if (!line)
+            goto cif_done;
+          }
 
 /* either symbol or label can be present & used for atom id purposes */
-          if (s_pos < 0)
-            s_pos = l_pos;
-          if (l_pos < 0)
-            l_pos = s_pos;
+        if (s_pos < 0)
+          s_pos = l_pos;
+        if (l_pos < 0)
+          l_pos = s_pos;
 /* check for minimum data */
-          if (s_pos < 0 || x_pos < 0 || y_pos < 0 || z_pos < 0)
-            {
+        if (s_pos < 0 || x_pos < 0 || y_pos < 0 || z_pos < 0)
+          {
 #if DEBUG_LOAD_CIF
 printf("read_cif() warning: incomplete cif file? [%d:%d:%d:%d]\n",
                                         s_pos, x_pos, y_pos, z_pos);
 #endif
-            break;
-            }
+          break;
+          }
 
 /* the expected number of tokens */
-          min_tokens = loop_count;
+        min_tokens = loop_count;
 
 #if DEBUG_LOAD_CIF
 printf(" min tokens: %d\n", min_tokens);
-printf("data format: [%d] (%d) - [%d] [%d] [%d]  (%d)",
+printf("data format: [%d] (%d) - [%d] [%d] [%d] (%d)",
                   s_pos, l_pos, x_pos, y_pos, z_pos, o_pos);
 if (data->fractional)
     printf(" (frac)\n");
@@ -669,79 +655,96 @@ else
 #endif
 
 /* while no new keywords found */
-          n = 0;
+        natom = 0;
+/* check for multiline strings beginning with semicolon */
+        if (strncmp(g_strstrip(line), ";", 1) == 0)
+          mstring ^= TRUE;
+        if (!mstring)
           list = get_keywords(line);
-          while (list == NULL)
-            {
-            buff = tokenize(line, &num_tokens);
 
+        while (list == NULL)
+          {
+          buff = tokenize(line, &num_tokens);
+
+#if DEBUG_LOAD_CIF
+	  if (num_tokens < min_tokens)
+            printf("Need to read next line. ('%s')\n", g_strstrip(line));
+#endif
 /* NB: cif is stupid - it allows data to continue on the next line, */
 /* until it gets its number of tokens */
 /* hopefully, this'll allow us to get something, even on short lines */
-            if (num_tokens >= z_pos)
-              {
+/* TODO: Cope with multiline entries */
+          if (num_tokens > z_pos)
+            {
 /* NEW - ignore labelled (*) symmetry equiv. atoms */
-              flag = TRUE;
-              if (l_pos >= 0 && l_pos < num_tokens)
-                {
-                len = strlen(*(buff+l_pos));
-                if ((*(buff+l_pos))[len-1] == '*')
-                  flag = FALSE;
-                }
+            flag = TRUE;
+            if (l_pos >= 0 && l_pos < num_tokens)
+              {
+              len = strlen(*(buff+l_pos));
+              if ((*(buff+l_pos))[len-1] == '*')
+                flag = FALSE;
 
-              if (elem_symbol_test(*(buff+s_pos)) && flag)
-                {
-                if (l_pos >= 0 && l_pos < num_tokens)
+              if (s_pos < num_tokens)
+	        {
+                if (elem_symbol_test(*(buff+s_pos)) && flag)
                   core = core_new(*(buff+s_pos), *(buff+l_pos), data);
-                else
+		else
                   core = core_new(*(buff+s_pos), NULL, data);
+		}
+              else if (flag)
+                core = core_new(*(buff+l_pos), NULL, data);
+	      else
+                core = core_new("X", NULL, data);
 
-                data->cores = g_slist_prepend(data->cores, core);
+              data->cores = g_slist_prepend(data->cores, core);
 
-                core->x[0] = str_to_float(*(buff+x_pos));
-                core->x[1] = str_to_float(*(buff+y_pos));
-                core->x[2] = str_to_float(*(buff+z_pos));
+              core->x[0] = str_to_float(*(buff+x_pos));
+              core->x[1] = str_to_float(*(buff+y_pos));
+              core->x[2] = str_to_float(*(buff+z_pos));
 
-                for (clist = label, i=0; clist; clist = g_slist_next(clist), i++)
+              for (clist = label, i=0; clist; clist = g_slist_next(clist), i++)
+                {
+                symbol = g_strdup(clist->data);
+                if (g_ascii_strcasecmp(symbol, *(buff+s_pos)) == 0)
                   {
-                  symbol = g_strdup(clist->data);
-                  if (g_ascii_strcasecmp(symbol, *(buff+s_pos)) == 0)
-                     {
-                     core->charge = g_ascii_strtod(g_slist_nth_data(oxidation,i), NULL);
-                     core->lookup_charge = FALSE;
-                     }
+                  core->charge = g_ascii_strtod(g_slist_nth_data(oxidation,i), NULL);
+                  core->lookup_charge = FALSE;
                   }
+                }
 
 /* only get occupancy if we're sure we have enough tokens */
-                if (o_pos > -1 && num_tokens >= min_tokens)
-                  {
-                  core->sof = str_to_float(*(buff+o_pos));
-                  core->has_sof = TRUE;
-                  }
-                n++;
+              if (o_pos > -1 && num_tokens >= min_tokens)
+                {
+                core->sof = str_to_float(*(buff+o_pos));
+                core->has_sof = TRUE;
                 }
+              natom++;
               }
+            }
 #if DEBUG_LOAD_CIF
-            else
-              printf("Not enough tokens found.\n");
+          else
+            printf("Not enough tokens found. ('%s')\n", g_strstrip(line));
 #endif
 /* get next line */
-            g_strfreev(buff);
+          g_strfreev(buff);
 
-            g_free(line);
-            line = file_read_line(fp);
-            if (!line)
-              goto cif_done;
+          g_free(line);
+          line = file_read_line(fp);
+          if (!line)
+            goto cif_done;
 
+/* check for multiline strings beginning with semicolon */
+          if (strncmp(g_strstrip(line), ";", 1) == 0)
+            mstring ^= TRUE;
+          if (!mstring)
             list = get_keywords(line);
 
 /* CURRENT - we really want this keyword list parsed again, just in case */
 /* a new model trigger (ie audit_creation_date) was found */
-            if (list)
-              goto cif_parse;
-            }
-          break;
-        }
+          if (list)
+            goto cif_parse;
+          }
+        break;
       }
     }
   }
@@ -750,7 +753,7 @@ else
   g_free(line);
 
 /* yet another hack to support the dodgy CIF standard */
-  if (!new && n)
+  if (!new && natom)
     {
 /* no new model was triggered - but we found atoms, so we'll */
 /* assume only one model was in the file & hope for the best */
@@ -773,7 +776,7 @@ else
     return(-1);
     }
 #if DEBUG_LOAD_CIF
-printf("Found %d atoms.\n", n);
+printf("Found %d atom%c.\n", natom, (natom != 1?'s':''));
 printf("Found %d symmetry matrices.\n", data->sginfo.order);
 printf("Found %d model(s)\n", new);
 printf("Periodicity is %d\n", data->periodic);
