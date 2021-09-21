@@ -476,7 +476,7 @@ v3->data = NULL;
 
 /* enforce an outwards pointing clockwise normal */
 /* TODO - prepend for speed */
-      if (angle < PI/2.0)
+      if (angle < G_PI*0.5)
         {
         vlist = g_slist_prepend(vlist, v3);
         vlist = g_slist_prepend(vlist, v2);

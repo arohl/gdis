@@ -278,9 +278,9 @@ scale[0] = dock_cell[0] / dock_grid[0];
 scale[1] = dock_cell[1] / dock_grid[1];
 
 /* rotational increments */
-dx = PI/dock_rotate[0];
-dy = PI/dock_rotate[1];
-dz = PI/dock_rotate[2];
+dx = G_PI/dock_rotate[0];
+dy = G_PI/dock_rotate[1];
+dz = G_PI/dock_rotate[2];
 
 /* translational sampling */
 if (dock_grid_on)

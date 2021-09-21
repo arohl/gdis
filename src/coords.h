@@ -217,6 +217,7 @@ void coords_make_cartesian(struct model_pak *);
 
 void fractional_clamp(gdouble *, gint *, gint);
 void fractional_min(gdouble *, gint);
+void check_fractional(struct model_pak *);
 
 void core_free(gpointer);
 void free_core_list(struct model_pak *);
@@ -261,7 +262,7 @@ void calc_emp(struct model_pak *);
 
 GSList *find_unique(gint, struct model_pak *);
 
-void cor_calc_xlimits(gdouble *, gdouble *, GSList *);
+void core_calc_xlimits(gdouble *, gdouble *, GSList *);
 
 void shell_make_links(struct model_pak *);
 

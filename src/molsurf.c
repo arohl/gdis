@@ -68,7 +68,7 @@ GSList *hsEnvironment=NULL;
 /****************************/
 /* interpolate a grid value */
 /****************************/
-gdouble ms_seista_interpol(gdouble *r, gdouble *v, struct model_pak *model)
+gdouble ms_siesta_interpol(gdouble *r, gdouble *v, struct model_pak *model)
 {
 gdouble x[3];
 
@@ -157,7 +157,7 @@ return(*(model->siesta.eden+n));
 /****************************************/
 /* retrieve the electrostatic potential */
 /****************************************/
-gdouble ms_seista_epot(gdouble *r, struct model_pak *model)
+gdouble ms_siesta_epot(gdouble *r, struct model_pak *model)
 {
 gint n, nx, ny, nz;
 gdouble x[3];
@@ -557,7 +557,7 @@ g_assert(model->siesta.epot != NULL);
 
 /* init min/max */
 p = points->data;
-q = ms_seista_epot(p->rx, model); 
+q = ms_siesta_epot(p->rx, model); 
 model->siesta.epot_min = q;
 model->siesta.epot_max = q;
 
@@ -568,7 +568,7 @@ for (list=points ; list ; list=g_slist_next(list))
   if (!p->adj)
     continue;
 
-  q = ms_seista_epot(p->rx, model); 
+  q = ms_siesta_epot(p->rx, model); 
   
   if (q < model->siesta.epot_min)
     model->siesta.epot_min = q;
@@ -1550,7 +1550,7 @@ for (list1=points ; list1 ; list1=g_slist_next(list1))
     continue;
 
   ms_grad(p, ms_data->cores);
-  q = ms_seista_epot(p->rx, model); 
+  q = ms_siesta_epot(p->rx, model); 
   ms_epot_colour(p->colour, q, model->epot_min, model->epot_max);
   }
 }
@@ -2217,7 +2217,7 @@ else
 if (method != MS_EDEN)
 {
     memcpy(latmat, model->latmat, 9*sizeof(gdouble));
-    cor_calc_xlimits(min, max, model->cores);
+    core_calc_xlimits(min, max, model->cores);
 
 /* NEW - save for the internally generated surface exception */
     x[0] = min[2];
@@ -2285,7 +2285,7 @@ dy = (max[1] - min[1]) / (grid[1]-1);
 dz = (max[2] - min[2]) / (grid[2]-1);
 
 #if DEBUG_MS_CUBE
-fprintf(stderr,"discretizing... (%d)", ms_zone);
+fprintf(stderr, "discretizing... (%d)", ms_zone);
 #endif
 jobStartTime = time(NULL);
 /* create grid points */
@@ -2301,7 +2301,7 @@ for (i=grid[0] ; i-- ; )
       x[1] = min[1] + j*dy;
       x[2] = min[2] + k*dz;
 
-/* CURRENT - cartesian/periodic/seista grid crap */
+/* CURRENT - cartesian/periodic/siesta grid crap */
 /*
       vecmat(model->latmat, x);
 */

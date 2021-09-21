@@ -1766,7 +1766,7 @@ model_init(temp);
 temp->gulp.energy = model->gulp.energy;
 gulp_data_copy(model, temp);
 temp->cores = dup_core_list(model->cores);
-/* FIXME - this is ugly, but the only way (curently) to do it, */
+/* FIXME - this is ugly, but the only way (currently) to do it, */
 /* as dup_core_list dups shells - but doesn't add them to a list */
 for (list=temp->cores ; list ; list=g_slist_next(list))
   {
@@ -1827,11 +1827,11 @@ void cb_surf_create(GtkWidget *w, struct model_pak *model)
 struct plane_pak *plane;
 struct shift_pak *shift;
 
-/* setup plane */
+/* set up plane */
 plane = plane_new(surfdata.surface.miller, model);
 g_return_if_fail(plane != NULL);
 
-/* setup shift */
+/* set up shift */
 shift = shift_new(surfdata.surface.shift);
 shift->region[0] = surfdata.surface.region[0];
 shift->region[1] = surfdata.surface.region[1];

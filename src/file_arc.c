@@ -62,17 +62,17 @@ if (model->periodic)
 /* saving a surface as a 3D model - make depth large enough to fit everything */
     fprintf(fp,"PBC %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f (P1)\n",
                 model->pbc[0], model->pbc[1], 2.0*model->rmax,
-                180.0*model->pbc[3]/PI,
-                180.0*model->pbc[4]/PI,
-                180.0*model->pbc[5]/PI);
+                R2D*model->pbc[3],
+                R2D*model->pbc[4],
+                R2D*model->pbc[5]);
     }
   else
     {
     fprintf(fp,"PBC %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f (P1)\n",
                 model->pbc[0], model->pbc[1], model->pbc[2],
-                180.0*model->pbc[3]/PI,
-                180.0*model->pbc[4]/PI,
-                180.0*model->pbc[5]/PI);
+                R2D*model->pbc[3],
+                R2D*model->pbc[4],
+                R2D*model->pbc[5]);
     }
   }
 
@@ -270,20 +270,20 @@ sscanf(line,"PBC %lf %lf %lf %lf %lf %lf %*s",&(data->pbc[0]),&(data->pbc[1]),&(
 fprintf(stdout,"#DBG: LINE:  %lf %lf %lf %lf %lf %lf\n",data->pbc[0],data->pbc[1],data->pbc[2],data->pbc[3],data->pbc[4],data->pbc[5]);
 #endif
     if((data->pbc[5])>=0){/*6 tokens -> PCB=ON with or without implicit 2D*/
-		data->pbc[3] *= PI/180.0;
-		data->pbc[4] *= PI/180.0;
-		data->pbc[5] *= PI/180.0;
+		data->pbc[3] *= D2R;
+		data->pbc[4] *= D2R;
+		data->pbc[5] *= D2R;
 		if((data->pbc[2])==0){/*implicit 2D*/
 			data->pbc[2] = 1.0;
-			data->pbc[3] = 0.5*PI;
-			data->pbc[4] = 0.5*PI;
+			data->pbc[3] = 0.5*G_PI;
+			data->pbc[4] = 0.5*G_PI;
 			data->periodic = 2;
 		}
     }else{/*less than 6 tokens -> PCB=2D */
-		data->pbc[5] = PI*(data->pbc[2])/180.0;
+		data->pbc[5] = D2R*(data->pbc[2]);
 		data->pbc[2] = 1.0;
-		data->pbc[3] = 0.5*PI;
-		data->pbc[4] = 0.5*PI;
+		data->pbc[3] = 0.5*G_PI;
+		data->pbc[4] = 0.5*G_PI;
     }
 #if DEBUG_ARC
 fprintf(stdout,"#DBG: a=%lf b=%lf c=%lf alpha=%lf beta=%lf gamma=%lf\n",data->pbc[0],data->pbc[1],data->pbc[2],data->pbc[3],data->pbc[4],data->pbc[5]);

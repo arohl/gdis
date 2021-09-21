@@ -30,7 +30,6 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "matrix.h"
 #include "quaternion.h"
 #include "measure.h"
-#include "model.h"
 #include "spatial.h"
 #include "opengl.h"
 #include "render.h"
@@ -334,8 +333,9 @@ delete_commit(data);
 data->selection = NULL;
 sysenv.select_source = NULL;
 
+gui_refresh(GUI_MODEL_PROPERTIES);
 redraw_canvas(SINGLE);
-model_content_refresh(data);
+//model_content_refresh(data);
 }
 
 /******************/
@@ -377,7 +377,7 @@ data->selection = NULL;
 
 /* update */
 redraw_canvas(SINGLE);
-model_content_refresh(data);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /***************************/
@@ -411,7 +411,7 @@ for (list=data->cores ; list ; list=g_slist_next(list))
 
 /* update */
 redraw_canvas(SINGLE);
-model_content_refresh(data);
+gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /********************/
@@ -435,14 +435,8 @@ for (list=data->cores ; list ; list=g_slist_next(list))
   core = list->data;
   if (core->status & (DELETED | HIDDEN))
      continue;
-  if ((!data->show_region1A && core->region == REGION1A) ||
-      (!data->show_region1B && core->region == REGION1B) ||
-      (!data->show_region2A && core->region == REGION2A) ||
-      (!data->show_region2B && core->region == REGION2B))
-     continue;
   data->selection = g_slist_append(data->selection, core);
   }
-
 
 /* update the highlighting */
 for (list=data->selection ; list ; list=g_slist_next(list))
@@ -485,11 +479,6 @@ for (list=data->cores ; list ; list=g_slist_next(list))
     core->status &= ~SELECT;
     new = g_slist_remove(new, core);
     }
-  if ((!data->show_region1A && core->region == REGION1A) ||
-      (!data->show_region1B && core->region == REGION1B) ||
-      (!data->show_region2A && core->region == REGION2A) ||
-      (!data->show_region2B && core->region == REGION2B))
-    new = g_slist_remove(new, core);
   }
 
 /* assign the new selection */
@@ -521,17 +510,10 @@ if (g_slist_find(data->selection, core))
 if (core->status & HIDDEN)
   return(0);
 
-/* Checks for MARVIN regions */
-if ((!data->show_region1A && core->region == REGION1A) ||
-    (!data->show_region1B && core->region == REGION1B) ||
-    (!data->show_region2A && core->region == REGION2A) ||
-    (!data->show_region2B && core->region == REGION2B))
-   return(0);
-
 data->selection = g_slist_append(data->selection, core);
 core->status |= SELECT;
 
-model_content_refresh(data);
+gui_refresh(GUI_MODEL_PROPERTIES);
 return(0);
 }
 
@@ -1617,7 +1599,6 @@ backbone = 0;
 /* recalc coords (ie the ribbon coords) & draw */
 coords_init(REDO_COORDS, data);
 redraw_canvas(SINGLE);
-gui_refresh(GUI_MODEL_PROPERTIES);
 }
 
 /******************************************************/
@@ -1830,11 +1811,11 @@ printf("ribbon segment: [%d] - [%d]\n", ribbon1->id1, ribbon1->id2);
 /* "consistent" normal enforcement */
 /* of dubious value, since ribbon lighing will be two sided */
 /* also, not as easy as this (eg twisted ribbon) ... good enough though? */
-  if (via(ribbon1->x1, ribbon1->u1, 3) > PI/2.0)
+  if (via(ribbon1->x1, ribbon1->u1, 3) > G_PI*0.5)
     {
     VEC3MUL(ribbon1->u1, -1.0);
     }
-  if (via(ribbon1->x2, ribbon1->u2, 3) > PI/2.0)
+  if (via(ribbon1->x2, ribbon1->u2, 3) > G_PI*0.5)
     {
     VEC3MUL(ribbon1->u2, -1.0);
     }

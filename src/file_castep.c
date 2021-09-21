@@ -61,8 +61,8 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
                 return(2);
             }
             data->periodic = 3;
-            buf=tokenize(line,&num_tokens);
-            printf("entries %d\n",num_tokens);
+            buf = tokenize(line, &num_tokens);
+            printf("entries %d\n", num_tokens);
             data->pbc[0] = str_to_float(*(buf+0));
             data->pbc[1] = str_to_float(*(buf+1));
             data->pbc[2] = str_to_float(*(buf+2));
@@ -71,11 +71,11 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
                 return(2);
             }
             g_strfreev(buf);
-            buf=tokenize(line,&num_tokens);
-            printf("entries %d\n",num_tokens);
-            data->pbc[3] = str_to_float(*(buf+0))* PI/180.0;
-            data->pbc[4] = str_to_float(*(buf+1)) * PI/180.0;
-            data->pbc[5] = str_to_float(*(buf+2)) * PI/180.0;
+            buf = tokenize(line, &num_tokens);
+            printf("entries %d\n", num_tokens);
+            data->pbc[3] = str_to_float(*(buf+0)) * D2R;
+            data->pbc[4] = str_to_float(*(buf+1)) * D2R;
+            data->pbc[5] = str_to_float(*(buf+2)) * D2R;
             printf("al be ga %f %f %f\n",data->pbc[3],data->pbc[4],data->pbc[5]);
             if (fgetline(fp, line)) {
                 gui_text_show(ERROR, "unexpected end of file skipping to gradients\n");
@@ -95,7 +95,7 @@ gint read_cell_block(FILE *fp, struct model_pak *data)
             } /* go to next line */
             
             while (g_strrstr(line, "ENDBLOCK POSITIONS_") == 0) {
-                buf = tokenize(line,&num_tokens);
+                buf = tokenize(line, &num_tokens);
                 element = g_strdup(*(buf+0));
                 atom_name = g_strdup(element);
                 if (clist)
@@ -724,17 +724,17 @@ if (model->periodic)
   else
     c = model->pbc[2];
 
-  if ((180.0*model->pbc[3]/PI<0.0) || (180.0*model->pbc[3]/PI>180.0))
+  if ((R2D*model->pbc[3]<0.0) || (R2D*model->pbc[3]>180.0))
 	gui_text_show(ERROR, "Cell angle alpha is not in 0-180 degree range, please correct manually\n");
-  if ((180.0*model->pbc[4]/PI<0.0) || (180.0*model->pbc[4]/PI>180.0))
+  if ((R2D*model->pbc[4]<0.0) || (R2D*model->pbc[4]>180.0))
 	gui_text_show(ERROR, "Cell angle beta is not in 0-180 degree range, please correct manually\n");
-  if ((180.0*model->pbc[5]/PI<0.0) || (180.0*model->pbc[5]/PI>180.0))
+  if ((R2D*model->pbc[5]<0.0) || (R2D*model->pbc[5]>180.0))
 	gui_text_show(ERROR, "Cell angle gamma is not in 0-180 degree range, please correct manually\n");
 
 
 fprintf(fp,"%%BLOCK LATTICE_ABC\n");
 fprintf(fp,"%f  %f   %f\n",model->pbc[0], model->pbc[1], c);
-fprintf(fp,"%f  %f   %f\n",fabs(180.0*model->pbc[3]/PI),fabs(180.0*model->pbc[4]/PI),fabs(180.0*model->pbc[5]/PI));
+fprintf(fp,"%f  %f   %f\n",fabs(R2D*model->pbc[3]),fabs(R2D*model->pbc[4]),fabs(R2D*model->pbc[5]));
 fprintf(fp,"%%ENDBLOCK LATTICE_ABC\n\n");
 
 }

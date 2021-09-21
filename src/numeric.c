@@ -67,7 +67,7 @@ gint i;
 gdouble a,s;
 
 /* alloc */
-s_size = PI/T_STEP + 1;
+s_size = G_PI/T_STEP + 1;
 s_data = (gdouble *) g_malloc(s_size * sizeof(gdouble));
 
 #if DEBUG_TRIG
@@ -75,7 +75,7 @@ printf("Initializing table: %d points\n", s_size);
 #endif
 
 i=0;
-for (a=0.0 ; a<=PI ; a+= T_STEP)
+for (a=0.0 ; a<=G_PI ; a+= T_STEP)
   {
   s = sin(a);
   *(s_data+i) = s;
@@ -98,9 +98,9 @@ ca_rad(&angle);
 /* determine quadrant */
 a = angle;
 quad = 0;
-while (a > PI/2.0)
+while (a > G_PI*0.5)
   {
-  a -= PI/2.0;
+  a -= G_PI*0.5;
   quad++;
   }
 /* setup angle and sign accordingly */
@@ -108,10 +108,10 @@ s = 1.0;
 switch (quad)
   {
   case 1:
-    a += PI/2.0;
+    a += G_PI*0.5;
     break;
   case 3:
-    a += PI/2.0;
+    a += G_PI*0.5;
   case 2:
     s *= -1.0;
     break;
@@ -141,7 +141,7 @@ return(s);
 /**********************/
 gdouble tbl_cos(gdouble angle)
 {
-return(tbl_sin(angle + PI/2.0));
+return(tbl_sin(angle + G_PI*0.5));
 }
 
 /*******************************************/
@@ -175,12 +175,12 @@ void ca_rad(gdouble *angle)
 {
 gint m;
 
-m = *angle/(2.0*PI);
+m = *angle/(2.0*G_PI);
 
-*angle -= (gdouble) m*2.0*PI;
+*angle -= (gdouble) m*2.0*G_PI;
 
 if (*angle < 0.0)
-  *angle += 2.0*PI;
+  *angle += 2.0*G_PI;
 }
 
 /***************************/
@@ -621,7 +621,7 @@ mmax = 2;
 while (n > mmax)
   {
   istep = 2 * mmax;
-  theta = 2.0 * PI / (isign * mmax);
+  theta = 2.0 * G_PI / (isign * mmax);
   wtemp = sin(0.5*theta);
   wpr = -2.0 * wtemp * wtemp;
   wpi = sin(theta);

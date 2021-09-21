@@ -73,7 +73,7 @@ g_assert(model->camera != NULL);
 
 /* number of layers - azimuthal sweep */
 layers = sysenv.render.sphere_quality+1.0;
-alpha = 0.5*PI/layers;
+alpha = 0.5*G_PI/layers;
 
 /* alloc */
 n=0;
@@ -122,7 +122,7 @@ printf("[%d/%d]\n", i, (gint) layers);
 
 /* divisions at this level - hexagonal sweep */
   divisions = i*6.0;
-  beta = 2.0*PI/divisions;
+  beta = 2.0*G_PI/divisions;
   for (j=0 ; j<(gint) divisions ; j++)
     {
     theta = j*beta;
@@ -325,7 +325,7 @@ else
 *(circle->x[2]) = x[2];
 
 /* sweep in x,z */
-da = 2.0 * PI / (gdouble) segments;
+da = 2.0 * G_PI / (gdouble) segments;
 for (i=1 ; i<segments ; i++) 
   {
   theta = (gdouble) i * da;
@@ -456,7 +456,7 @@ glBegin(GL_QUAD_STRIP);
 for (i=segments+1 ; i-- ; )
   {
 /* sweep out a circle */
-  theta = (gdouble) i * 2.0 * PI / (gdouble) segments;
+  theta = (gdouble) i * 2.0 * G_PI / (gdouble) segments;
   st = tbl_sin(theta);
   ct = tbl_cos(theta);
 /* construct normal */
@@ -512,7 +512,7 @@ normalize(p, 3);
 normalize(q, 3);
 
 /* build the cone */
-da = 2.0 * PI / (gdouble) segments;
+da = 2.0 * G_PI / (gdouble) segments;
 glBegin(GL_TRIANGLE_FAN);
 glVertex3dv(vb);
 for (i=segments+1 ; i-- ; )
@@ -601,7 +601,7 @@ glBegin(GL_LINE_STRIP);
 for (i=0 ; i<=num_points ; i++)
   {
 /* sweep out a circle */
-  theta = (gdouble) i * 0.5 * PI / (gdouble) num_points;
+  theta = (gdouble) i * 0.5 * G_PI / (gdouble) num_points;
   st = tbl_sin(theta);
   ct = tbl_cos(theta);
 /* construct normal */

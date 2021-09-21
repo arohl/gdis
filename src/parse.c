@@ -43,13 +43,66 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #include "gdis.h"
 #include "file.h"
-#include "parse.h"
+//#include "parse.h"
 #include "keywords.h"
 #include "interface.h"
 
 /* main structures */
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
+
+/*******************************************************************/
+/* extend truncated recurring decimals to avoid precision problems */
+/*******************************************************************/
+#define FRAC_PREC 1e-4
+void parse_decimal_fraction(gdouble *x)
+{
+gint i, n;
+gdouble frac;
+/* common fractions with repeating decimals as numerator, denominator */
+gdouble fractions[][3] = {{1.0, 3.0}, {2.0, 3.0}, {1.0, 6.0},
+                          {5.0, 6.0}, {1.0, 12.0}, {5.0, 12.0},
+                          {7.0, 12.0}, {11.0, 12.0}, {1.0, 9.0},
+                          {2.0, 9.0}, {4.0, 9.0}, {5.0, 9.0},
+                          {7.0, 9.0}, {8.0, 9.0}, {1.0, 11.0},
+                          {2.0, 11.0}, {3.0, 11.0}, {4.0, 11.0},
+                          {5.0, 11.0}, {6.0, 11.0}, {7.0, 11.0},
+                          {8.0, 11.0}, {9.0, 11.0}, {10.0, 11.0}};
+gint max = sizeof(fractions)/(3*sizeof(gdouble));
+
+for (n = 0; n < max; n++)
+  for (i = 3; i--;)
+    {
+    frac = fractions[n][0]/fractions[n][1];
+    if ( fabs(fabs(x[i]) - frac) <= FRAC_PREC )
+      x[i] = frac*(x[i]<0.0?-1.0:1.0);
+    }
+}
+/*************************************************************/
+/* replace all instances of character a with character b     */
+/* NEW: more general form of parse_space_replace             */
+/*************************************************************/
+void parse_char_replace(gchar *text, gchar a, gchar b)
+{
+gchar *t = text;
+
+do
+  {
+  switch (*t)
+    {
+/* exceptions */
+    case EOF:
+      return;
+    case '\r':
+    case '\n':
+      break;
+
+    default:
+      if (*t == a)
+        *t = b;
+    }
+  } while (*t++);
+}
 
 /***********************/
 /* strip off extension */
@@ -341,179 +394,6 @@ g_free(str);
 return(val);
 }
 
-/* Return a list of keywords found */
-/* NEW - match all keywords, not just space separated ones */
-#define DEBUG_GET_KEYWORDS_ANYWHERE 0
-GSList *get_keywords_anywhere(gchar *str)
-{
-gint i, j=0;
-GSList *list=NULL;
-
-#if DEBUG_GET_KEYWORD_ANYWHERE
-printf("extracted: ");
-#endif
-
-i = 0;
-while (keywords[i].code != -1)
-  {
-  if (strstr(str, keywords[i].label) != NULL)
-    {
-#if DEBUG_GET_KEYWORD_ANYWHERE
-printf(" %d",keywords[i].code);
-#endif
-    list = g_slist_prepend(list, GINT_TO_POINTER(keywords[i].code));
-    j++;
-    }
-  i++;
-  }
-list = g_slist_reverse(list);
-
-#if DEBUG_GET_KEYWORD_ANYWHERE
-printf("\nKeywords found: %d\n", j);
-#endif
-
-return(list);
-}
-
-/* Return a list of keywords found (iff space separated!) */
-/* NEW - replacement for below routine, avoids alloc/free worries */
-#define DEBUG_GET_KEYWORDS 0
-GSList *get_keywords(gchar *str)
-{
-gint i, j, n, len, num_tokens;
-gchar **buff;
-GSList *list=NULL;
-
-#if DEBUG_GET_KEYWORDS
-printf("extracting from: %s\n", str);
-#endif
-
-buff = tokenize(str, &num_tokens);
-
-i=n=0;
-while(i < num_tokens)
-  {
-  if (*(buff+i) == NULL)
-    break;
-/* default keyword code - nothing */
-  j=0;
-  while(keywords[j].code != -1)
-    {
-    len = strlen(keywords[j].label);
-    if (g_ascii_strncasecmp(*(buff+i), keywords[j].label, len) == 0)
-      {
-#if DEBUG_GET_KEYWORDS
-printf(" %d",keywords[j].code);
-#endif
-      list = g_slist_prepend(list, GINT_TO_POINTER(keywords[j].code));
-      n++;
-      }
-    j++;
-    }
-  i++;
-  }
-list = g_slist_reverse(list);
-
-g_strfreev(buff);
-#if DEBUG_GET_KEYWORDS
-printf("\nKeywords found: %d\n", n);
-#endif
-
-return(list);
-}
-
-/***********************************************************/
-/* hash table function for comparing two character strings */
-/***********************************************************/
-gint hash_strcmp(gconstpointer a, gconstpointer b)
-{
-if (g_ascii_strcasecmp(a, b) == 0)
-  return(TRUE);
-return(FALSE);
-}
-
-/**************************************************************/
-/* return a string of keyword code (if any) found in a string */
-/**************************************************************/
-/* 1st item -> number actually found */
-#define DEBUG_GET_KEYWORD 0
-gint *get_keyword(gchar *str, gint max)
-{
-gint i, j, n, len, num_tokens;
-gchar **buff;
-gint *list;
-
-#if DEBUG_GET_KEYWORD
-printf("extracted: ");
-#endif
-
-list = g_malloc((max+1) * sizeof(gint));
-buff = tokenize(str, &num_tokens);
-
-n=1;
-i=0;
-while(i < num_tokens)
-  {
-/* default keyword code - nothing */
-  *(list+n) = -1;
-  j=0;
-  while(keywords[j].code != -1)
-    {
-    len = strlen(keywords[j].label);
-    if (g_ascii_strncasecmp(*(buff+i), keywords[j].label, len) == 0)
-      {
-#if DEBUG_GET_KEYWORD
-printf(" %d",keywords[j].code);
-#endif
-      *(list+n) = keywords[j].code;
-      if (++n == max+1)
-        goto get_keyword_done;
-      }
-    j++;
-    }
-  i++;
-  }
-get_keyword_done:;
-g_strfreev(buff);
-*list = n-1;
-#if DEBUG_GET_KEYWORD
-printf("\n");
-#endif
-
-return(list);
-}
-
-gint num_keys(void)
-{
-gint n;
-
-n=0;
-while (keywords[n].code != -1)
-  n++;
-/*
-printf("Found %d keywords\n",n);
-*/
-return(n);
-}
-
-/*****************************************/
-/* get a token's keyword number (if any) */
-/*****************************************/
-gint get_keyword_code(const gchar *token)
-{
-gint j, len;
-
-j=0;
-while(keywords[j].code != -1)
-  {
-  len = strlen(keywords[j].label);
-  if (g_ascii_strncasecmp(token, keywords[j].label, len) == 0)
-    return(j);
-  j++;
-  }
-return(-1);
-}
-
 /*********************/
 /* tokenize a string */
 /*********************/
@@ -626,6 +506,179 @@ free_slist(list);
 
 return(dest);
 }
+/* Return a list of keywords found */
+/* NEW - match all keywords, not just space separated ones */
+#define DEBUG_GET_KEYWORDS_ANYWHERE 0
+GSList *get_keywords_anywhere(gchar *str)
+{
+gint i, j=0;
+GSList *list=NULL;
+
+#if DEBUG_GET_KEYWORD_ANYWHERE
+printf("extracted: ");
+#endif
+
+i = 0;
+while (keywords[i].code != -1)
+  {
+  if (strstr(str, keywords[i].label) != NULL)
+    {
+#if DEBUG_GET_KEYWORD_ANYWHERE
+printf(" %d", keywords[i].code);
+#endif
+    list = g_slist_prepend(list, GINT_TO_POINTER(keywords[i].code));
+    j++;
+    }
+  i++;
+  }
+list = g_slist_reverse(list);
+
+#if DEBUG_GET_KEYWORD_ANYWHERE
+printf("\nKeywords found: %d\n", j);
+#endif
+
+return(list);
+}
+
+/* Return a list of keywords found (iff space separated!) */
+/* NEW - replacement for below routine, avoids alloc/free worries */
+#define DEBUG_GET_KEYWORDS 0
+GSList *get_keywords(gchar *str)
+{
+gint i, j, len, num_tokens;
+gchar **buff;
+GSList *list=NULL;
+
+#if DEBUG_GET_KEYWORDS
+printf("extracting from: %s\n", str);
+#endif
+
+buff = tokenize(str, &num_tokens);
+
+i=0;
+while(i < num_tokens)
+  {
+  if (*(buff+i) == NULL)
+    break; 
+
+/* default keyword code - nothing */
+  j=0;
+  while(keywords[j].code != -1)
+    {
+    len = strlen(keywords[j].label);
+    if (g_ascii_strncasecmp(*(buff+i), keywords[j].label, len) == 0)
+      {
+#if DEBUG_GET_KEYWORDS
+printf(" %d %s (%s %d)", keywords[j].code, keywords[j].label, *(buff+i), len);
+#endif
+      list = g_slist_prepend(list, GINT_TO_POINTER(keywords[j].code));
+      }
+    j++;
+    }
+  i++;
+  }
+list = g_slist_reverse(list);
+
+g_strfreev(buff);
+#if DEBUG_GET_KEYWORDS
+printf("\nKeywords found: %d\n", g_slist_length(list));
+#endif
+
+return(list);
+}
+
+/***********************************************************/
+/* hash table function for comparing two character strings */
+/***********************************************************/
+gint hash_strcmp(gconstpointer a, gconstpointer b)
+{
+if (g_ascii_strcasecmp(a, b) == 0)
+  return(TRUE);
+return(FALSE);
+}
+
+/**************************************************************/
+/* return a string of keyword code (if any) found in a string */
+/**************************************************************/
+/* 1st item -> number actually found */
+#define DEBUG_GET_KEYWORD 0
+gint *get_keyword(gchar *str, gint max)
+{
+gint i, j, n, len, num_tokens;
+gchar **buff;
+gint *list;
+
+#if DEBUG_GET_KEYWORD
+printf("extracted: ");
+#endif
+
+list = g_malloc((max+1) * sizeof(gint));
+buff = tokenize(str, &num_tokens);
+
+n=1;
+i=0;
+while(i < num_tokens)
+  {
+/* default keyword code - nothing */
+  *(list+n) = -1;
+  j=0;
+  while(keywords[j].code != -1)
+    {
+    len = strlen(keywords[j].label);
+    if (g_ascii_strncasecmp(*(buff+i), keywords[j].label, len) == 0)
+      {
+#if DEBUG_GET_KEYWORD
+printf(" %d",keywords[j].code);
+#endif
+      *(list+n) = keywords[j].code;
+      if (++n == max+1)
+        goto get_keyword_done;
+      }
+    j++;
+    }
+  i++;
+  }
+get_keyword_done:;
+g_strfreev(buff);
+*list = n-1;
+#if DEBUG_GET_KEYWORD
+printf("\n");
+#endif
+
+return(list);
+}
+
+gint num_keys(void)
+{
+gint n;
+
+n=0;
+while (keywords[n].code != -1)
+  n++;
+/*
+printf("Found %d keywords\n",n);
+*/
+return(n);
+}
+
+/*****************************************/
+/* get a token's keyword number (if any) */
+/*****************************************/
+gint get_keyword_code(const gchar *token)
+{
+gint j, len;
+
+j=0;
+while(keywords[j].code != -1)
+  {
+  len = strlen(keywords[j].label);
+  if (g_ascii_strncasecmp(token, keywords[j].label, len) == 0)
+    return(j);
+  j++;
+  }
+return(-1);
+}
+
 
 /************************************************/
 /* get the next (non-trivial) line and tokenize */

@@ -104,6 +104,7 @@ if (list)
     undo->function(model, undo->pointers);
 
   model->undo_list = g_slist_remove(model->undo_list, undo);
+  gui_refresh(GUI_MODEL_PROPERTIES);
   }
 }
 

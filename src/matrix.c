@@ -1063,6 +1063,22 @@ tree_model_add(dest);
 redraw_canvas(SINGLE);
 }
 
+/*********************/
+/* distinguish empty */
+/*********************/
+gint matrix_is_empty(gdouble *mat, gint length)
+{
+gint i;
+
+for (i=0; i < length; i++)
+  {
+  if (*(mat+i) != 0.0)
+    return(FALSE);
+  }
+
+return(TRUE);
+}
+
 /************************/
 /* distinguish identity */
 /************************/

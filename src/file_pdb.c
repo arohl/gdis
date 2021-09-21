@@ -141,16 +141,16 @@ if (model->periodic)
 if (model->sginfo.spacename)
   fprintf(fp,"CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d\n",
               model->pbc[0], model->pbc[1], c,
-              180.0*model->pbc[3]/PI,
-              180.0*model->pbc[4]/PI,
-              180.0*model->pbc[5]/PI,
+              R2D*model->pbc[3],
+              R2D*model->pbc[4],
+              R2D*model->pbc[5],
               model->sginfo.spacename, 0);
 else
   fprintf(fp,"CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4d\n",
               model->pbc[0], model->pbc[1], c,
-              180.0*model->pbc[3]/PI,
-              180.0*model->pbc[4]/PI,
-              180.0*model->pbc[5]/PI,
+              R2D*model->pbc[3],
+              R2D*model->pbc[4],
+              R2D*model->pbc[5],
               "P1", 0);
 
   }
@@ -320,9 +320,9 @@ while (!fort_read_line(fp, &line))
     data->pbc[0] = a;
     data->pbc[1] = b;
     data->pbc[2] = c;
-    data->pbc[3] = fort_read_gdouble(line, 34, 40) * PI/180.0;
-    data->pbc[4] = fort_read_gdouble(line, 41, 47) * PI/180.0;
-    data->pbc[5] = fort_read_gdouble(line, 48, 54) * PI/180.0;
+    data->pbc[3] = fort_read_gdouble(line, 34, 40) * D2R;
+    data->pbc[4] = fort_read_gdouble(line, 41, 47) * D2R;
+    data->pbc[5] = fort_read_gdouble(line, 48, 54) * D2R;
     data->sginfo.spacename = fort_read_string(line, 56, 66);
     
     /* indicate that name should used in lookup (IF a spacegroup was found) */
