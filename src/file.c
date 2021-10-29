@@ -679,6 +679,19 @@ sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */
 file_data = g_malloc(sizeof(struct file_pak));
+file_data->id = XSF;
+file_data->group = XSF;
+file_data->menu = TRUE;
+file_data->label = g_strdup("XSF");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "xsf");
+file_data->write_file = write_xsf;
+file_data->read_file = read_xsf;
+file_data->read_frame = read_xsf_frame;       /* frame reading */
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = XTL;
 file_data->group = XTL;
 file_data->menu = TRUE;
