@@ -52,10 +52,11 @@ void matrix_transpose_44(gdouble *);
 
 void calc_norm(gdouble *, gdouble *, gdouble *, gdouble *);
 
+void matrix_lattice_from_pbc(gdouble *, gdouble *, gint);
 void matrix_lattice_init(struct model_pak *);
 void matrix_lattice_new(gdouble *, struct model_pak *);
 void matrix_identity(gdouble *);
-void matrix_rotation(gdouble *, gdouble , gint);
+void matrix_rotation(gdouble *, gdouble, gint);
 
 void matrix_z_alignment(gdouble *, gdouble *);
 void matrix_v_alignment(gdouble *, gdouble *, gdouble *);

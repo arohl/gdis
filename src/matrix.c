@@ -42,9 +42,9 @@ The GNU GPL can also be found at http://www.gnu.org
 /* main structure */
 extern struct sysenv_pak sysenv;
 
-/**********************************************************/
-/* adjust a rotation matrix wrt curent camera position */
-/**********************************************************/
+/********************************************************/
+/* adjust a rotation matrix wrt current camera position */
+/********************************************************/
 void matrix_camera_transform(gdouble *rot, struct model_pak *model)
 {
 gdouble q[9], qi[9], mat[9];
@@ -752,6 +752,53 @@ switch(type)
   }
 }
 
+/**********************************************/
+/* generate standard lattice matrix from pbcs */
+/**********************************************/
+void matrix_lattice_from_pbc(gdouble *mat, gdouble *pbc, gint periodic)
+{
+gdouble b1, b2, b3, c1, c2, c3;
+
+g_assert(mat != NULL);
+g_assert(pbc != NULL);
+
+/* FIXME - correction needed for 1D case as well? */
+if (periodic == 2)
+  {
+/* lattice code requires non-existent c parameter to be 1 */
+  pbc[2] = 1.0;
+  }
+
+/* compute the translation vector for b */
+b1 = cos(pbc[5]);
+b2 = sin(pbc[5]);
+b3 = 0.0;         /* constrain a,b to remain on the x-y plane */
+
+if (b2 == 0.0)
+  {
+  printf("matrix_lattice_from_pbc(): bad cell parameters.\n");
+  b2 = 1.0;
+  }
+
+/* compute the translation vector for c */
+c1 = cos(pbc[4]);
+c2 = (2.0*cos(pbc[3]) + b1*b1 + b2*b2 - 2.0*b1*c1 - 1.0)/(2.0*b2);
+c3 = sqrt(1.0 - c1*c1 - c2*c2);
+
+/* assign in rows to make it easier to scale */
+/* x & a are assumed co-linear */
+VEC3SET(&mat[0], pbc[0], 0.0, 0.0);
+VEC3SET(&mat[3], b1, b2, b3);
+VEC3SET(&mat[6], c1, c2, c3);
+
+/* scale b & c vectors up */
+VEC3MUL(&mat[3], pbc[1]);
+VEC3MUL(&mat[6], pbc[2]);
+
+/* get vectors in cols */
+matrix_transpose(mat);
+}
+
 /**************************************************************/
 /* get reciprocal lattice vectors from direct lattice vectors */
 /**************************************************************/
@@ -803,7 +850,7 @@ data->rlatmat[5] = c[1];
 data->rlatmat[8] = c[2];
 
 #if DEBUG_RLAT
-P3MAT("reciprocal lattice matrix:",data->rlatmat);
+P3MAT("reciprocal lattice matrix:", data->rlatmat);
 #endif
 }
 
@@ -814,10 +861,9 @@ P3MAT("reciprocal lattice matrix:",data->rlatmat);
 void matrix_lattice_init(struct model_pak *data)
 {
 gdouble n[3], v1[3], v2[3], v3[3];
-gdouble b1, b2, b3, c1, c2, c3;
 
 /* use a supplied latmat, rather than generating from pbc's */
-/* NB: should be in gdis style colum vector format (gulp/marvin are in rows) */
+/* NB: should be in gdis style column vector format (gulp/marvin are in rows) */
 if (data->construct_pbc)
   {
 #if DEBUG_XLAT
@@ -855,47 +901,14 @@ printf("constructing pbc...\n");
 else
   {
 #if DEBUG_XLAT
-printf("constructing latmat...\n");
+  printf("constructing latmat...\n");
 #endif
 /* construct lattice matrix from the unit cell lengths & angles */
 /* this basically works by using the cosine rule in conjunction */
 /* with a few geometric constraints (eg normalized vectors) */
 
 /* FIXME - correction needed for 1D case as well? */
-if (data->periodic == 2)
-  {
-/* lattice code requires non existent c parameter to be 1 */
-  data->pbc[2] = 1.0;
-  }
-
-/* compute the translation vector for b */
-  b1 = cos(data->pbc[5]);
-  b2 = sin(data->pbc[5]);
-  b3 = 0.0;              /* constrain a,b to remain on the x,y plane */
-
-  if (b2 == 0.0)
-    {
-    printf("matrix_lattice_init(): bad cell parameters.\n");
-    b2 = 1.0;
-    }
-
-/* compute the translation vector for c */
-  c1 = cos(data->pbc[4]);
-  c2 = (2.0*cos(data->pbc[3]) + b1*b1 + b2*b2 - 2.0*b1*c1 - 1.0)/(2.0*b2);
-  c3 = sqrt(1.0 - c1*c1 - c2*c2);
-
-/* assign in rows to make it easier to scale */
-/* x & a are assumed co-linear */
-  VEC3SET(&data->latmat[0], data->pbc[0], 0.0, 0.0);
-  VEC3SET(&data->latmat[3], b1, b2, b3);
-  VEC3SET(&data->latmat[6], c1, c2, c3);
-
-/* scale b & c vectors up */
-  VEC3MUL(&data->latmat[3], data->pbc[1]);
-  VEC3MUL(&data->latmat[6], data->pbc[2]);
-
-/* get vectors in cols */
-  matrix_transpose(data->latmat);
+  matrix_lattice_from_pbc(data->latmat, data->pbc, data->periodic);
   }
 
 /* update dependents */
@@ -922,7 +935,6 @@ VEC3MUL(data->cell_angles, R2D);
 printf("cell dimensions: [%6.2f %6.2f %6.2f] (%6.2f %6.2f %6.2f)\n",
        data->pbc[0], data->pbc[1], data->pbc[2],
        data->cell_angles[0], data->cell_angles[1], data->cell_angles[2]);
-P3MAT("lattice matrix:",data->latmat);
 #endif
 return;
 }
@@ -950,7 +962,6 @@ g_assert(model != NULL);
 
 #if DEBUG_NEW_LATTICE
 P3MAT("transformation matrix: :", latmat);
-P3MAT("old latmat:", model->latmat);
 #endif
 
 /* get the transformation matrix */
