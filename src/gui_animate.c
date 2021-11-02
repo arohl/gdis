@@ -256,7 +256,7 @@ g_assert(model != NULL);
 model->cur_frame += model->anim_step;
 if (model->cur_frame >= model->num_frames)
   if (model->anim_loop)
-    model->cur_frame = 1;
+    model->cur_frame = 0;
 
 /* continue until we run out of frames (or a stop is flagged) */
 if (model->cur_frame < model->num_frames && model->animating)
