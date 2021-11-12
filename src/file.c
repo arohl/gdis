@@ -56,9 +56,9 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
-/***************************************/
-/* setup the recognized file type list */
-/***************************************/
+/****************************************/
+/* set up the recognized file type list */
+/****************************************/
 #define DEBUG_FILE_INIT 0
 void file_init(void)
 {

@@ -59,9 +59,9 @@ if (*s2)
 return 0;
 }
 
-/********************************/
-/* cleanup raw sginfo structure */
-/********************************/
+/*********************************/
+/* clean up raw sginfo structure */
+/*********************************/
 void sginfo_free(T_SgInfo *SgInfo)
 {
 g_free(SgInfo->ListSeitzMx);

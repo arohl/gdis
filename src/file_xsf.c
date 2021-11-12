@@ -22,6 +22,7 @@ The GNU GPL can also be found at http://www.gnu.org
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "gdis.h"
 #include "coords.h"
@@ -30,6 +31,8 @@ The GNU GPL can also be found at http://www.gnu.org
 #include "matrix.h"
 #include "interface.h"
 #include "parse.h"
+#include "space.h"
+#include "edit.h"
 
 /* main structures */
 extern struct sysenv_pak sysenv;
@@ -80,7 +83,7 @@ return(0);
 /**********************/
 /* save in XSF format */
 /**********************/
-#define DEBUG_WRITE_XSF 1
+#define DEBUG_WRITE_XSF 0
 gint write_xsf(gchar *filename, struct model_pak *data)
 {
 gint n, current, status;
@@ -99,12 +102,12 @@ if( g_slist_length(data->cores) > 9999)
 
 if( data->periodic == 1)
   {
-  gui_text_show(ERROR, "Model must be 0, 2 or 3 dimensional.n");
+  gui_text_show(ERROR, "Model must be 0, 2 or 3 dimensional.\n");
   return(1);
   }
 
 /* open the file */
-fp = fopen(filename,"w");
+fp = fopen(filename, "w");
 if (!fp)
   {
   gui_text_show(ERROR, "Bad filename!\n");
@@ -123,9 +126,9 @@ if (data->frame_list)
 
   current = data->cur_frame; /* Remember current position */
 
-  fprintf(fp,"ANIMSTEPS %d\n", data->num_frames);
+  fprintf(fp, "ANIMSTEPS %d\n", data->num_frames);
 
-  for (n=data->cur_frame ; n<data->num_frames ; n++)
+  for (n = data->cur_frame ; n < data->num_frames ; n++)
     {
     status = read_raw_frame(data->afp, n, data);
 #if DEBUG_WRITE_XSF
@@ -152,16 +155,16 @@ printf("Frame no: %d\n",n);
          fputs("CRYSTAL\n", fp);
 
       fprintf(fp, "PRIMVEC %d\n", n+1);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[1], data->latmat[2]);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[3], data->latmat[4], data->latmat[5]);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[6], data->latmat[7], data->latmat[8]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[3], data->latmat[6]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[1], data->latmat[4], data->latmat[6]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[2], data->latmat[5], data->latmat[8]);
 
       if (data->periodic == 3)
         {
         fprintf(fp, "CONVVEC %d\n", n+1);
-        fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[1], data->latmat[2]);
-        fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[3], data->latmat[4], data->latmat[5]);
-        fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[6], data->latmat[7], data->latmat[8]);
+        fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[3], data->latmat[6]);
+        fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[1], data->latmat[4], data->latmat[7]);
+        fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[2], data->latmat[5], data->latmat[8]);
         }
 
       fprintf(fp, "PRIMCOORD %d\n", n+1);
@@ -187,16 +190,16 @@ else
       fputs("CRYSTAL\n", fp);
 
     fputs("PRIMVEC\n", fp);
-    fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[1], data->latmat[2]);
-    fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[3], data->latmat[4], data->latmat[5]);
-    fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[6], data->latmat[7], data->latmat[8]);
+    fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[3], data->latmat[6]);
+    fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[1], data->latmat[4], data->latmat[7]);
+    fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[2], data->latmat[5], data->latmat[8]);
 
     if (data->periodic == 3)
       {
       fputs("CONVVEC\n", fp);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[1], data->latmat[2]);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[3], data->latmat[4], data->latmat[5]);
-      fprintf(fp,"%11.6f %11.6f %11.6f\n", data->latmat[6], data->latmat[7], data->latmat[8]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[0], data->latmat[3], data->latmat[6]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[1], data->latmat[4], data->latmat[7]);
+      fprintf(fp, "%11.6f %11.6f %11.6f\n", data->latmat[2], data->latmat[5], data->latmat[8]);
       }
     fputs("PRIMCOORD\n", fp);
     }
@@ -204,7 +207,7 @@ else
   }
 
 /* done */
-gui_text_show(STANDARD, "File saved in XSF format\n");
+gui_text_show(STANDARD, "File saved in XSF format.\n");
 fclose(fp);
 return(0);
 }
@@ -216,17 +219,22 @@ return(0);
 /* NB: assumes fp is one line before frame data */
 void read_xsf_block(FILE *fp, struct model_pak *data)
 {
-gint i, code, num_tokens;
+gint i, j, k, code, num_tokens;
 gint n = 0, num_atoms = 0;
+//gint frame = 0;
+gint convflag = 0; /* Conventional cell given = 1 */
 gchar **buff;
-struct core_pak *core;
+gdouble m[3];
+gdouble convmat[9], invmat[9];
+struct core_pak *core, *copy;
 struct elem_pak elem_data;
-GSList *clist;
+GSList *list, *ilist = NULL;
 
 g_assert(fp != NULL);
 g_assert(data != NULL);
 
-clist = data->cores;
+if (data->cores)
+  free_core_list(data);
 
 /* loop while there's data */
 for (;;)
@@ -237,15 +245,12 @@ for (;;)
 
   if (num_tokens)
     {
-    if (num_tokens == 1)
+    if (!g_ascii_strcasecmp(*buff, "atoms") && n > 0)
       {
-      if (!g_ascii_strcasecmp(*buff, "crystal"))
-        break;
-      else if (!g_ascii_strcasecmp(*buff, "slab"))
-        break;
-      }
-    if (!g_ascii_strcasecmp(*buff, "atoms"))
+      fseek(fp, ftell(fp)-1, SEEK_SET); /* rewind a line to preserve tag info */
+      g_strfreev(buff);
       break;
+      }
 
     if (!g_ascii_strcasecmp(*buff, "primvec"))
       {
@@ -256,15 +261,37 @@ for (;;)
         buff = get_tokenized_line(fp, &num_tokens);
         if (num_tokens == 3)
           {
-          data->latmat[3*i] = str_to_float(*(buff));
-          data->latmat[3*i+1] = str_to_float(*(buff+1));
-          data->latmat[3*i+2] = str_to_float(*(buff+2));
+          data->latmat[i] = str_to_float(*(buff));
+          data->latmat[i+3] = str_to_float(*(buff+1));
+          data->latmat[i+6] = str_to_float(*(buff+2));
           }
-#if DEBUG_READ_XSF_BLOCK
-P3MAT("Lattice:", data->latmat);
-#endif
         }
+#if DEBUG_READ_XSF_BLOCK
+P3MAT("Primitive lattice:", data->latmat);
+#endif
+      continue;
       }
+
+    if (!g_ascii_strcasecmp(*buff, "convvec"))
+      {
+      convflag = 1;
+      for (i=0; i<3; i++)
+        {
+        g_strfreev(buff);
+        buff = get_tokenized_line(fp, &num_tokens);
+        if (num_tokens == 3)
+          {
+          convmat[i] = str_to_float(*(buff));
+          convmat[i+3] = str_to_float(*(buff+1));
+          convmat[i+6] = str_to_float(*(buff+2));
+          }
+        }
+#if DEBUG_READ_XSF_BLOCK
+P3MAT("Conventional lattice:", convmat);
+#endif
+      continue;
+      }
+ 
     if (!g_ascii_strcasecmp(*buff, "primcoord"))
       {
       g_strfreev(buff);
@@ -273,37 +300,43 @@ P3MAT("Lattice:", data->latmat);
       if (num_tokens == 2)
         num_atoms = (gint)str_to_float(*buff);
       else
+	{
+        g_strfreev(buff);
         return;
+	}
+      continue;
       }
 
     if (num_tokens > 3)
       {
-      code = (gint)str_to_float(*buff);
+      code = elem_symbol_test(*buff);
+
+      if (!code)
+        code = (gint)str_to_float(*buff);
+
       if (code > 0)
         {
         n++;
-/* overwrite existing core (if any) */
-        if (clist)
-          {
-          core = (struct core_pak *) clist->data;
-          clist = g_slist_next(clist);
-          }
-        else
-          {
 /* otherwise, add a new core */
-          get_elem_data(code, &elem_data, data);
-          core = core_new(elem_data.symbol, NULL, data);
-          data->cores = g_slist_append(data->cores, core);
-          }
+        get_elem_data(code, &elem_data, data);
+        core = core_new(elem_data.symbol, NULL, data);
+        data->cores = g_slist_append(data->cores, core);
 
         core->x[0] = str_to_float(*(buff+1));
         core->x[1] = str_to_float(*(buff+2));
         core->x[2] = str_to_float(*(buff+3));
         core->lookup_charge = TRUE;
 #if DEBUG_READ_XSF_BLOCK
-printf("Atom %d %s %f %f %f\n",n, core->atom_label, core->x[0],
-        core->x[1], core->x[2]);
+printf("Atom %d %s %f %f %f\n", n, core->atom_label,
+           core->x[0], core->x[1], core->x[2]);
 #endif
+
+/* end this frame if we've got the number of atoms expected */
+        if (n == num_atoms)
+          {
+          g_strfreev(buff);
+          break;
+          }
         }
       }
     }
@@ -311,12 +344,12 @@ printf("Atom %d %s %f %f %f\n",n, core->atom_label, core->x[0],
   }
 
 #if DEBUG_READ_XSF_BLOCK
-printf("Periodicity: %d\n", data->periodic);
+printf("Frame: %d\n", data->cur_frame);
 #endif
 
 if (n != g_slist_length(data->cores) || 
-   (data->periodic > 0 && num_atoms != n) ||
-   n == 0)
+    (data->periodic > 0 && num_atoms != n) ||
+    n == 0)
   gui_text_show(ERROR, "Wrong number of atoms in xsf file.\n");
 
 /* convert input cartesian coords to fractional */
@@ -327,8 +360,54 @@ if( data->periodic)
   data->fractional = TRUE;
   }
 
-g_strfreev(buff);
+/* Convert to conventional cell if matrix given */
+if (convflag)
+  {
+  memcpy(invmat, data->latmat, 9*sizeof(gdouble));
+  matrix_invert(invmat);
+  memcpy(data->ilatmat, invmat, 9*sizeof(gdouble));
+  matmat(convmat, invmat);
+  for (i=0; i<3; i++)
+    m[i] = (gint) ceil(sqrt(invmat[i]+invmat[i+3]+invmat[i+6]))+1;
+  /* create image cores */
+  for (i = 0; i < m[0]; i++)
+    for (j = 0; j < m[1]; j++)
+      for (k = 0; k < m[2]; k++)
+        {
+	if (i == 0 && j == 0 && k == 0)
+	  continue;
+	else
+          for (list=data->cores ; list ; list=g_slist_next(list))
+            {
+            core = list->data;
+            copy = dup_core(core);
+            copy->x[0] += i;
+            copy->x[1] += j;
+            copy->x[2] += k;
+            ilist = g_slist_prepend(ilist, copy);
+            }
+        }
+
+  /* order preserving core/shell additions */
+  data->cores = g_slist_concat(data->cores, g_slist_reverse(ilist));
+
+  /* convert to cartesian */
+  coords_make_cartesian(data);
+
+  data->periodic = 3;
+
+  /* set latmat to conventional cell values */
+  ARR3SET(data->latmat, convmat);
+  ARR3SET(&(data->latmat[3]), &convmat[3]);
+  ARR3SET(&(data->latmat[6]), &convmat[6]);
+  matrix_lattice_init(data);
+  coords_make_fractional(data);
+  data->fractional = TRUE;
+  }
+
+model_prep(data);
 }
+
 /******************/
 /* xsf frame read */
 /******************/
@@ -345,8 +424,10 @@ return(0);
 gint read_xsf(gchar *filename, struct model_pak *data)
 {
 gint frame = 0, end_flag = 0;
-gint num_tokens;
+gint i, total_frames = 1;
+gint prim_flag = 0, num_tokens;
 gchar **buff;
+long int fp_pos, fp_pos_prev = 0;
 fpos_t *offset;
 FILE *fp;
 
@@ -368,9 +449,11 @@ if (fp == NULL)
 
 /* inits */
 data->fractional = FALSE;
+data->periodic = 0;
 
 for (;;)
   {
+  fp_pos = ftell(fp); /* file position before reading line */
   buff = get_tokenized_line(fp, &num_tokens);
   if (buff == NULL)
     break;
@@ -378,26 +461,59 @@ for (;;)
   /* first line should be type */
   if (!g_ascii_strcasecmp(*buff, "animsteps"))
     {
-    g_strfreev(buff);
-    buff = get_tokenized_line(fp, &num_tokens);
-    if (!buff)
-      break;
-    }
-
-  if (!g_ascii_strcasecmp(*buff, "atoms"))
-    {
-    data->periodic = 0;
-    end_flag++;
+    total_frames = str_to_float(*(buff+1));
+    continue;
     }
   else if (!g_ascii_strcasecmp(*buff, "slab"))
     {
     data->periodic = 2;
-    end_flag++;
+    continue;
     }
   else if (!g_ascii_strcasecmp(*buff, "crystal"))
     {
     data->periodic = 3;
+    continue;
+    }
+  else if (!g_ascii_strcasecmp(*buff, "atoms"))
+    {
+    fp_pos_prev = fp_pos; /* file position before reading line */
     end_flag++;
+    }
+  else if (!g_ascii_strcasecmp(*buff, "primvec"))
+    {
+    if (num_tokens == 2)
+      {
+      fp_pos_prev = fp_pos; /* file position before reading line */
+      prim_flag++;
+      end_flag++;
+      }
+    else
+      {
+      data->construct_pbc = TRUE;
+      for (i=0; i<3; i++)
+        {
+        g_strfreev(buff);
+        buff = get_tokenized_line(fp, &num_tokens);
+        if (num_tokens == 3)
+          {
+          data->latmat[3*i] = str_to_float(*(buff));
+          data->latmat[3*i+1] = str_to_float(*(buff+1));
+          data->latmat[3*i+2] = str_to_float(*(buff+2));
+          }
+        }
+#if DEBUG_READ_XSF
+P3MAT("Fixed lattice:", data->latmat);
+#endif
+      continue;
+      }
+    }
+  else if (!g_ascii_strcasecmp(*buff, "primcoord"))
+    {
+    if (prim_flag == 0)
+      {
+      fp_pos_prev = fp_pos; /* file position before reading line */
+      end_flag++;
+      }
     }
   else
     end_flag = 0;
@@ -405,7 +521,10 @@ for (;;)
 /* coords search */
   if ( end_flag == 1)
     {
+    fp_pos = ftell(fp);
+    fseek(fp, fp_pos_prev, SEEK_SET); /* rewind a line to preserve tag info */
     add_frame_offset(fp, data);
+    fseek(fp, fp_pos, SEEK_SET); /* return to current position */
 
 /* increment counter */
     frame++;
@@ -417,6 +536,7 @@ for (;;)
 offset = g_list_nth_data(data->frame_list, 0);
 
 #if DEBUG_READ_XSF
+printf("Periodicity: %d\n", data->periodic);
 printf("Total frames: %d\n", g_list_length(data->frame_list));
 #endif
 
@@ -435,6 +555,12 @@ else
   }
 
 /* got everything */
+if (frame != total_frames)
+  {
+  gui_text_show(ERROR, "Incorrect number of frames.\n");
+  return(2);
+  }
+
 data->num_asym = g_slist_length(data->cores);
 data->num_frames = frame;
 
@@ -446,7 +572,7 @@ if (data->num_frames == 1)
   }
 
 #if DEBUG_READ_XSF
-printf("Found %d atoms.\n", n);
+printf("Found %d atoms.\n", g_slist_length(data->cores));
 #endif
 
 /* model setup */
