@@ -56,9 +56,9 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
-/***************************************/
-/* setup the recognized file type list */
-/***************************************/
+/****************************************/
+/* set up the recognized file type list */
+/****************************************/
 #define DEBUG_FILE_INIT 0
 void file_init(void)
 {
@@ -675,6 +675,19 @@ file_data->ext = g_slist_prepend(file_data->ext, "xml");
 file_data->write_file = write_xml;
 file_data->read_file = read_xml;
 file_data->read_frame = NULL;                   /* frame reading */
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = g_malloc(sizeof(struct file_pak));
+file_data->id = XSF;
+file_data->group = XSF;
+file_data->menu = TRUE;
+file_data->label = g_strdup("XSF");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "xsf");
+file_data->write_file = write_xsf;
+file_data->read_file = read_xsf;
+file_data->read_frame = read_xsf_frame;       /* frame reading */
 sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */

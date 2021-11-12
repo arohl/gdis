@@ -438,6 +438,7 @@ printf("new dipole: %f\n", data->gulp.sdipole);
 sprintf(txt, "New surface dipole: %f\n", data->gulp.sdipole);
 gui_text_show(STANDARD, txt);
 
+gui_refresh(GUI_MODEL_PROPERTIES);
 redraw_canvas(SINGLE);
 }
 
@@ -3050,18 +3051,21 @@ if (CEDIT.apd_core->shell)
     text = gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_x));
     CEDIT.apd_core->x[0] = str_to_float(text);
     coords_compute(model);
+    connect_refresh(model);
     break;
 
   case COORD_Y:
     text = gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_y));
     CEDIT.apd_core->x[1] = str_to_float(text);
     coords_compute(model);
+    connect_refresh(model);
     break;
 
   case COORD_Z:
     text = gtk_entry_get_text(GTK_ENTRY(CEDIT.apd_z));
     CEDIT.apd_core->x[2] = str_to_float(text);
     coords_compute(model);
+    connect_refresh(model);
     break;
 
   case SOF:
