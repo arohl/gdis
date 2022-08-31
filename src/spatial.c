@@ -399,8 +399,8 @@ struct core_pak *core1, *core2, *core3;
 /* FIXME - this only uses the 1st 3 points, in future - an average for n pts */
 /* http://www.geocities.com/CollegePark/Campus/1278/JBook/LSQ_Plane.html */
 /* shouldn't matter when this routine is properly implemented, as we'll go */
-/* through the atom_list in the usual fashoin & terminate when it is NULL, */
-/* not when it's data ptr is NULL */ 
+/* through the atom_list in the usual fashoin and terminate when it's NULL, */
+/* not when its data ptr is NULL */ 
 g_assert(cores != NULL);
 g_assert(g_list_length(cores) > 2);
 

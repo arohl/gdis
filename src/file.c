@@ -56,9 +56,74 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
-/***************************************/
-/* setup the recognized file type list */
-/***************************************/
+/**********************************************************/
+/* Check if file is binary or ascii                       */
+/**********************************************************/
+gint ascii_check(const gchar *filename)
+{
+FILE *fp;
+gchar c;
+gint flag = 0;
+
+fp = fopen(filename, "r");
+
+/* checks */
+g_assert(fp != NULL);
+
+c = fgetc(fp);
+
+while (c != EOF)
+  {
+  if (!isascii(c) ||
+     (iscntrl(c) && !isspace(c) &&
+     c != '\b' && c != '\032' && c != '\033'))
+      flag++;	/* not all ASCII */
+  c = fgetc(fp);
+  }
+
+fclose(fp);
+
+if (flag)
+  return 1;  /* Binary */
+else
+  return 0;  /* Ascii */
+}
+/**********************************************************/
+/* change model basename and update filenames & tree      */
+/**********************************************************/
+void change_basename(GtkWidget *w, struct model_pak *data)
+{
+g_assert(w != NULL);
+g_assert(data != NULL);
+
+/* de-alloc */
+g_free(data->basename);
+
+/* set the new basename & related info */
+data->basename = g_strdup(gtk_entry_get_text(GTK_ENTRY(w)));
+
+/* update the model tree */
+tree_model_add(data);
+}
+
+/********************************************/
+/* construct file name if path not included */
+/********************************************/
+gchar* construct_filename(gchar *filename)
+{
+gchar *fullname;
+
+/* construct complete filename */
+if( !g_ascii_strcasecmp(filename, g_path_get_basename(filename)) )
+  fullname = g_build_filename(sysenv.cwd, filename, NULL);
+else
+  fullname = g_strdup(filename);
+
+return fullname;
+}
+/****************************************/
+/* set up the recognized file type list */
+/****************************************/
 #define DEBUG_FILE_INIT 0
 void file_init(void)
 {
@@ -346,7 +411,7 @@ file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = QE;
 file_data->group = QE;
 file_data->menu = TRUE;
-file_data->label = g_strdup("QE");
+file_data->label = g_strdup("Quantum Espresso");
 file_data->ext = NULL;
 file_data->ext = g_slist_append(file_data->ext, "qein");
 file_data->write_file = write_qe;
@@ -489,6 +554,45 @@ file_data->ext = g_slist_append(file_data->ext, "mol2");
 file_data->write_file = NULL;
 file_data->read_file = read_mol2;
 file_data->read_frame = NULL; 
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = (struct file_pak *) g_malloc(sizeof(struct file_pak));
+file_data->id = MOLDY;
+file_data->group = MOLDY;
+file_data->menu = TRUE;
+file_data->label = g_strdup("Moldy");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "in");
+file_data->ext = g_slist_prepend(file_data->ext, "min");
+file_data->ext = g_slist_prepend(file_data->ext, "mdy");
+file_data->read_file = read_moldy;
+file_data->write_file = write_moldy_sys;
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = (struct file_pak *) g_malloc(sizeof(struct file_pak));
+file_data->id = MOLDY_POT;
+file_data->group = MOLDY;
+file_data->menu = FALSE;
+file_data->label = g_strdup("Moldy potentials");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "pot");
+file_data->read_file = NULL;
+file_data->write_file = NULL;
+sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
+
+/* supported file type */
+file_data = (struct file_pak *) g_malloc(sizeof(struct file_pak));
+file_data->id = MOLDY_RES;
+file_data->group = MOLDY;
+file_data->menu = TRUE;
+file_data->label = g_strdup("Moldy restart");
+file_data->ext = NULL;
+file_data->ext = g_slist_prepend(file_data->ext, "sav");
+file_data->ext = g_slist_prepend(file_data->ext, "mds");
+file_data->read_file = read_moldy_restart;
+file_data->write_file = NULL;
 sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */
@@ -679,19 +783,6 @@ sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
 
 /* supported file type */
 file_data = g_malloc(sizeof(struct file_pak));
-file_data->id = XSF;
-file_data->group = XSF;
-file_data->menu = TRUE;
-file_data->label = g_strdup("XSF");
-file_data->ext = NULL;
-file_data->ext = g_slist_prepend(file_data->ext, "xsf");
-file_data->write_file = write_xsf;
-file_data->read_file = read_xsf;
-file_data->read_frame = read_xsf_frame;       /* frame reading */
-sysenv.file_list = g_slist_prepend(sysenv.file_list, file_data);
-
-/* supported file type */
-file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = XTL;
 file_data->group = XTL;
 file_data->menu = TRUE;
@@ -814,7 +905,7 @@ while (list)
   name = list->data;
   list = g_slist_next(list);
 
-  if (!g_pattern_match_string(ps, name))
+  if (!g_pattern_spec_match_string(ps, name))
     {
     files = g_slist_remove(files, name);
     g_free(name);

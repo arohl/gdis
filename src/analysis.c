@@ -482,7 +482,7 @@ for (n=0 ; n<analysis->num_frames ; n++)
 */
 
 /* CURRENT - loop over all atoms - even duplicates so that we can record */
-/* distance between an atom and it's periodic images (NB: correct for double counting) */
+/* distance between an atom and its periodic images (NB: correct for double counting) */
   for (i=0 ; i<analysis->num_atoms ; i++)
     {
     corei = g_slist_nth_data(model->cores, i);
