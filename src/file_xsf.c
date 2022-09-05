@@ -1,7 +1,7 @@
 /*
-Copyright (C) 2000 by Sean David Fleming
+Copyright (C) 2022 by Craig Andrew James Fisher
 
-sean@ivec.org
+c_fisher@jfcc.or.jp
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
