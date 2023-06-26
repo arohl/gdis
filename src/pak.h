@@ -153,6 +153,15 @@ GtkWidget *apd_element, *apd_label, *apd_type, *apd_charge, *apd_mass, *apd_sof,
 	  *apd_x, *apd_y, *apd_z, *apd_growth, *apd_region, *apd_translate;
 struct model_pak *apd_data;
 struct core_pak *apd_core;
+
+gdouble edit_percent, edit_number, edit_subdist;
+gdouble edit_dist, edit_shift_min, edit_shift_max;
+gchar *edit_type;
+gchar *edit_insert;
+GtkWidget *elem_entry, *grid_dim, *grid_sep;
+GtkWidget *obj_reference;
+gdouble angle, edit_radius, edit_avcut;
+gdouble edit_x[3];
 };
 
 /***********************/

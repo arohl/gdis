@@ -63,6 +63,81 @@ extern struct elem_pak elements[];
 
 enum{AT_ANY, AT_SELECTED, AT_LATTICE};
 
+void show_surface_dipole(struct model_pak *data)
+{
+gchar txt[60];
+
+calc_emp(data);
+
+/* inform the user */
+sprintf(txt, "Surface dipole: %f e.Angs\n", data->gulp.sdipole);
+gui_text_show(STANDARD, txt);
+
+}
+
+/***************************************/
+/* hook for dipole moment button       */
+/***************************************/
+void surface_dipole(GtkWidget *w)
+{
+struct model_pak *data;
+
+data = sysenv.active_model;
+
+/* checks */
+if (!data)
+  return;
+
+if (data->periodic != 2) {
+  gui_text_show(WARNING, "Model must be 2D.\n");
+  return;
+  }
+
+show_surface_dipole(data);
+}
+
+/*********************************************/
+/* update widget values with internal values */
+/*********************************************/
+void update_centre(void)
+{
+/* set transformation matrix widget entries */
+gui_relation_update_widget(&CEDIT.edit_x[0]);
+gui_relation_update_widget(&CEDIT.edit_x[1]);
+gui_relation_update_widget(&CEDIT.edit_x[2]);
+}
+
+/*****************************************/
+/* set centre to centre of selected ions */
+/*****************************************/
+void set_centre(GtkWidget *w)
+{
+/* gint n; */
+struct model_pak *model;
+gdouble centroid[3];
+
+model = sysenv.active_model;
+if (!model)
+  return;
+
+/* list = model->selection;
+n = g_slist_length(list);
+if (!n)
+  return; */
+
+if (!model->selection)
+  return;
+
+calc_centroid(centroid, model->selection);
+
+if( model->periodic > 0 )
+   vecmat(model->latmat, centroid);
+
+ARR3SET(CEDIT.edit_x, centroid);
+
+update_centre();
+}
+
 /*********************************************/
 /* update widget values with internal values */
 /*********************************************/
@@ -2417,6 +2492,9 @@ gui_button_x("Add selected atoms to region 3", region_change, GINT_TO_POINTER(RE
 gui_button_x("Add selected atoms to region 4", region_change, GINT_TO_POINTER(REGION2B), vbox);
 gui_button_x("Add selected atoms to growth slice", region_growth_slice, (gpointer) GROWTH_ADD, vbox);
 gui_button_x("Remove selected atoms from growth slice", region_growth_slice, (gpointer) GROWTH_DEL, vbox);
+
+vbox = gui_frame_vbox("Properties", FALSE, FALSE, box);
+gui_button_x("Calculate surface dipole", surface_dipole, NULL, vbox);
 
 /* if (model->periodic == 0 || model->periodic == 2)
   gtk_widget_set_sensitive(GTK_WIDGET(model->edit_regions_frame), TRUE);
