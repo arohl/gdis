@@ -47,6 +47,32 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
+#define DEBUG_CALC_CENTROID 0
+/*************************************/
+/* return centroid of selected atoms */
+/*************************************/
+void calc_centroid(gdouble *centroid, GSList *input)
+{
+GSList *list=NULL;
+struct core_pak *core;
+
+if (!input)
+  return;
+
+VEC3SET(centroid, 0.0, 0.0, 0.0);
+for (list=input ; list ; list=g_slist_next(list))
+  {
+  core = list->data;
+  ARR3ADD(centroid, core->x);
+  }
+
+VEC3MUL(centroid, 1.0 / (gdouble) g_slist_length(input));
+
+#if DEBUG_CALC_CENTROID
+   P3VEC("Centroid = ", centroid);
+#endif
+}
+
 /**********************/
 /* debugging routines */
 /**********************/

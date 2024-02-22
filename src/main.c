@@ -423,27 +423,54 @@ sysenv.apb_on = TRUE;
 sysenv.lmb_on = FALSE;
 sysenv.pib_on = FALSE;
 
-/*edit_dialog*/
-sysenv.cedit.edit_anim_n=0;
-sysenv.cedit.edit_chirality[0]=6.;
-sysenv.cedit.edit_chirality[1]=6.;
-sysenv.cedit.edit_length=1.44;
-sysenv.cedit.edit_basis[0]=NULL;
-sysenv.cedit.edit_basis[1]=NULL;
-sysenv.cedit.edit_spatial_colour[0]=1.0;
-sysenv.cedit.edit_spatial_colour[1]=0.0;
-sysenv.cedit.edit_spatial_colour[2]=0.0;
-sysenv.cedit.edit_label_colour[0]=1.0;
-sysenv.cedit.edit_label_colour[1]=1.0;
-sysenv.cedit.edit_label_colour[2]=1.0;
-sysenv.cedit.spatial_list=NULL;
-sysenv.cedit.spatial_tree=NULL;
-sysenv.cedit.spatial_selected=NULL;
-sysenv.cedit.diffract_model=NULL;
+/* edit_dialog */
+sysenv.cedit.edit_anim_n = 0;
+sysenv.cedit.edit_chirality[0] = 6.;
+sysenv.cedit.edit_chirality[1] = 6.;
+sysenv.cedit.edit_length = 1.44;
+sysenv.cedit.edit_basis[0] = NULL;
+sysenv.cedit.edit_basis[1] = NULL;
+sysenv.cedit.edit_spatial_colour[0] = 1.0;
+sysenv.cedit.edit_spatial_colour[1] = 0.0;
+sysenv.cedit.edit_spatial_colour[2] = 0.0;
+sysenv.cedit.edit_label_colour[0] = 1.0;
+sysenv.cedit.edit_label_colour[1] = 1.0;
+sysenv.cedit.edit_label_colour[2] = 1.0;
+sysenv.cedit.spatial_list = NULL;
+sysenv.cedit.spatial_tree = NULL;
+sysenv.cedit.spatial_selected = NULL;
+sysenv.cedit.diffract_model = NULL;
 /*edit_widget*/
-sysenv.cedit.apd_data=NULL;
-sysenv.cedit.apd_core=NULL;
+sysenv.cedit.apd_data = NULL;
+sysenv.cedit.apd_core = NULL;
 
+/* edit miscellaneous functions dialog */
+sysenv.cedit.edit_x[0] = 0.0;
+sysenv.cedit.edit_x[1] = 0.0;
+sysenv.cedit.edit_x[2] = 0.0;
+/* sysenv.misc.edit_anim_n = 0;
+sysenv.misc.edit_length = 1.44;
+sysenv.misc.edit_percent = 0.0;
+sysenv.misc.edit_number = 1.0;
+sysenv.misc.edit_subdist = 0.0;
+sysenv.misc.edit_dist = 1.0;
+sysenv.misc.edit_shift_min = 0.0;
+sysenv.misc.edit_shift_max = 1.0;
+sysenv.misc.edit_length = 1.44;
+sysenv.misc.edit_construct;
+sysenv.misc.edit_basis[2] = {NULL, NULL};
+sysenv.misc.edit_type = NULL;
+sysenv.misc.edit_insert = NULL;
+sysenv.misc.elem_entry;
+sysenv.misc.grid_diml
+sysenv.misc.grid_sep;
+sysenv.misc.periodicity_spin;
+sysenv.misc.obj_reference;
+sysenv.misc.transmat[12];
+sysenv.misc.angle = 0.0;
+sysenv.misc.edit_radius = 10.0;
+sysenv.misc.edit_avcut = 0.8; 
+*/
 /* default to single model display */
 sysenv.mal = NULL;
 sysenv.displayed[0] = -1;

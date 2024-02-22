@@ -246,7 +246,7 @@ printf("%s", line);
 pclose(fp);
 
 /* Build the process hierarchy. Every process marks itself as first child */
-/* of it's parent or as sister of first child of its parent */
+/* of its parent or as sister of first child of its parent */
 /* algorithm taken from pstree.c by Fred Hucht */
 
 for (me = 0; me < psarray->len; me++)

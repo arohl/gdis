@@ -291,3 +291,4 @@ GSList *connect_fragment_get(struct core_pak *,
                              struct model_pak *);
 GSList *connect_neighbours(struct core_pak *) ;
 
+void calc_centroid(gdouble *, GSList *);

@@ -35,21 +35,21 @@ extern struct elem_pak elements[];
 
 /* meta data for computational chemistry archiving */
 
-/*****************************************************************/
-/* split a string containing units into it's raw value and units */
-/*****************************************************************/
+/****************************************************************/
+/* split a string containing units into its raw value and units */
+/****************************************************************/
 void meta_parse_units(gchar **value, gchar **units, gchar *source)
 {
 gchar **buff;
 
 buff = g_strsplit(source, " ", 2);
 
-if (*buff+0)
-  *value = g_strdup(*(buff+0));
+if (*buff)
+  *value = g_strdup(*(buff));
 else
   *value = NULL;
 
-if (*buff+1)
+if (g_strv_length(buff) == 2)
   *units = g_strdup(*(buff+1));
 else
   *units = NULL;
