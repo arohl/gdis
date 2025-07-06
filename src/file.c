@@ -33,6 +33,12 @@ The GNU GPL can also be found at http://www.gnu.org
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define GLIB_VERSION(major, minor, micro) \
+    (GLIB_MAJOR_VERSION > (major) || \
+    (GLIB_MAJOR_VERSION == (major) && GLIB_MINOR_VERSION > (minor)) || \
+    (GLIB_MAJOR_VERSION == (major) && GLIB_MINOR_VERSION == (minor) && \
+     GLIB_MICRO_VERSION >= (micro)))
+
 #include "gdis.h"
 #include "coords.h"
 #include "error.h"
@@ -56,9 +62,9 @@ The GNU GPL can also be found at http://www.gnu.org
 extern struct sysenv_pak sysenv;
 extern struct elem_pak elements[];
 
-/***************************************/
-/* setup the recognized file type list */
-/***************************************/
+/****************************************/
+/* set up the recognized file type list */
+/****************************************/
 #define DEBUG_FILE_INIT 0
 void file_init(void)
 {
@@ -346,7 +352,7 @@ file_data = g_malloc(sizeof(struct file_pak));
 file_data->id = QE;
 file_data->group = QE;
 file_data->menu = TRUE;
-file_data->label = g_strdup("QE");
+file_data->label = g_strdup("Quantum Espresso");
 file_data->ext = NULL;
 file_data->ext = g_slist_append(file_data->ext, "qein");
 file_data->write_file = write_qe;
@@ -801,7 +807,11 @@ while (list)
   name = list->data;
   list = g_slist_next(list);
 
+#if GLIB_VERSION(2, 7, 0)
+  if (!g_pattern_spec_match_string(ps, name))
+#else
   if (!g_pattern_match_string(ps, name))
+#endif
     {
     files = g_slist_remove(files, name);
     g_free(name);

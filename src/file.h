@@ -101,6 +101,7 @@ gint write_gmf(gchar *, struct model_pak *);
 gint write_planes(gchar *, struct model_pak *);
 gint write_marvin(gchar *, struct model_pak *);
 gint write_xml(gchar *, struct model_pak *);
+gint write_xsf(gchar *, struct model_pak *);
 gint write_xtl(gchar *, struct model_pak *);
 gint write_xyz(gchar *, struct model_pak *);
 gint write_gms(gchar *, struct model_pak *);
@@ -142,6 +143,7 @@ gint read_marvin(gchar *, struct model_pak *);
 gint read_mvnout(gchar *, struct model_pak *);
 gint read_sout(gchar *, struct model_pak *);
 gint read_xml(gchar *, struct model_pak *);
+gint read_xsf(gchar *, struct model_pak *);
 gint read_xtl(gchar *, struct model_pak *);
 gint read_xyz(gchar *, struct model_pak *);
 gint read_using_babel(gchar *, struct model_pak *);
@@ -189,6 +191,7 @@ gint read_qe_out_frame(FILE *, struct model_pak *);
 gint read_xyz_frame(FILE *, struct model_pak *);
 gint read_dlpoly_frame(FILE *, struct model_pak *);
 gint read_dmol_frame(FILE *, struct model_pak *);
+gint read_xsf_frame(FILE *, struct model_pak *);
 
 /*NEW: track/update frames (TODO)*/
 gint update_frame_uspex(gint idx,struct model_pak *model);

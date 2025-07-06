@@ -776,7 +776,7 @@ else
     return(-1);
     }
 #if DEBUG_LOAD_CIF
-printf("Found %d atom%c.\n", natom, (natom != 1?'s':''));
+printf("Found %d atom%s\n", natom, (natom != 1 ? "s.":"."));
 printf("Found %d symmetry matrices.\n", data->sginfo.order);
 printf("Found %d model(s)\n", new);
 printf("Periodicity is %d\n", data->periodic);
